@@ -15,23 +15,39 @@ verbose_message("Adding tests under ${CMAKE_PROJECT_NAME}Tests...")
 # Set the sources for the unit tests and add the executable(s)
 #
 
-set(test_sources 
-  src/historical_tests.cpp
+set(
+  test_headers
+  include/mock/mock_server.hpp
 )
-add_executable(${PROJECT_NAME} ${test_sources})
+
+set(
+  test_sources
+  src/historical_tests.cpp
+  src/http_client_tests.cpp
+  src/mock_server.cpp
+)
+add_executable(${PROJECT_NAME} ${test_headers} ${test_sources})
+find_package(Threads REQUIRED)
 
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC
+    ${CMAKE_THREAD_LIBS_INIT}
   PRIVATE
     nlohmann_json::nlohmann_json
+)
+
+target_include_directories(
+  ${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
 #
 # Set the compiler standard
 #
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 
 #
 # Setup code coverage if enabled

@@ -21,8 +21,9 @@ More detailed examples and the full API documentation can be found on the [Datab
 
 The minimum C++ standard is C++11.
 Dependencies:
-- libcurl
-- [nlohmann_json](https://github.com/nlohmann/json)
+- [cpp-httplib (header only)](https://github.com/yhirose/cpp-httplib)
+  - OpenSSL
+- [nlohmann_json (header only)](https://github.com/nlohmann/json)
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
 
 ## Building
@@ -61,6 +62,24 @@ To run clang-tidy, run the following command:
 ```sh
 cmake -S . -B build # configure to create compile_commands.json
 run-clang-tidy -p build
+```
+
+## macOS
+
+On macOS, the best way to install clang-tidy and clang-format is to install all of LLVM and symlink
+the binaries to some place in your `PATH`.
+```sh
+brew install llvm
+ln -s $(brew --prefix llvm)/bin/clang-tidy $HOME/.local/bin/
+ln -s $(brew --prefix llvm)/bin/clang-format $HOME/.local/bin/
+ln -s $(brew --prefix llvm)/bin/run-clang-format $HOME/.local/bin/
+```
+
+To setup OpenSSL, run the following:
+```sh
+brew install openssl
+# Add it to the PATH so cmake can find it
+export "$PATH:$HOMEBREW_PREFIX/opt/openssl/bin"
 ```
 
 ## License

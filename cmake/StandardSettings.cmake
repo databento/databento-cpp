@@ -2,7 +2,6 @@
 # Project settings
 #
 
-option(${PROJECT_NAME}_BUILD_EXECUTABLE "Build the project as an executable, rather than a library." OFF)
 option(${PROJECT_NAME}_BUILD_HEADERS_ONLY "Build the project as a header-only library." OFF)
 option(${PROJECT_NAME}_USE_ALT_NAMES "Use alternative names for the project, such as naming the include directory all lowercase." ON)
 
@@ -23,13 +22,15 @@ option(${PROJECT_NAME}_ENABLE_UNIT_TESTING "Enable unit tests for the projects (
 option(${PROJECT_NAME}_USE_GTEST "Use the GoogleTest project for creating unit tests." ON)
 option(${PROJECT_NAME}_USE_GOOGLE_MOCK "Use the GoogleMock project for extending the unit tests." OFF)
 
+option(${PROJECT_NAME}_ENABLE_EXAMPLES "Enable building examples for the project." OFF)
+
 #
 # Static analyzers
 #
 # Currently supporting: Clang-Tidy, Cppcheck.
 
-option(${PROJECT_NAME}_ENABLE_CLANG_TIDY "Enable static analysis with Clang-Tidy." OFF)
-option(${PROJECT_NAME}_ENABLE_CPPCHECK "Enable static analysis with Cppcheck." OFF)
+option(${PROJECT_NAME}_ENABLE_CLANG_TIDY "Enable static analysis with Clang-Tidy." ON)
+option(${PROJECT_NAME}_ENABLE_CPPCHECK "Enable static analysis with Cppcheck." ON)
 
 #
 # Code coverage

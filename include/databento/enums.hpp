@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 namespace databento {
 // Represents a historical data center gateway location.
@@ -28,6 +29,7 @@ enum class FeedMode : std::uint8_t {
 enum class Schema : std::uint16_t {
   Mbo,
   Mbp1,
+  Mbp10,
   Tbbo,
   Trades,
   Ohlcv1S,
@@ -88,4 +90,20 @@ enum class BatchState : std::uint8_t {
 };
 
 const char* UrlFromGateway(HistoricalGateway gateway);
+
+const char* ToString(Schema schema);
+const char* ToString(FeedMode mode);
+const char* ToString(Compression compression);
+const char* ToString(SType stype);
+
+template <typename T>
+T FromString(const std::string& str);
+template <>
+Schema FromString(const std::string& str);
+template <>
+FeedMode FromString(const std::string& str);
+template <>
+Compression FromString(const std::string& str);
+template <>
+SType FromString(const std::string& str);
 }  // namespace databento

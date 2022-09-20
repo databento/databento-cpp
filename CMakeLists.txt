@@ -39,6 +39,17 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 endif()
 
 #
+# Add version header
+#
+
+configure_file(
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/version.hpp.in
+  include/${PROJECT_NAME_LOWERCASE}/version.hpp
+  @ONLY
+)
+
+
+#
 # Find all headers and implementation files
 #
 include(cmake/SourcesAndHeaders.cmake)
@@ -88,7 +99,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 include(cmake/CompilerWarnings.cmake)
 set_project_warnings(${PROJECT_NAME})
 
-verbose_message("Applied compiler warnings. Using standard ${CMAKE_CXX_STANDARD}.\n")
+verbose_message("Applied compiler warnings.\n")
 
 #
 # Model project dependencies
@@ -105,14 +116,32 @@ else()
   )
   FetchContent_MakeAvailable(json)
 endif()
-# curl
-find_package(CURL REQUIRED)
+# cpp-httplib
+FetchContent_Declare(
+  httplib
+  URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.11.2.tar.gz
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(httplib)
+find_package(OpenSSL REQUIRED)
+if(OPENSSL_FOUND)
+  set(HTTPLIB_IS_USING_OPENSSL TRUE)
+endif()
 
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC
+    httplib
+    OpenSSL::Crypto
+    OpenSSL::SSL
   PRIVATE
-  nlohmann_json::nlohmann_json
+    nlohmann_json::nlohmann_json
+)
+
+target_compile_definitions(
+  ${PROJECT_NAME}
+  PUBLIC
+  CPPHTTPLIB_OPENSSL_SUPPORT
 )
 
 verbose_message("Successfully added all dependencies and linked against them.")
@@ -120,25 +149,25 @@ verbose_message("Successfully added all dependencies and linked against them.")
 #
 # Set the build/user include directories
 #
-include_directories(SYSTEM ${CURL_INCLUDE_DIR})
-link_directories(${CURL_LIBRARIES})
 
 # Allow usage of header files in the `src` directory, but only for utilities
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
   target_include_directories(
     ${PROJECT_NAME}
     INTERFACE
-    $<INSTALL_INTERFACE:include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      ${CMAKE_BINARY_DIR}/include   # for generated version.hpp
+      $<INSTALL_INTERFACE:include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   )
 else()
   target_include_directories(
     ${PROJECT_NAME}
     PUBLIC
-    $<INSTALL_INTERFACE:include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+      ${CMAKE_BINARY_DIR}/include   # for generated version.hpp
+      $<INSTALL_INTERFACE:include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
+      ${CMAKE_CURRENT_SOURCE_DIR}/src
   )
 endif()
 
@@ -188,16 +217,6 @@ add_clang_format_target()
 #   DESTINATION
 #   ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 # )
-
-#
-# Add version header
-#
-
-configure_file(
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/version.hpp.in
-  include/${PROJECT_NAME_LOWERCASE}/version.hpp
-  @ONLY
-)
 
 install(
   FILES
@@ -272,6 +291,11 @@ message(STATUS "Finished building requirements for installing the package.\n")
 
 if(${PROJECT_NAME}_ENABLE_UNIT_TESTING)
   enable_testing()
-  message(STATUS "Build unit tests for the project. Tests should always be found in the test folder\n")
+  message(STATUS "Build unit tests for the project.")
   add_subdirectory(test)
+endif()
+
+if(${PROJECT_NAME}_ENABLE_EXAMPLES)
+  message(STATUS "Build examples for the project.")
+  add_subdirectory(example)
 endif()
