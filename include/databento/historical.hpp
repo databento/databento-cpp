@@ -67,11 +67,9 @@ class Historical {
                                       const std::vector<std::string>& symbols,
                                       Schema schema, SType stype_in,
                                       std::size_t limit);
-  double MetadataGetCost(const std::string& dataset,
-                         const std::string& start,
+  double MetadataGetCost(const std::string& dataset, const std::string& start,
                          const std::string& end);
-  double MetadataGetCost(const std::string& dataset,
-                         const std::string& start,
+  double MetadataGetCost(const std::string& dataset, const std::string& start,
                          const std::string& end, FeedMode mode,
                          const std::vector<std::string>& symbols, Schema schema,
                          SType stype_in, std::size_t limit);
@@ -82,6 +80,12 @@ class Historical {
                                        SType stype_in, SType stype_out,
                                        const std::string& start_date,
                                        const std::string& end_date);
+  SymbologyResolution SymbologyResolve(const std::string& dataset,
+                                       const std::vector<std::string>& symbols,
+                                       SType stype_in, SType stype_out,
+                                       const std::string& start_date,
+                                       const std::string& end_date,
+                                       const std::string& default_value);
 
   // Timeseries API
   // TODO: create request builder for default options

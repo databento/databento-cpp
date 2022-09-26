@@ -21,10 +21,23 @@ target_include_directories(
   PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
+add_executable(symbology-resolve symbology_resolve.cpp)
+target_link_libraries(
+  symbology-resolve
+  PRIVATE
+    databento::databento
+    nlohmann_json::nlohmann_json
+)
+target_include_directories(
+  symbology-resolve
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
 
 #
 # Set the compiler standard
 #
 
 target_compile_features(metadata PUBLIC cxx_std_11)
+target_compile_features(symbology-resolve PUBLIC cxx_std_11)
 

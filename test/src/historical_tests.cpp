@@ -269,6 +269,56 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
   ASSERT_DOUBLE_EQ(res, 0.714);
 }
 
+TEST_F(HistoricalTests, TestSymbologyResolve) {
+  const nlohmann::json kResp{
+
+      {"result",
+       {{"ESM2",
+         {{
+             {"d0", "2022-06-06"},
+             {"d1", "2022-06-10"},
+             {"s", "3403"},
+         }}}}},
+      {"symbols", {"ESM2"}},
+      {"stype_in", "native"},
+      {"stype_out", "product_id"},
+      {"start_date", "2022-06-06"},
+      {"end_date", "2022-06-10"},
+      {"partial", nlohmann::json::array()},
+      {"not_found", nlohmann::json::array()},
+      {"message", "OK"},
+      {"status", 0},
+  };
+
+  mock_server_.MockGetJson("/v0/symbology.resolve",
+                           {
+                               {"dataset", "GLBX.MDP3"},
+                               {"symbols", "ESM2"},
+                               {"stype_in", "native"},
+                               {"stype_out", "product_id"},
+                               {"start_date", "2022-06-06"},
+                               {"end_date", "2022-06-10"},
+
+                           },
+                           kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res =
+      target.SymbologyResolve("GLBX.MDP3", {"ESM2"}, SType::Native,
+                              SType::ProductId, "2022-06-06", "2022-06-10");
+  EXPECT_TRUE(res.not_found.empty());
+  EXPECT_TRUE(res.partial.empty());
+  ASSERT_EQ(res.mappings.size(), 1);
+  const auto& esm2_mappings = res.mappings.at("ESM2");
+  ASSERT_EQ(esm2_mappings.size(), 1);
+  const auto& esm2_mapping = esm2_mappings.at(0);
+  EXPECT_EQ(esm2_mapping.start_date, "2022-06-06");
+  EXPECT_EQ(esm2_mapping.end_date, "2022-06-10");
+  EXPECT_EQ(esm2_mapping.symbol, "3403");
+}
+
 TEST(HistoricalBuilderTests, TestBasic) {
   constexpr auto kKey = "SECRET";
 
