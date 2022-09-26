@@ -95,6 +95,10 @@ const char* ToString(Schema schema);
 const char* ToString(FeedMode mode);
 const char* ToString(Compression compression);
 const char* ToString(SType stype);
+const char* ToString(DurationInterval duration_interval);
+const char* ToString(Packaging packaging);
+const char* ToString(Delivery delivery);
+const char* ToString(BatchState state);
 
 template <typename T>
 T FromString(const std::string& str);
@@ -106,4 +110,12 @@ template <>
 Compression FromString(const std::string& str);
 template <>
 SType FromString(const std::string& str);
+template <>
+DurationInterval FromString(const std::string& str);
+template <>
+Packaging FromString(const std::string& str);
+template <>
+Delivery FromString(const std::string& str);
+template <>
+BatchState FromString(const std::string& str);
 }  // namespace databento

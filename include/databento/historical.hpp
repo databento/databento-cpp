@@ -36,8 +36,20 @@ class Historical {
 
   // Batch API
 
-  BatchJob BatchSubmitJob();
+  BatchJob BatchSubmitJob(const std::string& dataset, Schema schema,
+                          const std::vector<std::string>& symbols,
+                          const std::string& start, const std::string& end);
+  BatchJob BatchSubmitJob(const std::string& dataset, Schema schema,
+                          const std::vector<std::string>& symbols,
+                          const std::string& start, const std::string& end,
+                          // FIXME: encoding and compression?
+                          DurationInterval split_duration,
+                          std::size_t split_size, Packaging packaging,
+                          Delivery delivery, SType stype_in, SType stype_out,
+                          std::size_t limit);
   std::vector<BatchJob> BatchListJobs();
+  std::vector<BatchJob> BatchListJobs(const std::vector<BatchState>& states,
+                                      const std::string& since);
 
   // Metadata API
   // list_fields, list_encodings, and list_compressions don't seem useful in C++

@@ -24,9 +24,12 @@ class HttpClient {
 
   nlohmann::json GetJson(const std::string& path,
                          const httplib::Params& params);
-  void Post();
+  nlohmann::json PostJson(const std::string& path,
+                          const httplib::Params& params);
 
  private:
+  static nlohmann::json CheckAndParseResponse(const std::string& path,
+                                              const httplib::Result& res);
   static bool IsErrorStatus(int status_code);
 };
 }  // namespace databento

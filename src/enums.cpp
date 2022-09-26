@@ -111,6 +111,83 @@ const char* ToString(SType stype) {
   }
 }
 
+const char* ToString(DurationInterval duration_interval) {
+  switch (duration_interval) {
+    case DurationInterval::Day: {
+      return "day";
+    }
+    case DurationInterval::Week: {
+      return "week";
+    }
+    case DurationInterval::Month: {
+      return "month";
+    }
+    case DurationInterval::None: {
+      return "none";
+    }
+    default: {
+      return "unknown";
+    }
+  }
+}
+
+const char* ToString(Packaging packaging) {
+  switch (packaging) {
+    case Packaging::None: {
+      return "none";
+    }
+    case Packaging::Zip: {
+      return "zip";
+    }
+    case Packaging::Tar: {
+      return "tar";
+    }
+    default: {
+      return "unknown";
+    }
+  }
+}
+
+const char* ToString(Delivery delivery) {
+  switch (delivery) {
+    case Delivery::Download: {
+      return "download";
+    }
+    case Delivery::S3: {
+      return "s3";
+    }
+    case Delivery::Disk: {
+      return "disk";
+    }
+    default: {
+      return "unknown";
+    }
+  }
+}
+
+const char* ToString(BatchState state) {
+  switch (state) {
+    case BatchState::Received: {
+      return "received";
+    }
+    case BatchState::Queued: {
+      return "queued";
+    }
+    case BatchState::Processing: {
+      return "processing";
+    }
+    case BatchState::Done: {
+      return "done";
+    }
+    case BatchState::Expired: {
+      return "expired";
+    }
+    default: {
+      return "unknown";
+    }
+  }
+}
+
 template <>
 Schema FromString(const std::string& str) {
   if (str == "mbo") {
@@ -189,5 +266,70 @@ SType FromString(const std::string& str) {
     return SType::Smart;
   }
   throw std::invalid_argument{"Unknown SType: '" + str + "'"};
+}
+
+template <>
+DurationInterval FromString(const std::string& str) {
+  if (str == "day") {
+    return DurationInterval::Day;
+  }
+  if (str == "week") {
+    return DurationInterval::Week;
+  }
+  if (str == "month") {
+    return DurationInterval::Month;
+  }
+  if (str == "none") {
+    return DurationInterval::None;
+  }
+  throw std::invalid_argument{"Unknown DurationInterval: '" + str + "'"};
+}
+
+template <>
+Packaging FromString(const std::string& str) {
+  if (str == "none") {
+    return Packaging::None;
+  }
+  if (str == "zip") {
+    return Packaging::Zip;
+  }
+  if (str == "tar") {
+    return Packaging::Tar;
+  }
+  throw std::invalid_argument{"Unknown Packaging: '" + str + "'"};
+}
+
+template <>
+Delivery FromString(const std::string& str) {
+  if (str == "download") {
+    return Delivery::Download;
+  }
+  if (str == "s3") {
+    return Delivery::S3;
+  }
+  if (str == "disk") {
+    return Delivery::Disk;
+  }
+  throw std::invalid_argument{"Unknown Delivery: '" + str + "'"};
+}
+
+template <>
+BatchState FromString(const std::string& str) {
+  if (str == "received") {
+    return BatchState::Received;
+  }
+  if (str == "queued") {
+    return BatchState::Queued;
+  }
+  if (str == "processing") {
+    return BatchState::Processing;
+  }
+  if (str == "done") {
+    return BatchState::Done;
+  }
+  if (str == "expired") {
+    return BatchState::Expired;
+  }
+  throw std::invalid_argument{"Unknown BatchState: '" + str + "'"};
 }
 }  // namespace databento

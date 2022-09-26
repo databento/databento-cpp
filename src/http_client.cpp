@@ -1,12 +1,14 @@
 #include "databento/http_client.hpp"
 
+#include <chrono>  // seconds
 #include <sstream>
 #include <stdexcept>
 
-#include "databento/version.hpp"
+#include "databento/version.hpp"  // DATABENTO_VERSION
 
 using databento::HttpClient;
 
+constexpr std::chrono::seconds kTimeout{100};
 const httplib::Headers HttpClient::kHeaders{
     {"accept", "application/json"},
     {"user-agent", "Databento/" DATABENTO_VERSION " C++"},
@@ -16,6 +18,8 @@ HttpClient::HttpClient(const std::string& key, const std::string& gateway)
     : client_{gateway} {
   client_.set_default_headers(HttpClient::kHeaders);
   client_.set_basic_auth(key, "");
+  client_.set_read_timeout(kTimeout);
+  client_.set_write_timeout(kTimeout);
 }
 
 HttpClient::HttpClient(const std::string& key, const std::string& gateway,
@@ -23,11 +27,26 @@ HttpClient::HttpClient(const std::string& key, const std::string& gateway,
     : client_{gateway, port} {
   client_.set_default_headers(HttpClient::kHeaders);
   client_.set_basic_auth(key, "");
+  client_.set_read_timeout(kTimeout);
+  client_.set_write_timeout(kTimeout);
 }
 
 nlohmann::json HttpClient::GetJson(const std::string& path,
                                    const httplib::Params& params) {
   const httplib::Result res = client_.Get(path, params, httplib::Headers{});
+  return HttpClient::CheckAndParseResponse(path, res);
+}
+
+nlohmann::json HttpClient::PostJson(const std::string& path,
+                                    const httplib::Params& params) {
+  // need to fully specify, otherwise sent as application/x-www-form-urlencoded
+  const std::string full_path = httplib::append_query_params(path, params);
+  const httplib::Result res = client_.Post(full_path);
+  return HttpClient::CheckAndParseResponse(path, res);
+}
+
+nlohmann::json HttpClient::CheckAndParseResponse(const std::string& path,
+                                                 const httplib::Result& res) {
   if (res.error() != httplib::Error::Success) {
     std::ostringstream err_msg;
     err_msg << "Request to " << path << " failed with " << res.error();
@@ -43,7 +62,5 @@ nlohmann::json HttpClient::GetJson(const std::string& path,
   }
   return nlohmann::json::parse(res.value().body);
 }
-
-void HttpClient::Post() {}
 
 bool HttpClient::IsErrorStatus(int status_code) { return status_code >= 400; }

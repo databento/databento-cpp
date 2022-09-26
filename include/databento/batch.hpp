@@ -1,10 +1,10 @@
 #pragma once
 
-#include <chrono>
 #include <cstddef>
 #include <string>
 #include <vector>
 
+#include "databento/datetime.hpp"
 #include "databento/enums.hpp"
 
 namespace databento {
@@ -13,12 +13,13 @@ struct BatchJob {
   std::string user_id;
   std::string bill_id;
   std::string dataset;
+  double cost;
   std::vector<std::string> symbols;
   SType stype_in;
   SType stype_out;
   Schema schema;
-  std::chrono::system_clock::duration start;
-  std::chrono::system_clock::duration end;
+  EpochNanos start;
+  EpochNanos end;
   std::size_t limit;
   Compression compression;
   DurationInterval split_duration;
@@ -33,10 +34,10 @@ struct BatchJob {
   std::size_t actual_size;
   std::size_t package_size;
   BatchState state;
-  std::chrono::system_clock ts_received;
-  std::chrono::system_clock ts_queued;
-  std::chrono::system_clock ts_process_start;
-  std::chrono::system_clock ts_process_done;
-  std::chrono::system_clock ts_expiration;
+  EpochNanos ts_received;
+  EpochNanos ts_queued;
+  EpochNanos ts_process_start;
+  EpochNanos ts_process_done;
+  EpochNanos ts_expiration;
 };
 }  // namespace databento

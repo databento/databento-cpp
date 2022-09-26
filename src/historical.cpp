@@ -11,12 +11,17 @@
 #include <utility>  // move
 
 #include "databento/constants.hpp"
+#include "databento/datetime.hpp"
 #include "databento/enums.hpp"
 
 using databento::Historical;
 using databento::HistoricalBuilder;
 
 namespace {
+std::string BuildBatchPath(const char* slug) {
+  return std::string{"/v"} + databento::kApiVersionStr + "/batch" + slug;
+}
+
 std::string BuildMetadataPath(const char* slug) {
   return std::string{"/v"} + databento::kApiVersionStr + "/metadata" + slug;
 }
@@ -32,12 +37,37 @@ void SetIfNotEmpty(httplib::Params* params, const std::string& key,
   }
 }
 
-std::string QueryStringify(const std::vector<std::string>& strings) {
-  return std::accumulate(strings.begin(), strings.end(), std::string{},
-                         [](std::string acc, const std::string& symbol) {
-                           return acc.empty() ? symbol
-                                              : std::move(acc) + "," + symbol;
-                         });
+void SetIfNotEmpty(httplib::Params* params, const std::string& key,
+                   const std::vector<std::string>& strings) {
+  if (!strings.empty()) {
+    std::string value =
+        std::accumulate(strings.begin(), strings.end(), std::string{},
+                        [](std::string acc, const std::string& str) {
+                          return acc.empty() ? str : std::move(acc) + "," + str;
+                        });
+    params->emplace(key, std::move(value));
+  }
+}
+
+void SetIfNotEmpty(httplib::Params* params, const std::string& key,
+                   const std::vector<databento::BatchState>& states) {
+  if (!states.empty()) {
+    std::string value = std::accumulate(
+        states.begin(), states.end(), std::string{},
+        [](std::string acc, databento::BatchState state) {
+          return acc.empty()
+                     ? databento::ToString(state)
+                     : std::move(acc) + "," + databento::ToString(state);
+        });
+    params->emplace(key, std::move(value));
+  }
+}
+
+void SetIfPositive(httplib::Params* params, const std::string& key,
+                   const std::size_t value) {
+  if (value > 0) {
+    params->emplace(key, std::to_string(value));
+  }
 }
 
 std::runtime_error MissingKey(const std::string& endpoint,
@@ -75,6 +105,120 @@ const nlohmann::json& CheckedAt(const std::string& endpoint,
   }
   throw ::MissingKey(endpoint, key);
 }
+
+template <typename T>
+T FromCheckedAtString(const std::string& endpoint, const nlohmann::json& json,
+                      const std::string& key) {
+  const auto& val_json = ::CheckedAt(endpoint, json, key);
+  if (!val_json.is_string()) {
+    throw ::TypeMismatch(endpoint, key + " string", val_json);
+  }
+  return databento::FromString<T>(val_json);
+}
+
+template <typename T>
+T ParseAt(const std::string& endpoint, const nlohmann::json& json,
+          const std::string& key);
+
+template <>
+bool ParseAt(const std::string& endpoint, const nlohmann::json& json,
+             const std::string& key) {
+  const auto& val_json = ::CheckedAt(endpoint, json, key);
+  if (!val_json.is_boolean()) {
+    throw ::TypeMismatch(endpoint, key + " bool", val_json);
+  }
+  return val_json;
+}
+
+template <>
+std::string ParseAt(const std::string& endpoint, const nlohmann::json& json,
+                    const std::string& key) {
+  const auto& val_json = ::CheckedAt(endpoint, json, key);
+  if (!val_json.is_string()) {
+    throw ::TypeMismatch(endpoint, key + " string", val_json);
+  }
+  return val_json;
+}
+
+template <>
+std::size_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
+                    const std::string& key) {
+  const auto& val_json = ::CheckedAt(endpoint, json, key);
+  if (!val_json.is_number_unsigned()) {
+    throw ::TypeMismatch(endpoint, key + " unsigned number", val_json);
+  }
+  return val_json;
+}
+
+template <>
+databento::EpochNanos ParseAt(const std::string& endpoint,
+                              const nlohmann::json& json,
+                              const std::string& key) {
+  const auto& val_json = ::CheckedAt(endpoint, json, key);
+  if (!val_json.is_number_unsigned()) {
+    throw ::TypeMismatch(endpoint, key + " unsigned number", val_json);
+  }
+  return databento::EpochNanos{std::chrono::nanoseconds{val_json}};
+}
+
+template <>
+std::vector<std::string> ParseAt(const std::string& endpoint,
+                                 const nlohmann::json& json,
+                                 const std::string& key) {
+  const auto& symbols_json = ::CheckedAt(endpoint, json, key);
+  if (!symbols_json.is_array()) {
+    throw ::TypeMismatch(endpoint, key + " array", json);
+  }
+  std::vector<std::string> res;
+  res.reserve(json.size());
+  for (const auto& item : json.items()) {
+    res.emplace_back(item.value());
+  }
+  return res;
+}
+
+databento::BatchJob Parse(const std::string& endpoint,
+                          const nlohmann::json& json) {
+  using databento::Compression;
+  using databento::Delivery;
+  using databento::DurationInterval;
+  using databento::EpochNanos;
+  using databento::Packaging;
+  using databento::Schema;
+  using databento::SType;
+
+  if (!json.is_object()) {
+    throw ::TypeMismatch(endpoint, "object", json);
+  }
+  return databento::BatchJob{
+      .id = ::CheckedAt(endpoint, json, "id"),
+      .user_id = ParseAt<std::string>(endpoint, json, "user_id"),
+      .bill_id = ParseAt<std::string>(endpoint, json, "bill_id"),
+      .dataset = ParseAt<std::string>(endpoint, json, "dataset"),
+      .symbols = ::ParseAt<std::vector<std::string>>(endpoint, json, "symbols"),
+      .stype_in = ::FromCheckedAtString<SType>(endpoint, json, "stype_in"),
+      .stype_out = ::FromCheckedAtString<SType>(endpoint, json, "stype_out"),
+      .schema = ::FromCheckedAtString<Schema>(endpoint, json, "schema"),
+      .start = ::ParseAt<EpochNanos>(endpoint, json, "start"),
+      .end = ::ParseAt<EpochNanos>(endpoint, json, "end"),
+      .limit = ::ParseAt<std::size_t>(endpoint, json, "limit"),
+      .compression =
+          ::FromCheckedAtString<Compression>(endpoint, json, "compression"),
+      .split_duration = ::FromCheckedAtString<DurationInterval>(
+          endpoint, json, "split_duration"),
+      .split_size = ::ParseAt<std::size_t>(endpoint, json, "split_size"),
+      .split_symbols = ::ParseAt<bool>(endpoint, json, "split_symbols"),
+      .packaging =
+          ::FromCheckedAtString<Packaging>(endpoint, json, "packaging"),
+      .delivery = ::FromCheckedAtString<Delivery>(endpoint, json, "delivery"),
+      .is_full_book = ::ParseAt<bool>(endpoint, json, "is_full_book"),
+      .is_example = ::ParseAt<bool>(endpoint, json, "is_example"),
+      .record_count = ::ParseAt<std::size_t>(endpoint, json, "record_count"),
+      .billed_size = ::ParseAt<std::size_t>(endpoint, json, "billed_size"),
+      .actual_size = ::ParseAt<std::size_t>(endpoint, json, "actual_size"),
+      .package_size = ::ParseAt<std::size_t>(endpoint, json, "package_size"),
+  };
+}
 }  // namespace
 
 Historical::Historical(std::string key, HistoricalGateway gateway)
@@ -86,6 +230,68 @@ Historical::Historical(std::string key, std::string gateway, std::uint16_t port)
     : key_{std::move(key)},
       gateway_{std::move(gateway)},
       client_{key_, gateway_, port} {}
+
+databento::BatchJob Historical::BatchSubmitJob(
+    const std::string& dataset, Schema schema,
+    const std::vector<std::string>& symbols, const std::string& start,
+    const std::string& end) {
+  return this->BatchSubmitJob(
+      dataset, schema, symbols, start, end, DurationInterval::Day, {},
+      Packaging::None, Delivery::Download, SType::Native, SType::ProductId, {});
+}
+
+databento::BatchJob Historical::BatchSubmitJob(
+    const std::string& dataset, Schema schema,
+    const std::vector<std::string>& symbols, const std::string& start,
+    const std::string& end, DurationInterval split_duration,
+    std::size_t split_size, Packaging packaging, Delivery delivery,
+    SType stype_in, SType stype_out, std::size_t limit) {
+  static const std::string kPath = ::BuildBatchPath(".submit_job");
+  httplib::Params params{{"dataset", dataset},
+                         {"schema", ToString(schema)},
+                         {"encoding", "dbz"},
+                         {"start", start},
+                         {"end", end},
+                         // {"compression", ToString(compression)},
+                         {"split_duration", ToString(split_duration)},
+                         {"packaging", ToString(packaging)},
+                         {"delivery", ToString(delivery)},
+                         {"stype_in", ToString(stype_in)},
+                         {"stype_out", ToString(stype_out)}};
+  ::SetIfPositive(&params, "split_size", split_size);
+  ::SetIfPositive(&params, "limit", limit);
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  const nlohmann::json json = client_.PostJson(kPath, params);
+  return ::Parse("BatchSubmitJob", json);
+}
+
+std::vector<databento::BatchJob> Historical::BatchListJobs() {
+  static const std::vector<BatchState> kDefaultStates = {
+      BatchState::Received, BatchState::Queued, BatchState::Processing,
+      BatchState::Done};
+  return this->BatchListJobs(kDefaultStates, {});
+}
+
+std::vector<databento::BatchJob> Historical::BatchListJobs(
+    const std::vector<databento::BatchState>& states,
+    const std::string& since) {
+  static const std::string kEndpoint = "BatchListJobs";
+  static const std::string kPath = ::BuildBatchPath(".list_jobs");
+
+  httplib::Params params;
+  ::SetIfNotEmpty(&params, "states", states);
+  ::SetIfNotEmpty(&params, "since", since);
+  const nlohmann::json json = client_.GetJson(kPath, params);
+  if (!json.is_array()) {
+    ::TypeMismatch(kEndpoint, "array", json);
+  }
+  std::vector<BatchJob> jobs;
+  jobs.reserve(json.size());
+  for (const auto& job_json : json.items()) {
+    jobs.emplace_back(::Parse(kEndpoint, job_json.value()));
+  }
+  return jobs;
+}
 
 std::map<std::string, std::int32_t> Historical::MetadataListPublishers() {
   static const std::string kEndpoint = "ListPublishers";
@@ -266,12 +472,8 @@ std::size_t Historical::MetadataGetBillableSize(
                          {"stype_in", ToString(stype_in)}};
   ::SetIfNotEmpty(&params, "start", start);
   ::SetIfNotEmpty(&params, "end", end);
-  if (limit > 0) {
-    params.emplace("limit", std::to_string(limit));
-  }
-  if (!symbols.empty()) {
-    params.emplace("symbols", ::QueryStringify(symbols));
-  }
+  ::SetIfPositive(&params, "limit", limit);
+  ::SetIfNotEmpty(&params, "symbols", symbols);
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_number_unsigned()) {
     throw ::TypeMismatch("GetBillableSize", "unsigned number", json);
@@ -300,12 +502,8 @@ double Historical::MetadataGetCost(const std::string& dataset,
                          {"stype_in", ToString(stype_in)}};
   ::SetIfNotEmpty(&params, "start", start);
   ::SetIfNotEmpty(&params, "end", end);
-  if (!symbols.empty()) {
-    params.emplace("symbols", ::QueryStringify(symbols));
-  }
-  if (limit > 0) {
-    params.emplace("limit", std::to_string(limit));
-  }
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  ::SetIfPositive(&params, "limit", limit);
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_number()) {
     throw ::TypeMismatch("GetCost", "number", json);
@@ -333,9 +531,7 @@ databento::SymbologyResolution Historical::SymbologyResolve(
                          {"start_date", start_date},
                          {"end_date", end_date},
                          {"default_value", default_value}};
-  if (!symbols.empty()) {
-    params.emplace("symbols", ::QueryStringify(symbols));
-  }
+  ::SetIfNotEmpty(&params, "symbols", symbols);
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_object()) {
     throw ::TypeMismatch(kEndpoint, "object", json);
