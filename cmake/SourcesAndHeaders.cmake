@@ -2,15 +2,24 @@ set(headers
   include/databento/batch.hpp
   include/databento/constants.hpp
   include/databento/datetime.hpp
+  include/databento/dbz.hpp
+  include/databento/dbz_parser.hpp
   include/databento/enums.hpp
   include/databento/historical.hpp
   include/databento/http_client.hpp
   include/databento/metadata.hpp
+  include/databento/record.hpp
   include/databento/symbology.hpp
+  include/databento/timeseries.hpp
+  src/parse_stream.hpp
 )
 
 set(sources
+  src/datetime.cpp
+  src/dbz_parser.cpp
   src/enums.cpp
   src/historical.cpp
   src/http_client.cpp
+  src/parse_stream.cpp
+  src/record.cpp
 )

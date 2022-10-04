@@ -8,17 +8,14 @@
 #include <string>
 #include <vector>
 
-#include "batch.hpp"
+#include "databento/batch.hpp"
+#include "databento/enums.hpp"
 #include "databento/http_client.hpp"
 #include "databento/metadata.hpp"
 #include "databento/symbology.hpp"
-#include "enums.hpp"
+#include "databento/timeseries.hpp"
 
 namespace databento {
-// TODO: Implement RAII StreamingToken and callback interface
-class StreamingToken {};
-using StreamingCallback = std::function<void()>;
-
 class Historical {
   const std::string key_;
   const std::string gateway_;
@@ -100,12 +97,13 @@ class Historical {
                                        const std::string& default_value);
 
   // Timeseries API
-  // TODO: create request builder for default options
-  StreamingToken TimeseriesStream(
-      const std::string& dataset, const std::vector<std::string>& symbols,
-      Schema schema, std::chrono::system_clock::time_point start,
-      std::chrono::system_clock::time_point end, SType stype_in,
-      SType stype_out, std::size_t limit, StreamingCallback callback);
+  void TimeseriesStream(const std::string& dataset,
+                        const std::vector<std::string>& symbols, Schema schema,
+                        std::chrono::system_clock::time_point start,
+                        std::chrono::system_clock::time_point end,
+                        SType stype_in, SType stype_out, std::size_t limit,
+                        const MetadataCallback& metadata_callback,
+                        const RecordCallback& callback);
 };
 
 class HistoricalBuilder {

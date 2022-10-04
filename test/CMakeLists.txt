@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.13)
 
 #
 # Project details
@@ -22,9 +22,12 @@ set(
 
 set(
   test_sources
+  src/datetime_tests.cpp
+  src/dbz_parser_tests.cpp
   src/historical_tests.cpp
   src/http_client_tests.cpp
   src/mock_server.cpp
+  src/parse_stream_tests.cpp
 )
 add_executable(${PROJECT_NAME} ${test_headers} ${test_sources})
 find_package(Threads REQUIRED)
@@ -41,6 +44,8 @@ target_include_directories(
   ${PROJECT_NAME}
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/src  # allow testing of private classes
 )
 
 #
@@ -94,5 +99,12 @@ add_test(
   COMMAND
     ${PROJECT_NAME}
 )
+
+#
+# Copy test data
+#
+
+file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+add_compile_definitions(TEST_BUILD_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 
 verbose_message("Finished adding unit tests for ${CMAKE_PROJECT_NAME}.")

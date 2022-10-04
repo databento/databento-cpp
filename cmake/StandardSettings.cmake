@@ -12,6 +12,17 @@ option(${PROJECT_NAME}_USE_EXTERNAL_JSON "Use an external JSON library" OFF)
 #
 
 option(${PROJECT_NAME}_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." ON)
+option(${PROJECT_NAME}_FORCE_COLOR_OUTPUT, "Always produce ANSI-colored output" OFF)
+
+if(${PROJECT_NAME}_FORCE_COLOR_OUTPUT)
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    add_compile_options(-fdiagnostics-color=always)
+  elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    add_compile_options(-fcolor-diagnostics)
+  else()
+    message(WARNING "Couldn't force color output with unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
+  endif()
+endif()
 
 #
 # Unit testing

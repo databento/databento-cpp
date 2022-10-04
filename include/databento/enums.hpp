@@ -27,31 +27,31 @@ enum class FeedMode : std::uint8_t {
 
 // Represents a data record schema.
 enum class Schema : std::uint16_t {
-  Mbo,
-  Mbp1,
-  Mbp10,
-  Tbbo,
-  Trades,
-  Ohlcv1S,
-  Ohlcv1M,
-  Ohlcv1H,
-  Ohlcv1D,
-  Definition,
-  Statistics,
-  Status,
+  Mbo = 0,
+  Mbp1 = 1,
+  Mbp10 = 2,
+  Tbbo = 3,
+  Trades = 4,
+  Ohlcv1S = 5,
+  Ohlcv1M = 6,
+  Ohlcv1H = 7,
+  Ohlcv1D = 8,
+  Definition = 9,
+  Statistics = 10,
+  Status = 11,
 };
 
 // Represents a data compression format (if any).
 enum class Compression : std::uint8_t {
-  None,
-  Zstd,
+  None = 0,
+  Zstd = 1,
 };
 
 // Represents a symbology type.
 enum class SType : std::uint8_t {
-  ProductId,
-  Native,
-  Smart,
+  ProductId = 0,
+  Native = 1,
+  Smart = 2,
 };
 
 enum class DurationInterval : std::uint8_t {

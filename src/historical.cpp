@@ -2,6 +2,7 @@
 
 #include <httplib.h>
 
+#include <atomic>
 #include <cstdlib>  // get_env
 #include <nlohmann/json.hpp>
 #include <numeric>  // accumulate
@@ -12,7 +13,9 @@
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
+#include "databento/dbz_parser.hpp"
 #include "databento/enums.hpp"
+#include "databento/timeseries.hpp"
 
 using databento::Historical;
 using databento::HistoricalBuilder;
@@ -29,6 +32,11 @@ std::string BuildMetadataPath(const char* slug) {
 std::string BuildSymbologyPath(const char* slug) {
   return std::string{"/v"} + databento::kApiVersionStr + "/symbology" + slug;
 }
+
+// std::string BuildTimeseriesPath(const char* slug) {
+//   return std::string{"/v"} + databento::kApiVersionStr + "/timeseries" +
+//   slug;
+// }
 
 void SetIfNotEmpty(httplib::Params* params, const std::string& key,
                    const std::string& value) {
@@ -190,34 +198,33 @@ databento::BatchJob Parse(const std::string& endpoint,
   if (!json.is_object()) {
     throw ::TypeMismatch(endpoint, "object", json);
   }
-  return databento::BatchJob{
-      .id = ::CheckedAt(endpoint, json, "id"),
-      .user_id = ParseAt<std::string>(endpoint, json, "user_id"),
-      .bill_id = ParseAt<std::string>(endpoint, json, "bill_id"),
-      .dataset = ParseAt<std::string>(endpoint, json, "dataset"),
-      .symbols = ::ParseAt<std::vector<std::string>>(endpoint, json, "symbols"),
-      .stype_in = ::FromCheckedAtString<SType>(endpoint, json, "stype_in"),
-      .stype_out = ::FromCheckedAtString<SType>(endpoint, json, "stype_out"),
-      .schema = ::FromCheckedAtString<Schema>(endpoint, json, "schema"),
-      .start = ::ParseAt<EpochNanos>(endpoint, json, "start"),
-      .end = ::ParseAt<EpochNanos>(endpoint, json, "end"),
-      .limit = ::ParseAt<std::size_t>(endpoint, json, "limit"),
-      .compression =
-          ::FromCheckedAtString<Compression>(endpoint, json, "compression"),
-      .split_duration = ::FromCheckedAtString<DurationInterval>(
-          endpoint, json, "split_duration"),
-      .split_size = ::ParseAt<std::size_t>(endpoint, json, "split_size"),
-      .split_symbols = ::ParseAt<bool>(endpoint, json, "split_symbols"),
-      .packaging =
-          ::FromCheckedAtString<Packaging>(endpoint, json, "packaging"),
-      .delivery = ::FromCheckedAtString<Delivery>(endpoint, json, "delivery"),
-      .is_full_book = ::ParseAt<bool>(endpoint, json, "is_full_book"),
-      .is_example = ::ParseAt<bool>(endpoint, json, "is_example"),
-      .record_count = ::ParseAt<std::size_t>(endpoint, json, "record_count"),
-      .billed_size = ::ParseAt<std::size_t>(endpoint, json, "billed_size"),
-      .actual_size = ::ParseAt<std::size_t>(endpoint, json, "actual_size"),
-      .package_size = ::ParseAt<std::size_t>(endpoint, json, "package_size"),
-  };
+  databento::BatchJob res;
+  res.id = ::CheckedAt(endpoint, json, "id");
+  res.user_id = ParseAt<std::string>(endpoint, json, "user_id");
+  res.bill_id = ParseAt<std::string>(endpoint, json, "bill_id");
+  res.dataset = ParseAt<std::string>(endpoint, json, "dataset");
+  res.symbols = ::ParseAt<std::vector<std::string>>(endpoint, json, "symbols");
+  res.stype_in = ::FromCheckedAtString<SType>(endpoint, json, "stype_in");
+  res.stype_out = ::FromCheckedAtString<SType>(endpoint, json, "stype_out");
+  res.schema = ::FromCheckedAtString<Schema>(endpoint, json, "schema");
+  res.start = ::ParseAt<EpochNanos>(endpoint, json, "start");
+  res.end = ::ParseAt<EpochNanos>(endpoint, json, "end");
+  res.limit = ::ParseAt<std::size_t>(endpoint, json, "limit");
+  res.compression =
+      ::FromCheckedAtString<Compression>(endpoint, json, "compression");
+  res.split_duration =
+      ::FromCheckedAtString<DurationInterval>(endpoint, json, "split_duration");
+  res.split_size = ::ParseAt<std::size_t>(endpoint, json, "split_size");
+  res.split_symbols = ::ParseAt<bool>(endpoint, json, "split_symbols");
+  res.packaging = ::FromCheckedAtString<Packaging>(endpoint, json, "packaging");
+  res.delivery = ::FromCheckedAtString<Delivery>(endpoint, json, "delivery");
+  res.is_full_book = ::ParseAt<bool>(endpoint, json, "is_full_book");
+  res.is_example = ::ParseAt<bool>(endpoint, json, "is_example");
+  res.record_count = ::ParseAt<std::size_t>(endpoint, json, "record_count");
+  res.billed_size = ::ParseAt<std::size_t>(endpoint, json, "billed_size");
+  res.actual_size = ::ParseAt<std::size_t>(endpoint, json, "actual_size");
+  res.package_size = ::ParseAt<std::size_t>(endpoint, json, "package_size");
+  return res;
 }
 }  // namespace
 
@@ -554,9 +561,9 @@ databento::SymbologyResolution Historical::SymbologyResolve(
     mapping_intervals.reserve(mapping_json.size());
     for (const auto& interval_json : mapping_json.items()) {
       mapping_intervals.emplace_back(MappingInterval{
-          .start_date = ::CheckedAt(kEndpoint, interval_json.value(), "d0"),
-          .end_date = ::CheckedAt(kEndpoint, interval_json.value(), "d1"),
-          .symbol = ::CheckedAt(kEndpoint, interval_json.value(), "s"),
+          ::CheckedAt(kEndpoint, interval_json.value(), "d0"),
+          ::CheckedAt(kEndpoint, interval_json.value(), "d1"),
+          ::CheckedAt(kEndpoint, interval_json.value(), "s"),
       });
     }
     res.mappings.emplace(mapping.key(), std::move(mapping_intervals));
@@ -584,6 +591,45 @@ databento::SymbologyResolution Historical::SymbologyResolve(
     res.not_found.emplace_back(symbol.value());
   }
   return res;
+}
+
+void Historical::TimeseriesStream(
+    const std::string& dataset, const std::vector<std::string>& symbols,
+    Schema schema, std::chrono::system_clock::time_point start,
+    std::chrono::system_clock::time_point end, SType stype_in, SType stype_out,
+    std::size_t limit, const MetadataCallback& metadata_callback,
+    const RecordCallback& callback) {
+  static const std::string kEndpoint = "TimeseriesStream";
+  static const std::string kPath = ::BuildSymbologyPath(".stream");
+  httplib::Params params{{"dataset", dataset},
+                         {"schema", ToString(schema)},
+                         {"stype_in", ToString(stype_in)},
+                         {"stype_out", ToString(stype_out)},
+                         {"start", ToString(start)},
+                         {"end", ToString(end)}};
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  ::SetIfPositive(&params, "limit", limit);
+
+  std::atomic<bool> should_continue{true};
+  DbzParser dbz_parser;
+  // no initialized lambda captures until C++14
+  std::thread stream{[this, &dbz_parser, &params, &should_continue] {
+    this->client_.GetRawStream(
+        kPath, params,
+        [&dbz_parser, &should_continue](const char* data, std::size_t length) {
+          dbz_parser.PassBytes(reinterpret_cast<const std::uint8_t*>(data),
+                               length);
+          return should_continue.load();
+        });
+    dbz_parser.EndInput();
+  }};
+  Metadata metadata = dbz_parser.ParseMetadata();
+  const auto record_count = metadata.record_count;
+  metadata_callback(std::move(metadata));
+  for (auto i = 0UL; i < record_count; ++i) {
+    should_continue = callback(dbz_parser.ParseRecord()) == KeepGoing::Continue;
+  }
+  stream.join();
 }
 
 HistoricalBuilder& HistoricalBuilder::keyFromEnv() {

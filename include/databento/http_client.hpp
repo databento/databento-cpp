@@ -26,6 +26,8 @@ class HttpClient {
                          const httplib::Params& params);
   nlohmann::json PostJson(const std::string& path,
                           const httplib::Params& params);
+  void GetRawStream(const std::string& path, const httplib::Params& params,
+                    httplib::ContentReceiver callback);
 
  private:
   static nlohmann::json CheckAndParseResponse(const std::string& path,

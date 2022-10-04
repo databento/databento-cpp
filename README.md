@@ -28,7 +28,7 @@ Dependencies:
 
 ## Building
 
-databento-cpp uses [CMake](https://cmake.org/) as its build system, with a minimum version of 3.15.
+databento-cpp uses [CMake](https://cmake.org/) as its build system, with a minimum version of 3.13.
 Building with `cmake` is a two step process: first configuring, then building.
 ```sh
 cmake -S . -B build  # configure

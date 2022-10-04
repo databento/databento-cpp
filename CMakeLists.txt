@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.13)
 
 #
 # Project details
@@ -34,6 +34,7 @@ endif()
 #
 # Prevent building in the source directory
 #
+
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there.\n")
 endif()
@@ -52,6 +53,7 @@ configure_file(
 #
 # Find all headers and implementation files
 #
+
 include(cmake/SourcesAndHeaders.cmake)
 
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
@@ -104,6 +106,7 @@ verbose_message("Applied compiler warnings.\n")
 #
 # Model project dependencies
 #
+
 include(FetchContent)
 # JSON
 if(${PROJECT_NAME}_USE_EXTERNAL_JSON)
@@ -127,6 +130,8 @@ find_package(OpenSSL REQUIRED)
 if(OPENSSL_FOUND)
   set(HTTPLIB_IS_USING_OPENSSL TRUE)
 endif()
+find_library(zstd zstd REQUIRED)
+find_package(Threads REQUIRED)
 
 target_link_libraries(
   ${PROJECT_NAME}
@@ -134,6 +139,8 @@ target_link_libraries(
     httplib
     OpenSSL::Crypto
     OpenSSL::SSL
+    Threads::Threads
+    zstd
   PRIVATE
     nlohmann_json::nlohmann_json
 )
@@ -141,7 +148,7 @@ target_link_libraries(
 target_compile_definitions(
   ${PROJECT_NAME}
   PUBLIC
-  CPPHTTPLIB_OPENSSL_SUPPORT
+    CPPHTTPLIB_OPENSSL_SUPPORT
 )
 
 verbose_message("Successfully added all dependencies and linked against them.")
