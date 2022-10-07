@@ -1,8 +1,9 @@
 #include "databento/enums.hpp"
 
 #include <cstdint>
-#include <stdexcept>
 #include <string>
+
+#include "databento/exceptions.hpp"  // InvalidArgumentError
 
 namespace databento {
 const char* UrlFromGateway(HistoricalGateway gateway) {
@@ -12,9 +13,10 @@ const char* UrlFromGateway(HistoricalGateway gateway) {
       return "https://hist.databento.com";
     }
     default: {
-      throw std::invalid_argument{
-          "Invalid HistoricalGateway " +
-          std::to_string(static_cast<std::uint8_t>(gateway))};
+      throw InvalidArgumentError{
+          "UrlFromGateway", "gateway",
+          "unknown value " +
+              std::to_string(static_cast<std::uint8_t>(gateway))};
     }
   }
 }
@@ -226,7 +228,8 @@ Schema FromString(const std::string& str) {
   if (str == "status") {
     return Schema::Status;
   }
-  throw std::invalid_argument{"Unknown Schema: '" + str + "'"};
+  throw InvalidArgumentError{"FromString<Schema>", "str",
+                             "unknown value '" + str + "'"};
 }
 
 template <>
@@ -240,7 +243,8 @@ FeedMode FromString(const std::string& str) {
   if (str == "live") {
     return FeedMode::Live;
   }
-  throw std::invalid_argument{"Unknown FeedMode: '" + str + "'"};
+  throw InvalidArgumentError{"FromString<FeedMode>", "str",
+                             "unknown value '" + str + "'"};
 }
 
 template <>
@@ -251,7 +255,8 @@ Compression FromString(const std::string& str) {
   if (str == "zstd") {
     return Compression::Zstd;
   }
-  throw std::invalid_argument{"Unknown Compression: '" + str + "'"};
+  throw InvalidArgumentError{"FromString<Compression>", "str",
+                             "unknown value '" + str + "'"};
 }
 
 template <>
@@ -265,7 +270,8 @@ SType FromString(const std::string& str) {
   if (str == "smart") {
     return SType::Smart;
   }
-  throw std::invalid_argument{"Unknown SType: '" + str + "'"};
+  throw InvalidArgumentError{"FromString<SType>", "str",
+                             "unknown value '" + str + "'"};
 }
 
 template <>
@@ -282,7 +288,8 @@ DurationInterval FromString(const std::string& str) {
   if (str == "none") {
     return DurationInterval::None;
   }
-  throw std::invalid_argument{"Unknown DurationInterval: '" + str + "'"};
+  throw InvalidArgumentError{"FromString<DurationInterval>", "str",
+                             "unknown value '" + str + "'"};
 }
 
 template <>
@@ -296,7 +303,8 @@ Packaging FromString(const std::string& str) {
   if (str == "tar") {
     return Packaging::Tar;
   }
-  throw std::invalid_argument{"Unknown Packaging: '" + str + "'"};
+  throw InvalidArgumentError{"FromString<Packaging>", "str",
+                             "unknown value '" + str + "'"};
 }
 
 template <>
@@ -310,7 +318,8 @@ Delivery FromString(const std::string& str) {
   if (str == "disk") {
     return Delivery::Disk;
   }
-  throw std::invalid_argument{"Unknown Delivery: '" + str + "'"};
+  throw InvalidArgumentError{"FromString<Delivery>", "str",
+                             "unknown value '" + str + "'"};
 }
 
 template <>
@@ -330,6 +339,7 @@ BatchState FromString(const std::string& str) {
   if (str == "expired") {
     return BatchState::Expired;
   }
-  throw std::invalid_argument{"Unknown BatchState: '" + str + "'"};
+  throw InvalidArgumentError{"FromString<BatchState>", "str",
+                             "unknown value '" + str + "'"};
 }
 }  // namespace databento

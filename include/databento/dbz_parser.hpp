@@ -14,16 +14,6 @@
 namespace databento {
 // Thread-safe DBZ parser
 class DbzParser {
-  ParseStream stream_;
-  std::uint8_t rtype_;
-  std::vector<std::uint8_t> in_buffer_;
-  std::vector<std::uint8_t> out_buffer_;
-  // ZSTD streaming decompression suggests the size of the next read
-  std::size_t read_suggestion_;
-  ZSTD_DStream* z_dstream_;
-  ZSTD_inBuffer z_in_buffer_;
-  ZSTD_outBuffer z_out_buffer_;
-
  public:
   DbzParser() = default;
   DbzParser(const DbzParser&) = delete;
@@ -44,10 +34,19 @@ class DbzParser {
   template <typename T>
   static T Consume(std::vector<std::uint8_t>::const_iterator& byte_it);
   static const char* Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
-                             const std::ptrdiff_t num_bytes);
-
+                             std::ptrdiff_t num_bytes);
   static std::vector<std::string> ParseRepeatedCstr(
       std::vector<std::uint8_t>::const_iterator& buffer_it,
       std::vector<std::uint8_t>::const_iterator buffer_end_it);
+
+  ParseStream stream_;
+  std::uint8_t rtype_;
+  std::vector<std::uint8_t> in_buffer_;
+  std::vector<std::uint8_t> out_buffer_;
+  // ZSTD streaming decompression suggests the size of the next read
+  std::size_t read_suggestion_;
+  ZSTD_DStream* z_dstream_;
+  ZSTD_inBuffer z_in_buffer_;
+  ZSTD_outBuffer z_out_buffer_;
 };
 }  // namespace databento

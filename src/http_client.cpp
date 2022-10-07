@@ -1,9 +1,8 @@
 #include "databento/http_client.hpp"
 
 #include <chrono>  // seconds
-#include <sstream>
-#include <stdexcept>
 
+#include "databento/exceptions.hpp"  // HttpResponseError, HttpRequestError, JsonResponseError
 #include "databento/version.hpp"  // DATABENTO_VERSION
 
 using databento::HttpClient;
@@ -33,16 +32,16 @@ HttpClient::HttpClient(const std::string& key, const std::string& gateway,
 
 nlohmann::json HttpClient::GetJson(const std::string& path,
                                    const httplib::Params& params) {
-  const httplib::Result res = client_.Get(path, params, httplib::Headers{});
-  return HttpClient::CheckAndParseResponse(path, res);
+  httplib::Result res = client_.Get(path, params, httplib::Headers{});
+  return HttpClient::CheckAndParseResponse(path, std::move(res));
 }
 
 nlohmann::json HttpClient::PostJson(const std::string& path,
                                     const httplib::Params& params) {
   // need to fully specify, otherwise sent as application/x-www-form-urlencoded
   const std::string full_path = httplib::append_query_params(path, params);
-  const httplib::Result res = client_.Post(full_path);
-  return HttpClient::CheckAndParseResponse(path, res);
+  httplib::Result res = client_.Post(full_path);
+  return HttpClient::CheckAndParseResponse(path, std::move(res));
 }
 
 void HttpClient::GetRawStream(const std::string& path,
@@ -56,25 +55,22 @@ void HttpClient::GetRawStream(const std::string& path,
         return !HttpClient::IsErrorStatus(resp.status);
       },
       std::move(callback));
-  client_.socket();
 }
 
 nlohmann::json HttpClient::CheckAndParseResponse(const std::string& path,
-                                                 const httplib::Result& res) {
+                                                 httplib::Result&& res) {
   if (res.error() != httplib::Error::Success) {
-    std::ostringstream err_msg;
-    err_msg << "Request to " << path << " failed with " << res.error();
-    throw std::runtime_error{err_msg.str()};
+    throw HttpRequestError{path, res.error()};
   }
   const auto status_code = res.value().status;
   if (HttpClient::IsErrorStatus(status_code)) {
-    std::ostringstream err_msg;
-    err_msg << "Received an error response from request to " << path
-            << " with status " << status_code << " and body "
-            << res.value().body;
-    throw std::runtime_error{err_msg.str()};
+    throw HttpResponseError{path, status_code, std::move(res.value().body)};
   }
-  return nlohmann::json::parse(res.value().body);
+  try {
+    return nlohmann::json::parse(std::move(res.value().body));
+  } catch (const nlohmann::json::parse_error& parse_err) {
+    throw JsonResponseError::ParseError(path, parse_err);
+  }
 }
 
 bool HttpClient::IsErrorStatus(int status_code) { return status_code >= 400; }

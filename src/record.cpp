@@ -1,9 +1,9 @@
 #include "databento/record.hpp"
 
-#include <stdexcept>
 #include <string>
 
 #include "databento/enums.hpp"
+#include "databento/exceptions.hpp"  // InvalidArgumentError
 
 using databento::Record;
 
@@ -27,7 +27,9 @@ std::size_t Record::SizeOfType(const std::uint8_t rtype) {
       return sizeof(OhlcvMsg);
     }
     default: {
-      throw std::logic_error{"Invalid rtype_ " + std::to_string(rtype)};
+      throw InvalidArgumentError{
+          "Record::SizeOfType", "rtype",
+          "unknown value '" + std::to_string(rtype) + "'"};
     }
   }
 }
@@ -56,9 +58,10 @@ std::uint8_t Record::TypeIdFromSchema(const Schema schema) {
       return OhlcvMsg::kTypeId;
     }
     default: {
-      throw std::invalid_argument{
-          "Unknown schema " +
-          std::to_string(static_cast<std::uint16_t>(schema))};
+      throw InvalidArgumentError{
+          "Record::TypeIdFromSchema", "schema",
+          "unknown value '" +
+              std::to_string(static_cast<std::uint16_t>(schema)) + "'"};
     }
   }
 }

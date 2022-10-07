@@ -11,9 +11,9 @@
 #include <algorithm>
 #include <cstdlib>
 #include <nlohmann/json_fwd.hpp>
-#include <stdexcept>
 
 #include "databento/enums.hpp"
+#include "databento/exceptions.hpp"  // Exception
 #include "databento/historical.hpp"
 #include "mock/mock_server.hpp"
 
@@ -337,7 +337,7 @@ TEST(HistoricalBuilderTests, TestBasic) {
 }
 
 TEST(HistoricalBuilderTests, TestMissingKey) {
-  ASSERT_THROW(databento::HistoricalBuilder().Build(), std::logic_error);
+  ASSERT_THROW(databento::HistoricalBuilder().Build(), Exception);
 }
 
 TEST(HistoricalBuilderTests, TestkeyFromEnv) {
@@ -354,7 +354,8 @@ TEST(HistoricalBuilderTests, TestkeyFromEnv) {
 
 TEST(HistoricalBuilderTests, TestkeyFromEnvMissing) {
   ASSERT_THROW(databento::HistoricalBuilder().keyFromEnv().Build(),
-               std::runtime_error);
+               Exception
+    );
 }
 }  // namespace test
 }  // namespace databento

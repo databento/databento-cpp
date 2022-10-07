@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "databento/datetime.hpp"
-#include "databento/enums.hpp"
+#include "databento/datetime.hpp"  // EpochNanos
+#include "databento/enums.hpp"  // BatchState, Delivery, Packaging, Schema, SType
 
 namespace databento {
 struct BatchJob {

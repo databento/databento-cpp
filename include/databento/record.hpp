@@ -24,8 +24,6 @@ struct RecordHeader {
 };
 
 class Record {
-  RecordHeader* record_;
-
  public:
   explicit Record(RecordHeader* record) : record_{record} {}
 
@@ -48,6 +46,9 @@ class Record {
   std::size_t size() const;
   static std::size_t SizeOfType(std::uint8_t rtype);
   static std::uint8_t TypeIdFromSchema(Schema schema);
+
+ private:
+  RecordHeader* record_;
 };
 
 /// Market-by-order (MBO) tick message.

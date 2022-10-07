@@ -3,11 +3,11 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
-#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
 
+#include "databento/exceptions.hpp"
 #include "parse_stream.hpp"
 
 namespace databento {
@@ -45,7 +45,7 @@ TEST_F(ParseStreamTests, TestReadExact) {
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "sestream");
   target_.ReadExact(buffer.data(), 8);
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "testsend");
-  ASSERT_THROW(target_.ReadExact(buffer.data(), 1), std::runtime_error);
+  ASSERT_THROW(target_.ReadExact(buffer.data(), 1), DbzResponseError);
 }
 
 TEST_F(ParseStreamTests, TestReadExactAfterFinished) {

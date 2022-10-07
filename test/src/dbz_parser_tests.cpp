@@ -2,13 +2,13 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <fstream>
-#include <iterator>
-#include <stdexcept>
+#include <fstream>  // ifstream
+#include <ios>  // streamsize, ios::binary, ios::ate
 #include <thread>
 
 #include "databento/dbz.hpp"
 #include "databento/dbz_parser.hpp"
+#include "databento/enums.hpp"
 #include "databento/record.hpp"
 
 namespace databento {

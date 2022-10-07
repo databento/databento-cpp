@@ -5,11 +5,11 @@
 #include <algorithm>  // copy
 #include <array>
 #include <cstring>  // strncmp
-#include <stdexcept>
 #include <vector>
 
 #include "databento/datetime.hpp"
 #include "databento/enums.hpp"
+#include "databento/exceptions.hpp"
 #include "databento/record.hpp"
 
 using databento::DbzParser;
@@ -63,13 +63,13 @@ databento::Metadata DbzParser::ParseMetadata() {
   stream_.ReadExact(reinterpret_cast<std::uint8_t*>(&magic),
                     sizeof(std::uint32_t));
   if (magic < ::kZstdMagicLowerBound || magic > ::kZstdMagicUpperBound) {
-    throw std::runtime_error{"Invalid metadata: no zstd magic number"};
+    throw DbzResponseError{"Invalid metadata: no zstd magic number"};
   }
   std::uint32_t frame_size{};
   stream_.ReadExact(reinterpret_cast<std::uint8_t*>(&frame_size),
                     sizeof(std::uint32_t));
   if (frame_size < ::kFixedMetadataLen) {
-    throw std::runtime_error{
+    throw DbzResponseError{
         "Frame length cannot be shorter than the fixed metadata size"};
   }
   std::vector<std::uint8_t> metadata_buffer(frame_size);
@@ -78,11 +78,11 @@ databento::Metadata DbzParser::ParseMetadata() {
   auto metadata_it = metadata_buffer.cbegin();
 
   if (std::strncmp(Consume(metadata_it, 3), "DBZ", 3) != 0) {
-    throw std::runtime_error{"Invalid version string"};
+    throw DbzResponseError{"Invalid version string"};
   }
   res.version = Consume<std::uint8_t>(metadata_it);
   if (res.version > ::kSchemaVersion) {
-    throw std::runtime_error{"Can't read newer version of DBZ"};
+    throw DbzResponseError{"Can't read newer version of DBZ"};
   }
   res.dataset = std::string{Consume(metadata_it, kDatasetCstrLen)};
   res.schema = static_cast<Schema>(Consume<std::uint16_t>(metadata_it));
@@ -107,13 +107,13 @@ databento::Metadata DbzParser::ParseMetadata() {
   const std::size_t actual_size = ::ZSTD_decompress(
       var_buffer.data(), buffer_size, &*metadata_it, compressed_size);
   if (::ZSTD_isError(actual_size) == 1) {
-    throw std::runtime_error{
+    throw DbzResponseError{
         "Error decompressing zstd-compressed variable-length metadata"};
   }
   auto var_buffer_it = var_buffer.cbegin();
   const auto schema_definition_length = Consume<std::uint32_t>(var_buffer_it);
   if (schema_definition_length != 0) {
-    throw std::runtime_error{
+    throw DbzResponseError{
         "This version of dbz can't parse schema definitions"};
   }
   res.symbols = DbzParser::ParseRepeatedCstr(var_buffer_it, var_buffer.cend());
@@ -164,9 +164,8 @@ databento::Record DbzParser::ParseRecord() {
     read_suggestion_ =
         ::ZSTD_decompressStream(z_dstream_, &z_out_buffer_, &z_in_buffer_);
     if (::ZSTD_isError(read_suggestion_)) {
-      throw std::runtime_error{
-          std::string{"zstd error decompressing record: "} +
-          ZSTD_getErrorName(read_suggestion_)};
+      throw DbzResponseError{std::string{"zstd error decompressing record: "} +
+                             ZSTD_getErrorName(read_suggestion_)};
     }
     if (read_suggestion_ == 0) {
       break;
@@ -179,12 +178,12 @@ std::vector<std::string> DbzParser::ParseRepeatedCstr(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   if (buffer_it + sizeof(std::uint32_t) > buffer_end_it) {
-    throw std::runtime_error{"Unexpected end of metadata buffer"};
+    throw DbzResponseError{"Unexpected end of metadata buffer"};
   }
   const auto count = std::size_t{Consume<std::uint32_t>(buffer_it)};
   if (buffer_it + static_cast<std::int64_t>(count * ::kSymbolCstrLen) >
       buffer_end_it) {
-    throw std::runtime_error{"Unexpected end of metadata buffer"};
+    throw DbzResponseError{"Unexpected end of metadata buffer"};
   }
   std::vector<std::string> res;
   res.reserve(count);

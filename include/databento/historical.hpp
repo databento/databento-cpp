@@ -1,37 +1,37 @@
 #pragma once
 
-#include <chrono>
-#include <cstddef>
+#include <cstddef>  // size_t
 #include <cstdint>
-#include <functional>
 #include <map>
 #include <string>
 #include <vector>
 
-#include "databento/batch.hpp"
-#include "databento/enums.hpp"
-#include "databento/http_client.hpp"
-#include "databento/metadata.hpp"
-#include "databento/symbology.hpp"
-#include "databento/timeseries.hpp"
+#include "databento/batch.hpp"     // BatchJob
+#include "databento/datetime.hpp"  // EpochNanos
+#include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Packaging, Schema, SType
+#include "databento/http_client.hpp"  // HttpClient
+#include "databento/metadata.hpp"  // PriceByFeedMode, PriceByFeedModeAndSchema PriceBySchema
+#include "databento/symbology.hpp"  // SymbologyResolution
+#include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
 
 namespace databento {
+// A client for interfacing with Databento's historical market data API.
 class Historical {
-  const std::string key_;
-  const std::string gateway_;
-  HttpClient client_;
-
  public:
   Historical(std::string key, HistoricalGateway gateway);
   // Primarily for unit tests
   Historical(std::string key, std::string gateway, std::uint16_t port);
 
-  // Getters
+  /*
+   * Getters
+   */
 
   const std::string& key() const { return key_; };
   const std::string& gateway() const { return gateway_; }
 
-  // Batch API
+  /*
+   * Batch API
+   */
 
   BatchJob BatchSubmitJob(const std::string& dataset, Schema schema,
                           const std::vector<std::string>& symbols,
@@ -48,8 +48,10 @@ class Historical {
   std::vector<BatchJob> BatchListJobs(const std::vector<BatchState>& states,
                                       const std::string& since);
 
-  // Metadata API
-  // list_fields, list_encodings, and list_compressions don't seem useful in C++
+  /*
+   * Metadata API
+   */
+  // TODO(carter): implement list_fields, list_encodings, and list_compressions
 
   // Retrievs a mapping of publisher name to publisher ID.
   std::map<std::string, std::int32_t> MetadataListPublishers();
@@ -83,7 +85,10 @@ class Historical {
                          const std::vector<std::string>& symbols, Schema schema,
                          SType stype_in, std::size_t limit);
 
-  // Symbology API
+  /*
+   * Symbology API
+   */
+
   SymbologyResolution SymbologyResolve(const std::string& dataset,
                                        const std::vector<std::string>& symbols,
                                        SType stype_in, SType stype_out,
@@ -96,20 +101,25 @@ class Historical {
                                        const std::string& end_date,
                                        const std::string& default_value);
 
-  // Timeseries API
+  /*
+   * Timeseries API
+   */
+
   void TimeseriesStream(const std::string& dataset,
                         const std::vector<std::string>& symbols, Schema schema,
-                        std::chrono::system_clock::time_point start,
-                        std::chrono::system_clock::time_point end,
-                        SType stype_in, SType stype_out, std::size_t limit,
+                        EpochNanos start, EpochNanos end, SType stype_in,
+                        SType stype_out, std::size_t limit,
                         const MetadataCallback& metadata_callback,
                         const RecordCallback& callback);
+
+ private:
+  const std::string key_;
+  const std::string gateway_;
+  HttpClient client_;
 };
 
+// A helper class for constructing an instance of Historical.
 class HistoricalBuilder {
-  std::string key_;
-  HistoricalGateway gateway_{HistoricalGateway::Nearest};
-
  public:
   HistoricalBuilder() = default;
 
@@ -120,6 +130,12 @@ class HistoricalBuilder {
   HistoricalBuilder& keyFromEnv();
   HistoricalBuilder& key(std::string key);
   HistoricalBuilder& gateway(HistoricalGateway gateway);
+  // Attempts to construct an instance of Historical or throws an exception if
+  // no key has been set.
   Historical Build();
+
+ private:
+  std::string key_;
+  HistoricalGateway gateway_{HistoricalGateway::Nearest};
 };
 }  // namespace databento

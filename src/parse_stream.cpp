@@ -1,8 +1,9 @@
 #include "parse_stream.hpp"
 
-#include <chrono>     // milliseconds
-#include <sstream>    // ostringstream
-#include <stdexcept>  // runtime_error
+#include <chrono>   // milliseconds
+#include <sstream>  // ostringstream
+
+#include "databento/exceptions.hpp"  // DbzResponseError
 
 using databento::ParseStream;
 
@@ -30,7 +31,7 @@ void ParseStream::ReadExact(std::uint8_t* buffer, std::size_t length) {
       !cv_.wait_for(lock, ::kLockTimeout, [this, length] {
         return stream_size() >= length || is_finished_;
       })) {
-    throw std::runtime_error{
+    throw DbzResponseError{
         std::string{
             "Timed out waiting for parser stream after 500ms. Stream size: "} +
         std::to_string(stream_size())};
@@ -39,7 +40,7 @@ void ParseStream::ReadExact(std::uint8_t* buffer, std::size_t length) {
     std::ostringstream err_msg;
     err_msg << "Reached end of the stream with only " << stream_size()
             << " bytes remaining";
-    throw std::runtime_error{err_msg.str()};
+    throw DbzResponseError{err_msg.str()};
   }
   stream_.read(buffer, static_cast<std::streamsize>(length));
 }
@@ -49,7 +50,7 @@ std::size_t ParseStream::ReadSome(std::uint8_t* buffer, std::size_t length) {
   if (stream_size() == 0 && !cv_.wait_for(lock, ::kLockTimeout, [this] {
         return stream_size() > 0 || is_finished_;
       })) {
-    throw std::runtime_error{
+    throw DbzResponseError{
         std::string{
             "Timed out waiting for parser stream after 500ms. Stream size: "} +
         std::to_string(stream_size())};

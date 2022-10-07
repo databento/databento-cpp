@@ -5,6 +5,7 @@ set(headers
   include/databento/dbz.hpp
   include/databento/dbz_parser.hpp
   include/databento/enums.hpp
+  include/databento/exceptions.hpp
   include/databento/historical.hpp
   include/databento/http_client.hpp
   include/databento/metadata.hpp
@@ -18,6 +19,7 @@ set(sources
   src/datetime.cpp
   src/dbz_parser.cpp
   src/enums.cpp
+  src/exceptions.cpp
   src/historical.cpp
   src/http_client.cpp
   src/parse_stream.cpp

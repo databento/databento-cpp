@@ -13,10 +13,6 @@
 
 namespace databento {
 class HttpClient {
-  static const httplib::Headers kHeaders;
-
-  httplib::Client client_;
-
  public:
   HttpClient(const std::string& key, const std::string& gateway);
   HttpClient(const std::string& key, const std::string& gateway,
@@ -31,7 +27,11 @@ class HttpClient {
 
  private:
   static nlohmann::json CheckAndParseResponse(const std::string& path,
-                                              const httplib::Result& res);
+                                              httplib::Result&& res);
   static bool IsErrorStatus(int status_code);
+
+  static const httplib::Headers kHeaders;
+
+  httplib::Client client_;
 };
 }  // namespace databento
