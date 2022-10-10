@@ -57,11 +57,11 @@ void SetIfNotEmpty(httplib::Params* params, const std::string& key,
 }
 
 void SetIfNotEmpty(httplib::Params* params, const std::string& key,
-                   const std::vector<databento::BatchState>& states) {
+                   const std::vector<databento::JobState>& states) {
   if (!states.empty()) {
     std::string value = std::accumulate(
         states.begin(), states.end(), std::string{},
-        [](std::string acc, databento::BatchState state) {
+        [](std::string acc, databento::JobState state) {
           return acc.empty()
                      ? databento::ToString(state)
                      : std::move(acc) + "," + databento::ToString(state);
@@ -165,10 +165,10 @@ databento::BatchJob Parse(const std::string& endpoint,
                           const nlohmann::json& json) {
   using databento::Compression;
   using databento::Delivery;
-  using databento::DurationInterval;
   using databento::EpochNanos;
   using databento::Packaging;
   using databento::Schema;
+  using databento::SplitDuration;
   using databento::SType;
 
   if (!json.is_object()) {
@@ -189,7 +189,7 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.compression =
       ::FromCheckedAtString<Compression>(endpoint, json, "compression");
   res.split_duration =
-      ::FromCheckedAtString<DurationInterval>(endpoint, json, "split_duration");
+      ::FromCheckedAtString<SplitDuration>(endpoint, json, "split_duration");
   res.split_size = ::ParseAt<std::size_t>(endpoint, json, "split_size");
   res.split_symbols = ::ParseAt<bool>(endpoint, json, "split_symbols");
   res.packaging = ::FromCheckedAtString<Packaging>(endpoint, json, "packaging");
@@ -219,14 +219,14 @@ databento::BatchJob Historical::BatchSubmitJob(
     const std::vector<std::string>& symbols, const std::string& start,
     const std::string& end) {
   return this->BatchSubmitJob(
-      dataset, schema, symbols, start, end, DurationInterval::Day, {},
+      dataset, schema, symbols, start, end, SplitDuration::Day, {},
       Packaging::None, Delivery::Download, SType::Native, SType::ProductId, {});
 }
 
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, Schema schema,
     const std::vector<std::string>& symbols, const std::string& start,
-    const std::string& end, DurationInterval split_duration,
+    const std::string& end, SplitDuration split_duration,
     std::size_t split_size, Packaging packaging, Delivery delivery,
     SType stype_in, SType stype_out, std::size_t limit) {
   static const std::string kPath = ::BuildBatchPath(".submit_job");
@@ -248,15 +248,14 @@ databento::BatchJob Historical::BatchSubmitJob(
 }
 
 std::vector<databento::BatchJob> Historical::BatchListJobs() {
-  static const std::vector<BatchState> kDefaultStates = {
-      BatchState::Received, BatchState::Queued, BatchState::Processing,
-      BatchState::Done};
+  static const std::vector<JobState> kDefaultStates = {
+      JobState::Received, JobState::Queued, JobState::Processing,
+      JobState::Done};
   return this->BatchListJobs(kDefaultStates, {});
 }
 
 std::vector<databento::BatchJob> Historical::BatchListJobs(
-    const std::vector<databento::BatchState>& states,
-    const std::string& since) {
+    const std::vector<databento::JobState>& states, const std::string& since) {
   static const std::string kEndpoint = "Historical::BatchListJobs";
   static const std::string kPath = ::BuildBatchPath(".list_jobs");
 
@@ -346,6 +345,112 @@ std::vector<databento::Schema> Historical::MetadataListSchemas(
     schemas.emplace_back(FromString<Schema>(item.value()));
   }
   return schemas;
+}
+
+databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields() {
+  return this->MetadataListFields(httplib::Params{});
+}
+databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
+    const std::string& dataset) {
+  httplib::Params params;
+  ::SetIfNotEmpty(&params, "dataset", dataset);
+  return this->MetadataListFields(params);
+}
+databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
+    const std::string& dataset, Encoding encoding, Schema schema) {
+  httplib::Params params{{"encoding", ToString(encoding)},
+                         {"schema", ToString(schema)}};
+  ::SetIfNotEmpty(&params, "dataset", dataset);
+  return this->MetadataListFields(params);
+}
+databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
+    const std::multimap<std::string, std::string>& params) {
+  static const std::string kEndpoint = "Historical::MetadataListFields";
+  static const std::string kPath = ::BuildMetadataPath(".list_fields");
+  const nlohmann::json json = client_.GetJson(kPath, params);
+  if (!json.is_object()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
+  }
+  FieldsByDatasetEncodingAndSchema fields;
+  for (const auto& dataset_and_fields : json.items()) {
+    if (!dataset_and_fields.value().is_object()) {
+      throw JsonResponseError::TypeMismatch(kEndpoint, "object",
+                                            dataset_and_fields.key(),
+                                            dataset_and_fields.value());
+    }
+    FieldsByEncodingAndSchema fields_by_encoding_and_schema;
+    for (const auto& encoding_and_fields : dataset_and_fields.value().items()) {
+      if (!encoding_and_fields.value().is_object()) {
+        throw JsonResponseError::TypeMismatch(kEndpoint, "nested object",
+                                              encoding_and_fields.key(),
+                                              encoding_and_fields.value());
+      }
+      FieldsByEncodingAndSchema::mapped_type fields_by_schema;
+      for (const auto& schema_and_fields :
+           encoding_and_fields.value().items()) {
+        if (!schema_and_fields.value().is_object()) {
+          throw JsonResponseError::TypeMismatch(
+              kEndpoint, "nested nested object", schema_and_fields.key(),
+              schema_and_fields.value());
+        }
+        FieldDefinition field_def;
+        for (const auto& field_and_type : schema_and_fields.value().items()) {
+          if (!field_and_type.value().is_string()) {
+            throw JsonResponseError::TypeMismatch(kEndpoint, "string",
+                                                  field_and_type.key(),
+                                                  field_and_type.value());
+          }
+          field_def.emplace(field_and_type.key(), field_and_type.value());
+        }
+        fields_by_schema.emplace(FromString<Schema>(schema_and_fields.key()),
+                                 std::move(field_def));
+      }
+      fields_by_encoding_and_schema.emplace(
+          FromString<Encoding>(encoding_and_fields.key()),
+          std::move(fields_by_schema));
+    }
+    fields.emplace(dataset_and_fields.key(),
+                   std::move(fields_by_encoding_and_schema));
+  }
+  return fields;
+}
+
+std::vector<databento::Encoding> Historical::MetadataListEncodings() {
+  static const std::string kEndpoint = "Historical::MetadataListEncodings";
+  static const std::string kPath = ::BuildMetadataPath(".list_encodings");
+  const nlohmann::json json = client_.GetJson(kPath, {});
+  if (!json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
+  }
+  std::vector<Encoding> encodings;
+  for (const auto& encoding_json : json.items()) {
+    if (!encoding_json.value().is_string()) {
+      throw JsonResponseError::TypeMismatch(
+          kEndpoint, "string", encoding_json.key(), encoding_json.value());
+    }
+    encodings.emplace_back(FromString<Encoding>(encoding_json.value()));
+  }
+  return encodings;
+}
+
+std::vector<databento::Compression> Historical::MetadataListCompressions() {
+  static const std::string kEndpoint = "Historical::MetadataListCompressions";
+  static const std::string kPath = ::BuildMetadataPath(".list_compressions");
+  const nlohmann::json json = client_.GetJson(kPath, {});
+  if (!json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
+  }
+  std::vector<Compression> compressions;
+  for (const auto& compression_json : json.items()) {
+    if (!compression_json.value().is_string()) {
+      throw JsonResponseError::TypeMismatch(kEndpoint, "string",
+                                            compression_json.key(),
+                                            compression_json.value());
+    }
+    compressions.emplace_back(
+        FromString<Compression>(compression_json.value()));
+  }
+  return compressions;
 }
 
 static const std::string kListUnitPricesEndpoint =

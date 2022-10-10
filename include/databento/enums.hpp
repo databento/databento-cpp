@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <iosfwd>
 #include <string>
 
 namespace databento {
@@ -41,6 +42,13 @@ enum class Schema : std::uint16_t {
   Status = 11,
 };
 
+// Represents a data output encoding.
+enum class Encoding : std::uint8_t {
+  Dbz = 0,
+  Csv = 1,
+  Json = 2,
+};
+
 // Represents a data compression format (if any).
 enum class Compression : std::uint8_t {
   None = 0,
@@ -54,19 +62,22 @@ enum class SType : std::uint8_t {
   Smart = 2,
 };
 
-enum class DurationInterval : std::uint8_t {
+// Represents the duration of time at which batch files will be split.
+enum class SplitDuration : std::uint8_t {
   Day = 0,
   Week,
   Month,
   None,
 };
 
+// Represents how a batch job will be packaged.
 enum class Packaging : std::uint8_t {
   None = 0,
   Zip,
   Tar,
 };
 
+// Represents how a batch job will be delivered.
 enum class Delivery : std::uint8_t {
   Download,
   S3,
@@ -81,7 +92,7 @@ enum class Flag : std::uint8_t {
   kMbp = 1 << 3,
 };
 
-enum class BatchState : std::uint8_t {
+enum class JobState : std::uint8_t {
   Received,
   Queued,
   Processing,
@@ -92,18 +103,31 @@ enum class BatchState : std::uint8_t {
 const char* UrlFromGateway(HistoricalGateway gateway);
 
 const char* ToString(Schema schema);
+const char* ToString(Encoding encoding);
 const char* ToString(FeedMode mode);
 const char* ToString(Compression compression);
 const char* ToString(SType stype);
-const char* ToString(DurationInterval duration_interval);
+const char* ToString(SplitDuration duration_interval);
 const char* ToString(Packaging packaging);
 const char* ToString(Delivery delivery);
-const char* ToString(BatchState state);
+const char* ToString(JobState state);
+
+std::ostream& operator<<(std::ostream& out, Schema schema);
+std::ostream& operator<<(std::ostream& out, Encoding encoding);
+std::ostream& operator<<(std::ostream& out, FeedMode mode);
+std::ostream& operator<<(std::ostream& out, Compression compression);
+std::ostream& operator<<(std::ostream& out, SType stype);
+std::ostream& operator<<(std::ostream& out, SplitDuration duration_interval);
+std::ostream& operator<<(std::ostream& out, Packaging packaging);
+std::ostream& operator<<(std::ostream& out, Delivery delivery);
+std::ostream& operator<<(std::ostream& out, JobState state);
 
 template <typename T>
 T FromString(const std::string& str);
 template <>
 Schema FromString(const std::string& str);
+template <>
+Encoding FromString(const std::string& str);
 template <>
 FeedMode FromString(const std::string& str);
 template <>
@@ -111,11 +135,11 @@ Compression FromString(const std::string& str);
 template <>
 SType FromString(const std::string& str);
 template <>
-DurationInterval FromString(const std::string& str);
+SplitDuration FromString(const std::string& str);
 template <>
 Packaging FromString(const std::string& str);
 template <>
 Delivery FromString(const std::string& str);
 template <>
-BatchState FromString(const std::string& str);
+JobState FromString(const std::string& str);
 }  // namespace databento

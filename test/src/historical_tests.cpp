@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <thread>
+
+#include "databento/metadata.hpp"
 // ignore warnings from httplib
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wold-style-cast"
@@ -113,6 +115,62 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Full) {
   for (std::size_t i = 0; i < res.size(); ++i) {
     EXPECT_EQ(res[i], kExp[i]) << "Index " << i;
   }
+}
+
+TEST_F(HistoricalTests, TestMetadataListFields) {
+  const nlohmann::json kResp{{"GLBX.MDP3",
+                              {{"dbz",
+                                {{"trades",
+                                  {{"length", "uint8_t"},
+                                   {"rtype", "uint8_t"},
+                                   {"dataset_id", "uint16_t"}}}}}}}};
+  mock_server_.MockGetJson(
+      "/v0/metadata.list_fields",
+      {{"dataset", "GLBX.MDP3"}, {"encoding", "dbz"}, {"schema", "trades"}},
+      kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res =
+      target.MetadataListFields("GLBX.MDP3", Encoding::Dbz, Schema::Trades);
+  const FieldsByDatasetEncodingAndSchema kExp{
+      {"GLBX.MDP3",
+       {{Encoding::Dbz,
+         {{Schema::Trades,
+           {{"length", "uint8_t"},
+            {"rtype", "uint8_t"},
+            {"dataset_id", "uint16_t"}}}}}}}};
+  const auto& tradesRes =
+      res.at("GLBX.MDP3").at(Encoding::Dbz).at(Schema::Trades);
+  EXPECT_EQ(tradesRes.at("length"), "uint8_t");
+  EXPECT_EQ(tradesRes.at("rtype"), "uint8_t");
+  EXPECT_EQ(tradesRes.at("dataset_id"), "uint16_t");
+}
+
+TEST_F(HistoricalTests, TestMetadataListEncodings) {
+  const nlohmann::json kResp{"dbz", "csv", "json"};
+  mock_server_.MockGetJson("/v0/metadata.list_encodings", kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.MetadataListEncodings();
+  const std::vector<Encoding> kExp{Encoding::Dbz, Encoding::Csv,
+                                   Encoding::Json};
+  EXPECT_EQ(res, kExp);
+}
+
+TEST_F(HistoricalTests, TestMetadataListCompressions) {
+  const nlohmann::json kResp{"none", "zstd"};
+  mock_server_.MockGetJson("/v0/metadata.list_compressions", kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.MetadataListCompressions();
+  const std::vector<Compression> kExp{Compression::None, Compression::Zstd};
+  EXPECT_EQ(res, kExp);
 }
 
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {

@@ -10,7 +10,7 @@
 #include "databento/datetime.hpp"  // EpochNanos
 #include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Packaging, Schema, SType
 #include "databento/http_client.hpp"  // HttpClient
-#include "databento/metadata.hpp"  // PriceByFeedMode, PriceByFeedModeAndSchema PriceBySchema
+#include "databento/metadata.hpp"  // FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema PriceBySchema,
 #include "databento/symbology.hpp"  // SymbologyResolution
 #include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
 
@@ -40,18 +40,16 @@ class Historical {
                           const std::vector<std::string>& symbols,
                           const std::string& start, const std::string& end,
                           // FIXME: encoding and compression?
-                          DurationInterval split_duration,
-                          std::size_t split_size, Packaging packaging,
-                          Delivery delivery, SType stype_in, SType stype_out,
-                          std::size_t limit);
+                          SplitDuration split_duration, std::size_t split_size,
+                          Packaging packaging, Delivery delivery,
+                          SType stype_in, SType stype_out, std::size_t limit);
   std::vector<BatchJob> BatchListJobs();
-  std::vector<BatchJob> BatchListJobs(const std::vector<BatchState>& states,
+  std::vector<BatchJob> BatchListJobs(const std::vector<JobState>& states,
                                       const std::string& since);
 
   /*
    * Metadata API
    */
-  // TODO(carter): implement list_fields, list_encodings, and list_compressions
 
   // Retrievs a mapping of publisher name to publisher ID.
   std::map<std::string, std::int32_t> MetadataListPublishers();
@@ -62,6 +60,13 @@ class Historical {
   std::vector<Schema> MetadataListSchemas(const std::string& dataset,
                                           const std::string& start_date,
                                           const std::string& end_date);
+  FieldsByDatasetEncodingAndSchema MetadataListFields();
+  FieldsByDatasetEncodingAndSchema MetadataListFields(
+      const std::string& dataset);
+  FieldsByDatasetEncodingAndSchema MetadataListFields(
+      const std::string& dataset, Encoding encoding, Schema schema);
+  std::vector<Encoding> MetadataListEncodings();
+  std::vector<Compression> MetadataListCompressions();
   PriceByFeedModeAndSchema MetadataListUnitPrices(const std::string& dataset);
   PriceBySchema MetadataListUnitPrices(const std::string& dataset,
                                        FeedMode mode);
@@ -113,6 +118,9 @@ class Historical {
                         const RecordCallback& callback);
 
  private:
+  FieldsByDatasetEncodingAndSchema MetadataListFields(
+      const std::multimap<std::string, std::string>& params);
+
   const std::string key_;
   const std::string gateway_;
   HttpClient client_;
