@@ -1,6 +1,5 @@
 #include "databento/dbz_parser.hpp"
 
-#include <endian.h>
 #include <zstd.h>
 
 #include <algorithm>  // copy
@@ -38,7 +37,7 @@ void DbzParser::EndInput() { stream_.Finish(); }
 
 template <typename T>
 T DbzParser::Consume(std::vector<std::uint8_t>::const_iterator& byte_it) {
-  const auto res = DbzParser::FromLittleEndianBytes<T>(&*byte_it);
+  const auto res = *reinterpret_cast<const T*>(&*byte_it);
   byte_it += sizeof(T);
   return res;
 }
@@ -60,17 +59,15 @@ const char* DbzParser::Consume(
 }
 
 databento::Metadata DbzParser::ParseMetadata() {
-  constexpr std::size_t kPreludeSize = 8;
-
-  std::array<uint8_t, kPreludeSize> prelude_buffer{};
-  stream_.ReadExact(prelude_buffer.data(), kPreludeSize);
-  const auto magic =
-      FromLittleEndianBytes<std::uint32_t>(prelude_buffer.data());
+  std::uint32_t magic{};
+  stream_.ReadExact(reinterpret_cast<std::uint8_t*>(&magic),
+                    sizeof(std::uint32_t));
   if (magic < ::kZstdMagicLowerBound || magic > ::kZstdMagicUpperBound) {
     throw std::runtime_error{"Invalid metadata: no zstd magic number"};
   }
-  const auto frame_size =
-      std::size_t{FromLittleEndianBytes<std::uint32_t>(&prelude_buffer[4])};
+  std::uint32_t frame_size{};
+  stream_.ReadExact(reinterpret_cast<std::uint8_t*>(&frame_size),
+                    sizeof(std::uint32_t));
   if (frame_size < ::kFixedMetadataLen) {
     throw std::runtime_error{
         "Frame length cannot be shorter than the fixed metadata size"};
@@ -196,19 +193,4 @@ std::vector<std::string> DbzParser::ParseRepeatedCstr(
     buffer_it += ::kSymbolCstrLen;
   }
   return res;
-}
-
-template <>
-std::uint64_t DbzParser::FromLittleEndianBytes(const std::uint8_t* bytes) {
-  return ::le64toh(*reinterpret_cast<const std::uint64_t*>(bytes));
-}
-
-template <>
-std::uint32_t DbzParser::FromLittleEndianBytes(const std::uint8_t* bytes) {
-  return ::le32toh(*reinterpret_cast<const std::uint32_t*>(bytes));
-}
-
-template <>
-std::uint16_t DbzParser::FromLittleEndianBytes(const std::uint8_t* bytes) {
-  return ::le16toh(*reinterpret_cast<const std::uint16_t*>(bytes));
 }

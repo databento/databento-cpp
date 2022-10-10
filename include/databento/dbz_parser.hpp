@@ -42,8 +42,6 @@ class DbzParser {
 
  private:
   template <typename T>
-  static T FromLittleEndianBytes(const std::uint8_t* bytes);
-  template <typename T>
   static T Consume(std::vector<std::uint8_t>::const_iterator& byte_it);
   static const char* Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
                              const std::ptrdiff_t num_bytes);
@@ -52,11 +50,4 @@ class DbzParser {
       std::vector<std::uint8_t>::const_iterator& buffer_it,
       std::vector<std::uint8_t>::const_iterator buffer_end_it);
 };
-
-template <>
-std::uint64_t DbzParser::FromLittleEndianBytes(const std::uint8_t* bytes);
-template <>
-std::uint32_t DbzParser::FromLittleEndianBytes(const std::uint8_t* bytes);
-template <>
-std::uint16_t DbzParser::FromLittleEndianBytes(const std::uint8_t* bytes);
 }  // namespace databento
