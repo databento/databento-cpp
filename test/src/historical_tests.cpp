@@ -319,8 +319,9 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
   EXPECT_EQ(esm2_mapping.symbol, "3403");
 }
 
-TEST(JsonImplementationTests, TestParsingNumberNotPreciselyRepresentableAsDouble) {
-  auto const number_json =  nlohmann::json::parse("1609160400000711344");
+TEST(JsonImplementationTests,
+     TestParsingNumberNotPreciselyRepresentableAsDouble) {
+  auto const number_json = nlohmann::json::parse("1609160400000711344");
   EXPECT_TRUE(number_json.is_number());
   EXPECT_EQ(number_json, 1609160400000711344);
 }
@@ -353,9 +354,7 @@ TEST(HistoricalBuilderTests, TestkeyFromEnv) {
 }
 
 TEST(HistoricalBuilderTests, TestkeyFromEnvMissing) {
-  ASSERT_THROW(databento::HistoricalBuilder().keyFromEnv().Build(),
-               Exception
-    );
+  ASSERT_THROW(databento::HistoricalBuilder().keyFromEnv().Build(), Exception);
 }
 }  // namespace test
 }  // namespace databento

@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>  // ifstream
-#include <ios>  // streamsize, ios::binary, ios::ate
+#include <ios>      // streamsize, ios::binary, ios::ate
 #include <thread>
 
 #include "databento/dbz.hpp"

@@ -9,7 +9,7 @@ TEST(DateFromIso8601IntTests, TestValid) {
 }
 
 TEST(DateFromIso8601IntTests, TestPadding) {
-    ASSERT_EQ(databento::DateFromIso8601Int(20190801), "2019-08-01");
+  ASSERT_EQ(databento::DateFromIso8601Int(20190801), "2019-08-01");
 }
 }  // namespace test
 }  // namespace databento
