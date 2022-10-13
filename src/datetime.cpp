@@ -9,8 +9,8 @@ std::string ToString(EpochNanos epoch_nanos) {
 }
 
 std::string DateFromIso8601Int(std::uint32_t date_int) {
-  const auto year = date_int / 10'000;
-  const auto remaining = date_int % 10'000;
+  const auto year = date_int / 10000;
+  const auto remaining = date_int % 10000;
   const auto month = remaining / 100;
   const auto day = remaining % 100;
   std::ostringstream out_ss;

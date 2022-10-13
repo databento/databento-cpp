@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.14)
 
 #
 # Project details
@@ -27,7 +27,7 @@ else()
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
-  message(INFO "Defaulting to Debug build")
+  message(STATUS "Defaulting to Debug build")
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
@@ -66,33 +66,22 @@ configure_file(
 
 include(cmake/SourcesAndHeaders.cmake)
 
-if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
-  if(${PROJECT_NAME}_VERBOSE_OUTPUT)
-    verbose_message("Found the following headers:")
-    foreach(header IN LIST headers)
-      verbose_message("* ${header}")
-    endforeach()
-  endif()
-
-  add_library(${PROJECT_NAME} INTERFACE)
-else()
-  if(${PROJECT_NAME}_VERBOSE_OUTPUT)
-    verbose_message("Found the following sources:")
-    foreach(source IN LISTS sources)
-      verbose_message("* ${source}")
-    endforeach()
-    verbose_message("Found the following headers:")
-    foreach(header IN LISTS headers)
-      verbose_message("* ${header}")
-    endforeach()
-  endif()
-
-  add_library(
-    ${PROJECT_NAME}
-    ${headers}
-    ${sources}
-  )
+if(${PROJECT_NAME}_VERBOSE_OUTPUT)
+  verbose_message("Found the following sources:")
+  foreach(source IN LISTS sources)
+    verbose_message("* ${source}")
+  endforeach()
+  verbose_message("Found the following headers:")
+  foreach(header IN LISTS headers)
+    verbose_message("* ${header}")
+  endforeach()
 endif()
+
+add_library(
+  ${PROJECT_NAME}
+  ${headers}
+  ${sources}
+)
 
 set_target_properties(
   ${PROJECT_NAME}
@@ -122,20 +111,46 @@ include(FetchContent)
 if(${PROJECT_NAME}_USE_EXTERNAL_JSON)
   find_package(nlohmann_json 3.11.2 REQUIRED)
 else()
-  FetchContent_Declare(
-    json 
-    URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-  )
-  FetchContent_MakeAvailable(json)
+  if(CMAKE_VERSION VERSION_LESS 3.24)
+    FetchContent_Declare(
+      json 
+      URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+    )
+  else()
+    # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
+    FetchContent_Declare(
+      json 
+      URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+  endif()
+  # FetchContent_MakeAvailable(json)
+  FetchContent_GetProperties(json)
+  if(NOT json_POPULATED)
+    FetchContent_Populate(json)
+    add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
+  endif()
 endif()
 # cpp-httplib
-FetchContent_Declare(
-  httplib
-  URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.11.2.tar.gz
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
-FetchContent_MakeAvailable(httplib)
+if(${PROJECT_NAME}_USE_EXTERNAL_HTTPLIB)
+  find_package(httplib 0.11.2 REQUIRED)
+else()
+  if(CMAKE_VERSION VERSION_LESS 3.24)
+    FetchContent_Declare(
+      httplib
+      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.11.2.tar.gz
+    )
+  else()
+    # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
+    FetchContent_Declare(
+      httplib
+      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.11.2.tar.gz
+      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+  endif()
+  FetchContent_MakeAvailable(httplib)
+endif()
+# openSSL
 find_package(OpenSSL REQUIRED)
 if(OPENSSL_FOUND)
   set(HTTPLIB_IS_USING_OPENSSL TRUE)
@@ -167,26 +182,15 @@ verbose_message("Successfully added all dependencies and linked against them.")
 # Set the build/user include directories
 #
 
-# Allow usage of header files in the `src` directory, but only for utilities
-if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
-  target_include_directories(
-    ${PROJECT_NAME}
-    INTERFACE
-      ${CMAKE_BINARY_DIR}/include   # for generated version.hpp
-      $<INSTALL_INTERFACE:include>
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  )
-else()
-  target_include_directories(
-    ${PROJECT_NAME}
-    PUBLIC
-      ${CMAKE_BINARY_DIR}/include   # for generated version.hpp
-      $<INSTALL_INTERFACE:include>
-      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    PRIVATE
-      ${CMAKE_CURRENT_SOURCE_DIR}/src
-  )
-endif()
+target_include_directories(
+  ${PROJECT_NAME}
+  PUBLIC
+    ${CMAKE_BINARY_DIR}/include   # for generated version.hpp
+    $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 
 message(STATUS "Finished setting up include directories.")
 

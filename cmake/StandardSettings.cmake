@@ -2,10 +2,10 @@
 # Project settings
 #
 
-option(${PROJECT_NAME}_BUILD_HEADERS_ONLY "Build the project as a header-only library." OFF)
 option(${PROJECT_NAME}_USE_ALT_NAMES "Use alternative names for the project, such as naming the include directory all lowercase." ON)
 
 option(${PROJECT_NAME}_USE_EXTERNAL_JSON "Use an external JSON library" OFF)
+option(${PROJECT_NAME}_USE_EXTERNAL_HTTPLIB "Use an external httplib library" OFF)
 
 #
 # Compiler options

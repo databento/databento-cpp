@@ -5,11 +5,12 @@
 #include <string>
 
 // ignore warnings from httplib
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wold-style-cast"
-#pragma clang diagnostic ignored "-Wformat-nonliteral"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wuseless-cast"
 #include <httplib.h>
-#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
 
 namespace databento {
 class HttpClient {
