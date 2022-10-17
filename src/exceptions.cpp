@@ -18,7 +18,8 @@ std::string HttpResponseError::BuildMessage(const std::string& request_path,
                                             const std::string& response_body) {
   std::ostringstream err_msg;
   err_msg << "Received an error response from request to " << request_path
-          << " with status " << status_code << " and body " << response_body;
+          << " with status " << status_code << " and body \"" << response_body
+          << '"';
   return err_msg.str();
 }
 
@@ -28,7 +29,7 @@ std::string InvalidArgumentError::BuildMessage(const std::string& method_name,
                                                const std::string& param_name,
                                                const std::string& details) {
   std::ostringstream err_msg;
-  err_msg << "Invalid argument '" << param_name << "' to " << method_name << " "
+  err_msg << "Invalid argument '" << param_name << "' to " << method_name << ' '
           << details;
   return err_msg.str();
 }
@@ -39,7 +40,7 @@ JsonResponseError JsonResponseError::ParseError(
     const std::string& method_name,
     const nlohmann::json::parse_error& parse_error) {
   std::ostringstream err_msg;
-  err_msg << "Error parsing JSON response to " << method_name << " "
+  err_msg << "Error parsing JSON response to " << method_name << ' '
           << parse_error.what();
   return JsonResponseError{err_msg.str()};
 }

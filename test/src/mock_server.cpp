@@ -1,14 +1,23 @@
 #include "mock/mock_server.hpp"
 
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
+#include <fstream>    // ifstream
+#include <ios>        // streamsize
+#include <iostream>   // cerr
+#include <sstream>    // ostringstream
+#include <stdexcept>  // runtime_error
+#include <vector>
 
 using databento::mock::MockServer;
 
 int MockServer::ListenOnThread() {
   listen_thread_ = std::thread{[this] { this->server_.listen_after_bind(); }};
   return port_;
+}
+
+void MockServer::MockBadRequest(const std::string& path) {
+  server_.Get(path, [](const httplib::Request&, httplib::Response& resp) {
+    resp.status = 400;
+  });
 }
 
 void MockServer::MockGetJson(const std::string& path,
@@ -26,24 +35,65 @@ void MockServer::MockGetJson(const std::string& path,
       return;
     }
     auto _auth = req.get_header_value("Authorization");
-    for (const auto& param : params) {
-      if (!req.has_param(param.first)) {
-        std::ostringstream err_msg;
-        err_msg << "Missing query param " << param.first;
-        std::cerr << err_msg.str() << std::endl;
-        throw std::runtime_error{err_msg.str()};
-      }
-      if (req.get_param_value(param.first) != param.second) {
-        std::ostringstream err_msg;
-        err_msg << "Incorrect query param value for " << param.first
-                << ". Expected " << param.second << ", found "
-                << req.get_param_value(param.first);
-        std::cerr << err_msg.str() << std::endl;
-        throw std::runtime_error{err_msg.str()};
-      }
-    }
-
+    CheckParams(params, req);
     resp.set_content(json.dump(), "application/json");
     resp.status = 200;
   });
+}
+
+void MockServer::MockStreamDbz(const std::string& path,
+                               const std::map<std::string, std::string>& params,
+                               const std::string& dbz_path) {
+  constexpr std::size_t kChunkSize = 32;
+
+  // Read contents into buffer
+  std::ifstream input_file{dbz_path, std::ios::binary | std::ios::ate};
+  const auto size = static_cast<std::size_t>(input_file.tellg());
+  input_file.seekg(0, std::ios::beg);
+  std::vector<char> buffer(size);
+  input_file.read(buffer.data(), static_cast<std::streamsize>(size));
+
+  // Serve
+  server_.Get(path, [buffer, kChunkSize, params](const httplib::Request& req,
+                                                 httplib::Response& resp) {
+    if (!req.has_header("Authorization")) {
+      resp.status = 401;
+      return;
+    }
+    CheckParams(params, req);
+    resp.status = 200;
+    resp.set_header("Content-Disposition", "attachment; filename=test.dbz");
+    resp.set_content_provider(
+        "application/octet-stream",
+        [buffer, kChunkSize](const std::size_t offset,
+                             httplib::DataSink& sink) {
+          if (offset < buffer.size()) {
+            sink.write(&buffer[offset],
+                       std::min(kChunkSize, buffer.size() - offset));
+          } else {
+            sink.done();
+          }
+          return true;
+        });
+  });
+}
+
+void MockServer::CheckParams(const std::map<std::string, std::string>& params,
+                             const httplib::Request& req) {
+  for (const auto& param : params) {
+    if (!req.has_param(param.first)) {
+      std::ostringstream err_msg;
+      err_msg << "Missing query param " << param.first;
+      std::cerr << err_msg.str() << std::endl;
+      throw std::runtime_error{err_msg.str()};
+    }
+    if (req.get_param_value(param.first) != param.second) {
+      std::ostringstream err_msg;
+      err_msg << "Incorrect query param value for " << param.first
+              << ". Expected " << param.second << ", found "
+              << req.get_param_value(param.first);
+      std::cerr << err_msg.str() << std::endl;
+      throw std::runtime_error{err_msg.str()};
+    }
+  }
 }

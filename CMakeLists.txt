@@ -59,7 +59,6 @@ configure_file(
   @ONLY
 )
 
-
 #
 # Find all headers and implementation files
 #
@@ -100,6 +99,11 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 include(cmake/CompilerWarnings.cmake)
 set_project_warnings(${PROJECT_NAME})
 
+# Ensure std::string debug info is included
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  target_compile_options(${PROJECT_NAME} PRIVATE -fstandalone-debug)
+endif()
+
 verbose_message("Applied compiler warnings.\n")
 
 #
@@ -124,12 +128,7 @@ else()
       DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
   endif()
-  # FetchContent_MakeAvailable(json)
-  FetchContent_GetProperties(json)
-  if(NOT json_POPULATED)
-    FetchContent_Populate(json)
-    add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
-  endif()
+  FetchContent_MakeAvailable(json)
 endif()
 # cpp-httplib
 if(${PROJECT_NAME}_USE_EXTERNAL_HTTPLIB)
@@ -149,6 +148,8 @@ else()
     )
   endif()
   FetchContent_MakeAvailable(httplib)
+  # Ignore compiler warnings in headers
+  add_system_include_property(httplib)
 endif()
 # openSSL
 find_package(OpenSSL REQUIRED)

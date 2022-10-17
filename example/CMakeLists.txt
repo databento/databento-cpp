@@ -48,6 +48,19 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/include
 )
 
+add_executable(timeseries-stream timeseries_stream.cpp)
+target_link_libraries(
+  timeseries-stream
+  PRIVATE
+    databento::databento
+    nlohmann_json::nlohmann_json
+)
+target_include_directories(
+  timeseries-stream
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
+
 #
 # Set the compiler standard
 #
@@ -55,4 +68,4 @@ target_include_directories(
 target_compile_features(batch PUBLIC cxx_std_11)
 target_compile_features(metadata PUBLIC cxx_std_11)
 target_compile_features(symbology-resolve PUBLIC cxx_std_11)
-
+target_compile_features(timeseries-stream PUBLIC cxx_std_11)

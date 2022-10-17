@@ -12,7 +12,7 @@ option(${PROJECT_NAME}_USE_EXTERNAL_HTTPLIB "Use an external httplib library" OF
 #
 
 option(${PROJECT_NAME}_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." ON)
-option(${PROJECT_NAME}_FORCE_COLOR_OUTPUT, "Always produce ANSI-colored output" OFF)
+option(${PROJECT_NAME}_FORCE_COLOR_OUTPUT "Always produce ANSI-colored output" OFF)
 
 if(${PROJECT_NAME}_FORCE_COLOR_OUTPUT)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")

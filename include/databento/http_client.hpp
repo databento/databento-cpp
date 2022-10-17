@@ -1,16 +1,10 @@
 #pragma once
 
+#include <httplib.h>
+
 #include <cstdint>
 #include <nlohmann/json.hpp>
 #include <string>
-
-// ignore warnings from httplib
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-#include <httplib.h>
-#pragma GCC diagnostic pop
 
 namespace databento {
 class HttpClient {

@@ -3,8 +3,7 @@
 #include <zstd.h>
 
 #include <algorithm>  // copy
-#include <array>
-#include <cstring>  // strncmp
+#include <cstring>    // strncmp
 #include <vector>
 
 #include "databento/datetime.hpp"

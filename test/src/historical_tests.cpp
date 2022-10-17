@@ -1,23 +1,21 @@
 #include <gtest/gtest.h>
-
-#include <thread>
-
-#include "databento/metadata.hpp"
-// ignore warnings from httplib
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#pragma GCC diagnostic ignored "-Wuseless-cast"
 #include <httplib.h>
-#pragma GCC diagnostic pop
 
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <nlohmann/json_fwd.hpp>
+#include <stdexcept>  // logic_error
+#include <thread>
 
+#include "databento/datetime.hpp"
+#include "databento/dbz.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception
 #include "databento/historical.hpp"
+#include "databento/metadata.hpp"
+#include "databento/record.hpp"
+#include "databento/timeseries.hpp"
 #include "mock/mock_server.hpp"
 
 namespace databento {
@@ -330,7 +328,6 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
 
 TEST_F(HistoricalTests, TestSymbologyResolve) {
   const nlohmann::json kResp{
-
       {"result",
        {{"ESM2",
          {{
@@ -357,7 +354,6 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
                                {"stype_out", "product_id"},
                                {"start_date", "2022-06-06"},
                                {"end_date", "2022-06-10"},
-
                            },
                            kResp);
   const auto port = mock_server_.ListenOnThread();
@@ -376,6 +372,82 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
   EXPECT_EQ(esm2_mapping.start_date, "2022-06-06");
   EXPECT_EQ(esm2_mapping.end_date, "2022-06-10");
   EXPECT_EQ(esm2_mapping.symbol, "3403");
+}
+
+TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
+  mock_server_.MockStreamDbz("/v0/timeseries.stream",
+                             {{"dataset", "GLBX.MDP3"},
+                              {"symbols", "ESH1"},
+                              {"schema", "mbo"},
+                              {"start", "1609160400000711344"},
+                              {"end", "1609160800000711344"},
+                              {"encoding", "dbz"},
+                              {"stype_in", "native"},
+                              {"stype_out", "product_id"}},
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  std::unique_ptr<Metadata> metadata_ptr;
+  std::vector<TickMsg> mbo_records;
+  target.TimeseriesStream(
+      "GLBX.MDP3", {"ESH1"}, Schema::Mbo,
+      EpochNanos{std::chrono::nanoseconds{1609160400000711344}},
+      EpochNanos{std::chrono::nanoseconds{1609160800000711344}}, SType::Native,
+      SType::ProductId, 2,
+      [&metadata_ptr](Metadata&& metadata) {
+        // no std::make_unique until C++14
+        metadata_ptr =
+            std::unique_ptr<Metadata>{new Metadata(std::move(metadata))};
+      },
+      [&mbo_records](const Record& record) {
+        mbo_records.emplace_back(record.get<TickMsg>());
+        return KeepGoing::Continue;
+      });
+  EXPECT_EQ(metadata_ptr->record_count, 2);
+  EXPECT_EQ(metadata_ptr->limit, 2);
+  EXPECT_EQ(metadata_ptr->schema, Schema::Mbo);
+  EXPECT_EQ(mbo_records.size(), 2);
+}
+
+// should get helpful message if there's a problem with the request
+TEST_F(HistoricalTests, TestTimeseriesStream_BadRequest) {
+  mock_server_.MockBadRequest("/v0/timeseries.stream");
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  try {
+    target.TimeseriesStream(
+        "GLBX.MDP3", {"E5"}, Schema::Mbo,
+        EpochNanos{std::chrono::nanoseconds{1609160400000711344}},
+        EpochNanos{std::chrono::nanoseconds{1609160800000711344}}, SType::Smart,
+        SType::ProductId, 2, [](Metadata&&) {},
+        [](const Record&) { return KeepGoing::Continue; });
+    FAIL() << "Call to TimeseriesStream was supposed to throw";
+  } catch (const std::exception& exc) {
+    ASSERT_STREQ(exc.what(),
+                 "Received an error response from request to "
+                 "/v0/timeseries.stream with status 400 and body \"\"");
+  }
+}
+
+TEST_F(HistoricalTests, TestTimeseriesStream_CallbackException) {
+  mock_server_.MockStreamDbz("/v0/timeseries.stream", {},
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  ASSERT_THROW(target.TimeseriesStream(
+                   "GLBX.MDP3", {"ESH1"}, Schema::Mbo,
+                   EpochNanos{std::chrono::nanoseconds{1609160400000711344}},
+                   EpochNanos{std::chrono::nanoseconds{1609160800000711344}},
+                   SType::Native, SType::ProductId, 2,
+                   [](Metadata&&) { throw std::logic_error{"Test failure"}; },
+                   [](const Record&) { return KeepGoing::Continue; }),
+               std::logic_error);
 }
 
 TEST(JsonImplementationTests,

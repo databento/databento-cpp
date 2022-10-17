@@ -34,3 +34,11 @@ function(add_clang_format_target)
   endif()
 endfunction()
 
+#
+# Make a target a system target so compiler warnings are ignored for its headers
+#
+
+macro(add_system_include_property NAME)
+  get_target_property(${NAME}_IID ${NAME} INTERFACE_INCLUDE_DIRECTORIES)
+  set_target_properties(${NAME} PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${${NAME}_IID}")
+endmacro()

@@ -11,6 +11,6 @@ enum KeepGoing : std::uint8_t {
   Stop,
 };
 
-using MetadataCallback = std::function<void(Metadata)>;
+using MetadataCallback = std::function<void(Metadata&&)>;
 using RecordCallback = std::function<KeepGoing(const Record&)>;
 }  // namespace databento

@@ -1,15 +1,11 @@
 #pragma once
 
+#include <httplib.h>
+
+#include <map>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <thread>
-// ignore warnings from httplib
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#pragma GCC diagnostic ignored "-Wuseless-cast"
-#include <httplib.h>
-#pragma GCC diagnostic pop
-#include <nlohmann/json.hpp>
 
 namespace databento {
 namespace mock {
@@ -30,12 +26,19 @@ class MockServer {
   }
 
   int ListenOnThread();
+  void MockBadRequest(const std::string& path);
   void MockGetJson(const std::string& path, const nlohmann::json& json);
   void MockGetJson(const std::string& path,
                    const std::map<std::string, std::string>& params,
                    const nlohmann::json& json);
+  void MockStreamDbz(const std::string& path,
+                     const std::map<std::string, std::string>& params,
+                     const std::string& dbz_path);
 
  private:
+  static void CheckParams(const std::map<std::string, std::string>& params,
+                          const httplib::Request& req);
+
   httplib::Server server_{};
   const int port_{};
   std::thread listen_thread_;

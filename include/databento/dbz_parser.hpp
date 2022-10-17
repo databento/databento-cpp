@@ -45,7 +45,7 @@ class DbzParser {
   std::vector<std::uint8_t> out_buffer_;
   // ZSTD streaming decompression suggests the size of the next read
   std::size_t read_suggestion_;
-  ZSTD_DStream* z_dstream_;
+  ZSTD_DStream* z_dstream_{};
   ZSTD_inBuffer z_in_buffer_;
   ZSTD_outBuffer z_out_buffer_;
 };

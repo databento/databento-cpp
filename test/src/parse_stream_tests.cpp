@@ -67,6 +67,7 @@ TEST_F(ParseStreamTests, TestInterleavedReadsAndWrites) {
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "hello");
   buffer = {};
   target_.Write(reinterpret_cast<const std::uint8_t*>("longer message"), 14);
+  target_.Finish();
   target_.ReadSome(buffer.data(), 6);
   target_.ReadSome(&buffer[6], 1);
   target_.ReadSome(&buffer[7], 7);

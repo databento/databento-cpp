@@ -48,13 +48,26 @@ void HttpClient::GetRawStream(const std::string& path,
                               const httplib::Params& params,
                               httplib::ContentReceiver callback) {
   const std::string full_path = httplib::append_query_params(path, params);
-  const httplib::Result res = client_.Get(
+  int err_status{};
+  httplib::Result res = client_.Get(
       full_path,
-      [](const httplib::Response& resp) {
+      [&err_status](const httplib::Response& resp) {
         // only continue if good response status
-        return !HttpClient::IsErrorStatus(resp.status);
+        if (HttpClient::IsErrorStatus(resp.status)) {
+          // instead of throwing here, store the HTTP status and return false to
+          // have the client close the connection
+          err_status = resp.status;
+          return false;
+        }
+        return true;
       },
       std::move(callback));
+  if (err_status > 0) {
+    throw HttpResponseError{path, err_status, ""};
+  }
+  if (res.error() != httplib::Error::Success) {
+    throw HttpRequestError{path, res.error()};
+  }
 }
 
 nlohmann::json HttpClient::CheckAndParseResponse(const std::string& path,

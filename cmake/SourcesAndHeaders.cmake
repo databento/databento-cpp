@@ -13,6 +13,7 @@ set(headers
   include/databento/symbology.hpp
   include/databento/timeseries.hpp
   src/parse_stream.hpp
+  src/scoped_thread.hpp
 )
 
 set(sources

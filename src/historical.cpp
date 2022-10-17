@@ -2,8 +2,9 @@
 
 #include <httplib.h>
 
-#include <atomic>   // atomic<bool>
-#include <cstdlib>  // get_env
+#include <atomic>     // atomic<bool>
+#include <cstdlib>    // get_env
+#include <exception>  // exception, exception_ptr
 #include <nlohmann/json.hpp>
 #include <numeric>  // accumulate
 #include <string>
@@ -15,6 +16,7 @@
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception, JsonResponseError
 #include "databento/timeseries.hpp"
+#include "scoped_thread.hpp"
 
 using databento::Historical;
 using databento::HistoricalBuilder;
@@ -32,10 +34,9 @@ std::string BuildSymbologyPath(const char* slug) {
   return std::string{"/v"} + databento::kApiVersionStr + "/symbology" + slug;
 }
 
-// std::string BuildTimeseriesPath(const char* slug) {
-//   return std::string{"/v"} + databento::kApiVersionStr + "/timeseries" +
-//   slug;
-// }
+std::string BuildTimeseriesPath(const char* slug) {
+  return std::string{"/v"} + databento::kApiVersionStr + "/timeseries" + slug;
+}
 
 void SetIfNotEmpty(httplib::Params* params, const std::string& key,
                    const std::string& value) {
@@ -697,8 +698,9 @@ void Historical::TimeseriesStream(const std::string& dataset,
                                   const MetadataCallback& metadata_callback,
                                   const RecordCallback& callback) {
   static const std::string kEndpoint = "Historical::TimeseriesStream";
-  static const std::string kPath = ::BuildSymbologyPath(".stream");
+  static const std::string kPath = ::BuildTimeseriesPath(".stream");
   httplib::Params params{{"dataset", dataset},
+                         {"encoding", "dbz"},
                          {"schema", ToString(schema)},
                          {"stype_in", ToString(stype_in)},
                          {"stype_out", ToString(stype_out)},
@@ -709,24 +711,46 @@ void Historical::TimeseriesStream(const std::string& dataset,
 
   std::atomic<bool> should_continue{true};
   DbzParser dbz_parser;
+  std::exception_ptr exception_ptr{};
+  std::mutex exception_ptr_mutex;
   // no initialized lambda captures until C++14
-  std::thread stream{[this, &dbz_parser, &params, &should_continue] {
-    this->client_.GetRawStream(
-        kPath, params,
-        [&dbz_parser, &should_continue](const char* data, std::size_t length) {
-          dbz_parser.PassBytes(reinterpret_cast<const std::uint8_t*>(data),
-                               length);
-          return should_continue.load();
-        });
-    dbz_parser.EndInput();
+  ScopedThread stream{[this, &dbz_parser, &exception_ptr, &exception_ptr_mutex,
+                       &params, &should_continue] {
+    try {
+      this->client_.GetRawStream(
+          kPath, params,
+          [&dbz_parser, &should_continue](const char* data,
+                                          std::size_t length) {
+            dbz_parser.PassBytes(reinterpret_cast<const std::uint8_t*>(data),
+                                 length);
+            return should_continue.load();
+          });
+      dbz_parser.EndInput();
+    } catch (const std::exception&) {
+      dbz_parser.EndInput();
+      std::lock_guard<std::mutex> guard{exception_ptr_mutex};
+      // rethrowing here will cause the process to be terminated
+      exception_ptr = std::current_exception();
+    }
   }};
-  Metadata metadata = dbz_parser.ParseMetadata();
-  const auto record_count = metadata.record_count;
-  metadata_callback(std::move(metadata));
-  for (auto i = 0UL; i < record_count; ++i) {
-    should_continue = callback(dbz_parser.ParseRecord()) == KeepGoing::Continue;
+  try {
+    Metadata metadata = dbz_parser.ParseMetadata();
+    const auto record_count = metadata.record_count;
+    metadata_callback(std::move(metadata));
+    for (auto i = 0UL; i < record_count; ++i) {
+      should_continue =
+          callback(dbz_parser.ParseRecord()) == KeepGoing::Continue;
+    }
+  } catch (const std::exception& exc) {
+    should_continue = false;
+    // check if there's an exception from stream thread
+    std::lock_guard<std::mutex> guard{exception_ptr_mutex};
+    if (exception_ptr) {
+      std::rethrow_exception(exception_ptr);
+    }
+    // otherwise rethrow original exception
+    throw;
   }
-  stream.join();
 }
 
 HistoricalBuilder& HistoricalBuilder::keyFromEnv() {

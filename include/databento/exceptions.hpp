@@ -1,16 +1,10 @@
 #pragma once
 
-#include <nlohmann/json.hpp>  // json, parse_error
-// ignore warnings from httplib
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#pragma GCC diagnostic ignored "-Wuseless-cast"
 #include <httplib.h>  // Error
-#pragma GCC diagnostic pop
 
 #include <cstdint>
 #include <exception>
+#include <nlohmann/json.hpp>  // json, parse_error
 #include <string>
 #include <utility>  // move
 
