@@ -115,12 +115,17 @@ databento::Metadata DbzParser::ParseMetadata() {
     throw DbzResponseError{
         "This version of dbz can't parse schema definitions"};
   }
-  res.symbols = DbzParser::ParseRepeatedCstr(var_buffer_it, var_buffer.cend());
-  res.partial = DbzParser::ParseRepeatedCstr(var_buffer_it, var_buffer.cend());
+  res.symbols =
+      DbzParser::ParseRepeatedSymbol(var_buffer_it, var_buffer.cend());
+  res.partial =
+      DbzParser::ParseRepeatedSymbol(var_buffer_it, var_buffer.cend());
   res.not_found =
-      DbzParser::ParseRepeatedCstr(var_buffer_it, var_buffer.cend());
+      DbzParser::ParseRepeatedSymbol(var_buffer_it, var_buffer.cend());
+  res.mappings =
+      DbzParser::ParseSymbolMappings(var_buffer_it, var_buffer.cend());
 
-  // Change internal state based on metadata in preparation for parsing records
+  // Change internal state based on metadata in preparation for parsing
+  // records
   rtype_ = Record::TypeIdFromSchema(res.schema);
   z_dstream_ = ::ZSTD_createDStream();
   read_suggestion_ = ::ZSTD_initDStream(z_dstream_);
@@ -173,7 +178,12 @@ databento::Record DbzParser::ParseRecord() {
   return Record{reinterpret_cast<RecordHeader*>(out_buffer_.data())};
 }
 
-std::vector<std::string> DbzParser::ParseRepeatedCstr(
+std::string DbzParser::ParseSymbol(
+    std::vector<std::uint8_t>::const_iterator& buffer_it) {
+  return std::string{Consume(buffer_it, kSymbolCstrLen)};
+}
+
+std::vector<std::string> DbzParser::ParseRepeatedSymbol(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   if (buffer_it + sizeof(std::uint32_t) > buffer_end_it) {
@@ -187,8 +197,55 @@ std::vector<std::string> DbzParser::ParseRepeatedCstr(
   std::vector<std::string> res;
   res.reserve(count);
   for (std::size_t i = 0; i < count; ++i) {
-    res.emplace_back(reinterpret_cast<const char*>(&*buffer_it));
-    buffer_it += ::kSymbolCstrLen;
+    res.emplace_back(ParseSymbol(buffer_it));
+  }
+  return res;
+}
+
+std::vector<databento::SymbolMapping> DbzParser::ParseSymbolMappings(
+    std::vector<std::uint8_t>::const_iterator& buffer_it,
+    std::vector<std::uint8_t>::const_iterator buffer_end_it) {
+  if (buffer_it + sizeof(std::uint32_t) > buffer_end_it) {
+    throw DbzResponseError{
+        "Unexpected end of metadata buffer while parsing mappings"};
+  }
+  const auto count = std::size_t{Consume<std::uint32_t>(buffer_it)};
+  std::vector<SymbolMapping> res;
+  res.reserve(count);
+  for (std::size_t i = 0; i < count; ++i) {
+    res.emplace_back(DbzParser::ParseSymbolMapping(buffer_it, buffer_end_it));
+  }
+  return res;
+}
+
+databento::SymbolMapping DbzParser::ParseSymbolMapping(
+    std::vector<std::uint8_t>::const_iterator& buffer_it,
+    std::vector<std::uint8_t>::const_iterator buffer_end_it) {
+  constexpr std::size_t kMinSymbolMappingEncodedLen =
+      kSymbolCstrLen + sizeof(std::uint32_t);
+  constexpr std::size_t kMappingIntervalEncodedLen =
+      sizeof(std::uint32_t) * 2 + kSymbolCstrLen;
+
+  if (buffer_it + kMinSymbolMappingEncodedLen > buffer_end_it) {
+    throw DbzResponseError{
+        "Unexpected end of metadata buffer while parsing symbol mapping"};
+  }
+  SymbolMapping res;
+  res.native = ParseSymbol(buffer_it);
+  const auto interval_count = std::size_t{Consume<std::uint32_t>(buffer_it)};
+  const auto read_size =
+      static_cast<std::ptrdiff_t>(interval_count * kMappingIntervalEncodedLen);
+  if (buffer_it + read_size > buffer_end_it) {
+    throw DbzResponseError{
+        "Symbol mapping interval_count doesn't match size of buffer"};
+  }
+  res.intervals.reserve(interval_count);
+  for (std::size_t i = 0; i < interval_count; ++i) {
+    MappingInterval interval;
+    interval.start_date = Consume<std::uint32_t>(buffer_it);
+    interval.end_date = Consume<std::uint32_t>(buffer_it);
+    interval.symbol = ParseSymbol(buffer_it);
+    res.intervals.emplace_back(std::move(interval));
   }
   return res;
 }

@@ -7,7 +7,7 @@
 #include "databento/enums.hpp"
 #include "databento/historical.hpp"
 
-// Converts a date to UTC Unix Epoch nanoseconds
+// Converts a date to Unix Epoch nanoseconds
 databento::EpochNanos DateToEpochNanos(int year, int month, int day) {
   std::tm time{};
   time.tm_year = year - 1900;

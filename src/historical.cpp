@@ -652,10 +652,10 @@ databento::SymbologyResolution Historical::SymbologyResolve(
       throw JsonResponseError::TypeMismatch(kEndpoint, "array", mapping.key(),
                                             mapping_json);
     }
-    std::vector<MappingInterval> mapping_intervals;
+    std::vector<StrMappingInterval> mapping_intervals;
     mapping_intervals.reserve(mapping_json.size());
     for (const auto& interval_json : mapping_json.items()) {
-      mapping_intervals.emplace_back(MappingInterval{
+      mapping_intervals.emplace_back(StrMappingInterval{
           ::CheckedAt(kEndpoint, interval_json.value(), "d0"),
           ::CheckedAt(kEndpoint, interval_json.value(), "d1"),
           ::CheckedAt(kEndpoint, interval_json.value(), "s"),

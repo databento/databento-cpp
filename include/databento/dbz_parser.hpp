@@ -35,7 +35,15 @@ class DbzParser {
   static T Consume(std::vector<std::uint8_t>::const_iterator& byte_it);
   static const char* Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
                              std::ptrdiff_t num_bytes);
-  static std::vector<std::string> ParseRepeatedCstr(
+  static std::string ParseSymbol(
+      std::vector<std::uint8_t>::const_iterator& buffer_it);
+  static std::vector<std::string> ParseRepeatedSymbol(
+      std::vector<std::uint8_t>::const_iterator& buffer_it,
+      std::vector<std::uint8_t>::const_iterator buffer_end_it);
+  static std::vector<SymbolMapping> ParseSymbolMappings(
+      std::vector<std::uint8_t>::const_iterator& buffer_it,
+      std::vector<std::uint8_t>::const_iterator buffer_end_it);
+  static SymbolMapping ParseSymbolMapping(
       std::vector<std::uint8_t>::const_iterator& buffer_it,
       std::vector<std::uint8_t>::const_iterator buffer_end_it);
 

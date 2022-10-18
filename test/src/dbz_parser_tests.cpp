@@ -35,6 +35,17 @@ class DbzParserTests : public testing::Test {
                       size);
     target_.EndInput();
   }
+
+  static void AssertMappings(const std::vector<SymbolMapping>& mappings) {
+    ASSERT_EQ(mappings.size(), 1);
+    const auto& mapping = mappings.at(0);
+    EXPECT_EQ(mapping.native, "ESH1");
+    ASSERT_EQ(mapping.intervals.size(), 1);
+    const auto& interval = mapping.intervals.at(0);
+    EXPECT_EQ(interval.symbol, "5482");
+    EXPECT_EQ(interval.start_date, 20201228);
+    EXPECT_EQ(interval.end_date, 20201229);
+  }
 };
 
 // Expected data for these tests obtained using the `dbz` CLI tool
@@ -56,6 +67,7 @@ TEST_F(DbzParserTests, TestParseMbo) {
   EXPECT_EQ(metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(metadata.partial.empty());
   EXPECT_TRUE(metadata.not_found.empty());
+  AssertMappings(metadata.mappings);
 
   const auto record1 = target_.ParseRecord();
   ASSERT_TRUE(record1.holds<TickMsg>());
@@ -110,6 +122,7 @@ TEST_F(DbzParserTests, TestParseMbp1) {
   EXPECT_EQ(metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(metadata.partial.empty());
   EXPECT_TRUE(metadata.not_found.empty());
+  AssertMappings(metadata.mappings);
 
   const auto record1 = target_.ParseRecord();
   ASSERT_TRUE(record1.holds<Mbp1Msg>());
@@ -174,6 +187,7 @@ TEST_F(DbzParserTests, TestParseMbp10) {
   EXPECT_EQ(metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(metadata.partial.empty());
   EXPECT_TRUE(metadata.not_found.empty());
+  AssertMappings(metadata.mappings);
 
   const auto record1 = target_.ParseRecord();
   ASSERT_TRUE(record1.holds<Mbp10Msg>());
@@ -262,6 +276,7 @@ TEST_F(DbzParserTests, TestParseTbbo) {
   EXPECT_EQ(metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(metadata.partial.empty());
   EXPECT_TRUE(metadata.not_found.empty());
+  AssertMappings(metadata.mappings);
 
   const auto record1 = target_.ParseRecord();
   ASSERT_TRUE(record1.holds<TbboMsg>());
@@ -326,6 +341,7 @@ TEST_F(DbzParserTests, TestParseTrades) {
   EXPECT_EQ(metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(metadata.partial.empty());
   EXPECT_TRUE(metadata.not_found.empty());
+  AssertMappings(metadata.mappings);
 
   const auto record1 = target_.ParseRecord();
   ASSERT_TRUE(record1.holds<TradeMsg>());
@@ -378,6 +394,7 @@ TEST_F(DbzParserTests, TestParseOhlcv1H) {
   EXPECT_EQ(metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(metadata.partial.empty());
   EXPECT_TRUE(metadata.not_found.empty());
+  AssertMappings(metadata.mappings);
 
   const auto record1 = target_.ParseRecord();
   ASSERT_TRUE(record1.holds<OhlcvMsg>());
@@ -422,6 +439,7 @@ TEST_F(DbzParserTests, TestParseOhlcv1M) {
   EXPECT_EQ(metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(metadata.partial.empty());
   EXPECT_TRUE(metadata.not_found.empty());
+  AssertMappings(metadata.mappings);
 
   const auto record1 = target_.ParseRecord();
   ASSERT_TRUE(record1.holds<OhlcvMsg>());
@@ -466,6 +484,7 @@ TEST_F(DbzParserTests, TestParseOhlcv1S) {
   EXPECT_EQ(metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(metadata.partial.empty());
   EXPECT_TRUE(metadata.not_found.empty());
+  AssertMappings(metadata.mappings);
 
   const auto record1 = target_.ParseRecord();
   ASSERT_TRUE(record1.holds<OhlcvMsg>());

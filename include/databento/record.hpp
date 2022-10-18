@@ -9,17 +9,17 @@
 #include "databento/enums.hpp"
 
 namespace databento {
-/// Common data for all Databento Records.
+// Common data for all Databento Records.
 struct RecordHeader {
-  /// The length of the message in 32-bit words.
+  // The length of the message in 32-bit words.
   std::uint8_t length;
-  /// The record type.
+  // The record type.
   std::uint8_t rtype;
-  /// The publisher ID assigned by Databento.
+  // The publisher ID assigned by Databento.
   std::uint16_t publisher_id;
-  /// The product ID assigned by the venue.
+  // The product ID assigned by the venue.
   std::uint32_t product_id;
-  /// The exchange timestamp in UTC UNIX epoch nanoseconds.
+  // The exchange timestamp in UNIX epoch nanoseconds.
   EpochNanos ts_event;
 };
 
@@ -51,7 +51,7 @@ class Record {
   RecordHeader* record_;
 };
 
-/// Market-by-order (MBO) tick message.
+// Market-by-order (MBO) tick message.
 struct TickMsg {
   static constexpr std::uint8_t kTypeId = 0xA0;
 
@@ -92,7 +92,7 @@ struct MbpMsg {
   char action;
   char side;
   std::int8_t flags;
-  /// Depth of the actual book change.
+  // Depth of the actual book change.
   std::uint8_t depth;
   EpochNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
@@ -110,7 +110,7 @@ struct TradeMsg {
   char action;
   char side;
   std::int8_t flags;
-  /// Depth of the actual book change.
+  // Depth of the actual book change.
   std::uint8_t depth;
   EpochNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
