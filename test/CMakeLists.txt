@@ -36,8 +36,6 @@ target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC
     ${CMAKE_THREAD_LIBS_INIT}
-  PRIVATE
-    nlohmann_json::nlohmann_json
 )
 
 target_include_directories(
@@ -112,3 +110,5 @@ file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 add_compile_definitions(TEST_BUILD_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 
 verbose_message("Finished adding unit tests for ${CMAKE_PROJECT_NAME}.")
+
+add_subdirectory(cmake_fetch_content)

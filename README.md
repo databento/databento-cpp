@@ -1,17 +1,58 @@
 # databento-cpp
 
-FIXME: badges
+[![test](https://github.com/databento/databento-cpp/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/databento/databento-cpp/actions/workflows/build.yaml)
+![license](https://img.shields.io/github/license/databento/databento-cpp?color=blue)
 
 The official C++ client library for [Databento](https://databento.com).
 The client supports both streaming live and historical data through similar interfaces.
 
-**Please note:** this client is under active development as Databento prepares to launch live data.
+**Please note:** this client currently supports historical data and is under active development as Databento prepares to launch live data.
 
 ## Usage
 
-FIXME: basic example
+A simple application that fetches 10 minutes of historical trades for all ES symbols and prints it look like this:
+
 ```cpp
+#include <chrono>
+#include <ctime>
+#include <databento/historical.hpp>
+#include <iomanip>
+#include <iostream>
+
+using namespace databento;
+
+static constexpr auto kApiKey = "YOUR_API_KEY";
+
+EpochNanos ToEpochNanos(int year, int month, int day, int hour, int min) {
+  std::tm time{};
+  time.tm_year = year - 1900;
+  time.tm_mon = month - 1;
+  time.tm_mday = day;
+  time.tm_hour = hour;
+  time.tm_min = min;
+  return EpochNanos{std::chrono::seconds{timegm(&time)}};
+}
+
+int main() {
+  auto start = ToEpochNanos(2022, 6, 10, 14, 30);
+  auto end = ToEpochNanos(2022, 6, 10, 14, 40);
+  auto client = HistoricalBuilder{}.key(kApiKey).Build();
+  client.TimeseriesStream(
+      "GLBX.MDP3", {"ES"}, Schema::Mbo, start, end, SType::Smart,
+      SType::ProductId, {}, [](Metadata&&) {},
+      [](const Record& record) {
+        const auto& trade_msg = record.get<TradeMsg>();
+        std::cout << trade_msg.hd.product_id << ": " << trade_msg.size << " @ "
+                  << trade_msg.price << std::endl;
+        return KeepGoing::Continue;
+      });
+}
 ```
+
+To run this program, replace `YOUR_API_KEY` with an actual API key.
+
+Additional example standalone executables are provided in the [examples](./examples) directory.
+These examples can be compiled by enabling the cmake option `DATABENTO_ENABLE_EXAMPLES` with `-DDATABENTO_ENABLE_EXAMPLES=1` during the configure step.
 
 ### Documentation
 
@@ -25,6 +66,10 @@ Dependencies:
   - OpenSSL
 - [nlohmann_json (header only)](https://github.com/nlohmann/json)
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
+
+By default, cpp-httplib and nlohmann_json are downloaded by CMake as part of the build process.
+If you would like to use a local version of these libraries, enable the CMake flag
+`DATABENTO_ENABLE_EXTERNAL_HTTPLIB` or `DATABENTO_ENABLE_EXTERNAL_JSON`.
 
 ## Building
 

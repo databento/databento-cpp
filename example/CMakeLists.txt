@@ -14,12 +14,6 @@ target_link_libraries(
   batch
   PRIVATE
     databento::databento
-    nlohmann_json::nlohmann_json
-)
-target_include_directories(
-  batch
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
 )
 
 add_executable(metadata metadata.cpp)
@@ -27,12 +21,13 @@ target_link_libraries(
   metadata
   PRIVATE
     databento::databento
-    nlohmann_json::nlohmann_json
 )
-target_include_directories(
-  metadata
+
+add_executable(readme readme.cpp)
+target_link_libraries(
+  readme
   PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
+    databento::databento
 )
 
 add_executable(symbology-resolve symbology_resolve.cpp)
@@ -40,12 +35,6 @@ target_link_libraries(
   symbology-resolve
   PRIVATE
     databento::databento
-    nlohmann_json::nlohmann_json
-)
-target_include_directories(
-  symbology-resolve
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
 )
 
 add_executable(timeseries-stream timeseries_stream.cpp)
@@ -53,12 +42,6 @@ target_link_libraries(
   timeseries-stream
   PRIVATE
     databento::databento
-    nlohmann_json::nlohmann_json
-)
-target_include_directories(
-  timeseries-stream
-  PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
 )
 
 #
@@ -67,5 +50,6 @@ target_include_directories(
 
 target_compile_features(batch PUBLIC cxx_std_11)
 target_compile_features(metadata PUBLIC cxx_std_11)
+target_compile_features(readme PUBLIC cxx_std_11)
 target_compile_features(symbology-resolve PUBLIC cxx_std_11)
 target_compile_features(timeseries-stream PUBLIC cxx_std_11)
