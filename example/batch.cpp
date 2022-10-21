@@ -3,14 +3,15 @@
 #include <algorithm>  // find_if
 #include <iostream>
 
+#include "databento/constants.hpp"
 #include "databento/historical.hpp"
 
 int main() {
   auto client = databento::HistoricalBuilder{}.SetKeyFromEnv().Build();
 
   const auto job =
-      client.BatchSubmitJob("GLBX.MDP3", "2022-08-26", "2022-09-27", {"GE"},
-                            databento::Schema::Trades);
+      client.BatchSubmitJob(databento::dataset::kGlbxMdp3, "2022-08-26",
+                            "2022-09-27", {"GE"}, databento::Schema::Trades);
   const auto all_jobs = client.BatchListJobs();
 
   const auto all_job_it = std::find_if(

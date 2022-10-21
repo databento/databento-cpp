@@ -92,6 +92,7 @@ enum class Flag : std::uint8_t {
   kMbp = 1 << 3,
 };
 
+// The current state of a batch job.
 enum class JobState : std::uint8_t {
   Received,
   Queued,
@@ -100,6 +101,7 @@ enum class JobState : std::uint8_t {
   Expired,
 };
 
+// Convert a HistoricalGateway to a URL.
 const char* UrlFromGateway(HistoricalGateway gateway);
 
 const char* ToString(Schema schema);

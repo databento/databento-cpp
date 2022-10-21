@@ -7,15 +7,16 @@
 #include <thread>
 #include <vector>
 
+#include "databento/detail/shared_channel.hpp"
 #include "databento/exceptions.hpp"
-#include "parse_stream.hpp"
 
 namespace databento {
+namespace detail {
 namespace test {
-class ParseStreamTests : public testing::Test {
+class ChannelTests : public testing::Test {
  protected:
   std::thread write_thread_;
-  ParseStream target_;
+  SharedChannel target_;
 
  public:
   void TearDown() override {
@@ -34,7 +35,7 @@ class ParseStreamTests : public testing::Test {
   }
 };
 
-TEST_F(ParseStreamTests, TestReadExact) {
+TEST_F(ChannelTests, TestReadExact) {
   write_thread_ = std::thread([this] {
     this->Write({"parse", "stream", "tests", "end"});
   });
@@ -48,7 +49,7 @@ TEST_F(ParseStreamTests, TestReadExact) {
   ASSERT_THROW(target_.ReadExact(buffer.data(), 1), DbzResponseError);
 }
 
-TEST_F(ParseStreamTests, TestReadExactAfterFinished) {
+TEST_F(ChannelTests, TestReadExactAfterFinished) {
   // write on same thread, so all reading happens after writing
   this->Write({"parse", "exact"});
   std::array<std::uint8_t, 16> buffer{};
@@ -60,7 +61,7 @@ TEST_F(ParseStreamTests, TestReadExactAfterFinished) {
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "act");
 }
 
-TEST_F(ParseStreamTests, TestInterleavedReadsAndWrites) {
+TEST_F(ChannelTests, TestInterleavedReadsAndWrites) {
   std::array<std::uint8_t, 16> buffer{};
   target_.Write(reinterpret_cast<const std::uint8_t*>("hello"), 5);
   ASSERT_EQ(target_.ReadSome(buffer.data(), buffer.size()), 5);
@@ -74,7 +75,7 @@ TEST_F(ParseStreamTests, TestInterleavedReadsAndWrites) {
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "longer message");
 }
 
-TEST_F(ParseStreamTests, TestReadSome) {
+TEST_F(ChannelTests, TestReadSome) {
   write_thread_ = std::thread([this] {
     this->Write({"parse", "stream", "tests", "some", "last"});
   });
@@ -91,4 +92,5 @@ TEST_F(ParseStreamTests, TestReadSome) {
   ASSERT_EQ(res, "parsestreamtestssomelast");
 }
 }  // namespace test
+}  // namespace detail
 }  // namespace databento

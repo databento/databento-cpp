@@ -138,4 +138,50 @@ struct OhlcvMsg {
 };
 
 static_assert(sizeof(OhlcvMsg) == 56, "OhlcvMsg size must match C");
+
+inline bool operator==(const RecordHeader& lhs, const RecordHeader& rhs) {
+  return lhs.length == rhs.length && lhs.rtype == rhs.rtype &&
+         lhs.publisher_id == rhs.publisher_id &&
+         lhs.product_id == rhs.product_id && lhs.ts_event == rhs.ts_event;
+}
+
+inline bool operator==(const TickMsg& lhs, const TickMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.order_id == rhs.order_id &&
+         lhs.price == rhs.price && lhs.size == rhs.size &&
+         lhs.flags == rhs.flags && lhs.channel_id == rhs.channel_id &&
+         lhs.action == rhs.action && lhs.side == rhs.side &&
+         lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
+         lhs.sequence == rhs.sequence;
+}
+
+inline bool operator==(const BidAskPair& lhs, const BidAskPair& rhs) {
+  return lhs.bid_px == rhs.bid_px && lhs.ask_px == rhs.ask_px &&
+         lhs.bid_sz == rhs.bid_sz && lhs.ask_sz == rhs.ask_sz &&
+         lhs.bid_ct == rhs.bid_ct && lhs.ask_ct == rhs.ask_ct;
+}
+
+namespace detail {
+template <std::size_t N>
+bool operator==(const MbpMsg<N>& lhs, const MbpMsg<N>& rhs) {
+  return lhs.hd == rhs.hd && lhs.price == rhs.price && lhs.size == rhs.size &&
+         lhs.action == rhs.action && lhs.side == rhs.side &&
+         lhs.flags == rhs.flags && lhs.depth == rhs.depth &&
+         lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
+         lhs.sequence == rhs.sequence && lhs.booklevel == rhs.booklevel;
+}
+}  // namespace detail
+
+inline bool operator==(const TradeMsg& lhs, const TradeMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.price == rhs.price && lhs.size == rhs.size &&
+         lhs.action == rhs.action && lhs.side == rhs.side &&
+         lhs.flags == rhs.flags && lhs.depth == rhs.depth &&
+         lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
+         lhs.sequence == rhs.sequence;
+}
+
+inline bool operator==(const OhlcvMsg& lhs, const OhlcvMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.open == rhs.open && lhs.high == rhs.high &&
+         lhs.low == rhs.low && lhs.close == rhs.close &&
+         lhs.volume == rhs.volume;
+}
 }  // namespace databento

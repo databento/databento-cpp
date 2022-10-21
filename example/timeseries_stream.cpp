@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>  // setw
 
+#include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/enums.hpp"
 #include "databento/historical.hpp"
@@ -23,8 +24,9 @@ int main() {
   const databento::UnixNanos end = DateToUnixNanos(2022, 10, 4);
   const auto limit = 1000;
   client.TimeseriesStream(
-      "GLBX.MDP3", start, end, {"ESZ2"}, databento::Schema::Trades,
-      databento::SType::Native, databento::SType::ProductId, limit,
+      databento::dataset::kGlbxMdp3, start, end, {"ESZ2"},
+      databento::Schema::Trades, databento::SType::Native,
+      databento::SType::ProductId, limit,
       [](databento::Metadata&& metadata) {
         std::cout << "Metadata (" << metadata.dataset << ", " << metadata.schema
                   << "): " << metadata.record_count << " records" << std::endl;

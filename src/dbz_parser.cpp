@@ -21,59 +21,53 @@ constexpr std::uint8_t kSchemaVersion = 1;
 constexpr std::size_t kDatasetCstrLen = 16;
 constexpr std::size_t kReservedLen = 39;
 constexpr std::size_t kSymbolCstrLen = 22;
-}  // namespace
-
-DbzParser::~DbzParser() {
-  // nullptr ok
-  ZSTD_freeDStream(z_dstream_);
-}
-
-void DbzParser::PassBytes(const std::uint8_t* data, std::size_t length) {
-  stream_.Write(data, length);
-}
-
-void DbzParser::EndInput() { stream_.Finish(); }
 
 template <typename T>
-T DbzParser::Consume(std::vector<std::uint8_t>::const_iterator& byte_it) {
+T Consume(std::vector<std::uint8_t>::const_iterator& byte_it) {
   const auto res = *reinterpret_cast<const T*>(&*byte_it);
   byte_it += sizeof(T);
   return res;
 }
 
 template <>
-std::uint8_t DbzParser::Consume(
-    std::vector<std::uint8_t>::const_iterator& byte_it) {
+std::uint8_t Consume(std::vector<std::uint8_t>::const_iterator& byte_it) {
   const auto res = *byte_it;
   byte_it += 1;
   return res;
 }
 
-const char* DbzParser::Consume(
-    std::vector<std::uint8_t>::const_iterator& byte_it,
-    const std::ptrdiff_t num_bytes) {
+const char* Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
+                    const std::ptrdiff_t num_bytes) {
   const auto* pos = &*byte_it;
   byte_it += num_bytes;
   return reinterpret_cast<const char*>(pos);
 }
+}  // namespace
 
-databento::Metadata DbzParser::ParseMetadata() {
+template <typename Input>
+DbzParser<Input>::~DbzParser() {
+  // nullptr ok
+  ZSTD_freeDStream(z_dstream_);
+}
+
+template <typename Input>
+databento::Metadata DbzParser<Input>::ParseMetadata() {
   std::uint32_t magic{};
-  stream_.ReadExact(reinterpret_cast<std::uint8_t*>(&magic),
-                    sizeof(std::uint32_t));
+  input_.ReadExact(reinterpret_cast<std::uint8_t*>(&magic),
+                   sizeof(std::uint32_t));
   if (magic < ::kZstdMagicLowerBound || magic > ::kZstdMagicUpperBound) {
     throw DbzResponseError{"Invalid metadata: no zstd magic number"};
   }
   std::uint32_t frame_size{};
-  stream_.ReadExact(reinterpret_cast<std::uint8_t*>(&frame_size),
-                    sizeof(std::uint32_t));
+  input_.ReadExact(reinterpret_cast<std::uint8_t*>(&frame_size),
+                   sizeof(std::uint32_t));
   if (frame_size < ::kFixedMetadataLen) {
     throw DbzResponseError{
         "Frame length cannot be shorter than the fixed metadata size"};
   }
   std::vector<std::uint8_t> metadata_buffer(frame_size);
   Metadata res;
-  stream_.ReadExact(metadata_buffer.data(), frame_size);
+  input_.ReadExact(metadata_buffer.data(), frame_size);
   auto metadata_it = metadata_buffer.cbegin();
 
   if (std::strncmp(Consume(metadata_it, 3), "DBZ", 3) != 0) {
@@ -130,7 +124,7 @@ databento::Metadata DbzParser::ParseMetadata() {
   z_dstream_ = ::ZSTD_createDStream();
   read_suggestion_ = ::ZSTD_initDStream(z_dstream_);
   in_buffer_ = std::vector<std::uint8_t>(read_suggestion_);
-  // set pos = size so first ParseRecord reads from stream_
+  // set pos = size so first ParseRecord reads from input_
   z_in_buffer_ = {in_buffer_.data(), in_buffer_.size(), in_buffer_.size()};
   out_buffer_ = std::vector<std::uint8_t>(Record::SizeOfType(rtype_));
   z_out_buffer_ = {out_buffer_.data(), out_buffer_.size(), 0};
@@ -139,7 +133,8 @@ databento::Metadata DbzParser::ParseMetadata() {
 }
 
 // assumes ParseMetadata has been called
-databento::Record DbzParser::ParseRecord() {
+template <typename Input>
+databento::Record DbzParser<Input>::ParseRecord() {
   z_out_buffer_.pos = 0;
   do {
     // std::cout << "ReadSuggestion: " << read_suggestion_ << std::endl;
@@ -161,8 +156,8 @@ databento::Record DbzParser::ParseRecord() {
       z_in_buffer_.src = in_buffer_.data();
     }
     // z_in_buffer_.size <= in_buffer.size()
-    z_in_buffer_.size = unread_size + stream_.ReadSome(&in_buffer_[unread_size],
-                                                       read_suggestion_);
+    z_in_buffer_.size = unread_size + input_.ReadSome(&in_buffer_[unread_size],
+                                                      read_suggestion_);
     z_in_buffer_.pos = 0;
 
     read_suggestion_ =
@@ -178,12 +173,14 @@ databento::Record DbzParser::ParseRecord() {
   return Record{reinterpret_cast<RecordHeader*>(out_buffer_.data())};
 }
 
-std::string DbzParser::ParseSymbol(
+template <typename Input>
+std::string DbzParser<Input>::ParseSymbol(
     std::vector<std::uint8_t>::const_iterator& buffer_it) {
   return std::string{Consume(buffer_it, kSymbolCstrLen)};
 }
 
-std::vector<std::string> DbzParser::ParseRepeatedSymbol(
+template <typename Input>
+std::vector<std::string> DbzParser<Input>::ParseRepeatedSymbol(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   if (buffer_it + sizeof(std::uint32_t) > buffer_end_it) {
@@ -202,7 +199,8 @@ std::vector<std::string> DbzParser::ParseRepeatedSymbol(
   return res;
 }
 
-std::vector<databento::SymbolMapping> DbzParser::ParseSymbolMappings(
+template <typename Input>
+std::vector<databento::SymbolMapping> DbzParser<Input>::ParseSymbolMappings(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   if (buffer_it + sizeof(std::uint32_t) > buffer_end_it) {
@@ -218,7 +216,8 @@ std::vector<databento::SymbolMapping> DbzParser::ParseSymbolMappings(
   return res;
 }
 
-databento::SymbolMapping DbzParser::ParseSymbolMapping(
+template <typename Input>
+databento::SymbolMapping DbzParser<Input>::ParseSymbolMapping(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   constexpr std::size_t kMinSymbolMappingEncodedLen =
@@ -249,3 +248,9 @@ databento::SymbolMapping DbzParser::ParseSymbolMapping(
   }
   return res;
 }
+
+// explicit template instantiation
+namespace databento {
+template class DbzParser<detail::FileStream>;
+template class DbzParser<detail::SharedChannel>;
+}  // namespace databento

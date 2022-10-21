@@ -4,15 +4,17 @@ set(headers
   include/databento/datetime.hpp
   include/databento/dbz.hpp
   include/databento/dbz_parser.hpp
+  include/databento/file_bento.hpp
   include/databento/enums.hpp
   include/databento/exceptions.hpp
   include/databento/historical.hpp
-  include/databento/http_client.hpp
   include/databento/metadata.hpp
   include/databento/record.hpp
   include/databento/symbology.hpp
   include/databento/timeseries.hpp
-  src/parse_stream.hpp
+  include/databento/detail/file_stream.hpp
+  include/databento/detail/http_client.hpp
+  include/databento/detail/shared_channel.hpp
   src/scoped_thread.hpp
 )
 
@@ -21,8 +23,10 @@ set(sources
   src/dbz_parser.cpp
   src/enums.cpp
   src/exceptions.cpp
+  src/file_bento.cpp
   src/historical.cpp
-  src/http_client.cpp
-  src/parse_stream.cpp
   src/record.cpp
+  src/detail/file_stream.cpp
+  src/detail/http_client.cpp
+  src/detail/shared_channel.cpp
 )

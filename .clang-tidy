@@ -1,5 +1,19 @@
 ---
-Checks: '*,-fuchsia-*,-google-*,-zircon-*,-abseil-*,-modernize-use-trailing-return-type,-llvm-*,-llvmlibc-*'
+Checks: >
+    -*,
+    bugprone-*,
+    -bugprone-easily-swappable-parameters,
+    clang-analyzer-*,
+    clang-diagnostic-*,
+    cppcore-guidelines-*,
+    google-*,
+    -google-readability-avoid-underscore-in-googletest-name,
+    -google-readability-casting,
+    modernize-deprecated-headers,
+    misc-*,
+    -misc-non-private-member-variables-in-classes,
+    performance-*,
+    portability-*'
 WarningsAsErrors: '*'
 HeaderFilterRegex: ''
-FormatStyle: none
+FormatStyle: file

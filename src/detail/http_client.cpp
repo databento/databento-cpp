@@ -1,11 +1,11 @@
-#include "databento/http_client.hpp"
+#include "databento/detail/http_client.hpp"
 
 #include <chrono>  // seconds
 
 #include "databento/exceptions.hpp"  // HttpResponseError, HttpRequestError, JsonResponseError
 #include "databento/version.hpp"  // DATABENTO_VERSION
 
-using databento::HttpClient;
+using databento::detail::HttpClient;
 
 constexpr std::chrono::seconds kTimeout{100};
 const httplib::Headers HttpClient::kHeaders{

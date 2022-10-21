@@ -8,16 +8,19 @@
 #include <stdexcept>  // logic_error
 #include <thread>
 
+#include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/dbz.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception
+#include "databento/file_bento.hpp"
 #include "databento/historical.hpp"
 #include "databento/metadata.hpp"
 #include "databento/record.hpp"
 #include "databento/symbology.hpp"  // kAllSymbols
 #include "databento/timeseries.hpp"
 #include "mock/mock_server.hpp"
+#include "temp_file.hpp"
 
 namespace databento {
 namespace test {
@@ -46,8 +49,8 @@ TEST_F(HistoricalTests, TestMetadataListPublishers) {
 
 TEST_F(HistoricalTests, TestMetadataListDatasets_Simple) {
   const nlohmann::json kResp{
-      "GLBX.MDP3",
-      "XNAS.ITCH",
+      dataset::kGlbxMdp3,
+      dataset::kXnasItch,
   };
   mock_server_.MockGetJson("/v0/metadata.list_datasets", kResp);
   const auto port = mock_server_.ListenOnThread();
@@ -61,9 +64,7 @@ TEST_F(HistoricalTests, TestMetadataListDatasets_Simple) {
 }
 
 TEST_F(HistoricalTests, TestMetadataListDatasets_Full) {
-  const nlohmann::json kResp{
-      "XNAS.ITCH",
-  };
+  const nlohmann::json kResp{dataset::kXnasItch};
   mock_server_.MockGetJson("/v0/metadata.list_datasets",
                            {{"start_date", "2021-01-05"}}, kResp);
   const auto port = mock_server_.ListenOnThread();
@@ -80,12 +81,12 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Simple) {
                              "tbbo",     "trades",   "ohlcv-1s",
                              "ohlcv-1m", "ohlcv-1h", "ohlcv-1d"};
   mock_server_.MockGetJson("/v0/metadata.list_schemas",
-                           {{"dataset", "GLBX.MDP3"}}, kResp);
+                           {{"dataset", dataset::kGlbxMdp3}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListSchemas("GLBX.MDP3");
+  const auto res = target.MetadataListSchemas(dataset::kGlbxMdp3);
   const std::vector<Schema> kExp{
       Schema::Mbo,     Schema::Mbp1,    Schema::Mbp10,
       Schema::Tbbo,    Schema::Trades,  Schema::Ohlcv1S,
@@ -102,12 +103,13 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Full) {
                              "ohlcv-1d"};
   mock_server_.MockGetJson(
       "/v0/metadata.list_schemas",
-      {{"dataset", "GLBX.MDP3"}, {"end_date", "2020-01-01"}}, kResp);
+      {{"dataset", dataset::kGlbxMdp3}, {"end_date", "2020-01-01"}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListSchemas("GLBX.MDP3", {}, "2020-01-01");
+  const auto res =
+      target.MetadataListSchemas(dataset::kGlbxMdp3, {}, "2020-01-01");
   const std::vector<Schema> kExp{Schema::Mbo, Schema::Mbp1, Schema::Ohlcv1M,
                                  Schema::Ohlcv1H, Schema::Ohlcv1D};
   ASSERT_EQ(res.size(), kResp.size());
@@ -118,31 +120,32 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Full) {
 }
 
 TEST_F(HistoricalTests, TestMetadataListFields) {
-  const nlohmann::json kResp{{"GLBX.MDP3",
+  const nlohmann::json kResp{{dataset::kGlbxMdp3,
                               {{"dbz",
                                 {{"trades",
                                   {{"length", "uint8_t"},
                                    {"rtype", "uint8_t"},
                                    {"dataset_id", "uint16_t"}}}}}}}};
-  mock_server_.MockGetJson(
-      "/v0/metadata.list_fields",
-      {{"dataset", "GLBX.MDP3"}, {"encoding", "dbz"}, {"schema", "trades"}},
-      kResp);
+  mock_server_.MockGetJson("/v0/metadata.list_fields",
+                           {{"dataset", dataset::kGlbxMdp3},
+                            {"encoding", "dbz"},
+                            {"schema", "trades"}},
+                           kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res =
-      target.MetadataListFields("GLBX.MDP3", Encoding::Dbz, Schema::Trades);
+  const auto res = target.MetadataListFields(dataset::kGlbxMdp3, Encoding::Dbz,
+                                             Schema::Trades);
   const FieldsByDatasetEncodingAndSchema kExp{
-      {"GLBX.MDP3",
+      {dataset::kGlbxMdp3,
        {{Encoding::Dbz,
          {{Schema::Trades,
            {{"length", "uint8_t"},
             {"rtype", "uint8_t"},
             {"dataset_id", "uint16_t"}}}}}}}};
   const auto& tradesRes =
-      res.at("GLBX.MDP3").at(Encoding::Dbz).at(Schema::Trades);
+      res.at(dataset::kGlbxMdp3).at(Encoding::Dbz).at(Schema::Trades);
   EXPECT_EQ(tradesRes.at("length"), "uint8_t");
   EXPECT_EQ(tradesRes.at("rtype"), "uint8_t");
   EXPECT_EQ(tradesRes.at("dataset_id"), "uint16_t");
@@ -178,12 +181,12 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {
       {"historical-streaming",
        {{"mbo", 21.05}, {"mbp-1", 82.05}, {"status", 62.72}}}};
   mock_server_.MockGetJson("/v0/metadata.list_unit_prices",
-                           {{"dataset", "GLBX.MDP3"}}, kResp);
+                           {{"dataset", dataset::kGlbxMdp3}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListUnitPrices("GLBX.MDP3");
+  const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3);
   const std::map<Schema, double> kExp{
       {Schema::Mbo, 21.05}, {Schema::Mbp1, 82.05}, {Schema::Status, 62.72}};
   ASSERT_EQ(res.size(), 1);
@@ -201,13 +204,14 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_FeedMode) {
        {{"mbo", 21.05}, {"mbp-1", 82.05}, {"status", 62.72}}}};
   mock_server_.MockGetJson(
       "/v0/metadata.list_unit_prices",
-      {{"dataset", "GLBX.MDP3"}, {"mode", "historical-streaming"}}, kResp);
+      {{"dataset", dataset::kGlbxMdp3}, {"mode", "historical-streaming"}},
+      kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res =
-      target.MetadataListUnitPrices("GLBX.MDP3", FeedMode::HistoricalStreaming);
+  const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3,
+                                                 FeedMode::HistoricalStreaming);
   const std::map<Schema, double> kExp{
       {Schema::Mbo, 21.05}, {Schema::Mbp1, 82.05}, {Schema::Status, 62.72}};
   ASSERT_EQ(res.size(), kExp.size());
@@ -222,13 +226,14 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_Schema) {
                              {"historical", {{"mbo", 19.95}}},
                              {"live", {{"mbo", 43.14}}}};
   mock_server_.MockGetJson("/v0/metadata.list_unit_prices",
-                           {{"dataset", "GLBX.MDP3"}, {"schema", "mbo"}},
+                           {{"dataset", dataset::kGlbxMdp3}, {"schema", "mbo"}},
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListUnitPrices("GLBX.MDP3", Schema::Mbo);
+  const auto res =
+      target.MetadataListUnitPrices(dataset::kGlbxMdp3, Schema::Mbo);
   const std::map<FeedMode, double> kExp{{FeedMode::HistoricalStreaming, 21.05},
                                         {FeedMode::Historical, 19.95},
                                         {FeedMode::Live, 43.14}};
@@ -243,20 +248,21 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_FullySpecified) {
   const nlohmann::json kResp = 43.21;
   mock_server_.MockGetJson(
       "/v0/metadata.list_unit_prices",
-      {{"dataset", "GLBX.MDP3"}, {"schema", "mbo"}, {"mode", "live"}}, kResp);
+      {{"dataset", dataset::kGlbxMdp3}, {"schema", "mbo"}, {"mode", "live"}},
+      kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res =
-      target.MetadataListUnitPrices("GLBX.MDP3", FeedMode::Live, Schema::Mbo);
+  const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3,
+                                                 FeedMode::Live, Schema::Mbo);
   EXPECT_DOUBLE_EQ(res, 43.21);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
   const nlohmann::json kResp = 44688;
   mock_server_.MockGetJson("/v0/metadata.get_billable_size",
-                           {{"dataset", "GLBX.MDP3"},
+                           {{"dataset", dataset::kGlbxMdp3},
                             {"start", "2020-06-06T00:00"},
                             {"end", "2021-03-02T00:00"},
                             {"schema", "trades"}},
@@ -266,7 +272,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetBillableSize(
-      "GLBX.MDP3", "2020-06-06T00:00", "2021-03-02T00:00", kAllSymbols,
+      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00", kAllSymbols,
       Schema::Trades);
   ASSERT_EQ(res, 44688);
 }
@@ -274,7 +280,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
 TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
   const nlohmann::json kResp = 55238;
   mock_server_.MockGetJson("/v0/metadata.get_billable_size",
-                           {{"dataset", "GLBX.MDP3"},
+                           {{"dataset", dataset::kGlbxMdp3},
                             {"start", "2020-06-06T00:00"},
                             {"end", "2021-03-02T00:00"},
                             {"symbols", "NG,LNQ"},
@@ -286,7 +292,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetBillableSize(
-      "GLBX.MDP3", "2020-06-06T00:00", "2021-03-02T00:00", {"NG", "LNQ"},
+      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00", {"NG", "LNQ"},
       Schema::Tbbo, SType::Smart, {});
   ASSERT_EQ(res, 55238);
 }
@@ -294,7 +300,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
 TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
   const nlohmann::json kResp = 0.65783;
   mock_server_.MockGetJson("/v0/metadata.get_cost",
-                           {{"dataset", "GLBX.MDP3"},
+                           {{"dataset", dataset::kGlbxMdp3},
                             {"start", "2020-06-06T00:00"},
                             {"end", "2021-03-02T00:00"},
                             {"symbols", "MESN1,MESQ1"}},
@@ -303,15 +309,16 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataGetCost(
-      "GLBX.MDP3", "2020-06-06T00:00", "2021-03-02T00:00", {"MESN1", "MESQ1"});
+  const auto res =
+      target.MetadataGetCost(dataset::kGlbxMdp3, "2020-06-06T00:00",
+                             "2021-03-02T00:00", {"MESN1", "MESQ1"});
   ASSERT_DOUBLE_EQ(res, 0.65783);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
   const nlohmann::json kResp = 0.714;
   mock_server_.MockGetJson("/v0/metadata.get_cost",
-                           {{"dataset", "GLBX.MDP3"},
+                           {{"dataset", dataset::kGlbxMdp3},
                             {"start", "2020-06-06T00:00"},
                             {"end", "2021-03-02T00:00"},
                             {"mode", "historical-streaming"},
@@ -323,9 +330,10 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataGetCost(
-      "GLBX.MDP3", "2020-06-06T00:00", "2021-03-02T00:00", {"MES", "SPY"},
-      Schema::Tbbo, FeedMode::HistoricalStreaming, SType::Smart, {});
+  const auto res =
+      target.MetadataGetCost(dataset::kGlbxMdp3, "2020-06-06T00:00",
+                             "2021-03-02T00:00", {"MES", "SPY"}, Schema::Tbbo,
+                             FeedMode::HistoricalStreaming, SType::Smart, {});
   ASSERT_DOUBLE_EQ(res, 0.714);
 }
 
@@ -351,7 +359,7 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
 
   mock_server_.MockGetJson("/v0/symbology.resolve",
                            {
-                               {"dataset", "GLBX.MDP3"},
+                               {"dataset", dataset::kGlbxMdp3},
                                {"start_date", "2022-06-06"},
                                {"end_date", "2022-06-10"},
                                {"symbols", "ESM2"},
@@ -364,8 +372,8 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res =
-      target.SymbologyResolve("GLBX.MDP3", "2022-06-06", "2022-06-10", {"ESM2"},
-                              SType::Native, SType::ProductId);
+      target.SymbologyResolve(dataset::kGlbxMdp3, "2022-06-06", "2022-06-10",
+                              {"ESM2"}, SType::Native, SType::ProductId);
   EXPECT_TRUE(res.not_found.empty());
   EXPECT_TRUE(res.partial.empty());
   ASSERT_EQ(res.mappings.size(), 1);
@@ -379,7 +387,7 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
 
 TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
   mock_server_.MockStreamDbz("/v0/timeseries.stream",
-                             {{"dataset", "GLBX.MDP3"},
+                             {{"dataset", dataset::kGlbxMdp3},
                               {"symbols", "ESH1"},
                               {"schema", "mbo"},
                               {"start", "1609160400000711344"},
@@ -396,7 +404,8 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
   std::unique_ptr<Metadata> metadata_ptr;
   std::vector<TickMsg> mbo_records;
   target.TimeseriesStream(
-      "GLBX.MDP3", UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+      dataset::kGlbxMdp3,
+      UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
       Schema::Mbo, SType::Native, SType::ProductId, 2,
       [&metadata_ptr](Metadata&& metadata) {
@@ -416,7 +425,7 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
 
 TEST_F(HistoricalTests, TestTimeseriesStream_NoMetadataCallback) {
   mock_server_.MockStreamDbz("/v0/timeseries.stream",
-                             {{"dataset", "GLBX.MDP3"},
+                             {{"dataset", dataset::kGlbxMdp3},
                               {"start", "2022-10-21T13:30"},
                               {"end", "2022-10-21T20:00"},
                               {"symbols", "CYZ2"},
@@ -430,8 +439,8 @@ TEST_F(HistoricalTests, TestTimeseriesStream_NoMetadataCallback) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::vector<TbboMsg> mbo_records;
-  target.TimeseriesStream("GLBX.MDP3", "2022-10-21T13:30", "2022-10-21T20:00",
-                          {"CYZ2"}, Schema::Tbbo,
+  target.TimeseriesStream(dataset::kGlbxMdp3, "2022-10-21T13:30",
+                          "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
                           [&mbo_records](const Record& record) {
                             mbo_records.emplace_back(record.get<TbboMsg>());
                             return KeepGoing::Continue;
@@ -448,7 +457,8 @@ TEST_F(HistoricalTests, TestTimeseriesStream_BadRequest) {
                                static_cast<std::uint16_t>(port)};
   try {
     target.TimeseriesStream(
-        "GLBX.MDP3", UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+        dataset::kGlbxMdp3,
+        UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
         UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"E5"},
         Schema::Mbo, SType::Smart, SType::ProductId, 2, [](Metadata&&) {},
         [](const Record&) { return KeepGoing::Continue; });
@@ -467,14 +477,45 @@ TEST_F(HistoricalTests, TestTimeseriesStream_CallbackException) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  ASSERT_THROW(
-      target.TimeseriesStream(
-          "GLBX.MDP3", UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
-          UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
-          Schema::Mbo, SType::Native, SType::ProductId, 2,
-          [](Metadata&&) { throw std::logic_error{"Test failure"}; },
-          [](const Record&) { return KeepGoing::Continue; }),
-      std::logic_error);
+  ASSERT_THROW(target.TimeseriesStream(
+                   dataset::kGlbxMdp3,
+                   UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+                   UnixNanos{std::chrono::nanoseconds{1609160800000711344}},
+                   {"ESH1"}, Schema::Mbo, SType::Native, SType::ProductId, 2,
+                   [](Metadata&&) { throw std::logic_error{"Test failure"}; },
+                   [](const Record&) { return KeepGoing::Continue; }),
+               std::logic_error);
+}
+
+TEST_F(HistoricalTests, TestTimeseriesStreamToFile) {
+  mock_server_.MockStreamDbz("/v0/timeseries.stream",
+                             {{"dataset", dataset::kGlbxMdp3},
+                              {"start", "2022-10-21T13:30"},
+                              {"end", "2022-10-21T20:00"},
+                              {"symbols", "CYZ2"},
+                              {"schema", "tbbo"},
+                              {"encoding", "dbz"},
+                              {"stype_in", "native"},
+                              {"stype_out", "product_id"}},
+                             TEST_BUILD_DIR "/data/test_data.tbbo.dbz");
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  TempFile temp_file{testing::TempDir() + "/" + __FUNCTION__};
+  target.TimeseriesStreamToFile(dataset::kGlbxMdp3, "2022-10-21T13:30",
+                                "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
+                                temp_file.Path());
+  // running it a second time should overwrite previous data
+  FileBento bento = target.TimeseriesStreamToFile(
+      dataset::kGlbxMdp3, "2022-10-21T13:30", "2022-10-21T20:00", {"CYZ2"},
+      Schema::Tbbo, temp_file.Path());
+  std::size_t counter{};
+  bento.Replay([&counter](const Record&) {
+    ++counter;
+    return KeepGoing::Continue;
+  });
+  ASSERT_EQ(counter, 2);
 }
 
 TEST(JsonImplementationTests,
@@ -491,8 +532,8 @@ TEST(HistoricalBuilderTests, TestBasic) {
                           .SetKey(kKey)
                           .SetGateway(databento::HistoricalGateway::Bo1)
                           .Build();
-  EXPECT_EQ(client.key(), kKey);
-  EXPECT_EQ(client.gateway(), "https://hist.databento.com");
+  EXPECT_EQ(client.Key(), kKey);
+  EXPECT_EQ(client.Gateway(), "https://hist.databento.com");
 }
 
 TEST(HistoricalBuilderTests, TestMissingKey) {
@@ -504,8 +545,8 @@ TEST(HistoricalBuilderTests, TestSetKeyFromEnv) {
   ASSERT_EQ(::setenv("DATABENTO_API_KEY", kKey, 1), 0)
       << "Failed to set environment variable";
   const auto client = databento::HistoricalBuilder().SetKeyFromEnv().Build();
-  EXPECT_EQ(client.key(), kKey);
-  EXPECT_EQ(client.gateway(), "https://hist.databento.com");
+  EXPECT_EQ(client.Key(), kKey);
+  EXPECT_EQ(client.Gateway(), "https://hist.databento.com");
   // unsetting prevents this test from affecting others
   ASSERT_EQ(::unsetenv("DATABENTO_API_KEY"), 0)
       << "Failed to unset environment variable";

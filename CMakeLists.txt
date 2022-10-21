@@ -12,6 +12,7 @@ string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 #
 
 include(cmake/StandardSettings.cmake)
+include(cmake/StaticAnalyzers.cmake)
 include(cmake/Utils.cmake)
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 
@@ -106,13 +107,13 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_JSON)
 else()
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
-      json 
+      json
       URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
     )
   else()
     # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
     FetchContent_Declare(
-      json 
+      json
       URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
       DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
@@ -302,12 +303,14 @@ message(STATUS "Finished building requirements for installing the package.\n")
 #
 
 if(${PROJECT_NAME_UPPERCASE}_ENABLE_UNIT_TESTING)
+  unset(CMAKE_CXX_CPPCHECK) # disable cppcheck for tests
   enable_testing()
   message(STATUS "Build unit tests for the project.")
   add_subdirectory(test)
 endif()
 
 if(${PROJECT_NAME_UPPERCASE}_ENABLE_EXAMPLES)
+  unset(CMAKE_CXX_CPPCHECK) # disable cppcheck for tests
   message(STATUS "Build examples for the project.")
   add_subdirectory(example)
 endif()

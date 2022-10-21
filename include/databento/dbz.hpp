@@ -4,9 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "databento/datetime.hpp"
+#include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
-#include "databento/symbology.hpp"
 
 namespace databento {
 struct MappingInterval {
@@ -58,4 +57,24 @@ struct Metadata {
   // Symbol mappings containing a native symbol and its mapping intervals.
   std::vector<SymbolMapping> mappings;
 };
+
+inline bool operator==(const MappingInterval& lhs, const MappingInterval& rhs) {
+  return lhs.start_date == rhs.start_date && lhs.end_date == rhs.end_date &&
+         lhs.symbol == rhs.symbol;
+}
+
+inline bool operator==(const SymbolMapping& lhs, const SymbolMapping& rhs) {
+  return lhs.native == rhs.native && lhs.intervals == rhs.intervals;
+}
+
+inline bool operator==(const Metadata& lhs, const Metadata& rhs) {
+  return lhs.version == rhs.version && lhs.dataset == rhs.dataset &&
+         lhs.schema == rhs.schema && lhs.start == rhs.start &&
+         lhs.end == rhs.end && lhs.limit == rhs.limit &&
+         lhs.record_count == rhs.record_count &&
+         lhs.compression == rhs.compression && lhs.stype_in == rhs.stype_in &&
+         lhs.stype_out == rhs.stype_out && lhs.symbols == rhs.symbols &&
+         lhs.partial == rhs.partial && lhs.not_found == rhs.not_found &&
+         lhs.mappings == rhs.mappings;
+}
 }  // namespace databento

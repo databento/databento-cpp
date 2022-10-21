@@ -5,6 +5,8 @@
 #include <atomic>     // atomic<bool>
 #include <cstdlib>    // get_env
 #include <exception>  // exception, exception_ptr
+#include <fstream>    // ofstream
+#include <ios>
 #include <nlohmann/json.hpp>
 #include <numeric>  // accumulate
 #include <string>
@@ -13,8 +15,10 @@
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/dbz_parser.hpp"
+#include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception, JsonResponseError
+#include "databento/file_bento.hpp"
 #include "databento/timeseries.hpp"
 #include "scoped_thread.hpp"
 
@@ -831,31 +835,32 @@ void Historical::TimeseriesStream(const std::string& dataset,
 
   this->TimeseriesStream(params, metadata_callback, record_callback);
 }
+static const std::string kTimeseriesStreamEndpoint =
+    "Historical::TimeseriesStream";
+static const std::string kTimeseriesStreamPath =
+    ::BuildTimeseriesPath(".stream");
 void Historical::TimeseriesStream(const HttplibParams& params,
                                   const MetadataCallback& metadata_callback,
                                   const RecordCallback& record_callback) {
-  static const std::string kEndpoint = "Historical::TimeseriesStream";
-  static const std::string kPath = ::BuildTimeseriesPath(".stream");
-
   std::atomic<bool> should_continue{true};
-  DbzParser dbz_parser;
+  detail::SharedChannel channel;
+  DbzChannelParser dbz_parser{channel};
   std::exception_ptr exception_ptr{};
   std::mutex exception_ptr_mutex;
   // no initialized lambda captures until C++14
-  ScopedThread stream{[this, &dbz_parser, &exception_ptr, &exception_ptr_mutex,
+  ScopedThread stream{[this, &channel, &exception_ptr, &exception_ptr_mutex,
                        &params, &should_continue] {
     try {
       this->client_.GetRawStream(
-          kPath, params,
-          [&dbz_parser, &should_continue](const char* data,
-                                          std::size_t length) {
-            dbz_parser.PassBytes(reinterpret_cast<const std::uint8_t*>(data),
-                                 length);
+          kTimeseriesStreamPath, params,
+          [channel, &should_continue](const char* data,
+                                      std::size_t length) mutable {
+            channel.Write(reinterpret_cast<const std::uint8_t*>(data), length);
             return should_continue.load();
           });
-      dbz_parser.EndInput();
+      channel.Finish();
     } catch (const std::exception&) {
-      dbz_parser.EndInput();
+      channel.Finish();
       std::lock_guard<std::mutex> guard{exception_ptr_mutex};
       // rethrowing here will cause the process to be terminated
       exception_ptr = std::current_exception();
@@ -881,6 +886,71 @@ void Historical::TimeseriesStream(const HttplibParams& params,
     // otherwise rethrow original exception
     throw;
   }
+}
+
+databento::FileBento Historical::TimeseriesStreamToFile(
+    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::vector<std::string>& symbols, Schema schema,
+    const std::string& file_path) {
+  return this->TimeseriesStreamToFile(dataset, start, end, symbols, schema,
+                                      SType::Native, SType::ProductId, {},
+                                      file_path);
+}
+databento::FileBento Historical::TimeseriesStreamToFile(
+    const std::string& dataset, const std::string& start,
+    const std::string& end, const std::vector<std::string>& symbols,
+    Schema schema, const std::string& file_path) {
+  return this->TimeseriesStreamToFile(dataset, start, end, symbols, schema,
+                                      SType::Native, SType::ProductId, {},
+                                      file_path);
+}
+databento::FileBento Historical::TimeseriesStreamToFile(
+    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+    SType stype_out, std::size_t limit, const std::string& file_path) {
+  httplib::Params params{{"dataset", dataset},
+                         {"encoding", "dbz"},
+                         {"start", ToString(start)},
+                         {"end", ToString(end)},
+                         {"schema", ToString(schema)},
+                         {"stype_in", ToString(stype_in)},
+                         {"stype_out", ToString(stype_out)}};
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  ::SetIfPositive(&params, "limit", limit);
+  return this->TimeseriesStreamToFile(params, file_path);
+}
+databento::FileBento Historical::TimeseriesStreamToFile(
+    const std::string& dataset, const std::string& start,
+    const std::string& end, const std::vector<std::string>& symbols,
+    Schema schema, SType stype_in, SType stype_out, std::size_t limit,
+    const std::string& file_path) {
+  httplib::Params params{{"dataset", dataset},
+                         {"encoding", "dbz"},
+                         {"start", start},
+                         {"end", end},
+                         {"schema", ToString(schema)},
+                         {"stype_in", ToString(stype_in)},
+                         {"stype_out", ToString(stype_out)}};
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  ::SetIfPositive(&params, "limit", limit);
+  return this->TimeseriesStreamToFile(params, file_path);
+}
+databento::FileBento Historical::TimeseriesStreamToFile(
+    const HttplibParams& params, const std::string& file_path) {
+  {
+    std::ofstream out_file{file_path, std::ios::binary};
+    if (out_file.fail()) {
+      throw InvalidArgumentError{kTimeseriesStreamEndpoint, "file_path",
+                                 "Non-existent or invalid file"};
+    }
+    this->client_.GetRawStream(
+        kTimeseriesStreamPath, params,
+        [&out_file](const char* data, std::size_t length) {
+          out_file.write(data, static_cast<std::streamsize>(length));
+          return true;
+        });
+  }  // close out_file
+  return FileBento{file_path};
 }
 
 HistoricalBuilder& HistoricalBuilder::SetKeyFromEnv() {

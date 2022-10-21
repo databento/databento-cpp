@@ -38,8 +38,8 @@ option(${PROJECT_NAME_UPPERCASE}_ENABLE_EXAMPLES "Enable building examples for t
 #
 # Currently supporting: Clang-Tidy, Cppcheck.
 
-option(${PROJECT_NAME_UPPERCASE}_ENABLE_CLANG_TIDY "Enable static analysis with Clang-Tidy." ON)
-option(${PROJECT_NAME_UPPERCASE}_ENABLE_CPPCHECK "Enable static analysis with Cppcheck." ON)
+option(${PROJECT_NAME_UPPERCASE}_ENABLE_CLANG_TIDY "Enable static analysis with Clang-Tidy." OFF)
+option(${PROJECT_NAME_UPPERCASE}_ENABLE_CPPCHECK "Enable static analysis with Cppcheck." OFF)
 
 #
 # Code coverage

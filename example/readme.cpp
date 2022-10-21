@@ -1,5 +1,6 @@
 // Duplicate of the example usage code from the README.md to ensure
 // it compiles and to be able to clang-format it.
+// NOLINTBEGIN(google-build-using-namespace)
 #include <chrono>
 #include <ctime>
 #include <databento/historical.hpp>
@@ -21,3 +22,4 @@ int main() {
         return KeepGoing::Continue;
       });
 }
+// NOLINTEND(google-build-using-namespace)

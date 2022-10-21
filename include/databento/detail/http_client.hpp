@@ -7,6 +7,7 @@
 #include <string>
 
 namespace databento {
+namespace detail {
 class HttpClient {
  public:
   HttpClient(const std::string& key, const std::string& gateway);
@@ -29,4 +30,5 @@ class HttpClient {
 
   httplib::Client client_;
 };
+}  // namespace detail
 }  // namespace databento
