@@ -6,6 +6,9 @@
 #include <vector>
 
 namespace databento {
+// Sentinel value for requesting all symbols
+static const std::vector<std::string> kAllSymbols{};
+
 struct StrMappingInterval {
   // YYYY-MM-DD
   std::string start_date;

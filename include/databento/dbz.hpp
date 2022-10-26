@@ -34,10 +34,10 @@ struct Metadata {
   Schema schema;
   // The UNIX timestamp of the query start, or the first record if the file was
   // split.
-  EpochNanos start;
+  UnixNanos start;
   // The UNIX timestamp of the query end, or the last record if the file was
   // split.
-  EpochNanos end;
+  UnixNanos end;
   // The maximum number of records for the query.
   std::uint64_t limit;
   // The total number of records.

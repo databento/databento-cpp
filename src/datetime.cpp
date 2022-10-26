@@ -4,7 +4,7 @@
 #include <sstream>
 
 namespace databento {
-std::string ToString(EpochNanos epoch_nanos) {
+std::string ToString(UnixNanos epoch_nanos) {
   return std::to_string(epoch_nanos.time_since_epoch().count());
 }
 

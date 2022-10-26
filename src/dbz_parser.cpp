@@ -86,9 +86,9 @@ databento::Metadata DbzParser::ParseMetadata() {
   res.dataset = std::string{Consume(metadata_it, kDatasetCstrLen)};
   res.schema = static_cast<Schema>(Consume<std::uint16_t>(metadata_it));
   res.start =
-      EpochNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(metadata_it)}};
+      UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(metadata_it)}};
   res.end =
-      EpochNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(metadata_it)}};
+      UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(metadata_it)}};
   res.limit = Consume<std::uint64_t>(metadata_it);
   res.record_count = Consume<std::uint64_t>(metadata_it);
   res.compression =

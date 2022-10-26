@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "databento/datetime.hpp"  // EpochNanos
+#include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
 
 namespace databento {
@@ -20,7 +20,7 @@ struct RecordHeader {
   // The product ID assigned by the venue.
   std::uint32_t product_id;
   // The exchange timestamp in UNIX epoch nanoseconds.
-  EpochNanos ts_event;
+  UnixNanos ts_event;
 };
 
 class Record {
@@ -63,7 +63,7 @@ struct TickMsg {
   std::uint8_t channel_id;
   char action;
   char side;
-  EpochNanos ts_recv;
+  UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
 };
@@ -94,7 +94,7 @@ struct MbpMsg {
   std::int8_t flags;
   // Depth of the actual book change.
   std::uint8_t depth;
-  EpochNanos ts_recv;
+  UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
   std::array<BidAskPair, N> booklevel;
@@ -112,7 +112,7 @@ struct TradeMsg {
   std::int8_t flags;
   // Depth of the actual book change.
   std::uint8_t depth;
-  EpochNanos ts_recv;
+  UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
   // 0-sized types don't exist in C++ so booklevel is omitted

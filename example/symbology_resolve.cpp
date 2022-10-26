@@ -22,9 +22,9 @@ int main(int argc, char* argv[]) {
     symbols.emplace_back(argv[i]);
   }
 
-  auto client = databento::HistoricalBuilder{}.keyFromEnv().Build();
+  auto client = databento::HistoricalBuilder{}.SetKeyFromEnv().Build();
   const databento::SymbologyResolution resolution = client.SymbologyResolve(
-      argv[1], symbols, stype_in, stype_out, argv[4], argv[4]);
+      argv[1], argv[4], argv[4], symbols, stype_in, stype_out);
   if (!resolution.not_found.empty()) {
     std::cout << "Not found:" << std::endl;
     for (const auto& symbol : resolution.not_found) {

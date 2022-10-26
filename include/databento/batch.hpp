@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "databento/datetime.hpp"  // EpochNanos
+#include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"  // JobState, Delivery, Packaging, Schema, SType
 
 namespace databento {
@@ -18,8 +18,8 @@ struct BatchJob {
   SType stype_in;
   SType stype_out;
   Schema schema;
-  EpochNanos start;
-  EpochNanos end;
+  UnixNanos start;
+  UnixNanos end;
   std::size_t limit;
   Compression compression;
   SplitDuration split_duration;
@@ -34,10 +34,10 @@ struct BatchJob {
   std::size_t actual_size;
   std::size_t package_size;
   JobState state;
-  EpochNanos ts_received;
-  EpochNanos ts_queued;
-  EpochNanos ts_process_start;
-  EpochNanos ts_process_done;
-  EpochNanos ts_expiration;
+  UnixNanos ts_received;
+  UnixNanos ts_queued;
+  UnixNanos ts_process_start;
+  UnixNanos ts_process_done;
+  UnixNanos ts_expiration;
 };
 }  // namespace databento

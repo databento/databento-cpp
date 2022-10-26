@@ -10,7 +10,8 @@ ParseStream::~ParseStream() { Finish(); }
 
 void ParseStream::Write(const std::uint8_t* data, std::size_t length) {
   std::lock_guard<std::mutex> lock{mutex_};
-  stream_.write(data, static_cast<std::streamsize>(length));
+  stream_.write(reinterpret_cast<const char*>(data),
+                static_cast<std::streamsize>(length));
   cv_.notify_one();
 }
 
@@ -30,7 +31,8 @@ void ParseStream::ReadExact(std::uint8_t* buffer, std::size_t length) {
             << " bytes remaining";
     throw DbzResponseError{err_msg.str()};
   }
-  stream_.read(buffer, static_cast<std::streamsize>(length));
+  stream_.read(reinterpret_cast<char*>(buffer),
+               static_cast<std::streamsize>(length));
 }
 
 std::size_t ParseStream::ReadSome(std::uint8_t* buffer, std::size_t length) {
@@ -39,7 +41,7 @@ std::size_t ParseStream::ReadSome(std::uint8_t* buffer, std::size_t length) {
   if (stream_size() == 0) {
     return 0;
   }
-  stream_.read(buffer,
+  stream_.read(reinterpret_cast<char*>(buffer),
                static_cast<std::streamsize>(std::min(stream_size(), length)));
   return static_cast<std::size_t>(stream_.gcount());
 }

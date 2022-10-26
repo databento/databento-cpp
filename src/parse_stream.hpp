@@ -4,7 +4,7 @@
 #include <cstddef>  // size_t
 #include <cstdint>  // uint8_t
 #include <mutex>
-#include <sstream>  // basic_stringstream
+#include <sstream>  // stringstream
 #include <vector>
 
 namespace databento {
@@ -14,7 +14,7 @@ class ParseStream {
   // could use eofbit, but seekg clears this
   bool is_finished_{false};
   std::condition_variable cv_;
-  std::basic_stringstream<std::uint8_t> stream_;
+  std::stringstream stream_;
 
  public:
   ParseStream() = default;

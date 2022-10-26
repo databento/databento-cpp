@@ -5,7 +5,7 @@
 #include "databento/historical.hpp"
 
 int main() {
-  auto client = databento::HistoricalBuilder{}.keyFromEnv().Build();
+  auto client = databento::HistoricalBuilder{}.SetKeyFromEnv().Build();
 
   const auto publishers = client.MetadataListPublishers();
   std::cout << "Publishers:" << std::endl;

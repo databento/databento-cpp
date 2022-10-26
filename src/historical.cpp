@@ -71,8 +71,9 @@ void SetIfNotEmpty(httplib::Params* params, const std::string& key,
   }
 }
 
+template <typename T>
 void SetIfPositive(httplib::Params* params, const std::string& key,
-                   const std::size_t value) {
+                   const T value) {
   if (value > 0) {
     params->emplace(key, std::to_string(value));
   }
@@ -135,15 +136,15 @@ std::size_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
 }
 
 template <>
-databento::EpochNanos ParseAt(const std::string& endpoint,
-                              const nlohmann::json& json,
-                              const std::string& key) {
+databento::UnixNanos ParseAt(const std::string& endpoint,
+                             const nlohmann::json& json,
+                             const std::string& key) {
   const auto& val_json = ::CheckedAt(endpoint, json, key);
   if (!val_json.is_number_unsigned()) {
     throw JsonResponseError::TypeMismatch(endpoint, key + " unsigned number",
                                           val_json);
   }
-  return databento::EpochNanos{std::chrono::nanoseconds{val_json}};
+  return databento::UnixNanos{std::chrono::nanoseconds{val_json}};
 }
 
 template <>
@@ -166,11 +167,11 @@ databento::BatchJob Parse(const std::string& endpoint,
                           const nlohmann::json& json) {
   using databento::Compression;
   using databento::Delivery;
-  using databento::EpochNanos;
   using databento::Packaging;
   using databento::Schema;
   using databento::SplitDuration;
   using databento::SType;
+  using databento::UnixNanos;
 
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(endpoint, "object", json);
@@ -184,8 +185,8 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.stype_in = ::FromCheckedAtString<SType>(endpoint, json, "stype_in");
   res.stype_out = ::FromCheckedAtString<SType>(endpoint, json, "stype_out");
   res.schema = ::FromCheckedAtString<Schema>(endpoint, json, "schema");
-  res.start = ::ParseAt<EpochNanos>(endpoint, json, "start");
-  res.end = ::ParseAt<EpochNanos>(endpoint, json, "end");
+  res.start = ::ParseAt<UnixNanos>(endpoint, json, "start");
+  res.end = ::ParseAt<UnixNanos>(endpoint, json, "end");
   res.limit = ::ParseAt<std::size_t>(endpoint, json, "limit");
   res.compression =
       ::FromCheckedAtString<Compression>(endpoint, json, "compression");
@@ -216,21 +217,46 @@ Historical::Historical(std::string key, std::string gateway, std::uint16_t port)
       client_{key_, gateway_, port} {}
 
 databento::BatchJob Historical::BatchSubmitJob(
-    const std::string& dataset, Schema schema,
-    const std::vector<std::string>& symbols, const std::string& start,
-    const std::string& end) {
+    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::vector<std::string>& symbols, Schema schema) {
   return this->BatchSubmitJob(
-      dataset, schema, symbols, start, end, SplitDuration::Day, {},
+      dataset, start, end, symbols, schema, SplitDuration::Day, {},
       Packaging::None, Delivery::Download, SType::Native, SType::ProductId, {});
 }
-
 databento::BatchJob Historical::BatchSubmitJob(
-    const std::string& dataset, Schema schema,
-    const std::vector<std::string>& symbols, const std::string& start,
-    const std::string& end, SplitDuration split_duration,
-    std::size_t split_size, Packaging packaging, Delivery delivery,
-    SType stype_in, SType stype_out, std::size_t limit) {
-  static const std::string kPath = ::BuildBatchPath(".submit_job");
+    const std::string& dataset, const std::string& start,
+    const std::string& end, const std::vector<std::string>& symbols,
+    Schema schema) {
+  return this->BatchSubmitJob(
+      dataset, start, end, symbols, schema, SplitDuration::Day, {},
+      Packaging::None, Delivery::Download, SType::Native, SType::ProductId, {});
+}
+databento::BatchJob Historical::BatchSubmitJob(
+    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::vector<std::string>& symbols, Schema schema,
+    SplitDuration split_duration, std::size_t split_size, Packaging packaging,
+    Delivery delivery, SType stype_in, SType stype_out, std::size_t limit) {
+  httplib::Params params{{"dataset", dataset},
+                         {"schema", ToString(schema)},
+                         {"encoding", "dbz"},
+                         {"start", ToString(start)},
+                         {"end", ToString(end)},
+                         {"split_duration", ToString(split_duration)},
+                         {"packaging", ToString(packaging)},
+                         {"delivery", ToString(delivery)},
+                         {"stype_in", ToString(stype_in)},
+                         {"stype_out", ToString(stype_out)}};
+  ::SetIfPositive(&params, "split_size", split_size);
+  ::SetIfPositive(&params, "limit", limit);
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  return this->BatchSubmitJob(params);
+}
+databento::BatchJob Historical::BatchSubmitJob(
+    const std::string& dataset, const std::string& start,
+    const std::string& end, const std::vector<std::string>& symbols,
+    Schema schema, SplitDuration split_duration, std::size_t split_size,
+    Packaging packaging, Delivery delivery, SType stype_in, SType stype_out,
+    std::size_t limit) {
   httplib::Params params{{"dataset", dataset},
                          {"schema", ToString(schema)},
                          {"encoding", "dbz"},
@@ -244,6 +270,10 @@ databento::BatchJob Historical::BatchSubmitJob(
   ::SetIfPositive(&params, "split_size", split_size);
   ::SetIfPositive(&params, "limit", limit);
   ::SetIfNotEmpty(&params, "symbols", symbols);
+  return this->BatchSubmitJob(params);
+}
+databento::BatchJob Historical::BatchSubmitJob(const httplib::Params& params) {
+  static const std::string kPath = ::BuildBatchPath(".submit_job");
   const nlohmann::json json = client_.PostJson(kPath, params);
   return ::Parse("BatchSubmitJob", json);
 }
@@ -252,17 +282,26 @@ std::vector<databento::BatchJob> Historical::BatchListJobs() {
   static const std::vector<JobState> kDefaultStates = {
       JobState::Received, JobState::Queued, JobState::Processing,
       JobState::Done};
-  return this->BatchListJobs(kDefaultStates, {});
+  return this->BatchListJobs(kDefaultStates, UnixNanos{});
 }
-
+std::vector<databento::BatchJob> Historical::BatchListJobs(
+    const std::vector<databento::JobState>& states, UnixNanos since) {
+  httplib::Params params;
+  ::SetIfNotEmpty(&params, "states", states);
+  ::SetIfPositive(&params, "since", since.time_since_epoch().count());
+  return this->BatchListJobs(params);
+}
 std::vector<databento::BatchJob> Historical::BatchListJobs(
     const std::vector<databento::JobState>& states, const std::string& since) {
-  static const std::string kEndpoint = "Historical::BatchListJobs";
-  static const std::string kPath = ::BuildBatchPath(".list_jobs");
-
   httplib::Params params;
   ::SetIfNotEmpty(&params, "states", states);
   ::SetIfNotEmpty(&params, "since", since);
+  return this->BatchListJobs(params);
+}
+std::vector<databento::BatchJob> Historical::BatchListJobs(
+    const httplib::Params& params) {
+  static const std::string kEndpoint = "Historical::BatchListJobs";
+  static const std::string kPath = ::BuildBatchPath(".list_jobs");
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_array()) {
     JsonResponseError::TypeMismatch(kEndpoint, "array", json);
@@ -365,7 +404,7 @@ databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
   return this->MetadataListFields(params);
 }
 databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
-    const std::multimap<std::string, std::string>& params) {
+    const httplib::Params& params) {
   static const std::string kEndpoint = "Historical::MetadataListFields";
   static const std::string kPath = ::BuildMetadataPath(".list_fields");
   const nlohmann::json json = client_.GetJson(kPath, params);
@@ -554,25 +593,47 @@ double Historical::MetadataListUnitPrices(const std::string& dataset,
   return json;
 }
 
-std::size_t Historical::MetadataGetBillableSize(const std::string& dataset,
-                                                const std::string& start,
-                                                const std::string& end) {
-  return this->MetadataGetBillableSize(dataset, start, end, {}, Schema::Trades,
+std::size_t Historical::MetadataGetBillableSize(
+    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::vector<std::string>& symbols, Schema schema) {
+  return this->MetadataGetBillableSize(dataset, start, end, symbols, schema,
                                        SType::Native, {});
 }
-
+std::size_t Historical::MetadataGetBillableSize(
+    const std::string& dataset, const std::string& start,
+    const std::string& end, const std::vector<std::string>& symbols,
+    Schema schema) {
+  return this->MetadataGetBillableSize(dataset, start, end, symbols, schema,
+                                       SType::Native, {});
+}
+std::size_t Historical::MetadataGetBillableSize(
+    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+    std::size_t limit) {
+  httplib::Params params{{"dataset", dataset},
+                         {"start", ToString(start)},
+                         {"end", ToString(end)},
+                         {"schema", ToString(schema)},
+                         {"stype_in", ToString(stype_in)}};
+  ::SetIfPositive(&params, "limit", limit);
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  return this->MetadataGetBillableSize(params);
+}
 std::size_t Historical::MetadataGetBillableSize(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema, SType stype_in, std::size_t limit) {
-  static const std::string kPath = ::BuildMetadataPath(".get_billable_size");
   httplib::Params params{{"dataset", dataset},
+                         {"start", start},
+                         {"end", end},
                          {"schema", ToString(schema)},
                          {"stype_in", ToString(stype_in)}};
-  ::SetIfNotEmpty(&params, "start", start);
-  ::SetIfNotEmpty(&params, "end", end);
   ::SetIfPositive(&params, "limit", limit);
   ::SetIfNotEmpty(&params, "symbols", symbols);
+  return this->MetadataGetBillableSize(params);
+}
+std::size_t Historical::MetadataGetBillableSize(const httplib::Params& params) {
+  static const std::string kPath = ::BuildMetadataPath(".get_billable_size");
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_number_unsigned()) {
     throw JsonResponseError::TypeMismatch("Historical::MetadataGetBillableSize",
@@ -581,29 +642,54 @@ std::size_t Historical::MetadataGetBillableSize(
   return json;
 }
 
-double Historical::MetadataGetCost(const std::string& dataset,
-                                   const std::string& start,
-                                   const std::string& end) {
-  return this->MetadataGetCost(dataset, start, end,
-                               FeedMode::HistoricalStreaming, {},
-                               Schema::Trades, SType::Native, {});
+double Historical::MetadataGetCost(const std::string& dataset, UnixNanos start,
+                                   UnixNanos end,
+                                   const std::vector<std::string>& symbols) {
+  return this->MetadataGetCost(dataset, start, end, symbols, Schema::Trades,
+                               FeedMode::HistoricalStreaming, SType::Native,
+                               {});
 }
-
 double Historical::MetadataGetCost(const std::string& dataset,
                                    const std::string& start,
-                                   const std::string& end, FeedMode mode,
+                                   const std::string& end,
+                                   const std::vector<std::string>& symbols) {
+  return this->MetadataGetCost(dataset, start, end, symbols, Schema::Trades,
+                               FeedMode::HistoricalStreaming, SType::Native,
+                               {});
+}
+double Historical::MetadataGetCost(const std::string& dataset, UnixNanos start,
+                                   UnixNanos end,
                                    const std::vector<std::string>& symbols,
-                                   Schema schema, SType stype_in,
+                                   Schema schema, FeedMode mode, SType stype_in,
+                                   std::size_t limit) {
+  static const std::string kPath = ::BuildMetadataPath(".get_cost");
+  httplib::Params params{
+      {"dataset", dataset},         {"start", ToString(start)},
+      {"end", ToString(end)},       {"mode", ToString(mode)},
+      {"schema", ToString(schema)}, {"stype_in", ToString(stype_in)}};
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  ::SetIfPositive(&params, "limit", limit);
+  return this->MetadataGetCost(params);
+}
+double Historical::MetadataGetCost(const std::string& dataset,
+                                   const std::string& start,
+                                   const std::string& end,
+                                   const std::vector<std::string>& symbols,
+                                   Schema schema, FeedMode mode, SType stype_in,
                                    std::size_t limit) {
   static const std::string kPath = ::BuildMetadataPath(".get_cost");
   httplib::Params params{{"dataset", dataset},
+                         {"start", start},
+                         {"end", end},
                          {"mode", ToString(mode)},
                          {"schema", ToString(schema)},
                          {"stype_in", ToString(stype_in)}};
-  ::SetIfNotEmpty(&params, "start", start);
-  ::SetIfNotEmpty(&params, "end", end);
   ::SetIfNotEmpty(&params, "symbols", symbols);
   ::SetIfPositive(&params, "limit", limit);
+  return this->MetadataGetCost(params);
+}
+double Historical::MetadataGetCost(const HttplibParams& params) {
+  static const std::string kPath = ::BuildMetadataPath(".get_cost");
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_number()) {
     throw JsonResponseError::TypeMismatch("Historical::MetadataGetCost",
@@ -613,26 +699,25 @@ double Historical::MetadataGetCost(const std::string& dataset,
 }
 
 databento::SymbologyResolution Historical::SymbologyResolve(
-    const std::string& dataset, const std::vector<std::string>& symbols,
-    SType stype_in, SType stype_out, const std::string& start_date,
-    const std::string& end_date) {
-  return this->SymbologyResolve(dataset, symbols, stype_in, stype_out,
-                                start_date, end_date, {});
+    const std::string& dataset, const std::string& start_date,
+    const std::string& end_date, const std::vector<std::string>& symbols,
+    SType stype_in, SType stype_out) {
+  return this->SymbologyResolve(dataset, start_date, end_date, symbols,
+                                stype_in, stype_out, {});
 }
-
 databento::SymbologyResolution Historical::SymbologyResolve(
-    const std::string& dataset, const std::vector<std::string>& symbols,
-    SType stype_in, SType stype_out, const std::string& start_date,
-    const std::string& end_date, const std::string& default_value) {
+    const std::string& dataset, const std::string& start_date,
+    const std::string& end_date, const std::vector<std::string>& symbols,
+    SType stype_in, SType stype_out, const std::string& default_value) {
   static const std::string kEndpoint = "Historical::SymbologyResolve";
   static const std::string kPath = ::BuildSymbologyPath(".resolve");
   httplib::Params params{{"dataset", dataset},
-                         {"stype_in", ToString(stype_in)},
-                         {"stype_out", ToString(stype_out)},
                          {"start_date", start_date},
                          {"end_date", end_date},
-                         {"default_value", default_value}};
+                         {"stype_in", ToString(stype_in)},
+                         {"stype_out", ToString(stype_out)}};
   ::SetIfNotEmpty(&params, "symbols", symbols);
+  ::SetIfNotEmpty(&params, "default_value", default_value);
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
@@ -690,24 +775,67 @@ databento::SymbologyResolution Historical::SymbologyResolve(
   return res;
 }
 
-void Historical::TimeseriesStream(const std::string& dataset,
+void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
+                                  UnixNanos end,
                                   const std::vector<std::string>& symbols,
-                                  Schema schema, EpochNanos start,
-                                  EpochNanos end, SType stype_in,
+                                  Schema schema,
+                                  const RecordCallback& record_callback) {
+  this->TimeseriesStream(dataset, start, end, symbols, schema, SType::Native,
+                         SType::ProductId, {}, {}, record_callback);
+}
+void Historical::TimeseriesStream(const std::string& dataset,
+                                  const std::string& start,
+                                  const std::string& end,
+                                  const std::vector<std::string>& symbols,
+                                  Schema schema,
+                                  const RecordCallback& record_callback) {
+  this->TimeseriesStream(dataset, start, end, symbols, schema, SType::Native,
+                         SType::ProductId, {}, {}, record_callback);
+}
+void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
+                                  UnixNanos end,
+                                  const std::vector<std::string>& symbols,
+                                  Schema schema, SType stype_in,
                                   SType stype_out, std::size_t limit,
                                   const MetadataCallback& metadata_callback,
-                                  const RecordCallback& callback) {
-  static const std::string kEndpoint = "Historical::TimeseriesStream";
-  static const std::string kPath = ::BuildTimeseriesPath(".stream");
+                                  const RecordCallback& record_callback) {
   httplib::Params params{{"dataset", dataset},
                          {"encoding", "dbz"},
+                         {"start", ToString(start)},
+                         {"end", ToString(end)},
                          {"schema", ToString(schema)},
                          {"stype_in", ToString(stype_in)},
-                         {"stype_out", ToString(stype_out)},
-                         {"start", ToString(start)},
-                         {"end", ToString(end)}};
+                         {"stype_out", ToString(stype_out)}};
   ::SetIfNotEmpty(&params, "symbols", symbols);
   ::SetIfPositive(&params, "limit", limit);
+
+  this->TimeseriesStream(params, metadata_callback, record_callback);
+}
+void Historical::TimeseriesStream(const std::string& dataset,
+                                  const std::string& start,
+                                  const std::string& end,
+                                  const std::vector<std::string>& symbols,
+                                  Schema schema, SType stype_in,
+                                  SType stype_out, std::size_t limit,
+                                  const MetadataCallback& metadata_callback,
+                                  const RecordCallback& record_callback) {
+  httplib::Params params{{"dataset", dataset},
+                         {"encoding", "dbz"},
+                         {"start", start},
+                         {"end", end},
+                         {"schema", ToString(schema)},
+                         {"stype_in", ToString(stype_in)},
+                         {"stype_out", ToString(stype_out)}};
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  ::SetIfPositive(&params, "limit", limit);
+
+  this->TimeseriesStream(params, metadata_callback, record_callback);
+}
+void Historical::TimeseriesStream(const HttplibParams& params,
+                                  const MetadataCallback& metadata_callback,
+                                  const RecordCallback& record_callback) {
+  static const std::string kEndpoint = "Historical::TimeseriesStream";
+  static const std::string kPath = ::BuildTimeseriesPath(".stream");
 
   std::atomic<bool> should_continue{true};
   DbzParser dbz_parser;
@@ -736,10 +864,12 @@ void Historical::TimeseriesStream(const std::string& dataset,
   try {
     Metadata metadata = dbz_parser.ParseMetadata();
     const auto record_count = metadata.record_count;
-    metadata_callback(std::move(metadata));
+    if (metadata_callback) {
+      metadata_callback(std::move(metadata));
+    }
     for (auto i = 0UL; i < record_count; ++i) {
       should_continue =
-          callback(dbz_parser.ParseRecord()) == KeepGoing::Continue;
+          record_callback(dbz_parser.ParseRecord()) == KeepGoing::Continue;
     }
   } catch (const std::exception& exc) {
     should_continue = false;
@@ -753,21 +883,21 @@ void Historical::TimeseriesStream(const std::string& dataset,
   }
 }
 
-HistoricalBuilder& HistoricalBuilder::keyFromEnv() {
+HistoricalBuilder& HistoricalBuilder::SetKeyFromEnv() {
   char const* env_key = std::getenv("DATABENTO_API_KEY");
   if (env_key == nullptr) {
     throw Exception{
         "Expected environment variable DATABENTO_API_KEY to be set"};
   }
-  return this->key(env_key);
+  return this->SetKey(env_key);
 }
 
-HistoricalBuilder& HistoricalBuilder::key(std::string key) {
+HistoricalBuilder& HistoricalBuilder::SetKey(std::string key) {
   key_ = std::move(key);
   return *this;
 }
 
-HistoricalBuilder& HistoricalBuilder::gateway(HistoricalGateway gateway) {
+HistoricalBuilder& HistoricalBuilder::SetGateway(HistoricalGateway gateway) {
   gateway_ = gateway;
   return *this;
 }

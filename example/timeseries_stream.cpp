@@ -8,22 +8,22 @@
 #include "databento/historical.hpp"
 
 // Converts a date to Unix Epoch nanoseconds
-databento::EpochNanos DateToEpochNanos(int year, int month, int day) {
+databento::UnixNanos DateToUnixNanos(int year, int month, int day) {
   std::tm time{};
   time.tm_year = year - 1900;
   // January is 0
   time.tm_mon = month - 1;
   time.tm_mday = day;
-  return databento::EpochNanos{std::chrono::seconds{::timegm(&time)}};
+  return databento::UnixNanos{std::chrono::seconds{::timegm(&time)}};
 }
 
 int main() {
-  auto client = databento::HistoricalBuilder{}.keyFromEnv().Build();
-  const databento::EpochNanos start = DateToEpochNanos(2022, 10, 3);
-  const databento::EpochNanos end = DateToEpochNanos(2022, 10, 4);
+  auto client = databento::HistoricalBuilder{}.SetKeyFromEnv().Build();
+  const databento::UnixNanos start = DateToUnixNanos(2022, 10, 3);
+  const databento::UnixNanos end = DateToUnixNanos(2022, 10, 4);
   const auto limit = 1000;
   client.TimeseriesStream(
-      "GLBX.MDP3", {"ESZ2"}, databento::Schema::Trades, start, end,
+      "GLBX.MDP3", start, end, {"ESZ2"}, databento::Schema::Trades,
       databento::SType::Native, databento::SType::ProductId, limit,
       [](databento::Metadata&& metadata) {
         std::cout << "Metadata (" << metadata.dataset << ", " << metadata.schema
