@@ -25,14 +25,15 @@ static constexpr auto kApiKey = "YOUR_API_KEY";
 
 int main() {
   auto client = HistoricalBuilder{}.SetKey(kApiKey).Build();
-  client.TimeseriesStream(
-      "GLBX.MDP3", "2022-06-10T14:30", "2022-05-10T14:40", {"ES"}, Schema::Mbo,
-      SType::Smart, SType::ProductId, {}, {}, [](const Record& record) {
-        const auto& trade_msg = record.get<TradeMsg>();
-        std::cout << trade_msg.hd.product_id << ": " << trade_msg.size << " @ "
-                  << trade_msg.price << std::endl;
-        return KeepGoing::Continue;
-      });
+  client.TimeseriesStream("GLBX.MDP3", "2022-06-10T14:30", "2022-05-10T14:40",
+                          {"ES"}, Schema::Trades, SType::Smart,
+                          SType::ProductId, {}, {}, [](const Record& record) {
+                            const auto& trade_msg = record.get<TradeMsg>();
+                            std::cout << trade_msg.hd.product_id << ": "
+                                      << trade_msg.size << " @ "
+                                      << trade_msg.price << std::endl;
+                            return KeepGoing::Continue;
+                          });
 }
 ```
 
