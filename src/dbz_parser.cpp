@@ -137,11 +137,11 @@ template <typename Input>
 databento::Record DbzParser<Input>::ParseRecord() {
   z_out_buffer_.pos = 0;
   do {
-    // std::cout << "ReadSuggestion: " << read_suggestion_ << std::endl;
+    // std::cout << "ReadSuggestion: " << read_suggestion_ << '\n';
     // std::cout << "Out pos: " << z_out_buffer_.pos
-    //           << " Size: " << z_out_buffer_.size << std::endl;
+    //           << " Size: " << z_out_buffer_.size << '\n';
     // std::cout << "In pos: " << z_in_buffer_.pos
-    //           << " Size: " << z_in_buffer_.size << std::endl;
+    //           << " Size: " << z_in_buffer_.size << '\n';
 
     // shift values in vector. A no-op if z_in_buffer_.pos == z_in_buffer_.size
     const std::size_t unread_size = z_in_buffer_.size - z_in_buffer_.pos;

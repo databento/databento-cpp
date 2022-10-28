@@ -31,6 +31,145 @@ class HistoricalTests : public ::testing::Test {
   mock::MockServer mock_server_{kApiKey};
 };
 
+TEST_F(HistoricalTests, TestBatchSubmitJob) {
+  const nlohmann::json kResp{
+      {"actual_size", 2022690},
+      {"bill_id", "73186317471eb623d161a1"},
+      {"billed_size", 5156064},
+      {"compression", "zstd"},
+      {"cost", 11.9089},
+      {"dataset", "XNAS.ITCH"},
+      {"delivery", "download"},
+      {"encoding", "dbz"},
+      {"end", "2022-07-03 00:00:00+00:00"},
+      {"id", "GLBX-20221031-L3RVE95CV5"},
+      {"is_example", false},
+      {"is_full_book", false},
+      {"limit", nullptr},
+      {"package_size", 2026761},
+      {"packaging", "none"},
+      {"pretty_px", false},
+      {"pretty_ts", false},
+      {"progress", 100},
+      {"record_count", 107418},
+      {"schema", "trades"},
+      {"split_duration", "day"},
+      {"split_size", nullptr},
+      {"split_symbols", false},
+      {"start", "2022-05-17 00:00:00+00:00"},
+      {"state", "done"},
+      {"stype_in", "native"},
+      {"stype_out", "product_id"},
+      /* test the fact the API returns a string when there's only one symbol */
+      {"symbols", "CLH3"},
+      {"ts_expiration", "2022-11-30 15:29:43.148303+00:00"},
+      {"ts_process_done", "2022-10-31 15:29:43.148303+00:00"},
+      {"ts_process_start", "2022-10-31 15:29:41.189821+00:00"},
+      {"ts_queued", "2022-10-31 15:29:39.130441+00:00"},
+      {"ts_received", "2022-10-31 15:29:38.380286+00:00"},
+      {"user_id", "TEST_USER"}};
+  mock_server_.MockPostJson("/v0/batch.submit_job",
+                            {{"dataset", dataset::kXnasItch},
+                             {"start", "2022-05-17"},
+                             {"end", "2022-07-03"},
+                             {"symbols", "CLH3"},
+                             {"schema", "trades"}},
+                            kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.BatchSubmitJob(
+      dataset::kXnasItch, "2022-05-17", "2022-07-03", {"CLH3"}, Schema::Trades);
+  EXPECT_EQ(res.symbols, std::vector<std::string>{"CLH3"});
+  EXPECT_NEAR(res.cost, 11.908, 1e-2);
+  EXPECT_EQ(res.encoding, Encoding::Dbz);
+  // null handling
+  EXPECT_EQ(res.split_size, 0);
+}
+
+TEST_F(HistoricalTests, TestBatchListJobs) {
+  const nlohmann::json kResp{
+      {{"actual_size", 2022690},
+       {"bill_id", "a670"},
+       {"billed_size", 5156064},
+       {"compression", "zstd"},
+       {"cost", 11.9089},
+       {"dataset", "GLBX.MDP3"},
+       {"delivery", "download"},
+       {"encoding", "dbz"},
+       {"end", "2022-09-27 00:00:00+00:00"},
+       {"id", "CKXF"},
+       {"is_example", false},
+       {"is_full_book", false},
+       {"limit", nullptr},
+       {"package_size", 2026761},
+       {"packaging", "none"},
+       {"pretty_px", false},
+       {"pretty_ts", false},
+       {"progress", 100},
+       {"record_count", 107418},
+       {"schema", "trades"},
+       {"split_duration", "day"},
+       {"split_size", nullptr},
+       {"split_symbols", false},
+       {"start", "2022-08-26 00:00:00+00:00"},
+       {"state", "done"},
+       {"stype_in", "native"},
+       {"stype_out", "product_id"},
+       {"symbols", "GEZ2"},
+       {"ts_expiration", "2022-11-30 15:27:10.148788+00:00"},
+       {"ts_process_done", "2022-10-31 15:27:10.148788+00:00"},
+       {"ts_process_start", "2022-10-31 15:27:08.018759+00:00"},
+       {"ts_queued", "2022-10-31 15:26:58.654241+00:00"},
+       {"ts_received", "2022-10-31 15:26:58.112496+00:00"},
+       {"user_id", "A_USER"}},
+      {{"actual_size", 2022690},
+       {"bill_id", "a1b7"},
+       {"billed_size", 5156064},
+       {"compression", "zstd"},
+       {"cost", 11.9089},
+       {"dataset", "GLBX.MDP3"},
+       {"delivery", "download"},
+       {"encoding", "dbz"},
+       {"end", "2022-09-27 00:00:00+00:00"},
+       {"id", "8UPL"},
+       {"is_example", false},
+       {"is_full_book", false},
+       {"limit", nullptr},
+       {"package_size", 2026761},
+       {"packaging", "none"},
+       {"pretty_px", false},
+       {"pretty_ts", false},
+       {"progress", 100},
+       {"record_count", 107418},
+       {"schema", "trades"},
+       {"split_duration", "day"},
+       {"split_size", nullptr},
+       {"split_symbols", false},
+       {"start", "2022-08-26 00:00:00+00:00"},
+       {"state", "done"},
+       {"stype_in", "native"},
+       {"stype_out", "product_id"},
+       {"symbols", {"GEZ2", "GEH3"}},
+       {"ts_expiration", "2022-11-30 15:29:03.010429+00:00"},
+       {"ts_process_done", "2022-10-31 15:29:03.010429+00:00"},
+       {"ts_process_start", "2022-10-31 15:29:01.104930+00:00"},
+       {"ts_queued", "2022-10-31 15:28:58.933725+00:00"},
+       {"ts_received", "2022-10-31 15:28:58.233520+00:00"},
+       {"user_id", "A_USER"}}};
+  mock_server_.MockGetJson("/v0/batch.list_jobs", kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.BatchListJobs();
+  ASSERT_EQ(res.size(), 2);
+  const std::vector<std::string> symbols{"GEZ2", "GEH3"};
+  EXPECT_EQ(res[1].symbols, symbols);
+  EXPECT_EQ(res[0].ts_expiration, "2022-11-30 15:27:10.148788+00:00");
+}
+
 TEST_F(HistoricalTests, TestMetadataListPublishers) {
   const nlohmann::json kResp{
       {"GLBX", 1},
@@ -303,15 +442,16 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
                            {{"dataset", dataset::kGlbxMdp3},
                             {"start", "2020-06-06T00:00"},
                             {"end", "2021-03-02T00:00"},
-                            {"symbols", "MESN1,MESQ1"}},
+                            {"symbols", "MESN1,MESQ1"},
+                            {"schema", "trades"}},
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res =
-      target.MetadataGetCost(dataset::kGlbxMdp3, "2020-06-06T00:00",
-                             "2021-03-02T00:00", {"MESN1", "MESQ1"});
+  const auto res = target.MetadataGetCost(
+      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00",
+      {"MESN1", "MESQ1"}, Schema::Trades);
   ASSERT_DOUBLE_EQ(res, 0.65783);
 }
 

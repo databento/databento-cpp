@@ -1,0 +1,77 @@
+#include <gtest/gtest.h>
+
+#include "databento/batch.hpp"
+#include "databento/constants.hpp"
+#include "databento/enums.hpp"
+
+namespace databento {
+namespace test {
+TEST(BatchTests, TestBatchJobToString) {
+  const BatchJob target{"aNiD",
+                        "USER",
+                        "57db",
+                        dataset::kXnasItch,
+                        12.39,
+                        {"CL.FUT"},
+                        SType::Smart,
+                        SType::ProductId,
+                        Schema::Ohlcv1M,
+                        {},
+                        {},
+                        {},
+                        Encoding::Dbz,
+                        Compression::None,
+                        SplitDuration::Week,
+                        {},
+                        false,
+                        Packaging::Tar,
+                        Delivery::Download,
+                        false,
+                        false,
+                        10250,
+                        35000000,
+                        20000000,
+                        0,
+                        JobState::Processing,
+                        {},
+                        {},
+                        {},
+                        {},
+                        {}};
+  const auto res = ToString(target);
+  ASSERT_EQ(res, R"(BatchJob {
+    id = "aNiD",
+    user_id = "USER",
+    bill_id = "57db",
+    dataset = "XNAS.ITCH",
+    cost = 12.39,
+    symbols = { "CL.FUT" },
+    stype_in = smart,
+    stype_out = product_id,
+    schema = ohlcv-1m,
+    start = "",
+    end = "",
+    limit = 0,
+    encoding = dbz,
+    compression = none,
+    split_duration = week,
+    split_size = 0,
+    split_symbols = false,
+    packaging = tar,
+    delivery = download,
+    is_full_book = false,
+    is_example = false,
+    record_count = 10250,
+    billed_size = 35000000,
+    actual_size = 20000000,
+    package_size = 0,
+    state = processing,
+    ts_received = "",
+    ts_queued = "",
+    ts_process_start = "",
+    ts_process_done = "",
+    ts_expiration = ""
+})");
+}
+}  // namespace test
+}  // namespace databento

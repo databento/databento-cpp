@@ -122,6 +122,9 @@ template <>
 std::string ParseAt(const std::string& endpoint, const nlohmann::json& json,
                     const std::string& key) {
   const auto& val_json = ::CheckedAt(endpoint, json, key);
+  if (val_json.is_null()) {
+    return {};
+  }
   if (!val_json.is_string()) {
     throw JsonResponseError::TypeMismatch(endpoint, key + " string", val_json);
   }
@@ -132,6 +135,9 @@ template <>
 std::size_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
                     const std::string& key) {
   const auto& val_json = ::CheckedAt(endpoint, json, key);
+  if (val_json.is_null()) {
+    return 0;
+  }
   if (!val_json.is_number_unsigned()) {
     throw JsonResponseError::TypeMismatch(endpoint, key + " unsigned number",
                                           val_json);
@@ -140,15 +146,16 @@ std::size_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
 }
 
 template <>
-databento::UnixNanos ParseAt(const std::string& endpoint,
-                             const nlohmann::json& json,
-                             const std::string& key) {
+double ParseAt(const std::string& endpoint, const nlohmann::json& json,
+               const std::string& key) {
   const auto& val_json = ::CheckedAt(endpoint, json, key);
-  if (!val_json.is_number_unsigned()) {
-    throw JsonResponseError::TypeMismatch(endpoint, key + " unsigned number",
-                                          val_json);
+  if (val_json.is_null()) {
+    return 0;
   }
-  return databento::UnixNanos{std::chrono::nanoseconds{val_json}};
+  if (!val_json.is_number()) {
+    throw JsonResponseError::TypeMismatch(endpoint, key + " number", val_json);
+  }
+  return val_json;
 }
 
 template <>
@@ -156,26 +163,34 @@ std::vector<std::string> ParseAt(const std::string& endpoint,
                                  const nlohmann::json& json,
                                  const std::string& key) {
   const auto& symbols_json = ::CheckedAt(endpoint, json, key);
+  // if there's only one symbol, it returns a string not an array
+  if (symbols_json.is_string()) {
+    return {symbols_json};
+  }
   if (!symbols_json.is_array()) {
     throw JsonResponseError::TypeMismatch(endpoint, key + " array", json);
   }
   std::vector<std::string> res;
-  res.reserve(json.size());
-  for (const auto& item : json.items()) {
+  res.reserve(symbols_json.size());
+  for (const auto& item : symbols_json.items()) {
     res.emplace_back(item.value());
   }
   return res;
 }
 
+constexpr auto kDefaultSTypeIn = databento::SType::Native;
+constexpr auto kDefaultSTypeOut = databento::SType::ProductId;
+
 databento::BatchJob Parse(const std::string& endpoint,
                           const nlohmann::json& json) {
   using databento::Compression;
   using databento::Delivery;
+  using databento::Encoding;
+  using databento::JobState;
   using databento::Packaging;
   using databento::Schema;
   using databento::SplitDuration;
   using databento::SType;
-  using databento::UnixNanos;
 
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(endpoint, "object", json);
@@ -185,27 +200,36 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.user_id = ParseAt<std::string>(endpoint, json, "user_id");
   res.bill_id = ParseAt<std::string>(endpoint, json, "bill_id");
   res.dataset = ParseAt<std::string>(endpoint, json, "dataset");
-  res.symbols = ::ParseAt<std::vector<std::string>>(endpoint, json, "symbols");
-  res.stype_in = ::FromCheckedAtString<SType>(endpoint, json, "stype_in");
-  res.stype_out = ::FromCheckedAtString<SType>(endpoint, json, "stype_out");
-  res.schema = ::FromCheckedAtString<Schema>(endpoint, json, "schema");
-  res.start = ::ParseAt<UnixNanos>(endpoint, json, "start");
-  res.end = ::ParseAt<UnixNanos>(endpoint, json, "end");
-  res.limit = ::ParseAt<std::size_t>(endpoint, json, "limit");
+  res.symbols = ParseAt<std::vector<std::string>>(endpoint, json, "symbols");
+  res.cost = ParseAt<double>(endpoint, json, "cost");
+  res.stype_in = FromCheckedAtString<SType>(endpoint, json, "stype_in");
+  res.stype_out = FromCheckedAtString<SType>(endpoint, json, "stype_out");
+  res.schema = FromCheckedAtString<Schema>(endpoint, json, "schema");
+  res.start = ParseAt<std::string>(endpoint, json, "start");
+  res.end = ParseAt<std::string>(endpoint, json, "end");
+  res.limit = ParseAt<std::size_t>(endpoint, json, "limit");
+  res.encoding = FromCheckedAtString<Encoding>(endpoint, json, "encoding");
   res.compression =
-      ::FromCheckedAtString<Compression>(endpoint, json, "compression");
+      FromCheckedAtString<Compression>(endpoint, json, "compression");
   res.split_duration =
-      ::FromCheckedAtString<SplitDuration>(endpoint, json, "split_duration");
-  res.split_size = ::ParseAt<std::size_t>(endpoint, json, "split_size");
-  res.split_symbols = ::ParseAt<bool>(endpoint, json, "split_symbols");
-  res.packaging = ::FromCheckedAtString<Packaging>(endpoint, json, "packaging");
-  res.delivery = ::FromCheckedAtString<Delivery>(endpoint, json, "delivery");
-  res.is_full_book = ::ParseAt<bool>(endpoint, json, "is_full_book");
-  res.is_example = ::ParseAt<bool>(endpoint, json, "is_example");
-  res.record_count = ::ParseAt<std::size_t>(endpoint, json, "record_count");
-  res.billed_size = ::ParseAt<std::size_t>(endpoint, json, "billed_size");
-  res.actual_size = ::ParseAt<std::size_t>(endpoint, json, "actual_size");
-  res.package_size = ::ParseAt<std::size_t>(endpoint, json, "package_size");
+      FromCheckedAtString<SplitDuration>(endpoint, json, "split_duration");
+  res.split_size = ParseAt<std::size_t>(endpoint, json, "split_size");
+  res.split_symbols = ParseAt<bool>(endpoint, json, "split_symbols");
+  res.packaging = FromCheckedAtString<Packaging>(endpoint, json, "packaging");
+  res.delivery = FromCheckedAtString<Delivery>(endpoint, json, "delivery");
+  res.is_full_book = ParseAt<bool>(endpoint, json, "is_full_book");
+  res.is_example = ParseAt<bool>(endpoint, json, "is_example");
+  res.record_count = ParseAt<std::size_t>(endpoint, json, "record_count");
+  res.billed_size = ParseAt<std::size_t>(endpoint, json, "billed_size");
+  res.actual_size = ParseAt<std::size_t>(endpoint, json, "actual_size");
+  res.package_size = ParseAt<std::size_t>(endpoint, json, "package_size");
+  res.state = FromCheckedAtString<JobState>(endpoint, json, "state");
+  res.ts_received = ParseAt<std::string>(endpoint, json, "ts_received");
+  res.ts_queued = ParseAt<std::string>(endpoint, json, "ts_queued");
+  res.ts_process_start =
+      ParseAt<std::string>(endpoint, json, "ts_process_start");
+  res.ts_process_done = ParseAt<std::string>(endpoint, json, "ts_process_done");
+  res.ts_expiration = ParseAt<std::string>(endpoint, json, "ts_expiration");
   return res;
 }
 }  // namespace
@@ -223,17 +247,19 @@ Historical::Historical(std::string key, std::string gateway, std::uint16_t port)
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema) {
-  return this->BatchSubmitJob(
-      dataset, start, end, symbols, schema, SplitDuration::Day, {},
-      Packaging::None, Delivery::Download, SType::Native, SType::ProductId, {});
+  return this->BatchSubmitJob(dataset, start, end, symbols, schema,
+                              SplitDuration::Day, {}, Packaging::None,
+                              Delivery::Download, kDefaultSTypeIn,
+                              kDefaultSTypeOut, {});
 }
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema) {
-  return this->BatchSubmitJob(
-      dataset, start, end, symbols, schema, SplitDuration::Day, {},
-      Packaging::None, Delivery::Download, SType::Native, SType::ProductId, {});
+  return this->BatchSubmitJob(dataset, start, end, symbols, schema,
+                              SplitDuration::Day, {}, Packaging::None,
+                              Delivery::Download, kDefaultSTypeIn,
+                              kDefaultSTypeOut, {});
 }
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, UnixNanos start, UnixNanos end,
@@ -601,14 +627,14 @@ std::size_t Historical::MetadataGetRecordCount(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema) {
   return this->MetadataGetRecordCount(dataset, start, end, symbols, schema,
-                                      SType::Native, {});
+                                      kDefaultSTypeIn, {});
 }
 std::size_t Historical::MetadataGetRecordCount(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema) {
   return this->MetadataGetRecordCount(dataset, start, end, symbols, schema,
-                                      SType::Native, {});
+                                      kDefaultSTypeIn, {});
 }
 std::size_t Historical::MetadataGetRecordCount(
     const std::string& dataset, UnixNanos start, UnixNanos end,
@@ -650,14 +676,14 @@ std::size_t Historical::MetadataGetBillableSize(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema) {
   return this->MetadataGetBillableSize(dataset, start, end, symbols, schema,
-                                       SType::Native, {});
+                                       kDefaultSTypeIn, {});
 }
 std::size_t Historical::MetadataGetBillableSize(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema) {
   return this->MetadataGetBillableSize(dataset, start, end, symbols, schema,
-                                       SType::Native, {});
+                                       kDefaultSTypeIn, {});
 }
 std::size_t Historical::MetadataGetBillableSize(
     const std::string& dataset, UnixNanos start, UnixNanos end,
@@ -697,17 +723,19 @@ std::size_t Historical::MetadataGetBillableSize(const httplib::Params& params) {
 
 double Historical::MetadataGetCost(const std::string& dataset, UnixNanos start,
                                    UnixNanos end,
-                                   const std::vector<std::string>& symbols) {
-  return this->MetadataGetCost(dataset, start, end, symbols, Schema::Trades,
-                               FeedMode::HistoricalStreaming, SType::Native,
+                                   const std::vector<std::string>& symbols,
+                                   Schema schema) {
+  return this->MetadataGetCost(dataset, start, end, symbols, schema,
+                               FeedMode::HistoricalStreaming, kDefaultSTypeIn,
                                {});
 }
 double Historical::MetadataGetCost(const std::string& dataset,
                                    const std::string& start,
                                    const std::string& end,
-                                   const std::vector<std::string>& symbols) {
-  return this->MetadataGetCost(dataset, start, end, symbols, Schema::Trades,
-                               FeedMode::HistoricalStreaming, SType::Native,
+                                   const std::vector<std::string>& symbols,
+                                   Schema schema) {
+  return this->MetadataGetCost(dataset, start, end, symbols, schema,
+                               FeedMode::HistoricalStreaming, kDefaultSTypeIn,
                                {});
 }
 double Historical::MetadataGetCost(const std::string& dataset, UnixNanos start,
@@ -833,8 +861,8 @@ void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
                                   const std::vector<std::string>& symbols,
                                   Schema schema,
                                   const RecordCallback& record_callback) {
-  this->TimeseriesStream(dataset, start, end, symbols, schema, SType::Native,
-                         SType::ProductId, {}, {}, record_callback);
+  this->TimeseriesStream(dataset, start, end, symbols, schema, kDefaultSTypeIn,
+                         kDefaultSTypeOut, {}, {}, record_callback);
 }
 void Historical::TimeseriesStream(const std::string& dataset,
                                   const std::string& start,
@@ -842,8 +870,8 @@ void Historical::TimeseriesStream(const std::string& dataset,
                                   const std::vector<std::string>& symbols,
                                   Schema schema,
                                   const RecordCallback& record_callback) {
-  this->TimeseriesStream(dataset, start, end, symbols, schema, SType::Native,
-                         SType::ProductId, {}, {}, record_callback);
+  this->TimeseriesStream(dataset, start, end, symbols, schema, kDefaultSTypeIn,
+                         kDefaultSTypeOut, {}, {}, record_callback);
 }
 void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
                                   UnixNanos end,
@@ -942,7 +970,7 @@ databento::FileBento Historical::TimeseriesStreamToFile(
     const std::vector<std::string>& symbols, Schema schema,
     const std::string& file_path) {
   return this->TimeseriesStreamToFile(dataset, start, end, symbols, schema,
-                                      SType::Native, SType::ProductId, {},
+                                      kDefaultSTypeIn, kDefaultSTypeOut, {},
                                       file_path);
 }
 databento::FileBento Historical::TimeseriesStreamToFile(
@@ -950,7 +978,7 @@ databento::FileBento Historical::TimeseriesStreamToFile(
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema, const std::string& file_path) {
   return this->TimeseriesStreamToFile(dataset, start, end, symbols, schema,
-                                      SType::Native, SType::ProductId, {},
+                                      kDefaultSTypeIn, kDefaultSTypeOut, {},
                                       file_path);
 }
 databento::FileBento Historical::TimeseriesStreamToFile(

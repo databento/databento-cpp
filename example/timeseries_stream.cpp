@@ -27,14 +27,10 @@ int main() {
       databento::dataset::kGlbxMdp3, start, end, {"ESZ2"},
       databento::Schema::Trades, databento::SType::Native,
       databento::SType::ProductId, limit,
-      [](databento::Metadata&& metadata) {
-        std::cout << "Metadata (" << metadata.dataset << ", " << metadata.schema
-                  << "): " << metadata.record_count << " records" << std::endl;
-      },
+      [](databento::Metadata&& metadata) { std::cout << metadata << '\n'; },
       [](const databento::Record& record) {
         const auto& trade_msg = record.get<databento::TradeMsg>();
-        std::cout << "Received trade " << std::setw(3) << trade_msg.size
-                  << " @ " << trade_msg.price << std::endl;
+        std::cout << trade_msg << '\n';
         return databento::KeepGoing::Continue;
       });
 

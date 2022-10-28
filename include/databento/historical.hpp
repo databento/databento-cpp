@@ -130,11 +130,12 @@ class Historical {
                                       Schema schema, SType stype_in,
                                       std::size_t limit);
   double MetadataGetCost(const std::string& dataset, UnixNanos start,
-                         UnixNanos end,
-                         const std::vector<std::string>& symbols);
+                         UnixNanos end, const std::vector<std::string>& symbols,
+                         Schema schema);
   double MetadataGetCost(const std::string& dataset, const std::string& start,
                          const std::string& end,
-                         const std::vector<std::string>& symbols);
+                         const std::vector<std::string>& symbols,
+                         Schema schema);
   double MetadataGetCost(const std::string& dataset, UnixNanos start,
                          UnixNanos end, const std::vector<std::string>& symbols,
                          Schema schema, FeedMode mode, SType stype_in,

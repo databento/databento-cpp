@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -18,9 +19,10 @@ struct BatchJob {
   SType stype_in;
   SType stype_out;
   Schema schema;
-  UnixNanos start;
-  UnixNanos end;
+  std::string start;
+  std::string end;
   std::size_t limit;
+  Encoding encoding;
   Compression compression;
   SplitDuration split_duration;
   std::size_t split_size;
@@ -34,10 +36,13 @@ struct BatchJob {
   std::size_t actual_size;
   std::size_t package_size;
   JobState state;
-  UnixNanos ts_received;
-  UnixNanos ts_queued;
-  UnixNanos ts_process_start;
-  UnixNanos ts_process_done;
-  UnixNanos ts_expiration;
+  std::string ts_received;
+  std::string ts_queued;
+  std::string ts_process_start;
+  std::string ts_process_done;
+  std::string ts_expiration;
 };
+
+std::string ToString(const BatchJob& batch_job);
+std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job);
 }  // namespace databento

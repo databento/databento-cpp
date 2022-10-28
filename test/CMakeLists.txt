@@ -23,11 +23,16 @@ set(
 
 set(
   test_sources
+  src/batch_tests.cpp
   src/datetime_tests.cpp
+  src/dbz_tests.cpp
   src/dbz_parser_tests.cpp
   src/historical_tests.cpp
   src/mock_server.cpp
+  src/record_tests.cpp
   src/shared_channel_tests.cpp
+  src/stream_op_helper_tests.cpp
+  src/symbology_tests.cpp
 )
 add_executable(${PROJECT_NAME} ${test_headers} ${test_sources})
 find_package(Threads REQUIRED)
@@ -35,7 +40,7 @@ find_package(Threads REQUIRED)
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC
-    ${CMAKE_THREAD_LIBS_INIT}
+    Threads::Threads
 )
 
 target_include_directories(

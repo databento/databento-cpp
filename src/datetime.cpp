@@ -4,8 +4,12 @@
 #include <sstream>
 
 namespace databento {
-std::string ToString(UnixNanos epoch_nanos) {
-  return std::to_string(epoch_nanos.time_since_epoch().count());
+std::string ToString(UnixNanos unix_nanos) {
+  return std::to_string(unix_nanos.time_since_epoch().count());
+}
+
+std::string ToString(TimeDeltaNanos td_nanos) {
+  return std::to_string(td_nanos.count());
 }
 
 std::string DateFromIso8601Int(std::uint32_t date_int) {

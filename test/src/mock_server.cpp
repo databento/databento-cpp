@@ -41,6 +41,22 @@ void MockServer::MockGetJson(const std::string& path,
   });
 }
 
+void MockServer::MockPostJson(const std::string& path,
+                              const std::map<std::string, std::string>& params,
+                              const nlohmann::json& json) {
+  server_.Post(path, [json, params](const httplib::Request& req,
+                                    httplib::Response& resp) {
+    if (!req.has_header("Authorization")) {
+      resp.status = 401;
+      return;
+    }
+    auto _auth = req.get_header_value("Authorization");
+    CheckParams(params, req);
+    resp.set_content(json.dump(), "application/json");
+    resp.status = 200;
+  });
+}
+
 void MockServer::MockStreamDbz(const std::string& path,
                                const std::map<std::string, std::string>& params,
                                const std::string& dbz_path) {
@@ -84,7 +100,7 @@ void MockServer::CheckParams(const std::map<std::string, std::string>& params,
     if (!req.has_param(param.first)) {
       std::ostringstream err_msg;
       err_msg << "Missing query param " << param.first;
-      std::cerr << err_msg.str() << std::endl;
+      std::cerr << err_msg.str() << '\n';
       throw std::runtime_error{err_msg.str()};
     }
     if (req.get_param_value(param.first) != param.second) {
@@ -92,7 +108,7 @@ void MockServer::CheckParams(const std::map<std::string, std::string>& params,
       err_msg << "Incorrect query param value for " << param.first
               << ". Expected " << param.second << ", found "
               << req.get_param_value(param.first);
-      std::cerr << err_msg.str() << std::endl;
+      std::cerr << err_msg.str() << '\n';
       throw std::runtime_error{err_msg.str()};
     }
   }

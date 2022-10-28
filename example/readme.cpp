@@ -1,10 +1,7 @@
 // Duplicate of the example usage code from the README.md to ensure
 // it compiles and to be able to clang-format it.
 // NOLINTBEGIN(google-build-using-namespace)
-#include <chrono>
-#include <ctime>
 #include <databento/historical.hpp>
-#include <iomanip>
 #include <iostream>
 
 using namespace databento;
@@ -17,9 +14,7 @@ int main() {
                           {"ES"}, Schema::Trades, SType::Smart,
                           SType::ProductId, {}, {}, [](const Record& record) {
                             const auto& trade_msg = record.get<TradeMsg>();
-                            std::cout << trade_msg.hd.product_id << ": "
-                                      << trade_msg.size << " @ "
-                                      << trade_msg.price << std::endl;
+                            std::cout << trade_msg << '\n';
                             return KeepGoing::Continue;
                           });
 }

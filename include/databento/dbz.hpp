@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -77,4 +78,11 @@ inline bool operator==(const Metadata& lhs, const Metadata& rhs) {
          lhs.partial == rhs.partial && lhs.not_found == rhs.not_found &&
          lhs.mappings == rhs.mappings;
 }
+
+std::string ToString(const Metadata& metadata);
+std::ostream& operator<<(std::ostream& stream, const Metadata& metadata);
+std::string ToString(const SymbolMapping& mapping);
+std::ostream& operator<<(std::ostream& stream, const SymbolMapping& mapping);
+std::string ToString(const MappingInterval& interval);
+std::ostream& operator<<(std::ostream& stream, const MappingInterval& interval);
 }  // namespace databento

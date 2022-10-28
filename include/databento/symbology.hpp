@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -22,4 +23,11 @@ struct SymbologyResolution {
   std::vector<std::string> partial;
   std::vector<std::string> not_found;
 };
+
+std::string ToString(const StrMappingInterval& mapping_interval);
+std::string ToString(const SymbologyResolution& sym_res);
+std::ostream& operator<<(std::ostream& stream,
+                         const StrMappingInterval& mapping_interval);
+std::ostream& operator<<(std::ostream& stream,
+                         const SymbologyResolution& sym_res);
 }  // namespace databento

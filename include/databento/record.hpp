@@ -4,6 +4,7 @@
 #include <chrono>  // nanoseconds
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 #include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
@@ -169,6 +170,20 @@ bool operator==(const MbpMsg<N>& lhs, const MbpMsg<N>& rhs) {
          lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
          lhs.sequence == rhs.sequence && lhs.booklevel == rhs.booklevel;
 }
+
+template <std::size_t N>
+std::string ToString(const MbpMsg<N>& mbp_msg);
+template <>
+std::string ToString(const Mbp1Msg& mbp_msg);
+template <>
+std::string ToString(const Mbp10Msg& mbp_msg);
+
+template <std::size_t N>
+std::ostream& operator<<(std::ostream& stream, const MbpMsg<N>& mbp_msg);
+template <>
+std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp_msg);
+template <>
+std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp_msg);
 }  // namespace detail
 
 inline bool operator==(const TradeMsg& lhs, const TradeMsg& rhs) {
@@ -184,4 +199,15 @@ inline bool operator==(const OhlcvMsg& lhs, const OhlcvMsg& rhs) {
          lhs.low == rhs.low && lhs.close == rhs.close &&
          lhs.volume == rhs.volume;
 }
+
+std::string ToString(const RecordHeader& header);
+std::ostream& operator<<(std::ostream& stream, const RecordHeader& header);
+std::string ToString(const TickMsg& tick_msg);
+std::ostream& operator<<(std::ostream& stream, const TickMsg& tick_msg);
+std::string ToString(const BidAskPair& ba_pair);
+std::ostream& operator<<(std::ostream& stream, const BidAskPair& ba_pair);
+std::string ToString(const TradeMsg& trade_msg);
+std::ostream& operator<<(std::ostream& stream, const TradeMsg& trade_msg);
+std::string ToString(const OhlcvMsg& ohlcv_msg);
+std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg);
 }  // namespace databento

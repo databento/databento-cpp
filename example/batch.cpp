@@ -11,7 +11,7 @@ int main() {
 
   const auto job =
       client.BatchSubmitJob(databento::dataset::kGlbxMdp3, "2022-08-26",
-                            "2022-09-27", {"GE"}, databento::Schema::Trades);
+                            "2022-09-27", {"GEZ2"}, databento::Schema::Trades);
   const auto all_jobs = client.BatchListJobs();
 
   const auto all_job_it = std::find_if(
@@ -19,9 +19,9 @@ int main() {
       [&job](const databento::BatchJob& a_job) { return job.id == a_job.id; });
 
   if (all_job_it == all_jobs.end()) {
-    std::cout << "Couldn't find submitted job" << std::endl;
+    std::cout << "Couldn't find submitted job\n";
   } else {
-    std::cout << "Found submitted job with ID " << all_job_it->id << std::endl;
+    std::cout << "Found submitted job: " << *all_job_it << '\n';
   }
 
   return 0;

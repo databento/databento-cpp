@@ -31,6 +31,9 @@ class MockServer {
   void MockGetJson(const std::string& path,
                    const std::map<std::string, std::string>& params,
                    const nlohmann::json& json);
+  void MockPostJson(const std::string& path,
+                    const std::map<std::string, std::string>& params,
+                    const nlohmann::json& json);
   void MockStreamDbz(const std::string& path,
                      const std::map<std::string, std::string>& params,
                      const std::string& dbz_path);

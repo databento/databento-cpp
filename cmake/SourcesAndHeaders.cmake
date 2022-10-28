@@ -16,16 +16,20 @@ set(headers
   include/databento/detail/http_client.hpp
   include/databento/detail/shared_channel.hpp
   src/scoped_thread.hpp
+  src/stream_op_helper.hpp
 )
 
 set(sources
+  src/batch.cpp
   src/datetime.cpp
+  src/dbz.cpp
   src/dbz_parser.cpp
   src/enums.cpp
   src/exceptions.cpp
   src/file_bento.cpp
   src/historical.cpp
   src/record.cpp
+  src/symbology.cpp
   src/detail/file_stream.cpp
   src/detail/http_client.cpp
   src/detail/shared_channel.cpp

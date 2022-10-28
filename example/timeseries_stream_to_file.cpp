@@ -19,8 +19,7 @@ int main() {
       databento::SType::ProductId, limit, "ESZ2-ohlcv1m-20201003-20201004.dbz");
   file_bento.Replay([](const databento::Record record) {
     const auto& ohlcv_bar = record.get<databento::OhlcvMsg>();
-    std::cout << "open: " << ohlcv_bar.high << " close: " << ohlcv_bar.close
-              << std::endl;
+    std::cout << ohlcv_bar << '\n';
     return databento::KeepGoing::Continue;
   });
   return 0;
