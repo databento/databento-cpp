@@ -597,6 +597,55 @@ double Historical::MetadataListUnitPrices(const std::string& dataset,
   return json;
 }
 
+std::size_t Historical::MetadataGetRecordCount(
+    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::vector<std::string>& symbols, Schema schema) {
+  return this->MetadataGetRecordCount(dataset, start, end, symbols, schema,
+                                      SType::Native, {});
+}
+std::size_t Historical::MetadataGetRecordCount(
+    const std::string& dataset, const std::string& start,
+    const std::string& end, const std::vector<std::string>& symbols,
+    Schema schema) {
+  return this->MetadataGetRecordCount(dataset, start, end, symbols, schema,
+                                      SType::Native, {});
+}
+std::size_t Historical::MetadataGetRecordCount(
+    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+    std::size_t limit) {
+  httplib::Params params{{"dataset", dataset},
+                         {"start", ToString(start)},
+                         {"end", ToString(end)},
+                         {"schema", ToString(schema)},
+                         {"stype_in", ToString(stype_in)}};
+  ::SetIfPositive(&params, "limit", limit);
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  return this->MetadataGetRecordCount(params);
+}
+std::size_t Historical::MetadataGetRecordCount(
+    const std::string& dataset, const std::string& start,
+    const std::string& end, const std::vector<std::string>& symbols,
+    Schema schema, SType stype_in, std::size_t limit) {
+  httplib::Params params{{"dataset", dataset},
+                         {"start", start},
+                         {"end", end},
+                         {"schema", ToString(schema)},
+                         {"stype_in", ToString(stype_in)}};
+  ::SetIfPositive(&params, "limit", limit);
+  ::SetIfNotEmpty(&params, "symbols", symbols);
+  return this->MetadataGetRecordCount(params);
+}
+std::size_t Historical::MetadataGetRecordCount(const httplib::Params& params) {
+  static const std::string kPath = ::BuildMetadataPath(".get_record_count");
+  const nlohmann::json json = client_.GetJson(kPath, params);
+  if (!json.is_number_unsigned()) {
+    throw JsonResponseError::TypeMismatch("Historical::MetadataGetRecordCount",
+                                          "unsigned number", json);
+  }
+  return json;
+}
+
 std::size_t Historical::MetadataGetBillableSize(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema) {

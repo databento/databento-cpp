@@ -89,6 +89,26 @@ class Historical {
                                          Schema schema);
   double MetadataListUnitPrices(const std::string& dataset, FeedMode mode,
                                 Schema schema);
+  std::size_t MetadataGetRecordCount(const std::string& dataset,
+                                     UnixNanos start, UnixNanos end,
+                                     const std::vector<std::string>& symbols,
+                                     Schema schema);
+  std::size_t MetadataGetRecordCount(const std::string& dataset,
+                                     const std::string& start,
+                                     const std::string& end,
+                                     const std::vector<std::string>& symbols,
+                                     Schema schema);
+  std::size_t MetadataGetRecordCount(const std::string& dataset,
+                                     UnixNanos start, UnixNanos end,
+                                     const std::vector<std::string>& symbols,
+                                     Schema schema, SType stype_in,
+                                     std::size_t limit);
+  std::size_t MetadataGetRecordCount(const std::string& dataset,
+                                     const std::string& start,
+                                     const std::string& end,
+                                     const std::vector<std::string>& symbols,
+                                     Schema schema, SType stype_in,
+                                     std::size_t limit);
   std::size_t MetadataGetBillableSize(const std::string& dataset,
                                       UnixNanos start, UnixNanos end,
                                       const std::vector<std::string>& symbols,
@@ -208,6 +228,7 @@ class Historical {
 
   BatchJob BatchSubmitJob(const HttplibParams& params);
   std::vector<BatchJob> BatchListJobs(const HttplibParams& params);
+  std::size_t MetadataGetRecordCount(const HttplibParams& params);
   std::size_t MetadataGetBillableSize(const HttplibParams& params);
   double MetadataGetCost(const HttplibParams& params);
   FieldsByDatasetEncodingAndSchema MetadataListFields(
