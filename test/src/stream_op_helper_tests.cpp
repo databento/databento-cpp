@@ -29,7 +29,7 @@ TEST(StreamOpHelperTests, TestSingleLine) {
   EXPECT_EQ(stream.str(),
             "TestClass { schema = ohlcv-1d, dataset = \"XNAS.ITCH\", size = "
             "10, i8 = -10, u8 = 16 }");
-};
+}
 
 TEST(StreamOpHelperTests, TestMultiLine) {
   std::ostringstream stream;
@@ -51,7 +51,7 @@ TEST(StreamOpHelperTests, TestMultiLine) {
     is_full = true,
     action = 'A'
 })");
-};
+}
 
 TEST(StreamOpHelperTests, TestWithVector) {
   const std::vector<Schema> test_data{Schema::Ohlcv1D, Schema::Mbp10,
