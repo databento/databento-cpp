@@ -9,6 +9,7 @@ Checks: >
     google-*,
     -google-readability-avoid-underscore-in-googletest-name,
     -google-readability-casting,
+    -google-runtime-references,
     modernize-deprecated-headers,
     misc-*,
     -misc-non-private-member-variables-in-classes,
