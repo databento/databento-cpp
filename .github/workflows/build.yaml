@@ -10,25 +10,27 @@ jobs:
   ubuntu:
     strategy:
       matrix:
-        compiler: [clang, gcc]
+        compiler: [clang++, g++]
 
-    name: build - ubuntu-latest - (${{ matrix.compiler}})
+    name: build - ubuntu-latest - ${{ matrix.compiler}}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install dependencies
-        run: sudo apt-get install libzstd-dev ninja-build libgtest-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install libzstd-dev ninja-build
       - name: Install gtest
         uses: MarkusJx/googletest-installer@v1.1
       - name: CMake configure
-        run: cmake -S . -B build \
-          -GNinja \
-          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
-          -DCMAKE_ENABLE_EXAMPLES=1 \
-          -DDATABENTO_ENABLE_CLANG_TIDY=1 \
-          -DDATABENTO_ENABLE_CPPCHECK=1
+        run: |
+          cmake -S . -B build \
+            -GNinja \
+            -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DDATABENTO_ENABLE_EXAMPLES=1 \
+            -DDATABENTO_ENABLE_CLANG_TIDY=1
       - name: CMake build
         run: cmake --build build
       - name: Unit tests

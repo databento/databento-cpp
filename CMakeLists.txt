@@ -310,7 +310,8 @@ if(${PROJECT_NAME_UPPERCASE}_ENABLE_UNIT_TESTING)
 endif()
 
 if(${PROJECT_NAME_UPPERCASE}_ENABLE_EXAMPLES)
-  unset(CMAKE_CXX_CPPCHECK) # disable cppcheck for tests
+  unset(CMAKE_CXX_CPPCHECK) # disable cppcheck for examples
+  unset(CMAKE_CXX_CLANG_TIDY) # disable clang-tidy for examples
   message(STATUS "Build examples for the project.")
   add_subdirectory(example)
 endif()

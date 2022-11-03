@@ -334,7 +334,7 @@ std::vector<databento::BatchJob> Historical::BatchListJobs(
   static const std::string kPath = ::BuildBatchPath(".list_jobs");
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_array()) {
-    JsonResponseError::TypeMismatch(kEndpoint, "array", json);
+    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
   std::vector<BatchJob> jobs;
   jobs.reserve(json.size());
