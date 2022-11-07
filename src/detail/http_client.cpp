@@ -46,24 +46,29 @@ nlohmann::json HttpClient::PostJson(const std::string& path,
 
 void HttpClient::GetRawStream(const std::string& path,
                               const httplib::Params& params,
-                              httplib::ContentReceiver callback) {
+                              const httplib::ContentReceiver& callback) {
   const std::string full_path = httplib::append_query_params(path, params);
+  std::string err_body{};
   int err_status{};
   httplib::Result res = client_.Get(
       full_path,
       [&err_status](const httplib::Response& resp) {
-        // only continue if good response status
         if (HttpClient::IsErrorStatus(resp.status)) {
-          // instead of throwing here, store the HTTP status and return false to
-          // have the client close the connection
           err_status = resp.status;
-          return false;
         }
         return true;
       },
-      std::move(callback));
+      [&callback, &err_body, &err_status](const char* data,
+                                          std::size_t length) {
+        // if an error response was received, read all content into err_status
+        if (err_status > 0) {
+          err_body.append(data, length);
+          return true;
+        }
+        return callback(data, length);
+      });
   if (err_status > 0) {
-    throw HttpResponseError{path, err_status, ""};
+    throw HttpResponseError{path, err_status, std::move(err_body)};
   }
   if (res.error() != httplib::Error::Success) {
     throw HttpRequestError{path, res.error()};

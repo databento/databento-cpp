@@ -14,9 +14,11 @@ int MockServer::ListenOnThread() {
   return port_;
 }
 
-void MockServer::MockBadRequest(const std::string& path) {
-  server_.Get(path, [](const httplib::Request&, httplib::Response& resp) {
+void MockServer::MockBadRequest(const std::string& path,
+                                const nlohmann::json& json) {
+  server_.Get(path, [json](const httplib::Request&, httplib::Response& resp) {
     resp.status = 400;
+    resp.body = json.dump();
   });
 }
 

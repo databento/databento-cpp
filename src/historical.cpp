@@ -199,9 +199,9 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.id = ::CheckedAt(endpoint, json, "id");
   res.user_id = ParseAt<std::string>(endpoint, json, "user_id");
   res.bill_id = ParseAt<std::string>(endpoint, json, "bill_id");
+  res.cost = ParseAt<double>(endpoint, json, "cost");
   res.dataset = ParseAt<std::string>(endpoint, json, "dataset");
   res.symbols = ParseAt<std::vector<std::string>>(endpoint, json, "symbols");
-  res.cost = ParseAt<double>(endpoint, json, "cost");
   res.stype_in = FromCheckedAtString<SType>(endpoint, json, "stype_in");
   res.stype_out = FromCheckedAtString<SType>(endpoint, json, "stype_out");
   res.schema = FromCheckedAtString<Schema>(endpoint, json, "schema");

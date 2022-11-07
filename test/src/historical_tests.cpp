@@ -590,7 +590,9 @@ TEST_F(HistoricalTests, TestTimeseriesStream_NoMetadataCallback) {
 
 // should get helpful message if there's a problem with the request
 TEST_F(HistoricalTests, TestTimeseriesStream_BadRequest) {
-  mock_server_.MockBadRequest("/v0/timeseries.stream");
+  const nlohmann::json resp{
+      {"detail", "Authorization failed: illegal chars in username."}};
+  mock_server_.MockBadRequest("/v0/timeseries.stream", resp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
@@ -604,9 +606,13 @@ TEST_F(HistoricalTests, TestTimeseriesStream_BadRequest) {
         [](const Record&) { return KeepGoing::Continue; });
     FAIL() << "Call to TimeseriesStream was supposed to throw";
   } catch (const std::exception& exc) {
-    ASSERT_STREQ(exc.what(),
-                 "Received an error response from request to "
-                 "/v0/timeseries.stream with status 400 and body \"\"");
+    ASSERT_STREQ(
+        exc.what(),
+        "Received an error response from request to "
+        "/v0/timeseries.stream with status 400 and body "
+        "'{\"detail\":\"Authorization failed: illegal chars in username.\"}'"
+
+    );
   }
 }
 

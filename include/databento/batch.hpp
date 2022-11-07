@@ -13,8 +13,9 @@ struct BatchJob {
   std::string id;
   std::string user_id;
   std::string bill_id;
-  std::string dataset;
+  // Price in cents
   double cost;
+  std::string dataset;
   std::vector<std::string> symbols;
   SType stype_in;
   SType stype_out;
@@ -29,17 +30,27 @@ struct BatchJob {
   bool split_symbols;
   Packaging packaging;
   Delivery delivery;
+  // If the entire book is selected.
   bool is_full_book;
+  // If the batch job is a tutorial example.
   bool is_example;
   std::size_t record_count;
+  // Size in bytes.
   std::size_t billed_size;
+  // Size in bytes.
   std::size_t actual_size;
+  // Size in bytes.
   std::size_t package_size;
   JobState state;
   std::string ts_received;
+  // Empty if it hasn't been queued.
   std::string ts_queued;
+  // Empty if processing hasn't started.
   std::string ts_process_start;
+  // Empty if it hasn't finished processing.
   std::string ts_process_done;
+  // Empty if it hasn't finished processing. The expiration is set based on when
+  // the job finishes processing, not when it was requested.
   std::string ts_expiration;
 };
 

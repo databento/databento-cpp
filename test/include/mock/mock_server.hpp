@@ -26,7 +26,7 @@ class MockServer {
   }
 
   int ListenOnThread();
-  void MockBadRequest(const std::string& path);
+  void MockBadRequest(const std::string& path, const nlohmann::json& json);
   void MockGetJson(const std::string& path, const nlohmann::json& json);
   void MockGetJson(const std::string& path,
                    const std::map<std::string, std::string>& params,

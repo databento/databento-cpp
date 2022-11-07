@@ -10,9 +10,9 @@ static constexpr auto kApiKey = "YOUR_API_KEY";
 
 int main() {
   auto client = HistoricalBuilder{}.SetKey(kApiKey).Build();
-  client.TimeseriesStream("GLBX.MDP3", "2022-06-10T14:30", "2022-05-10T14:40",
-                          {"ES"}, Schema::Trades, SType::Smart,
-                          SType::ProductId, {}, {}, [](const Record& record) {
+  client.TimeseriesStream("GLBX.MDP3", "2022-06-10", "2022-06-11", {"ES"},
+                          Schema::Trades, SType::Smart, SType::ProductId, {},
+                          {}, [](const Record& record) {
                             const auto& trade_msg = record.get<TradeMsg>();
                             std::cout << trade_msg << '\n';
                             return KeepGoing::Continue;

@@ -18,8 +18,8 @@ std::string HttpResponseError::BuildMessage(const std::string& request_path,
                                             const std::string& response_body) {
   std::ostringstream err_msg;
   err_msg << "Received an error response from request to " << request_path
-          << " with status " << status_code << " and body \"" << response_body
-          << '"';
+          << " with status " << status_code << " and body '" << response_body
+          << '\'';
   return err_msg.str();
 }
 

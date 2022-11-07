@@ -95,13 +95,15 @@ databento::Metadata DbzParser<Input>::ParseMetadata() {
   // Decompress variable-length metadata
   const auto compressed_size =
       static_cast<std::size_t>(metadata_buffer.cend() - metadata_it);
-  const std::size_t buffer_size = compressed_size * 3;  //  3x is arbitrary
+  const std::size_t buffer_size = compressed_size * 10;  //  10x is arbitrary
   std::vector<std::uint8_t> var_buffer(buffer_size);
   const std::size_t actual_size = ::ZSTD_decompress(
       var_buffer.data(), buffer_size, &*metadata_it, compressed_size);
   if (::ZSTD_isError(actual_size) == 1) {
     throw DbzResponseError{
-        "Error decompressing zstd-compressed variable-length metadata"};
+        std::string{
+            "Error decompressing zstd-compressed variable-length metadata: "} +
+        ::ZSTD_getErrorName(actual_size)};
   }
   auto var_buffer_it = var_buffer.cbegin();
   const auto schema_definition_length = Consume<std::uint32_t>(var_buffer_it);
