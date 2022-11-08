@@ -10,7 +10,7 @@ The client supports both streaming live and historical data through similar inte
 
 ## Usage
 
-A simple program that fetches a days worth of historical trades for all ES symbols and prints it looks like this:
+A simple program that fetches a day's worth of historical trades for all ES symbols and prints it looks like this:
 
 ```cpp
 #include <databento/historical.hpp>
@@ -88,7 +88,7 @@ target_link_libraries(my_library PRIVATE databento::databento)
 The minimum C++ standard is C++11 and CMake 3.14.
 The library has the following dependencies:
 - [cpp-httplib (header only)](https://github.com/yhirose/cpp-httplib)
-  - OpenSSL
+  - [OpenSSL](https://www.openssl.org/)
 - [nlohmann_json (header only)](https://github.com/nlohmann/json)
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
 
