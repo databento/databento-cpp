@@ -7,14 +7,12 @@
 namespace databento {
 // Represents a historical data center gateway location.
 enum class HistoricalGateway : std::uint8_t {
-  Nearest = 0,
   Bo1,
 };
 
 // Represents a live data center gateway location.
 enum class LiveGateway : std::uint8_t {
   Origin = 0,
-  Nearest,
   Ny4,
   Dc3,
 };

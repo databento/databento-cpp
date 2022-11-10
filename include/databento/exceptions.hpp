@@ -65,6 +65,21 @@ class HttpResponseError : public Exception {
   const std::string response_body_;
 };
 
+// Exception indicating an issue with the TCP connection.
+class TcpError : public Exception {
+ public:
+  explicit TcpError(int err_num, std::string message)
+      : Exception{BuildMessage(err_num, std::move(message))},
+        err_num_{err_num} {};
+
+  int err_num() const { return err_num_; }
+
+ private:
+  static std::string BuildMessage(int err_num, std::string message);
+
+  int err_num_;
+};
+
 // Exception indicating an argument to a callable is invalid.
 class InvalidArgumentError : public Exception {
  public:

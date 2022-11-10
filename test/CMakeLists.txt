@@ -34,6 +34,7 @@ set(
   src/shared_channel_tests.cpp
   src/stream_op_helper_tests.cpp
   src/symbology_tests.cpp
+  src/tcp_client_tests.cpp
 )
 add_executable(${PROJECT_NAME} ${test_headers} ${test_sources})
 find_package(Threads REQUIRED)

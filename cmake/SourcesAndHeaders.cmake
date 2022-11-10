@@ -15,6 +15,8 @@ set(headers
   include/databento/detail/file_stream.hpp
   include/databento/detail/http_client.hpp
   include/databento/detail/shared_channel.hpp
+  include/databento/detail/socket.hpp
+  include/databento/detail/tcp_client.hpp
   src/scoped_thread.hpp
   src/stream_op_helper.hpp
 )
@@ -34,4 +36,6 @@ set(sources
   src/detail/file_stream.cpp
   src/detail/http_client.cpp
   src/detail/shared_channel.cpp
+  src/detail/socket.cpp
+  src/detail/tcp_client.cpp
 )

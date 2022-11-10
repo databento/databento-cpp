@@ -27,8 +27,8 @@ class Historical {
    * Getters
    */
 
-  inline const std::string& Key() const { return key_; };
-  inline const std::string& Gateway() const { return gateway_; }
+  const std::string& Key() const { return key_; };
+  const std::string& Gateway() const { return gateway_; }
 
   /*
    * Batch API
@@ -266,6 +266,6 @@ class HistoricalBuilder {
 
  private:
   std::string key_;
-  HistoricalGateway gateway_{HistoricalGateway::Nearest};
+  HistoricalGateway gateway_{HistoricalGateway::Bo1};
 };
 }  // namespace databento

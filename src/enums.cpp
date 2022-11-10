@@ -9,7 +9,6 @@
 namespace databento {
 const char* UrlFromGateway(HistoricalGateway gateway) {
   switch (gateway) {
-    case HistoricalGateway::Nearest:
     case HistoricalGateway::Bo1: {
       return "https://hist.databento.com";
     }
