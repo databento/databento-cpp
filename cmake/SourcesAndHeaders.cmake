@@ -28,6 +28,7 @@ set(sources
   src/exceptions.cpp
   src/file_bento.cpp
   src/historical.cpp
+  src/metadata.cpp
   src/record.cpp
   src/symbology.cpp
   src/detail/file_stream.cpp

@@ -208,6 +208,20 @@ const char* ToString(JobState state) {
   }
 }
 
+const char* ToString(DatasetCondition condition) {
+  switch (condition) {
+    case DatasetCondition::Available: {
+      return "available";
+    }
+    case DatasetCondition::Bad: {
+      return "bad";
+    }
+    default: {
+      return "unknown";
+    }
+  }
+}
+
 std::ostream& operator<<(std::ostream& out, Schema schema) {
   out << ToString(schema);
   return out;
@@ -253,6 +267,11 @@ std::ostream& operator<<(std::ostream& out, JobState state) {
   return out;
 }
 
+std::ostream& operator<<(std::ostream& out, DatasetCondition condition) {
+  out << ToString(condition);
+  return out;
+}
+
 template <>
 Schema FromString(const std::string& str) {
   if (str == "mbo") {
@@ -292,7 +311,7 @@ Schema FromString(const std::string& str) {
     return Schema::Status;
   }
   throw InvalidArgumentError{"FromString<Schema>", "str",
-                             "unknown value '" + str + "'"};
+                             "unknown value '" + str + '\''};
 }
 
 template <>
@@ -307,7 +326,7 @@ Encoding FromString(const std::string& str) {
     return Encoding::Json;
   }
   throw InvalidArgumentError{"FromString<Encoding>", "str",
-                             "unknown value '" + str + "'"};
+                             "unknown value '" + str + '\''};
 }
 
 template <>
@@ -322,7 +341,7 @@ FeedMode FromString(const std::string& str) {
     return FeedMode::Live;
   }
   throw InvalidArgumentError{"FromString<FeedMode>", "str",
-                             "unknown value '" + str + "'"};
+                             "unknown value '" + str + '\''};
 }
 
 template <>
@@ -334,7 +353,7 @@ Compression FromString(const std::string& str) {
     return Compression::Zstd;
   }
   throw InvalidArgumentError{"FromString<Compression>", "str",
-                             "unknown value '" + str + "'"};
+                             "unknown value '" + str + '\''};
 }
 
 template <>
@@ -349,7 +368,7 @@ SType FromString(const std::string& str) {
     return SType::Smart;
   }
   throw InvalidArgumentError{"FromString<SType>", "str",
-                             "unknown value '" + str + "'"};
+                             "unknown value '" + str + '\''};
 }
 
 template <>
@@ -366,8 +385,8 @@ SplitDuration FromString(const std::string& str) {
   if (str == "none") {
     return SplitDuration::None;
   }
-  throw InvalidArgumentError{"FromString<DurationInterval>", "str",
-                             "unknown value '" + str + "'"};
+  throw InvalidArgumentError{"FromString<SplitInterval>", "str",
+                             "unknown value '" + str + '\''};
 }
 
 template <>
@@ -382,7 +401,7 @@ Packaging FromString(const std::string& str) {
     return Packaging::Tar;
   }
   throw InvalidArgumentError{"FromString<Packaging>", "str",
-                             "unknown value '" + str + "'"};
+                             "unknown value '" + str + '\''};
 }
 
 template <>
@@ -397,7 +416,7 @@ Delivery FromString(const std::string& str) {
     return Delivery::Disk;
   }
   throw InvalidArgumentError{"FromString<Delivery>", "str",
-                             "unknown value '" + str + "'"};
+                             "unknown value '" + str + '\''};
 }
 
 template <>
@@ -417,7 +436,19 @@ JobState FromString(const std::string& str) {
   if (str == "expired") {
     return JobState::Expired;
   }
-  throw InvalidArgumentError{"FromString<BatchState>", "str",
-                             "unknown value '" + str + "'"};
+  throw InvalidArgumentError{"FromString<JobState>", "str",
+                             "unknown value '" + str + '\''};
+}
+
+template <>
+DatasetCondition FromString(const std::string& str) {
+  if (str == "available") {
+    return DatasetCondition::Available;
+  }
+  if (str == "bad") {
+    return DatasetCondition::Bad;
+  }
+  throw InvalidArgumentError{"FromString<DatasetCondition>", "str",
+                             "unknown value '" + str + '\''};
 }
 }  // namespace databento

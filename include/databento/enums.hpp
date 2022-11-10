@@ -101,6 +101,12 @@ enum class JobState : std::uint8_t {
   Expired,
 };
 
+// The condition of a dataset at a point in time.
+enum class DatasetCondition : std::uint8_t {
+  Available,
+  Bad,
+};
+
 // Convert a HistoricalGateway to a URL.
 const char* UrlFromGateway(HistoricalGateway gateway);
 
@@ -113,6 +119,7 @@ const char* ToString(SplitDuration duration_interval);
 const char* ToString(Packaging packaging);
 const char* ToString(Delivery delivery);
 const char* ToString(JobState state);
+const char* ToString(DatasetCondition condition);
 
 std::ostream& operator<<(std::ostream& out, Schema schema);
 std::ostream& operator<<(std::ostream& out, Encoding encoding);
@@ -123,6 +130,7 @@ std::ostream& operator<<(std::ostream& out, SplitDuration duration_interval);
 std::ostream& operator<<(std::ostream& out, Packaging packaging);
 std::ostream& operator<<(std::ostream& out, Delivery delivery);
 std::ostream& operator<<(std::ostream& out, JobState state);
+std::ostream& operator<<(std::ostream& out, DatasetCondition condition);
 
 template <typename T>
 T FromString(const std::string& str);
@@ -144,4 +152,6 @@ template <>
 Delivery FromString(const std::string& str);
 template <>
 JobState FromString(const std::string& str);
+template <>
+DatasetCondition FromString(const std::string& str);
 }  // namespace databento

@@ -19,6 +19,7 @@
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception, JsonResponseError
 #include "databento/file_bento.hpp"
+#include "databento/metadata.hpp"
 #include "databento/timeseries.hpp"
 #include "scoped_thread.hpp"
 
@@ -521,6 +522,39 @@ std::vector<databento::Compression> Historical::MetadataListCompressions() {
         FromString<Compression>(compression_json.value()));
   }
   return compressions;
+}
+
+databento::DatasetConditions Historical::MetadataListDatasetConditions(
+    const std::string& dataset, const std::string& start_date,
+    const std::string& end_date) {
+  static const std::string kEndpoint =
+      "Historical::MetadataListDatasetConditions";
+  static const std::string kPath =
+      ::BuildMetadataPath(".list_dataset_conditions");
+
+  const nlohmann::json json =
+      client_.GetJson(kPath, httplib::Params{{"dataset", dataset},
+                                             {"start_date", start_date},
+                                             {"end_date", end_date}});
+  if (!json.is_object()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
+  }
+  const auto& details_json = CheckedAt(kEndpoint, json, "details");
+  if (!details_json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "details array", json);
+  }
+  std::vector<DatasetConditionDetail> details;
+  details.reserve(details_json.size());
+  for (const auto& detail_json : details_json.items()) {
+    details.emplace_back(DatasetConditionDetail{
+        ParseAt<std::string>(kEndpoint, detail_json.value(), "date"),
+        FromCheckedAtString<DatasetCondition>(kEndpoint, detail_json.value(),
+                                              "condition")});
+  }
+  return {FromCheckedAtString<DatasetCondition>(kEndpoint, json, "condition"),
+          std::move(details),
+          ParseAt<std::string>(kEndpoint, json, "adjusted_start_date"),
+          ParseAt<std::string>(kEndpoint, json, "adjusted_end_date")};
 }
 
 static const std::string kListUnitPricesEndpoint =

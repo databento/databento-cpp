@@ -315,6 +315,41 @@ TEST_F(HistoricalTests, TestMetadataListCompressions) {
   EXPECT_EQ(res, kExp);
 }
 
+TEST_F(HistoricalTests, TestMetadataListDatasetConditions) {
+  const nlohmann::json kResp{
+      {"condition", "bad"},
+      {"details",
+       {{{"date", "2022-11-07"}, {"condition", "available"}},
+        {{"date", "2022-11-08"}, {"condition", "bad"}},
+        {{"date", "2022-11-09"}, {"condition", "bad"}},
+        {{"date", "2022-11-10"}, {"condition", "available"}}}},
+      {"adjusted_start_date", "2022-11-07"},
+      {"adjusted_end_date", "2022-11-10"}};
+  mock_server_.MockGetJson("/v0/metadata.list_dataset_conditions",
+                           {{"dataset", dataset::kXnasItch},
+                            {"start_date", "2022-11-06"},
+                            {"end_date", "2022-11-10"}},
+                           kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.MetadataListDatasetConditions(
+      dataset::kXnasItch, "2022-11-06", "2022-11-10");
+  EXPECT_EQ(res.condition, DatasetCondition::Bad);
+  ASSERT_EQ(res.details.size(), 4);
+  EXPECT_EQ(res.details[0].date, res.adjusted_start_date);
+  EXPECT_EQ(res.details[1].date, "2022-11-08");
+  EXPECT_EQ(res.details[2].date, "2022-11-09");
+  EXPECT_EQ(res.details[3].date, res.adjusted_end_date);
+  EXPECT_EQ(res.details[0].condition, DatasetCondition::Available);
+  EXPECT_EQ(res.details[1].condition, DatasetCondition::Bad);
+  EXPECT_EQ(res.details[2].condition, DatasetCondition::Bad);
+  EXPECT_EQ(res.details[3].condition, DatasetCondition::Available);
+  EXPECT_EQ(res.adjusted_start_date, "2022-11-07");
+  EXPECT_EQ(res.adjusted_end_date, "2022-11-10");
+}
+
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {
   const nlohmann::json kResp{
       {"historical-streaming",

@@ -1,9 +1,11 @@
 #pragma once
 
 #include <map>
+#include <ostream>
 #include <string>
+#include <vector>
 
-#include "databento/enums.hpp"  // FeedMode, Schema
+#include "databento/enums.hpp"  // FeedMode, DatasetCondition, Schema
 
 namespace databento {
 // mapping of field name to type name
@@ -15,4 +17,25 @@ using FieldsByDatasetEncodingAndSchema =
 using PriceBySchema = std::map<Schema, double>;
 using PriceByFeedModeAndSchema = std::map<FeedMode, PriceBySchema>;
 using PriceByFeedMode = std::map<FeedMode, double>;
+
+struct DatasetConditionDetail {
+  std::string date;
+  DatasetCondition condition;
+};
+
+struct DatasetConditions {
+  // Overall condition for the date range.
+  DatasetCondition condition;
+  // The dataset condition by date.
+  std::vector<DatasetConditionDetail> details;
+  std::string adjusted_start_date;
+  std::string adjusted_end_date;
+};
+
+std::string ToString(const DatasetConditionDetail& condition_detail);
+std::ostream& operator<<(std::ostream& stream,
+                         const DatasetConditionDetail& condition_detail);
+std::string ToString(const DatasetConditions& conditions);
+std::ostream& operator<<(std::ostream& stream,
+                         const DatasetConditions& conditions);
 }  // namespace databento

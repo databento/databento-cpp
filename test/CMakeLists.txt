@@ -28,6 +28,7 @@ set(
   src/dbz_tests.cpp
   src/dbz_parser_tests.cpp
   src/historical_tests.cpp
+  src/metadata_tests.cpp
   src/mock_server.cpp
   src/record_tests.cpp
   src/shared_channel_tests.cpp
