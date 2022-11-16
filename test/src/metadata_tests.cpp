@@ -13,16 +13,17 @@ TEST(MetadataTests, TestDatasetConditionDetailToString) {
       R"(DatasetConditionDetail { date = "2022-11-10", condition = available })");
 }
 
-TEST(MetadataTests, TestDatasetConditionsToString) {
-  const DatasetConditions target{DatasetCondition::Bad,
-                                 {{"2022-11-07", DatasetCondition::Available},
-                                  {"2022-11-08", DatasetCondition::Bad},
-                                  {"2022-11-09", DatasetCondition::Bad},
-                                  {"2022-11-10", DatasetCondition::Available}},
-                                 "2022-11-07",
-                                 "2022-11-10"};
+TEST(MetadataTests, TestDatasetConditionInfoToString) {
+  const DatasetConditionInfo target{
+      DatasetCondition::Bad,
+      {{"2022-11-07", DatasetCondition::Available},
+       {"2022-11-08", DatasetCondition::Bad},
+       {"2022-11-09", DatasetCondition::Bad},
+       {"2022-11-10", DatasetCondition::Available}},
+      "2022-11-07",
+      "2022-11-10"};
   const auto res = ToString(target);
-  ASSERT_EQ(res, R"(DatasetConditions {
+  ASSERT_EQ(res, R"(DatasetConditionInfo {
     condition = bad,
     details = {
         DatasetConditionDetail { date = "2022-11-07", condition = available },

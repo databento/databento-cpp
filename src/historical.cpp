@@ -524,39 +524,6 @@ std::vector<databento::Compression> Historical::MetadataListCompressions() {
   return compressions;
 }
 
-databento::DatasetConditions Historical::MetadataListDatasetConditions(
-    const std::string& dataset, const std::string& start_date,
-    const std::string& end_date) {
-  static const std::string kEndpoint =
-      "Historical::MetadataListDatasetConditions";
-  static const std::string kPath =
-      ::BuildMetadataPath(".list_dataset_conditions");
-
-  const nlohmann::json json =
-      client_.GetJson(kPath, httplib::Params{{"dataset", dataset},
-                                             {"start_date", start_date},
-                                             {"end_date", end_date}});
-  if (!json.is_object()) {
-    throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
-  }
-  const auto& details_json = CheckedAt(kEndpoint, json, "details");
-  if (!details_json.is_array()) {
-    throw JsonResponseError::TypeMismatch(kEndpoint, "details array", json);
-  }
-  std::vector<DatasetConditionDetail> details;
-  details.reserve(details_json.size());
-  for (const auto& detail_json : details_json.items()) {
-    details.emplace_back(DatasetConditionDetail{
-        ParseAt<std::string>(kEndpoint, detail_json.value(), "date"),
-        FromCheckedAtString<DatasetCondition>(kEndpoint, detail_json.value(),
-                                              "condition")});
-  }
-  return {FromCheckedAtString<DatasetCondition>(kEndpoint, json, "condition"),
-          std::move(details),
-          ParseAt<std::string>(kEndpoint, json, "adjusted_start_date"),
-          ParseAt<std::string>(kEndpoint, json, "adjusted_end_date")};
-}
-
 static const std::string kListUnitPricesEndpoint =
     "Historical::MetadataListUnitPrices";
 static const std::string kListUnitPricesPath =
@@ -655,6 +622,39 @@ double Historical::MetadataListUnitPrices(const std::string& dataset,
                                           "number", json);
   }
   return json;
+}
+
+databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
+    const std::string& dataset, const std::string& start_date,
+    const std::string& end_date) {
+  static const std::string kEndpoint =
+      "Historical::MetadataGetDatasetCondition";
+  static const std::string kPath =
+      ::BuildMetadataPath(".get_dataset_condition");
+
+  const nlohmann::json json =
+      client_.GetJson(kPath, httplib::Params{{"dataset", dataset},
+                                             {"start_date", start_date},
+                                             {"end_date", end_date}});
+  if (!json.is_object()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
+  }
+  const auto& details_json = CheckedAt(kEndpoint, json, "details");
+  if (!details_json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "details array", json);
+  }
+  std::vector<DatasetConditionDetail> details;
+  details.reserve(details_json.size());
+  for (const auto& detail_json : details_json.items()) {
+    details.emplace_back(DatasetConditionDetail{
+        ParseAt<std::string>(kEndpoint, detail_json.value(), "date"),
+        FromCheckedAtString<DatasetCondition>(kEndpoint, detail_json.value(),
+                                              "condition")});
+  }
+  return {FromCheckedAtString<DatasetCondition>(kEndpoint, json, "condition"),
+          std::move(details),
+          ParseAt<std::string>(kEndpoint, json, "adjusted_start_date"),
+          ParseAt<std::string>(kEndpoint, json, "adjusted_end_date")};
 }
 
 std::size_t Historical::MetadataGetRecordCount(
@@ -959,8 +959,8 @@ void Historical::TimeseriesStream(const HttplibParams& params,
   std::exception_ptr exception_ptr{};
   std::mutex exception_ptr_mutex;
   // no initialized lambda captures until C++14
-  ScopedThread stream{[this, &channel, &exception_ptr, &exception_ptr_mutex,
-                       &params, &should_continue] {
+  const ScopedThread stream{[this, &channel, &exception_ptr,
+                             &exception_ptr_mutex, &params, &should_continue] {
     try {
       this->client_.GetRawStream(
           kTimeseriesStreamPath, params,
@@ -972,7 +972,7 @@ void Historical::TimeseriesStream(const HttplibParams& params,
       channel.Finish();
     } catch (const std::exception&) {
       channel.Finish();
-      std::lock_guard<std::mutex> guard{exception_ptr_mutex};
+      const std::lock_guard<std::mutex> guard{exception_ptr_mutex};
       // rethrowing here will cause the process to be terminated
       exception_ptr = std::current_exception();
     }
@@ -990,7 +990,7 @@ void Historical::TimeseriesStream(const HttplibParams& params,
   } catch (const std::exception& exc) {
     should_continue = false;
     // check if there's an exception from stream thread
-    std::lock_guard<std::mutex> guard{exception_ptr_mutex};
+    const std::lock_guard<std::mutex> guard{exception_ptr_mutex};
     if (exception_ptr) {
       std::rethrow_exception(exception_ptr);
     }

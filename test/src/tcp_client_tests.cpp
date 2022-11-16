@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include <netinet/in.h>  // IPPROTO_TCP
-#include <sys/socket.h>  // socket
+#include <netinet/in.h>  // IPPROTO_TCP, sockaddr_in, ntohs
+#include <sys/socket.h>  // AF_INET, listen, socket
+#include <unistd.h>      // close, socklen_t, write
 
 #include <array>
 #include <cerrno>
@@ -25,7 +26,7 @@ class TcpClientTests : public testing::Test {
         target_{"127.0.0.1", port_} {}
 
   void TearDown() override {
-    if (socket_ > 0) {
+    if (socket_ >= 0) {
       ::close(socket_);
     }
   }
@@ -36,14 +37,14 @@ class TcpClientTests : public testing::Test {
     auto conn_fd =
         ::accept(socket_, reinterpret_cast<sockaddr*>(&addr), &addr_len);
     {
-      std::lock_guard<std::mutex> rec_guard{server_received_mutex_};
+      const std::lock_guard<std::mutex> rec_guard{server_received_mutex_};
       server_received_.resize(1024);
       const auto read_size = ::read(conn_fd, &*server_received_.begin(), 1024);
       if (read_size <= 0) {
         throw TcpError{errno, "Server failed to read"};
       }
       server_received_.resize(static_cast<std::size_t>(read_size));
-      std::lock_guard<std::mutex> send_guard{server_send_mutex_};
+      const std::lock_guard<std::mutex> send_guard{server_send_mutex_};
       const auto write_size =
           ::write(conn_fd, server_send_.data(), server_send_.length());
       ASSERT_EQ(write_size, server_send_.length());
@@ -62,11 +63,14 @@ class TcpClientTests : public testing::Test {
 };
 
 int TcpClientTests::InitSocket() {
-  int fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  const int fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (fd == -1) {
     throw TcpError{errno, "Invalid fd"};
   }
-  const sockaddr_in addr_in{AF_INET, 0, {INADDR_ANY}, {}};
+  sockaddr_in addr_in{};
+  addr_in.sin_family = AF_INET;
+  addr_in.sin_port = 0;  // will be assigned
+  addr_in.sin_addr.s_addr = INADDR_ANY;
   if (::bind(fd, reinterpret_cast<const sockaddr*>(&addr_in),
              sizeof(addr_in)) != 0) {
     throw TcpError{errno, "Failed to bind to port"};
@@ -77,7 +81,7 @@ int TcpClientTests::InitSocket() {
                     &addr_size) == -1) {
     throw TcpError{errno, "Error fetching port"};
   }
-  port_ = ::ntohs(addr_actual.sin_port);
+  port_ = ntohs(addr_actual.sin_port);
   if (::listen(fd, 1) != 0) {
     throw TcpError{errno, "Error listening on port"};
   }
@@ -88,7 +92,7 @@ TEST_F(TcpClientTests, TestWriteAll) {
   const std::string msg = "testing 1, 2, 3";
   target_.WriteAll(msg.c_str(), msg.length());
   while (true) {
-    std::lock_guard<std::mutex> guard{server_received_mutex_};
+    const std::lock_guard<std::mutex> guard{server_received_mutex_};
     if (!server_received_.empty()) {
       ASSERT_EQ(server_received_, msg);
       break;
@@ -98,7 +102,7 @@ TEST_F(TcpClientTests, TestWriteAll) {
 
 TEST_F(TcpClientTests, TestFullRead) {
   {
-    std::lock_guard<std::mutex> guard{server_send_mutex_};
+    const std::lock_guard<std::mutex> guard{server_send_mutex_};
     server_send_ = "Live data";
   }
   // server does one write than reads
@@ -108,7 +112,7 @@ TEST_F(TcpClientTests, TestFullRead) {
   // - 1 to leave NUL byte
   const auto read_size = target_.Read(buffer.data(), buffer.size() - 1);
 
-  std::lock_guard<std::mutex> guard{server_send_mutex_};
+  const std::lock_guard<std::mutex> guard{server_send_mutex_};
   EXPECT_STREQ(buffer.data(), server_send_.c_str());
   EXPECT_EQ(read_size, server_send_.length());
   EXPECT_EQ(read_size, buffer.size() - 1);
@@ -116,7 +120,7 @@ TEST_F(TcpClientTests, TestFullRead) {
 
 TEST_F(TcpClientTests, TestPartialRead) {
   {
-    std::lock_guard<std::mutex> guard{server_send_mutex_};
+    const std::lock_guard<std::mutex> guard{server_send_mutex_};
     server_send_ = "Partial re";
   }
   // server does one write than reads
@@ -125,7 +129,7 @@ TEST_F(TcpClientTests, TestPartialRead) {
   std::array<char, 100> buffer{0};
   const auto read_size = target_.Read(buffer.data(), buffer.size());
 
-  std::lock_guard<std::mutex> guard{server_send_mutex_};
+  const std::lock_guard<std::mutex> guard{server_send_mutex_};
   EXPECT_STREQ(buffer.data(), server_send_.c_str());
   EXPECT_EQ(read_size, server_send_.length());
 }
@@ -141,7 +145,7 @@ TEST_F(TcpClientTests, TestEmptyRead) {
 
 TEST_F(TcpClientTests, TestReadExactSuccess) {
   {
-    std::lock_guard<std::mutex> guard{server_send_mutex_};
+    const std::lock_guard<std::mutex> guard{server_send_mutex_};
     server_send_ = "Live data";
   }
   // server does one write than reads
@@ -151,13 +155,13 @@ TEST_F(TcpClientTests, TestReadExactSuccess) {
   // - 1 to leave NUL byte
   target_.ReadExact(buffer.data(), buffer.size() - 1);
 
-  std::lock_guard<std::mutex> guard{server_send_mutex_};
+  const std::lock_guard<std::mutex> guard{server_send_mutex_};
   EXPECT_STREQ(buffer.data(), server_send_.c_str());
 }
 
 TEST_F(TcpClientTests, TestReadExactFailure) {
   {
-    std::lock_guard<std::mutex> guard{server_send_mutex_};
+    const std::lock_guard<std::mutex> guard{server_send_mutex_};
     server_send_ = "Partial re";
   }
   // server does one write than reads

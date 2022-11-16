@@ -23,7 +23,10 @@ Socket::Socket(const std::string& addr, std::uint16_t port)
     throw InvalidArgumentError{"Socket::Socket", "addr",
                                "Unable to convert to a binary IPv4 address"};
   }
-  const sockaddr_in addr_in{AF_INET, ::htons(port), network_addr, {}};
+  sockaddr_in addr_in{};
+  addr_in.sin_family = AF_INET;
+  addr_in.sin_port = htons(port);
+  addr_in.sin_addr = network_addr;
   if (::connect(fd_, reinterpret_cast<const sockaddr*>(&addr_in),
                 sizeof(sockaddr_in)) != 0) {
     ::close(fd_);

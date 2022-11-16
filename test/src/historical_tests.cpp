@@ -315,7 +315,7 @@ TEST_F(HistoricalTests, TestMetadataListCompressions) {
   EXPECT_EQ(res, kExp);
 }
 
-TEST_F(HistoricalTests, TestMetadataListDatasetConditions) {
+TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
   const nlohmann::json kResp{
       {"condition", "bad"},
       {"details",
@@ -325,7 +325,7 @@ TEST_F(HistoricalTests, TestMetadataListDatasetConditions) {
         {{"date", "2022-11-10"}, {"condition", "available"}}}},
       {"adjusted_start_date", "2022-11-07"},
       {"adjusted_end_date", "2022-11-10"}};
-  mock_server_.MockGetJson("/v0/metadata.list_dataset_conditions",
+  mock_server_.MockGetJson("/v0/metadata.get_dataset_condition",
                            {{"dataset", dataset::kXnasItch},
                             {"start_date", "2022-11-06"},
                             {"end_date", "2022-11-10"}},
@@ -334,7 +334,7 @@ TEST_F(HistoricalTests, TestMetadataListDatasetConditions) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListDatasetConditions(
+  const auto res = target.MetadataGetDatasetCondition(
       dataset::kXnasItch, "2022-11-06", "2022-11-10");
   EXPECT_EQ(res.condition, DatasetCondition::Bad);
   ASSERT_EQ(res.details.size(), 4);
@@ -683,7 +683,7 @@ TEST_F(HistoricalTests, TestTimeseriesStreamToFile) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  TempFile temp_file{testing::TempDir() + "/" + __FUNCTION__};
+  const TempFile temp_file{testing::TempDir() + "/" + __FUNCTION__};
   target.TimeseriesStreamToFile(dataset::kGlbxMdp3, "2022-10-21T13:30",
                                 "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
                                 temp_file.Path());

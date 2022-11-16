@@ -65,14 +65,14 @@ SharedChannel::Channel::~Channel() { Finish(); }
 
 void SharedChannel::Channel::Write(const std::uint8_t* data,
                                    std::size_t length) {
-  std::lock_guard<std::mutex> lock{mutex_};
+  const std::lock_guard<std::mutex> lock{mutex_};
   stream_.write(reinterpret_cast<const char*>(data),
                 static_cast<std::streamsize>(length));
   cv_.notify_one();
 }
 
 void SharedChannel::Channel::Finish() {
-  std::lock_guard<std::mutex> lock{mutex_};
+  const std::lock_guard<std::mutex> lock{mutex_};
   is_finished_ = true;
   cv_.notify_one();
 }
