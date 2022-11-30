@@ -8,7 +8,7 @@
 #include "databento/symbology.hpp"
 
 int main(int argc, char* argv[]) {
-  if (argc < 6) {
+  if (argc < 7) {
     std::cerr << "USAGE: symbology-resolve <DATASET> <STYPE_IN> <STYPE_OUT> "
                  "<START_DATE> <END_DATE> <SYMBOLS...>\n";
     return EX_USAGE;
