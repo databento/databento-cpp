@@ -1,6 +1,8 @@
 #include "databento/exceptions.hpp"
 
+#include <cstring>  // strerror
 #include <sstream>  // ostringstream
+#include <utility>  // move
 
 using databento::HttpRequestError;
 
@@ -9,6 +11,12 @@ std::string HttpRequestError::BuildMessage(const std::string& request_path,
   std::ostringstream err_msg;
   err_msg << "Request to " << request_path << " failed with " << error_code;
   return err_msg.str();
+}
+
+using databento::TcpError;
+
+std::string TcpError::BuildMessage(int err_num, std::string message) {
+  return std::move(message) + ": " + std::strerror(err_num);
 }
 
 using databento::HttpResponseError;

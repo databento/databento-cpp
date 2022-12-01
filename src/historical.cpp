@@ -19,6 +19,7 @@
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception, JsonResponseError
 #include "databento/file_bento.hpp"
+#include "databento/metadata.hpp"
 #include "databento/timeseries.hpp"
 #include "scoped_thread.hpp"
 
@@ -49,16 +50,17 @@ void SetIfNotEmpty(httplib::Params* params, const std::string& key,
   }
 }
 
-void SetIfNotEmpty(httplib::Params* params, const std::string& key,
-                   const std::vector<std::string>& strings) {
-  if (!strings.empty()) {
-    std::string value =
-        std::accumulate(strings.begin(), strings.end(), std::string{},
-                        [](std::string acc, const std::string& str) {
-                          return acc.empty() ? str : std::move(acc) + "," + str;
-                        });
-    params->emplace(key, std::move(value));
+std::string ToSymbolString(const std::string& method_name,
+                           const std::vector<std::string>& strings) {
+  if (strings.empty()) {
+    throw databento::InvalidArgumentError{method_name, "symbols",
+                                          "Cannot be empty"};
   }
+  return std::accumulate(strings.begin(), strings.end(), std::string{},
+                         [](std::string acc, const std::string& str) {
+                           return acc.empty() ? str
+                                              : std::move(acc) + "," + str;
+                         });
 }
 
 void SetIfNotEmpty(httplib::Params* params, const std::string& key,
@@ -244,6 +246,8 @@ Historical::Historical(std::string key, std::string gateway, std::uint16_t port)
       gateway_{std::move(gateway)},
       client_{key_, gateway_, port} {}
 
+static const std::string kBatchSubmitJobEndpoint = "Historical::BatchSubmitJob";
+
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema) {
@@ -266,19 +270,20 @@ databento::BatchJob Historical::BatchSubmitJob(
     const std::vector<std::string>& symbols, Schema schema,
     SplitDuration split_duration, std::size_t split_size, Packaging packaging,
     Delivery delivery, SType stype_in, SType stype_out, std::size_t limit) {
-  httplib::Params params{{"dataset", dataset},
-                         {"schema", ToString(schema)},
-                         {"encoding", "dbz"},
-                         {"start", ToString(start)},
-                         {"end", ToString(end)},
-                         {"split_duration", ToString(split_duration)},
-                         {"packaging", ToString(packaging)},
-                         {"delivery", ToString(delivery)},
-                         {"stype_in", ToString(stype_in)},
-                         {"stype_out", ToString(stype_out)}};
+  httplib::Params params{
+      {"dataset", dataset},
+      {"start", ToString(start)},
+      {"end", ToString(end)},
+      {"symbols", ToSymbolString(kBatchSubmitJobEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"encoding", "dbz"},
+      {"split_duration", ToString(split_duration)},
+      {"packaging", ToString(packaging)},
+      {"delivery", ToString(delivery)},
+      {"stype_in", ToString(stype_in)},
+      {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "split_size", split_size);
   ::SetIfPositive(&params, "limit", limit);
-  ::SetIfNotEmpty(&params, "symbols", symbols);
   return this->BatchSubmitJob(params);
 }
 databento::BatchJob Historical::BatchSubmitJob(
@@ -287,19 +292,20 @@ databento::BatchJob Historical::BatchSubmitJob(
     Schema schema, SplitDuration split_duration, std::size_t split_size,
     Packaging packaging, Delivery delivery, SType stype_in, SType stype_out,
     std::size_t limit) {
-  httplib::Params params{{"dataset", dataset},
-                         {"schema", ToString(schema)},
-                         {"encoding", "dbz"},
-                         {"start", start},
-                         {"end", end},
-                         {"split_duration", ToString(split_duration)},
-                         {"packaging", ToString(packaging)},
-                         {"delivery", ToString(delivery)},
-                         {"stype_in", ToString(stype_in)},
-                         {"stype_out", ToString(stype_out)}};
+  httplib::Params params{
+      {"dataset", dataset},
+      {"start", start},
+      {"end", end},
+      {"symbols", ToSymbolString(kBatchSubmitJobEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"encoding", "dbz"},
+      {"split_duration", ToString(split_duration)},
+      {"packaging", ToString(packaging)},
+      {"delivery", ToString(delivery)},
+      {"stype_in", ToString(stype_in)},
+      {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "split_size", split_size);
   ::SetIfPositive(&params, "limit", limit);
-  ::SetIfNotEmpty(&params, "symbols", symbols);
   return this->BatchSubmitJob(params);
 }
 databento::BatchJob Historical::BatchSubmitJob(const httplib::Params& params) {
@@ -623,6 +629,42 @@ double Historical::MetadataListUnitPrices(const std::string& dataset,
   return json;
 }
 
+databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
+    const std::string& dataset, const std::string& start_date,
+    const std::string& end_date) {
+  static const std::string kEndpoint =
+      "Historical::MetadataGetDatasetCondition";
+  static const std::string kPath =
+      ::BuildMetadataPath(".get_dataset_condition");
+
+  const nlohmann::json json =
+      client_.GetJson(kPath, httplib::Params{{"dataset", dataset},
+                                             {"start_date", start_date},
+                                             {"end_date", end_date}});
+  if (!json.is_object()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
+  }
+  const auto& details_json = CheckedAt(kEndpoint, json, "details");
+  if (!details_json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "details array", json);
+  }
+  std::vector<DatasetConditionDetail> details;
+  details.reserve(details_json.size());
+  for (const auto& detail_json : details_json.items()) {
+    details.emplace_back(DatasetConditionDetail{
+        ParseAt<std::string>(kEndpoint, detail_json.value(), "date"),
+        FromCheckedAtString<DatasetCondition>(kEndpoint, detail_json.value(),
+                                              "condition")});
+  }
+  return {FromCheckedAtString<DatasetCondition>(kEndpoint, json, "condition"),
+          std::move(details),
+          ParseAt<std::string>(kEndpoint, json, "adjusted_start_date"),
+          ParseAt<std::string>(kEndpoint, json, "adjusted_end_date")};
+}
+
+static const std::string kMetadataGetRecordCountEndpoint =
+    "Historical::MetadataGetRecordCount";
+
 std::size_t Historical::MetadataGetRecordCount(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema) {
@@ -640,26 +682,28 @@ std::size_t Historical::MetadataGetRecordCount(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     std::size_t limit) {
-  httplib::Params params{{"dataset", dataset},
-                         {"start", ToString(start)},
-                         {"end", ToString(end)},
-                         {"schema", ToString(schema)},
-                         {"stype_in", ToString(stype_in)}};
+  httplib::Params params{
+      {"dataset", dataset},
+      {"start", ToString(start)},
+      {"end", ToString(end)},
+      {"symbols", ToSymbolString(kMetadataGetRecordCountEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)}};
   ::SetIfPositive(&params, "limit", limit);
-  ::SetIfNotEmpty(&params, "symbols", symbols);
   return this->MetadataGetRecordCount(params);
 }
 std::size_t Historical::MetadataGetRecordCount(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema, SType stype_in, std::size_t limit) {
-  httplib::Params params{{"dataset", dataset},
-                         {"start", start},
-                         {"end", end},
-                         {"schema", ToString(schema)},
-                         {"stype_in", ToString(stype_in)}};
+  httplib::Params params{
+      {"dataset", dataset},
+      {"start", start},
+      {"end", end},
+      {"symbols", ToSymbolString(kMetadataGetRecordCountEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)}};
   ::SetIfPositive(&params, "limit", limit);
-  ::SetIfNotEmpty(&params, "symbols", symbols);
   return this->MetadataGetRecordCount(params);
 }
 std::size_t Historical::MetadataGetRecordCount(const httplib::Params& params) {
@@ -671,6 +715,9 @@ std::size_t Historical::MetadataGetRecordCount(const httplib::Params& params) {
   }
   return json;
 }
+
+static const std::string kMetadataGetBillableSizeEndpoint =
+    "Historical::MetadataGetBillableSize";
 
 std::size_t Historical::MetadataGetBillableSize(
     const std::string& dataset, UnixNanos start, UnixNanos end,
@@ -689,26 +736,28 @@ std::size_t Historical::MetadataGetBillableSize(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     std::size_t limit) {
-  httplib::Params params{{"dataset", dataset},
-                         {"start", ToString(start)},
-                         {"end", ToString(end)},
-                         {"schema", ToString(schema)},
-                         {"stype_in", ToString(stype_in)}};
+  httplib::Params params{
+      {"dataset", dataset},
+      {"start", ToString(start)},
+      {"end", ToString(end)},
+      {"symbols", ToSymbolString(kMetadataGetBillableSizeEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)}};
   ::SetIfPositive(&params, "limit", limit);
-  ::SetIfNotEmpty(&params, "symbols", symbols);
   return this->MetadataGetBillableSize(params);
 }
 std::size_t Historical::MetadataGetBillableSize(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema, SType stype_in, std::size_t limit) {
-  httplib::Params params{{"dataset", dataset},
-                         {"start", start},
-                         {"end", end},
-                         {"schema", ToString(schema)},
-                         {"stype_in", ToString(stype_in)}};
+  httplib::Params params{
+      {"dataset", dataset},
+      {"start", start},
+      {"end", end},
+      {"symbols", ToSymbolString(kMetadataGetBillableSizeEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)}};
   ::SetIfPositive(&params, "limit", limit);
-  ::SetIfNotEmpty(&params, "symbols", symbols);
   return this->MetadataGetBillableSize(params);
 }
 std::size_t Historical::MetadataGetBillableSize(const httplib::Params& params) {
@@ -720,6 +769,9 @@ std::size_t Historical::MetadataGetBillableSize(const httplib::Params& params) {
   }
   return json;
 }
+
+static const std::string kMetadataGetCostEndpoint =
+    "Historical::MetadataGetCost";
 
 double Historical::MetadataGetCost(const std::string& dataset, UnixNanos start,
                                    UnixNanos end,
@@ -745,10 +797,13 @@ double Historical::MetadataGetCost(const std::string& dataset, UnixNanos start,
                                    std::size_t limit) {
   static const std::string kPath = ::BuildMetadataPath(".get_cost");
   httplib::Params params{
-      {"dataset", dataset},         {"start", ToString(start)},
-      {"end", ToString(end)},       {"mode", ToString(mode)},
-      {"schema", ToString(schema)}, {"stype_in", ToString(stype_in)}};
-  ::SetIfNotEmpty(&params, "symbols", symbols);
+      {"dataset", dataset},
+      {"start", ToString(start)},
+      {"end", ToString(end)},
+      {"symbols", ToSymbolString(kMetadataGetCostEndpoint, symbols)},
+      {"mode", ToString(mode)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)}};
   ::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetCost(params);
 }
@@ -759,13 +814,14 @@ double Historical::MetadataGetCost(const std::string& dataset,
                                    Schema schema, FeedMode mode, SType stype_in,
                                    std::size_t limit) {
   static const std::string kPath = ::BuildMetadataPath(".get_cost");
-  httplib::Params params{{"dataset", dataset},
-                         {"start", start},
-                         {"end", end},
-                         {"mode", ToString(mode)},
-                         {"schema", ToString(schema)},
-                         {"stype_in", ToString(stype_in)}};
-  ::SetIfNotEmpty(&params, "symbols", symbols);
+  httplib::Params params{
+      {"dataset", dataset},
+      {"start", start},
+      {"end", end},
+      {"symbols", ToSymbolString(kMetadataGetCostEndpoint, symbols)},
+      {"mode", ToString(mode)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)}};
   ::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetCost(params);
 }
@@ -795,9 +851,9 @@ databento::SymbologyResolution Historical::SymbologyResolve(
   httplib::Params params{{"dataset", dataset},
                          {"start_date", start_date},
                          {"end_date", end_date},
+                         {"symbols", ToSymbolString(kEndpoint, symbols)},
                          {"stype_in", ToString(stype_in)},
                          {"stype_out", ToString(stype_out)}};
-  ::SetIfNotEmpty(&params, "symbols", symbols);
   ::SetIfNotEmpty(&params, "default_value", default_value);
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_object()) {
@@ -856,66 +912,69 @@ databento::SymbologyResolution Historical::SymbologyResolve(
   return res;
 }
 
-void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
-                                  UnixNanos end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema,
-                                  const RecordCallback& record_callback) {
-  this->TimeseriesStream(dataset, start, end, symbols, schema, kDefaultSTypeIn,
-                         kDefaultSTypeOut, {}, {}, record_callback);
-}
-void Historical::TimeseriesStream(const std::string& dataset,
-                                  const std::string& start,
-                                  const std::string& end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema,
-                                  const RecordCallback& record_callback) {
-  this->TimeseriesStream(dataset, start, end, symbols, schema, kDefaultSTypeIn,
-                         kDefaultSTypeOut, {}, {}, record_callback);
-}
-void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
-                                  UnixNanos end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema, SType stype_in,
-                                  SType stype_out, std::size_t limit,
-                                  const MetadataCallback& metadata_callback,
-                                  const RecordCallback& record_callback) {
-  httplib::Params params{{"dataset", dataset},
-                         {"encoding", "dbz"},
-                         {"start", ToString(start)},
-                         {"end", ToString(end)},
-                         {"schema", ToString(schema)},
-                         {"stype_in", ToString(stype_in)},
-                         {"stype_out", ToString(stype_out)}};
-  ::SetIfNotEmpty(&params, "symbols", symbols);
-  ::SetIfPositive(&params, "limit", limit);
-
-  this->TimeseriesStream(params, metadata_callback, record_callback);
-}
-void Historical::TimeseriesStream(const std::string& dataset,
-                                  const std::string& start,
-                                  const std::string& end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema, SType stype_in,
-                                  SType stype_out, std::size_t limit,
-                                  const MetadataCallback& metadata_callback,
-                                  const RecordCallback& record_callback) {
-  httplib::Params params{{"dataset", dataset},
-                         {"encoding", "dbz"},
-                         {"start", start},
-                         {"end", end},
-                         {"schema", ToString(schema)},
-                         {"stype_in", ToString(stype_in)},
-                         {"stype_out", ToString(stype_out)}};
-  ::SetIfNotEmpty(&params, "symbols", symbols);
-  ::SetIfPositive(&params, "limit", limit);
-
-  this->TimeseriesStream(params, metadata_callback, record_callback);
-}
 static const std::string kTimeseriesStreamEndpoint =
     "Historical::TimeseriesStream";
 static const std::string kTimeseriesStreamPath =
     ::BuildTimeseriesPath(".stream");
+
+void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
+                                  UnixNanos end,
+                                  const std::vector<std::string>& symbols,
+                                  Schema schema,
+                                  const RecordCallback& record_callback) {
+  this->TimeseriesStream(dataset, start, end, symbols, schema, kDefaultSTypeIn,
+                         kDefaultSTypeOut, {}, {}, record_callback);
+}
+void Historical::TimeseriesStream(const std::string& dataset,
+                                  const std::string& start,
+                                  const std::string& end,
+                                  const std::vector<std::string>& symbols,
+                                  Schema schema,
+                                  const RecordCallback& record_callback) {
+  this->TimeseriesStream(dataset, start, end, symbols, schema, kDefaultSTypeIn,
+                         kDefaultSTypeOut, {}, {}, record_callback);
+}
+void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
+                                  UnixNanos end,
+                                  const std::vector<std::string>& symbols,
+                                  Schema schema, SType stype_in,
+                                  SType stype_out, std::size_t limit,
+                                  const MetadataCallback& metadata_callback,
+                                  const RecordCallback& record_callback) {
+  httplib::Params params{
+      {"dataset", dataset},
+      {"encoding", "dbz"},
+      {"start", ToString(start)},
+      {"end", ToString(end)},
+      {"symbols", ToSymbolString(kTimeseriesStreamEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)},
+      {"stype_out", ToString(stype_out)}};
+  ::SetIfPositive(&params, "limit", limit);
+
+  this->TimeseriesStream(params, metadata_callback, record_callback);
+}
+void Historical::TimeseriesStream(const std::string& dataset,
+                                  const std::string& start,
+                                  const std::string& end,
+                                  const std::vector<std::string>& symbols,
+                                  Schema schema, SType stype_in,
+                                  SType stype_out, std::size_t limit,
+                                  const MetadataCallback& metadata_callback,
+                                  const RecordCallback& record_callback) {
+  httplib::Params params{
+      {"dataset", dataset},
+      {"encoding", "dbz"},
+      {"start", start},
+      {"end", end},
+      {"symbols", ToSymbolString(kTimeseriesStreamEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)},
+      {"stype_out", ToString(stype_out)}};
+  ::SetIfPositive(&params, "limit", limit);
+
+  this->TimeseriesStream(params, metadata_callback, record_callback);
+}
 void Historical::TimeseriesStream(const HttplibParams& params,
                                   const MetadataCallback& metadata_callback,
                                   const RecordCallback& record_callback) {
@@ -925,8 +984,8 @@ void Historical::TimeseriesStream(const HttplibParams& params,
   std::exception_ptr exception_ptr{};
   std::mutex exception_ptr_mutex;
   // no initialized lambda captures until C++14
-  ScopedThread stream{[this, &channel, &exception_ptr, &exception_ptr_mutex,
-                       &params, &should_continue] {
+  const ScopedThread stream{[this, &channel, &exception_ptr,
+                             &exception_ptr_mutex, &params, &should_continue] {
     try {
       this->client_.GetRawStream(
           kTimeseriesStreamPath, params,
@@ -938,7 +997,7 @@ void Historical::TimeseriesStream(const HttplibParams& params,
       channel.Finish();
     } catch (const std::exception&) {
       channel.Finish();
-      std::lock_guard<std::mutex> guard{exception_ptr_mutex};
+      const std::lock_guard<std::mutex> guard{exception_ptr_mutex};
       // rethrowing here will cause the process to be terminated
       exception_ptr = std::current_exception();
     }
@@ -956,7 +1015,7 @@ void Historical::TimeseriesStream(const HttplibParams& params,
   } catch (const std::exception& exc) {
     should_continue = false;
     // check if there's an exception from stream thread
-    std::lock_guard<std::mutex> guard{exception_ptr_mutex};
+    const std::lock_guard<std::mutex> guard{exception_ptr_mutex};
     if (exception_ptr) {
       std::rethrow_exception(exception_ptr);
     }
@@ -964,6 +1023,9 @@ void Historical::TimeseriesStream(const HttplibParams& params,
     throw;
   }
 }
+
+static const std::string kTimeseriesStreamToFileEndpoint =
+    "Historical::TimeseriesStreamToFile";
 
 databento::FileBento Historical::TimeseriesStreamToFile(
     const std::string& dataset, UnixNanos start, UnixNanos end,
@@ -985,14 +1047,15 @@ databento::FileBento Historical::TimeseriesStreamToFile(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     SType stype_out, std::size_t limit, const std::string& file_path) {
-  httplib::Params params{{"dataset", dataset},
-                         {"encoding", "dbz"},
-                         {"start", ToString(start)},
-                         {"end", ToString(end)},
-                         {"schema", ToString(schema)},
-                         {"stype_in", ToString(stype_in)},
-                         {"stype_out", ToString(stype_out)}};
-  ::SetIfNotEmpty(&params, "symbols", symbols);
+  httplib::Params params{
+      {"dataset", dataset},
+      {"encoding", "dbz"},
+      {"start", ToString(start)},
+      {"end", ToString(end)},
+      {"symbols", ToSymbolString(kTimeseriesStreamToFileEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)},
+      {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "limit", limit);
   return this->TimeseriesStreamToFile(params, file_path);
 }
@@ -1001,14 +1064,15 @@ databento::FileBento Historical::TimeseriesStreamToFile(
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema, SType stype_in, SType stype_out, std::size_t limit,
     const std::string& file_path) {
-  httplib::Params params{{"dataset", dataset},
-                         {"encoding", "dbz"},
-                         {"start", start},
-                         {"end", end},
-                         {"schema", ToString(schema)},
-                         {"stype_in", ToString(stype_in)},
-                         {"stype_out", ToString(stype_out)}};
-  ::SetIfNotEmpty(&params, "symbols", symbols);
+  httplib::Params params{
+      {"dataset", dataset},
+      {"encoding", "dbz"},
+      {"start", start},
+      {"end", end},
+      {"symbols", ToSymbolString(kTimeseriesStreamToFileEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)},
+      {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "limit", limit);
   return this->TimeseriesStreamToFile(params, file_path);
 }

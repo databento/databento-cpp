@@ -11,7 +11,7 @@
 #include "databento/detail/http_client.hpp"  // HttpClient
 #include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Packaging, Schema, SType
 #include "databento/file_bento.hpp"
-#include "databento/metadata.hpp"  // FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema PriceBySchema,
+#include "databento/metadata.hpp"  // DatasetConditionInfo, FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema, PriceBySchema
 #include "databento/symbology.hpp"  // SymbologyResolution
 #include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
 
@@ -27,8 +27,8 @@ class Historical {
    * Getters
    */
 
-  inline const std::string& Key() const { return key_; };
-  inline const std::string& Gateway() const { return gateway_; }
+  const std::string& Key() const { return key_; };
+  const std::string& Gateway() const { return gateway_; }
 
   /*
    * Batch API
@@ -89,6 +89,9 @@ class Historical {
                                          Schema schema);
   double MetadataListUnitPrices(const std::string& dataset, FeedMode mode,
                                 Schema schema);
+  DatasetConditionInfo MetadataGetDatasetCondition(
+      const std::string& dataset, const std::string& start_date,
+      const std::string& end_date);
   std::size_t MetadataGetRecordCount(const std::string& dataset,
                                      UnixNanos start, UnixNanos end,
                                      const std::vector<std::string>& symbols,
@@ -263,6 +266,6 @@ class HistoricalBuilder {
 
  private:
   std::string key_;
-  HistoricalGateway gateway_{HistoricalGateway::Nearest};
+  HistoricalGateway gateway_{HistoricalGateway::Bo1};
 };
 }  // namespace databento

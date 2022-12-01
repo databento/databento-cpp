@@ -50,7 +50,7 @@ void HttpClient::GetRawStream(const std::string& path,
   const std::string full_path = httplib::append_query_params(path, params);
   std::string err_body{};
   int err_status{};
-  httplib::Result res = client_.Get(
+  const httplib::Result res = client_.Get(
       full_path,
       [&err_status](const httplib::Response& resp) {
         if (HttpClient::IsErrorStatus(resp.status)) {

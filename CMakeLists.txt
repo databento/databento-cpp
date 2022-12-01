@@ -4,13 +4,14 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.1.0 LANGUAGES CXX)
+project("databento" VERSION 0.2.0 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
 # Set project options
 #
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(cmake/StandardSettings.cmake)
 include(cmake/StaticAnalyzers.cmake)
 include(cmake/Utils.cmake)
@@ -146,18 +147,18 @@ find_package(OpenSSL REQUIRED)
 if(OPENSSL_FOUND)
   set(HTTPLIB_IS_USING_OPENSSL TRUE)
 endif()
-find_library(zstd zstd REQUIRED)
+find_package(Zstd REQUIRED)
 find_package(Threads REQUIRED)
 
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC
-    httplib
+    httplib::httplib
     nlohmann_json::nlohmann_json
     OpenSSL::Crypto
     OpenSSL::SSL
     Threads::Threads
-    zstd
+    zstd::zstd
 )
 
 target_compile_definitions(

@@ -196,7 +196,7 @@ std::string ToString(const OhlcvMsg& ohlcv_msg) {
 std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg) {
   return StreamOpBuilder{stream}
       .SetSpacer("\n    ")
-      .SetTypeName("OhclvMsg")
+      .SetTypeName("OhlcvMsg")
       .Build()
       .AddField("hd", ohlcv_msg.hd)
       .AddField("open", ohlcv_msg.open)

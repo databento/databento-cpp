@@ -5,7 +5,7 @@
 namespace databento {
 namespace test {
 TEST(SymbologyTests, TestSymbologyResolutionToString) {
-  SymbologyResolution target{
+  const SymbologyResolution target{
       {
           {"ESM2", {{"2022-06-01", "2022-06-17", "12344"}}},
           {"ESU2", {{"2022-06-01", "2022-07-01", "12345"}}},
