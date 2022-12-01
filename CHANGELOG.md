@@ -1,5 +1,8 @@
 # Changelog
 
+## TBD
+- Updated `Flag` enum
+
 ## 0.2.0 - 2022-12-01
 - Add dataset condition endpoint
 - Improve Zstd CMake integration
