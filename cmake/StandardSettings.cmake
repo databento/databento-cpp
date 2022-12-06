@@ -2,8 +2,9 @@
 # Project settings
 #
 
-option(DATABENTO_USE_EXTERNAL_JSON "Use an external JSON library" OFF)
+option(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_JSON "Use an external JSON library" OFF)
 option(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB "Use an external httplib library" OFF)
+option(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_GTEST "Use an external google test (gtest) library" ON)
 
 #
 # Compiler options
@@ -27,10 +28,6 @@ endif()
 #
 
 option(${PROJECT_NAME_UPPERCASE}_ENABLE_UNIT_TESTING "Enable unit tests for the projects (from the `test` subfolder)." ON)
-
-option(${PROJECT_NAME_UPPERCASE}_USE_GTEST "Use the GoogleTest project for creating unit tests." ON)
-option(${PROJECT_NAME_UPPERCASE}_USE_GOOGLE_MOCK "Use the GoogleMock project for extending the unit tests." OFF)
-
 option(${PROJECT_NAME_UPPERCASE}_ENABLE_EXAMPLES "Enable building examples for the project." OFF)
 
 #

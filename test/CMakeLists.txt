@@ -83,18 +83,31 @@ else()
   set(${CMAKE_PROJECT_NAME}_TEST_LIB ${CMAKE_PROJECT_NAME})
 endif()
 
-find_package(GTest REQUIRED)
-
-if(${CMAKE_PROJECT_NAME}_USE_GOOGLE_MOCK)
-  set(GOOGLE_MOCK_LIBRARIES GTest::gmock GTest::gmock_main)
+if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_GTEST)
+  find_package(GTest REQUIRED)
+else()
+  include(FetchContent)
+  if(CMAKE_VERSION VERSION_LESS 3.24)
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
+    )
+  else()
+    # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
+      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+  endif()
+  FetchContent_MakeAvailable(googletest)
 endif()
 
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC
-    GTest::GTest
-    GTest::Main
-    ${GOOGLE_MOCK_LIBRARIES}
+    gtest
+    gtest_main
     ${${CMAKE_PROJECT_NAME}_TEST_LIB}
 )
 
