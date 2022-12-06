@@ -15,7 +15,7 @@ class Exception : public std::exception {
   explicit Exception(std::string message) : message_{std::move(message)} {}
 
   const char* what() const noexcept override { return message_.c_str(); }
-  const std::string& message() const { return message_; }
+  const std::string& Message() const { return message_; }
 
  private:
   const std::string message_;
@@ -28,8 +28,8 @@ class HttpRequestError : public Exception {
         request_path_{std::move(request_path)},
         error_code_{error_code} {}
 
-  const std::string& request_path() const { return request_path_; }
-  httplib::Error error_code() const { return error_code_; }
+  const std::string& RequestPath() const { return request_path_; }
+  httplib::Error ErrorCode() const { return error_code_; }
 
  private:
   static std::string BuildMessage(const std::string& request_path,
@@ -50,9 +50,9 @@ class HttpResponseError : public Exception {
         status_code_{status_code},
         response_body_{std::move(response_body)} {}
 
-  const std::string& request_path() const { return request_path_; }
-  std::int32_t status_code() const { return status_code_; }
-  const std::string& response_body() const { return response_body_; }
+  const std::string& RequestPath() const { return request_path_; }
+  std::int32_t StatusCode() const { return status_code_; }
+  const std::string& ResponseBody() const { return response_body_; }
 
  private:
   static std::string BuildMessage(const std::string& request_path,
@@ -72,7 +72,7 @@ class TcpError : public Exception {
       : Exception{BuildMessage(err_num, std::move(message))},
         err_num_{err_num} {};
 
-  int err_num() const { return err_num_; }
+  int ErrNum() const { return err_num_; }
 
  private:
   static std::string BuildMessage(int err_num, std::string message);
@@ -90,9 +90,9 @@ class InvalidArgumentError : public Exception {
         param_name_{std::move(param_name)},
         details_{std::move(details)} {}
 
-  const std::string& method_name() const { return method_name_; }
-  const std::string& argument_name() const { return param_name_; }
-  const std::string& details() const { return details_; }
+  const std::string& MethodName() const { return method_name_; }
+  const std::string& ArgumentName() const { return param_name_; }
+  const std::string& Details() const { return details_; }
 
  private:
   static std::string BuildMessage(const std::string& method_name,

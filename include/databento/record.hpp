@@ -31,20 +31,20 @@ class Record {
   const RecordHeader& header() const;
 
   template <typename T>
-  bool holds() const {
+  bool Holds() const {
     return record_->rtype == T::kTypeId;
   }
 
   template <typename T>
-  const T& get() const {
+  const T& Get() const {
     return *reinterpret_cast<const T*>(record_);
   }
   template <typename T>
-  T& get() {
+  T& Get() {
     return *reinterpret_cast<T*>(record_);
   }
 
-  std::size_t size() const;
+  std::size_t Size() const;
   static std::size_t SizeOfType(std::uint8_t rtype);
   static std::uint8_t TypeIdFromSchema(Schema schema);
 

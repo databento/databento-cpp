@@ -8,7 +8,7 @@
 
 using databento::Record;
 
-std::size_t Record::size() const { return Record::SizeOfType(record_->rtype); }
+std::size_t Record::Size() const { return Record::SizeOfType(record_->rtype); }
 
 std::size_t Record::SizeOfType(const std::uint8_t rtype) {
   switch (rtype) {

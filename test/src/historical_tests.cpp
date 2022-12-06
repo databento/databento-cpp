@@ -589,7 +589,7 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
             std::unique_ptr<Metadata>{new Metadata(std::move(metadata))};
       },
       [&mbo_records](const Record& record) {
-        mbo_records.emplace_back(record.get<TickMsg>());
+        mbo_records.emplace_back(record.Get<TickMsg>());
         return KeepGoing::Continue;
       });
   EXPECT_EQ(metadata_ptr->record_count, 2);
@@ -617,7 +617,7 @@ TEST_F(HistoricalTests, TestTimeseriesStream_NoMetadataCallback) {
   target.TimeseriesStream(dataset::kGlbxMdp3, "2022-10-21T13:30",
                           "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
                           [&mbo_records](const Record& record) {
-                            mbo_records.emplace_back(record.get<TbboMsg>());
+                            mbo_records.emplace_back(record.Get<TbboMsg>());
                             return KeepGoing::Continue;
                           });
   EXPECT_EQ(mbo_records.size(), 2);
