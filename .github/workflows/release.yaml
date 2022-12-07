@@ -26,14 +26,14 @@ jobs:
       - name: Create git tag
         uses: salsify/action-detect-and-tag-new-version@v2
         with:
-          version-command: script/get_version.sh
+          version-command: scripts/get_version.sh
 
       # Set release output variables
       - name: Set output
         id: vars
         run: |
-          echo "::set-output name=tag_name::v$(script/get_version.sh)"
-          echo "::set-output name=release_name::$(script/get_version.sh)"
+          echo "::set-output name=tag_name::v$(scripts/get_version.sh)"
+          echo "::set-output name=release_name::$(scripts/get_version.sh)"
 
       # Create GitHub release
       - name: Create release
