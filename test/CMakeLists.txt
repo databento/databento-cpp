@@ -89,6 +89,14 @@ endif()
 
 if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_GTEST)
   find_package(GTest REQUIRED)
+  target_link_libraries(
+    ${PROJECT_NAME}
+    PUBLIC
+      GTest::GTest
+      GTest::Main
+      ${${CMAKE_PROJECT_NAME}_TEST_LIB}
+  )
+
 else()
   include(FetchContent)
   if(CMAKE_VERSION VERSION_LESS 3.24)
@@ -105,15 +113,14 @@ else()
     )
   endif()
   FetchContent_MakeAvailable(googletest)
+  target_link_libraries(
+    ${PROJECT_NAME}
+    PUBLIC
+      gtest
+      gtest_main
+      ${${CMAKE_PROJECT_NAME}_TEST_LIB}
+  )
 endif()
-
-target_link_libraries(
-  ${PROJECT_NAME}
-  PUBLIC
-    gtest
-    gtest_main
-    ${${CMAKE_PROJECT_NAME}_TEST_LIB}
-)
 
 #
 # Add the unit tests
