@@ -88,7 +88,7 @@ target_link_libraries(my_library PRIVATE databento::databento)
 The minimum C++ standard is C++11 and CMake 3.14.
 The library has the following dependencies:
 - [cpp-httplib (header only)](https://github.com/yhirose/cpp-httplib)
-  - [OpenSSL](https://www.openssl.org/)
+- [OpenSSL](https://www.openssl.org/)
 - [nlohmann_json (header only)](https://github.com/nlohmann/json)
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
 

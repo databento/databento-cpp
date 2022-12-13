@@ -7,6 +7,7 @@
 #include <thread>
 #include <vector>
 
+#include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/exceptions.hpp"
 
@@ -15,16 +16,10 @@ namespace detail {
 namespace test {
 class ChannelTests : public testing::Test {
  protected:
-  std::thread write_thread_;
+  ScopedThread write_thread_;
   SharedChannel target_;
 
  public:
-  void TearDown() override {
-    if (write_thread_.joinable()) {
-      write_thread_.join();
-    }
-  }
-
   void Write(const std::vector<std::string>& inputs) {
     for (const auto& input : inputs) {
       target_.Write(reinterpret_cast<const std::uint8_t*>(input.data()),
@@ -36,9 +31,9 @@ class ChannelTests : public testing::Test {
 };
 
 TEST_F(ChannelTests, TestReadExact) {
-  write_thread_ = std::thread([this] {
+  write_thread_ = ScopedThread{[this] {
     this->Write({"parse", "stream", "tests", "end"});
-  });
+  }};
   std::array<std::uint8_t, 16> buffer{};
   target_.ReadExact(buffer.data(), 3);
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "par");
@@ -76,9 +71,9 @@ TEST_F(ChannelTests, TestInterleavedReadsAndWrites) {
 }
 
 TEST_F(ChannelTests, TestReadSome) {
-  write_thread_ = std::thread([this] {
+  write_thread_ = ScopedThread{[this] {
     this->Write({"parse", "stream", "tests", "some", "last"});
-  });
+  }};
   std::array<std::uint8_t, 16> buffer{};
   std::string res;
   // -1 to keep last null byte

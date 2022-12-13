@@ -19,7 +19,7 @@
 #include "databento/record.hpp"
 #include "databento/symbology.hpp"  // kAllSymbols
 #include "databento/timeseries.hpp"
-#include "mock/mock_server.hpp"
+#include "mock/mock_http_server.hpp"
 #include "temp_file.hpp"
 
 namespace databento {
@@ -28,7 +28,7 @@ constexpr auto kApiKey = "HIST_SECRET";
 
 class HistoricalTests : public ::testing::Test {
  protected:
-  mock::MockServer mock_server_{kApiKey};
+  mock::MockHttpServer mock_server_{kApiKey};
 };
 
 TEST_F(HistoricalTests, TestBatchSubmitJob) {

@@ -17,7 +17,8 @@ verbose_message("Adding tests under ${CMAKE_PROJECT_NAME}Tests...")
 
 set(
   test_headers
-  include/mock/mock_server.hpp
+  include/mock/mock_http_server.hpp
+  include/mock/mock_tcp_server.hpp
   include/temp_file.hpp
 )
 
@@ -28,9 +29,12 @@ set(
   src/dbz_tests.cpp
   src/dbz_parser_tests.cpp
   src/historical_tests.cpp
+  src/live_tests.cpp
   src/metadata_tests.cpp
-  src/mock_server.cpp
+  src/mock_http_server.cpp
+  src/mock_tcp_server.cpp
   src/record_tests.cpp
+  src/scoped_thread_tests.cpp
   src/shared_channel_tests.cpp
   src/stream_op_helper_tests.cpp
   src/symbology_tests.cpp

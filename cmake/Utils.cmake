@@ -42,3 +42,17 @@ macro(add_system_include_property NAME)
   get_target_property(${NAME}_IID ${NAME} INTERFACE_INCLUDE_DIRECTORIES)
   set_target_properties(${NAME} PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${${NAME}_IID}")
 endmacro()
+
+#
+# Add an example target
+#
+
+function(add_example_target name file)
+  add_executable(${name} ${file})
+  target_link_libraries(
+    ${name}
+    PRIVATE
+      databento::databento
+  )
+  target_compile_features(${name} PUBLIC cxx_std_11)
+endfunction()

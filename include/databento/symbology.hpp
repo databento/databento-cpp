@@ -24,6 +24,12 @@ struct SymbologyResolution {
   std::vector<std::string> not_found;
 };
 
+// Converts a vector of symbols to a comma-delineated string for sending to
+// Databento's historical and live APIs.
+//
+// Throws InvalidArgumentError if symbols is empty.
+std::string JoinSymbolStrings(const std::string& method_name,
+                              const std::vector<std::string>& symbols);
 std::string ToString(const StrMappingInterval& mapping_interval);
 std::string ToString(const SymbologyResolution& sym_res);
 std::ostream& operator<<(std::ostream& stream,

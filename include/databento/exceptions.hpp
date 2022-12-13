@@ -131,4 +131,11 @@ class DbzResponseError : public Exception {
   explicit DbzResponseError(std::string message)
       : Exception{std::move(message)} {}
 };
+
+// Exception indicating something internal to the live API, but unrelated to TCP
+// went wrong.
+class LiveApiError : public Exception {
+ public:
+  explicit LiveApiError(std::string message) : Exception{std::move(message)} {}
+};
 }  // namespace databento

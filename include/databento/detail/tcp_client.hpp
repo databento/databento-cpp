@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <string>
 
@@ -12,6 +11,7 @@ class TcpClient {
  public:
   TcpClient(const std::string& gateway, std::uint16_t port);
 
+  void WriteAll(const std::string& str);
   void WriteAll(const char* buffer, std::size_t size);
   // returns bytes read
   std::size_t Read(char* buffer, std::size_t max_size);

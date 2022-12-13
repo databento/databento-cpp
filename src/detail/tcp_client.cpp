@@ -13,6 +13,10 @@ using databento::detail::TcpClient;
 TcpClient::TcpClient(const std::string& gateway, std::uint16_t port)
     : socket_{gateway, port} {}
 
+void TcpClient::WriteAll(const std::string& str) {
+  WriteAll(str.c_str(), str.length());
+}
+
 void TcpClient::WriteAll(const char* buffer, std::size_t size) {
   do {
     const ::ssize_t res = ::write(socket_.Get(), buffer, size);
