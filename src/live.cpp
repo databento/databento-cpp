@@ -80,7 +80,7 @@ Live::AsyncToken Live::StartAsync(Live::RecordCallback callback) {
 std::string Live::DecodeChallenge() {
   std::cout << "Received from server:\n";
   while (true) {
-    std::size_t read_size = client_.Read(buffer_.data(), buffer_.size());
+    const std::size_t read_size = client_.Read(buffer_.data(), buffer_.size());
     if (read_size == 0) {
       throw LiveApiError{"No data received from server when authenticating"};
     }

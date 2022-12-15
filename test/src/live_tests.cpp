@@ -16,7 +16,7 @@ class LiveTests : public testing::Test {
 };
 
 TEST_F(LiveTests, TestAuthentication) {
-  mock::MockTcpServer mock_server{[](mock::MockTcpServer& self) {
+  const mock::MockTcpServer mock_server{[](mock::MockTcpServer& self) {
     self.Accept();
 
     self.SetSend("lsg-test\n");
@@ -45,7 +45,7 @@ TEST_F(LiveTests, TestAuthentication) {
     self.Close();
   }};
 
-  Live target_{kKey, "127.0.0.1", mock_server.Port(), false};
+  const Live target{kKey, "127.0.0.1", mock_server.Port(), false};
 }
 
 TEST(LiveBuilderTests, TestBasic) {
