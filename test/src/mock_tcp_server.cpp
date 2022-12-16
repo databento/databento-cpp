@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>  // ASSERT_EQ
 #include <netinet/in.h>   // IPPROTO_TCP, sockaddr_in, ntohs
-#include <sys/socket.h>   // AF_INET, listen, socket
+#include <sys/socket.h>   // AF_INET, listen, recv, socket
 #include <unistd.h>       // close, socklen_t, write
 
 #include <thread>  // this_thread
@@ -12,16 +12,7 @@
 using databento::test::mock::MockTcpServer;
 
 MockTcpServer::MockTcpServer()
-    : socket_{InitSocket()}, thread_{[this] { this->Serve(); }} {}
-
-MockTcpServer::MockTcpServer(std::function<void(mock::MockTcpServer&)> serve_fn)
-    : socket_{InitSocket()}, thread_{std::move(serve_fn), std::ref(*this)} {}
-
-MockTcpServer::~MockTcpServer() {
-  if (socket_ >= 0) {
-    ::close(socket_);
-  }
-}
+    : socket_{InitSocketAndSetPort()}, thread_{[this] { this->Serve(); }} {}
 
 void MockTcpServer::SetSend(std::string send) {
   const std::lock_guard<std::mutex> lock{send_mutex_};
@@ -40,36 +31,37 @@ std::string MockTcpServer::AwaitReceived() const {
 
 void MockTcpServer::Serve() {
   Accept();
-  Read();
-  Write();
+  Receive();
+  Send();
   Close();
 }
 
 void MockTcpServer::Accept() {
   sockaddr_in addr{};
   auto addr_len = static_cast<socklen_t>(sizeof(addr));
-  conn_fd_ = ::accept(socket_, reinterpret_cast<sockaddr*>(&addr), &addr_len);
+  conn_fd_ = detail::ScopedFd{
+      ::accept(socket_.Get(), reinterpret_cast<sockaddr*>(&addr), &addr_len)};
 }
 
-void MockTcpServer::Read() {
+void MockTcpServer::Receive() {
   const std::lock_guard<std::mutex> rec_guard{received_mutex_};
   received_.resize(1024);
-  const auto read_size = ::read(conn_fd_, &*received_.begin(), 1024);
+  const auto read_size = ::recv(conn_fd_.Get(), &*received_.begin(), 1024, {});
   if (read_size <= 0) {
     throw TcpError{errno, "Server failed to read"};
   }
   received_.resize(static_cast<std::size_t>(read_size));
 }
 
-void MockTcpServer::Write() {
+void MockTcpServer::Send() {
   const std::lock_guard<std::mutex> send_guard{send_mutex_};
-  const auto write_size = ::write(conn_fd_, send_.data(), send_.length());
+  const auto write_size = ::write(conn_fd_.Get(), send_.data(), send_.length());
   ASSERT_EQ(write_size, send_.length());
 }
 
-void MockTcpServer::Close() { ::close(conn_fd_); }
+void MockTcpServer::Close() { conn_fd_.Close(); }
 
-int MockTcpServer::InitSocket() {
+std::pair<std::uint16_t, int> MockTcpServer::InitSocket() {
   const int fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (fd == -1) {
     throw TcpError{errno, "Invalid fd"};
@@ -88,9 +80,15 @@ int MockTcpServer::InitSocket() {
                     &addr_size) == -1) {
     throw TcpError{errno, "Error fetching port"};
   }
-  port_ = ntohs(addr_actual.sin_port);
+  auto port = ntohs(addr_actual.sin_port);
   if (::listen(fd, 1) != 0) {
     throw TcpError{errno, "Error listening on port"};
   }
-  return fd;
+  return {port, fd};
+}
+
+int MockTcpServer::InitSocketAndSetPort() {
+  auto pair = InitSocket();
+  port_ = pair.first;
+  return pair.second;
 }

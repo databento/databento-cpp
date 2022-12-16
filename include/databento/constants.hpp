@@ -3,6 +3,7 @@
 namespace databento {
 static constexpr auto kApiVersion = 0;
 static constexpr auto kApiVersionStr = "0";
+static constexpr auto kApiKeyLength = 32;
 
 // This is not necessarily a comprehensive list of available datasets. Please
 // use `Historical.MetadataListDatasets` to retrieve an up-to-date list.

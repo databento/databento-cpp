@@ -137,5 +137,8 @@ class DbzResponseError : public Exception {
 class LiveApiError : public Exception {
  public:
   explicit LiveApiError(std::string message) : Exception{std::move(message)} {}
+
+  static LiveApiError UnexpectedMsg(const std::string& message,
+                                    const std::string& response);
 };
 }  // namespace databento

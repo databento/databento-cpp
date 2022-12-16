@@ -1,60 +1,22 @@
 #include <gtest/gtest.h>
 
-#include <chrono>
-#include <thread>
-
-#include "databento/exceptions.hpp"  // Exception
+#include "databento/exceptions.hpp"  // Exception, InvalidArgumentError
 #include "databento/live.hpp"
 #include "mock/mock_tcp_server.hpp"  // MockTcpServer
 
-namespace databento {
-namespace test {
-class LiveTests : public testing::Test {
- public:
-  static constexpr auto kKey = "32-character-with-lots-of-filler";
-  // mock::MockTcpServer mock_server_;
-};
-
-TEST_F(LiveTests, TestAuthentication) {
-  const mock::MockTcpServer mock_server{[](mock::MockTcpServer& self) {
-    self.Accept();
-
-    self.SetSend("lsg-test\n");
-    self.Write();
-    // write challenge separate to test multiple reads to get CRAM challenge
-    self.SetSend("cram=t7kNhwj4xqR0QYjzFKtBEG2ec2pXJ4FK\n");
-    self.Write();
-    std::this_thread::sleep_for(std::chrono::milliseconds{50});
-    self.Read();
-    {
-      const auto received = self.AwaitReceived();
-      const auto auth_start = received.find('=') + 1;
-      const auto auth =
-          received.substr(auth_start, received.find('-') - auth_start);
-      EXPECT_EQ(auth.length(), SHA256_DIGEST_LENGTH * 2);
-      for (const char c : auth) {
-        EXPECT_TRUE((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))
-            << "Expected hex character";
-      }
-      EXPECT_NE(received.find("encoding=dbz"), std::string::npos);
-      EXPECT_NE(received.find("ts_out=0"), std::string::npos);
-    }
-    self.SetSend("success=1|session_id=5|\n");
-    self.Write();
-
-    self.Close();
-  }};
-
-  const Live target{kKey, "127.0.0.1", mock_server.Port(), false};
+namespace {
+constexpr auto kKey = "32-character-with-lots-of-filler";
 }
 
+namespace databento {
+namespace test {
 TEST(LiveBuilderTests, TestBasic) {
   GTEST_SKIP();
   const auto client = databento::LiveBuilder()
-                          .SetKey(LiveTests::kKey)
+                          .SetKey(kKey)
                           .SetGateway(databento::LiveGateway::Origin)
-                          .Build();
-  EXPECT_EQ(client.Key(), LiveTests::kKey);
+                          .BuildBlocking();
+  EXPECT_EQ(client.Key(), kKey);
   // TODO(cg): update when live gateway URLs are known
   // EXPECT_EQ(client.Gateway(), "https://hist.databento.com");
 }
@@ -65,7 +27,7 @@ TEST(LiveBuilderTests, TestShortKey) {
 }
 
 TEST(LiveBuilderTests, TestMissingKey) {
-  ASSERT_THROW(databento::LiveBuilder().Build(), Exception);
+  ASSERT_THROW(databento::LiveBuilder().BuildThreaded(), Exception);
 }
 
 TEST(LiveBuilderTests, TestSetKeyFromEnv) {
@@ -75,7 +37,7 @@ TEST(LiveBuilderTests, TestSetKeyFromEnv) {
   constexpr auto kKey = "SECRET_KEY";
   ASSERT_EQ(::setenv("DATABENTO_API_KEY", kKey, 1), 0)
       << "Failed to set environment variable";
-  const auto client = databento::LiveBuilder().SetKeyFromEnv().Build();
+  const auto client = databento::LiveBuilder().SetKeyFromEnv().BuildBlocking();
   EXPECT_EQ(client.Key(), kKey);
   // EXPECT_EQ(client.Gateway(), "https://hist.databento.com");
   // unsetting prevents this test from affecting others
@@ -84,7 +46,8 @@ TEST(LiveBuilderTests, TestSetKeyFromEnv) {
 }
 
 TEST(LiveBuilderTests, TestSetKeyFromEnvMissing) {
-  ASSERT_THROW(databento::LiveBuilder().SetKeyFromEnv().Build(), Exception);
+  ASSERT_THROW(databento::LiveBuilder().SetKeyFromEnv().BuildThreaded(),
+               Exception);
 }
 }  // namespace test
 }  // namespace databento

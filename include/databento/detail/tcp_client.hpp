@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-#include "databento/detail/socket.hpp"
+#include "databento/detail/scoped_fd.hpp"  // ScopedFd
 
 namespace databento {
 namespace detail {
@@ -18,7 +18,9 @@ class TcpClient {
   void ReadExact(char* buffer, std::size_t size);
 
  private:
-  Socket socket_;
+  static int InitSocket(const std::string& gateway, std::uint16_t port);
+
+  ScopedFd socket_;
 };
 }  // namespace detail
 }  // namespace databento
