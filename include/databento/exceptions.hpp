@@ -1,10 +1,10 @@
 #pragma once
 
-#include <httplib.h>  // Error
+#include <httplib.h>          // Error
+#include <nlohmann/json.hpp>  // json, parse_error
 
 #include <cstdint>
 #include <exception>
-#include <nlohmann/json.hpp>  // json, parse_error
 #include <string>
 #include <utility>  // move
 

@@ -1,2 +1,5 @@
 ---
 BasedOnStyle: Google
+IncludeCategories:
+- Regex: '^<(httplib|nlohmann)'
+  Priority: 1

@@ -1,14 +1,14 @@
 #include "databento/historical.hpp"
 
 #include <httplib.h>
+#include <nlohmann/json.hpp>
 
 #include <atomic>     // atomic<bool>
 #include <cstdlib>    // get_env
 #include <exception>  // exception, exception_ptr
 #include <fstream>    // ofstream
 #include <ios>        // ios::binary
-#include <nlohmann/json.hpp>
-#include <numeric>  // accumulate
+#include <numeric>    // accumulate
 #include <string>
 #include <utility>  // move
 

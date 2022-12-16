@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include <httplib.h>
+#include <nlohmann/json_fwd.hpp>
 
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
-#include <nlohmann/json_fwd.hpp>
 #include <stdexcept>  // logic_error
 #include <thread>
 

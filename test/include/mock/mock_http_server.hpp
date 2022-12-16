@@ -1,9 +1,9 @@
 #pragma once
 
 #include <httplib.h>
+#include <nlohmann/json.hpp>
 
 #include <map>
-#include <nlohmann/json.hpp>
 #include <string>
 
 #include "databento/detail/scoped_thread.hpp"
