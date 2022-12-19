@@ -39,7 +39,7 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .AddField("split_symbols", batch_job.split_symbols)
       .AddField("packaging", batch_job.packaging)
       .AddField("delivery", batch_job.delivery)
-      .AddField("is_full_book", batch_job.is_full_book)
+      .AddField("is_full_universe", batch_job.is_full_universe)
       .AddField("is_example", batch_job.is_example)
       .AddField("record_count", batch_job.record_count)
       .AddField("billed_size", batch_job.billed_size)

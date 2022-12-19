@@ -30,8 +30,8 @@ struct BatchJob {
   bool split_symbols;
   Packaging packaging;
   Delivery delivery;
-  // If the entire book is selected.
-  bool is_full_book;
+  // If the entire universe of instruments for the dataset is selected.
+  bool is_full_universe;
   // If the batch job is a tutorial example.
   bool is_example;
   std::size_t record_count;
