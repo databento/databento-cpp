@@ -968,10 +968,8 @@ void Historical::TimeseriesStream(const HttplibParams& params,
   detail::SharedChannel channel;
   DbzChannelParser dbz_parser{channel};
   std::exception_ptr exception_ptr{};
-  std::mutex exception_ptr_mutex;
-  const detail::ScopedThread stream{[this, &channel, &exception_ptr,
-                                     &exception_ptr_mutex, &params,
-                                     &should_continue] {
+  detail::ScopedThread stream{[this, &channel, &exception_ptr, &params,
+                               &should_continue] {
     try {
       this->client_.GetRawStream(
           kTimeseriesStreamPath, params,
@@ -983,7 +981,6 @@ void Historical::TimeseriesStream(const HttplibParams& params,
       channel.Finish();
     } catch (const std::exception&) {
       channel.Finish();
-      const std::lock_guard<std::mutex> guard{exception_ptr_mutex};
       // rethrowing here will cause the process to be terminated
       exception_ptr = std::current_exception();
     }
@@ -1000,8 +997,10 @@ void Historical::TimeseriesStream(const HttplibParams& params,
     }
   } catch (const std::exception& exc) {
     should_continue = false;
-    // check if there's an exception from stream thread
-    const std::lock_guard<std::mutex> guard{exception_ptr_mutex};
+    // wait for thread to finish before checking for exceptions
+    stream.Join();
+    // check if there's an exception from stream thread. Thread safe because
+    // `stream` thread has been joined
     if (exception_ptr) {
       std::rethrow_exception(exception_ptr);
     }

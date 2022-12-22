@@ -43,6 +43,15 @@ TEST(ScopedThreadTests, MoveAssign) {
   }  // target1
   ASSERT_TRUE(flag1);
 }
+
+TEST(ScopedThreadTests, Join) {
+  bool flag1 = false;
+  ScopedThread target{[&flag1] { flag1 = true; }};
+  ASSERT_TRUE(target.Joinable());
+  target.Join();
+  ASSERT_TRUE(flag1);
+  ASSERT_FALSE(target.Joinable());
+}
 }  // namespace test
 }  // namespace detail
 }  // namespace databento

@@ -5,7 +5,8 @@
 
 namespace databento {
 namespace detail {
-// An RAII thread that joins if necessary on destruction.
+// An RAII thread that joins if necessary on destruction, like std::jthread in
+// C++20.
 class ScopedThread {
  public:
   ScopedThread() noexcept = default;
@@ -15,8 +16,8 @@ class ScopedThread {
   ScopedThread(ScopedThread&& other) noexcept
       : thread_{std::move(other.thread_)} {}
   ScopedThread& operator=(ScopedThread&& other) noexcept {
-    if (thread_.joinable()) {
-      thread_.join();
+    if (Joinable()) {
+      Join();
     }
     thread_ = std::move(other.thread_);
     return *this;
@@ -24,10 +25,13 @@ class ScopedThread {
   ScopedThread(const ScopedThread&) = delete;
   ScopedThread& operator=(const ScopedThread&) = delete;
   ~ScopedThread() {
-    if (thread_.joinable()) {
-      thread_.join();
+    if (Joinable()) {
+      Join();
     }
   }
+
+  bool Joinable() const { return thread_.joinable(); }
+  void Join() { return thread_.join(); }
 
  private:
   std::thread thread_;
