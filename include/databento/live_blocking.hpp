@@ -49,7 +49,7 @@ class LiveBlocking {
   std::string DecodeChallenge();
   std::string GenerateCramReply(const std::string& challenge_key);
   std::string EncodeAuthReq(const std::string& auth);
-  static void DecodeAuthResp(const std::string& response);
+  void DecodeAuthResp();
 
   static constexpr std::size_t kMaxStrLen = 24L * 1024;
 
@@ -58,10 +58,9 @@ class LiveBlocking {
   bool send_ts_out_;
   detail::TcpClient client_;
   std::array<char, kMaxStrLen> buffer_{};
-  std::string session_id_;
-  // reading variables
   std::size_t buffer_size_{};
   std::size_t buffer_idx_{};
+  std::string session_id_;
   Record current_record_{nullptr};
 };
 }  // namespace databento

@@ -43,15 +43,6 @@ void LiveBlocking::Subscribe(const std::string& dataset,
 void LiveBlocking::Start() { client_.WriteAll("start_session\n"); }
 
 const databento::Record& LiveBlocking::NextRecord() {
-  // const auto read_size = client_.Read(buffer_.data(), buffer_.size());
-  // auto buf_it = buffer_.begin();
-  // const auto buf_end = buffer_.begin() + read_size;
-  // while (buf_it != buf_end) {
-  //   const auto length = static_cast<std::uint8_t>(*buf_it);
-  //   const Record record{reinterpret_cast<RecordHeader*>(&*buf_it)};
-  //   callback(record);
-  //   buf_it += static_cast<std::ptrdiff_t>(length) * 4;
-  // }
   if (buffer_idx_ >= buffer_size_) {
     buffer_size_ = client_.Read(buffer_.data(), buffer_.size());
     if (buffer_size_ == 0) {
@@ -70,8 +61,6 @@ const databento::Record& LiveBlocking::NextRecord() {
         buffer_idx_ +
         client_.Read(&buffer_[buffer_idx_], buffer_.size() - buffer_idx_);
     if (read_size == 0) {
-      // TODO(cg): is this the best way to handle this? Using a callback would
-      // allow not nullability by not calling the callback
       throw LiveApiError{"Server closed the socket"};
     }
     buffer_size_ = buffer_idx_ + read_size;
@@ -83,12 +72,12 @@ const databento::Record& LiveBlocking::NextRecord() {
 }
 
 std::string LiveBlocking::DecodeChallenge() {
-  std::size_t read_size = client_.Read(buffer_.data(), buffer_.size());
-  if (read_size == 0) {
+  buffer_size_ = client_.Read(buffer_.data(), buffer_.size());
+  if (buffer_size_ == 0) {
     throw LiveApiError{"Server closed socket during authentication"};
   }
   // first line is version
-  std::string response{buffer_.data(), read_size};
+  std::string response{buffer_.data(), buffer_size_};
   auto first_nl_pos = response.find('\n');
   if (first_nl_pos == std::string::npos) {
     throw LiveApiError::UnexpectedMsg("Received malformed initial message",
@@ -98,11 +87,11 @@ std::string LiveBlocking::DecodeChallenge() {
   std::size_t find_start{};
   if (first_nl_pos + 1 == response.length()) {
     // read more
-    read_size = client_.Read(buffer_.data(), buffer_.size());
-    if (read_size == 0) {
+    buffer_size_ = client_.Read(buffer_.data(), buffer_.size());
+    if (buffer_size_ == 0) {
       throw LiveApiError{"Server closed socket during authentication"};
     }
-    response = {buffer_.data(), read_size};
+    response = {buffer_.data(), buffer_size_};
     find_start = 0;
   } else {
     find_start = first_nl_pos + 1;
@@ -131,13 +120,7 @@ std::string LiveBlocking::Authenticate() {
   std::string auth = GenerateCramReply(challenge_key);
   const std::string req = EncodeAuthReq(auth);
   client_.WriteAll(req.c_str(), req.size());
-
-  const std::size_t read_size = client_.Read(buffer_.data(), buffer_.size());
-  if (read_size == 0) {
-    throw LiveApiError{"No data received from server when replying to CRAM"};
-  }
-  const std::string auth_response{buffer_.data(), read_size};
-  DecodeAuthResp(auth_response);
+  DecodeAuthResp();
 
   return auth;
 }
@@ -167,7 +150,28 @@ std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
   return reply_stream.str();
 }
 
-void LiveBlocking::DecodeAuthResp(const std::string& response) {
+void LiveBlocking::DecodeAuthResp() {
+  // handle split packet read
+  auto nl_it = buffer_.end();
+  buffer_size_ = 0;
+  do {
+    buffer_idx_ = buffer_size_;
+    const auto read_size = client_.Read(buffer_.data() + buffer_idx_,
+                                        buffer_.size() - buffer_idx_);
+    if (read_size == 0) {
+      throw LiveApiError{
+          "Unexpected end of message received from server after replying to "
+          "CRAM"};
+    }
+    buffer_size_ += read_size;
+    nl_it = std::find(buffer_.begin() + buffer_idx_,
+                      buffer_.begin() + buffer_size_, '\n');
+  } while (nl_it == buffer_.end());
+  // one beyond newline
+  const std::string response{buffer_.begin(), nl_it + 1};
+  // set in case Read call also read records
+  buffer_idx_ = response.length();
+
   std::size_t pos{};
   std::size_t count{};
   bool found_success{};

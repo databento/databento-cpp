@@ -75,7 +75,7 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
   LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
-    ASSERT_TRUE(rec.Holds<OhlcvMsg>());
+    ASSERT_TRUE(rec.Holds<OhlcvMsg>()) << "Failed on call " << i;
   }
 }
 }  // namespace test
