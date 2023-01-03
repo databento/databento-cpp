@@ -9,6 +9,7 @@ on:
 jobs:
   ubuntu:
     strategy:
+      fail-fast: false
       matrix:
         compiler: [clang++, g++]
 

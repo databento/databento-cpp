@@ -152,12 +152,12 @@ std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
 
 void LiveBlocking::DecodeAuthResp() {
   // handle split packet read
-  auto nl_it = buffer_.end();
+  std::array<char, kMaxStrLen>::const_iterator nl_it;
   buffer_size_ = 0;
   do {
     buffer_idx_ = buffer_size_;
-    const auto read_size = client_.Read(buffer_.data() + buffer_idx_,
-                                        buffer_.size() - buffer_idx_);
+    const auto read_size =
+        client_.Read(&buffer_[buffer_idx_], buffer_.size() - buffer_idx_);
     if (read_size == 0) {
       throw LiveApiError{
           "Unexpected end of message received from server after replying to "
@@ -168,7 +168,7 @@ void LiveBlocking::DecodeAuthResp() {
                       buffer_.begin() + buffer_size_, '\n');
   } while (nl_it == buffer_.end());
   // one beyond newline
-  const std::string response{buffer_.begin(), nl_it + 1};
+  const std::string response{buffer_.cbegin(), nl_it + 1};
   // set in case Read call also read records
   buffer_idx_ = response.length();
 
