@@ -70,7 +70,10 @@ void HttpClient::GetRawStream(const std::string& path,
   if (err_status > 0) {
     throw HttpResponseError{path, err_status, std::move(err_body)};
   }
-  if (res.error() != httplib::Error::Success) {
+  if (res.error() != httplib::Error::Success &&
+      // canceled happens if `callback` returns false, which is based on the
+      // user input, and therefor not exceptional
+      res.error() != httplib::Error::Canceled) {
     throw HttpRequestError{path, res.error()};
   }
 }

@@ -992,8 +992,12 @@ void Historical::TimeseriesStream(const HttplibParams& params,
       metadata_callback(std::move(metadata));
     }
     for (auto i = 0UL; i < record_count; ++i) {
-      should_continue =
-          record_callback(dbz_parser.ParseRecord()) == KeepGoing::Continue;
+      const bool should_stop =
+          record_callback(dbz_parser.ParseRecord()) == KeepGoing::Stop;
+      if (should_stop) {
+        should_continue = false;
+        break;
+      }
     }
   } catch (const std::exception& exc) {
     should_continue = false;

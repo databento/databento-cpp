@@ -668,6 +668,28 @@ TEST_F(HistoricalTests, TestTimeseriesStream_CallbackException) {
                std::logic_error);
 }
 
+TEST_F(HistoricalTests, TestTimeseriesStreamCancellation) {
+  mock_server_.MockStreamDbz("/v0/timeseries.stream", {},
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  std::uint32_t call_count = 0;
+  target.TimeseriesStream(
+      dataset::kGlbxMdp3,
+      UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+      UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
+      Schema::Mbo, SType::Native, SType::ProductId, 2, [](Metadata&&) {},
+      [&call_count](const Record&) {
+        ++call_count;
+        return KeepGoing::Stop;
+      });
+  // Should gracefully exit after first record, even though there are two
+  // records in the file
+  ASSERT_EQ(call_count, 1);
+}
+
 TEST_F(HistoricalTests, TestTimeseriesStreamToFile) {
   mock_server_.MockStreamDbz("/v0/timeseries.stream",
                              {{"dataset", dataset::kGlbxMdp3},
