@@ -52,8 +52,8 @@ class Record {
   RecordHeader* record_;
 };
 
-// Market-by-order (MBO) tick message.
-struct TickMsg {
+// Market-by-order (MBO) message.
+struct MboMsg {
   static constexpr std::uint8_t kTypeId = 0xA0;
 
   RecordHeader hd;
@@ -69,7 +69,7 @@ struct TickMsg {
   std::uint32_t sequence;
 };
 
-static_assert(sizeof(TickMsg) == 56, "TickMsg size must match C");
+static_assert(sizeof(MboMsg) == 56, "MboMsg size must match C");
 
 struct BidAskPair {
   std::int64_t bid_px;
@@ -146,7 +146,7 @@ inline bool operator==(const RecordHeader& lhs, const RecordHeader& rhs) {
          lhs.product_id == rhs.product_id && lhs.ts_event == rhs.ts_event;
 }
 
-inline bool operator==(const TickMsg& lhs, const TickMsg& rhs) {
+inline bool operator==(const MboMsg& lhs, const MboMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.order_id == rhs.order_id &&
          lhs.price == rhs.price && lhs.size == rhs.size &&
          lhs.flags == rhs.flags && lhs.channel_id == rhs.channel_id &&
@@ -202,8 +202,8 @@ inline bool operator==(const OhlcvMsg& lhs, const OhlcvMsg& rhs) {
 
 std::string ToString(const RecordHeader& header);
 std::ostream& operator<<(std::ostream& stream, const RecordHeader& header);
-std::string ToString(const TickMsg& tick_msg);
-std::ostream& operator<<(std::ostream& stream, const TickMsg& tick_msg);
+std::string ToString(const MboMsg& mbo_msg);
+std::ostream& operator<<(std::ostream& stream, const MboMsg& mbo_msg);
 std::string ToString(const BidAskPair& ba_pair);
 std::ostream& operator<<(std::ostream& stream, const BidAskPair& ba_pair);
 std::string ToString(const TradeMsg& trade_msg);

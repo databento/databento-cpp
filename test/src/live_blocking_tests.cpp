@@ -145,9 +145,9 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
 }
 
 TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
-  const TickMsg kRec{
-      DummyHeader<TickMsg>(), 1,  2, 3, {}, 4, 'A', 'B', UnixNanos{},
-      TimeDeltaNanos{},       100};
+  const MboMsg kRec{
+      DummyHeader<MboMsg>(), 1,  2, 3, {}, 4, 'A', 'B', UnixNanos{},
+      TimeDeltaNanos{},      100};
 
   std::mutex mutex;
   std::condition_variable cv;
@@ -162,8 +162,8 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
 
   LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
   auto rec = target.NextRecord();
-  ASSERT_TRUE(rec.Holds<TickMsg>());
-  EXPECT_EQ(rec.Get<TickMsg>(), kRec);
+  ASSERT_TRUE(rec.Holds<MboMsg>());
+  EXPECT_EQ(rec.Get<MboMsg>(), kRec);
   // partial read and timeout occurs here
   ASSERT_EQ(target.NextRecord(std::chrono::milliseconds{10}), nullptr);
   {
@@ -173,8 +173,8 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
   }
   // recovers from partial read
   rec = target.NextRecord();
-  ASSERT_TRUE(rec.Holds<TickMsg>());
-  EXPECT_EQ(rec.Get<TickMsg>(), kRec);
+  ASSERT_TRUE(rec.Holds<MboMsg>());
+  EXPECT_EQ(rec.Get<MboMsg>(), kRec);
 }
 }  // namespace test
 }  // namespace databento

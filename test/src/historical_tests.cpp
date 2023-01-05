@@ -577,7 +577,7 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::unique_ptr<Metadata> metadata_ptr;
-  std::vector<TickMsg> mbo_records;
+  std::vector<MboMsg> mbo_records;
   target.TimeseriesStream(
       dataset::kGlbxMdp3,
       UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
@@ -589,7 +589,7 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
             std::unique_ptr<Metadata>{new Metadata(std::move(metadata))};
       },
       [&mbo_records](const Record& record) {
-        mbo_records.emplace_back(record.Get<TickMsg>());
+        mbo_records.emplace_back(record.Get<MboMsg>());
         return KeepGoing::Continue;
       });
   EXPECT_EQ(metadata_ptr->record_count, 2);

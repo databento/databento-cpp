@@ -17,17 +17,17 @@ class LiveThreadedTests : public testing::Test {
 };
 
 TEST_F(LiveThreadedTests, TestBasic) {
-  const TickMsg kRec{{sizeof(TickMsg) / 4, TickMsg::kTypeId, 1, 2, UnixNanos{}},
-                     1,
-                     2,
-                     3,
-                     0,
-                     4,
-                     'A',
-                     'B',
-                     UnixNanos{},
-                     TimeDeltaNanos{},
-                     100};
+  const MboMsg kRec{{sizeof(MboMsg) / 4, MboMsg::kTypeId, 1, 2, UnixNanos{}},
+                    1,
+                    2,
+                    3,
+                    0,
+                    4,
+                    'A',
+                    'B',
+                    UnixNanos{},
+                    TimeDeltaNanos{},
+                    100};
   const mock::MockLsgServer mock_server{[&kRec](mock::MockLsgServer& self) {
     self.Accept();
     self.Authenticate();
@@ -40,8 +40,8 @@ TEST_F(LiveThreadedTests, TestBasic) {
   std::atomic<std::uint32_t> call_count{};
   target.Start([&call_count, &kRec](const Record& rec) {
     ++call_count;
-    ASSERT_TRUE(rec.Holds<TickMsg>());
-    EXPECT_EQ(rec.Get<TickMsg>(), kRec);
+    ASSERT_TRUE(rec.Holds<MboMsg>());
+    EXPECT_EQ(rec.Get<MboMsg>(), kRec);
   });
   while (call_count < 2) {
     std::this_thread::yield();
@@ -49,17 +49,17 @@ TEST_F(LiveThreadedTests, TestBasic) {
 }
 
 TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
-  const TickMsg kRec{{sizeof(TickMsg) / 4, TickMsg::kTypeId, 1, 2, UnixNanos{}},
-                     1,
-                     2,
-                     3,
-                     0,
-                     4,
-                     'A',
-                     'B',
-                     UnixNanos{},
-                     TimeDeltaNanos{},
-                     100};
+  const MboMsg kRec{{sizeof(MboMsg) / 4, MboMsg::kTypeId, 1, 2, UnixNanos{}},
+                    1,
+                    2,
+                    3,
+                    0,
+                    4,
+                    'A',
+                    'B',
+                    UnixNanos{},
+                    TimeDeltaNanos{},
+                    100};
   std::atomic<std::uint32_t> call_count{};
   const mock::MockLsgServer mock_server{
       [&kRec, &call_count](mock::MockLsgServer& self) {
@@ -78,8 +78,8 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
   LiveThreaded target{kKey, "127.0.0.1", mock_server.Port(), false};
   target.Start([&call_count, &kRec](const Record& rec) {
     ++call_count;
-    ASSERT_TRUE(rec.Holds<TickMsg>());
-    EXPECT_EQ(rec.Get<TickMsg>(), kRec);
+    ASSERT_TRUE(rec.Holds<MboMsg>());
+    EXPECT_EQ(rec.Get<MboMsg>(), kRec);
   });
   while (call_count < 2) {
     std::this_thread::yield();

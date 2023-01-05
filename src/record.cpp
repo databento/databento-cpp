@@ -12,8 +12,8 @@ std::size_t Record::Size() const { return Record::SizeOfType(record_->rtype); }
 
 std::size_t Record::SizeOfType(const std::uint8_t rtype) {
   switch (rtype) {
-    case TickMsg::kTypeId: {
-      return sizeof(TickMsg);
+    case MboMsg::kTypeId: {
+      return sizeof(MboMsg);
     }
     case TradeMsg::kTypeId: {
       return sizeof(TradeMsg);
@@ -38,7 +38,7 @@ std::size_t Record::SizeOfType(const std::uint8_t rtype) {
 std::uint8_t Record::TypeIdFromSchema(const Schema schema) {
   switch (schema) {
     case Schema::Mbo: {
-      return TickMsg::kTypeId;
+      return MboMsg::kTypeId;
     }
     case Schema::Mbp1: {
       return Mbp1Msg::kTypeId;
@@ -137,23 +137,23 @@ std::ostream& operator<<(std::ostream& stream, const RecordHeader& header) {
       .AddField("ts_event", header.ts_event)
       .Finish();
 }
-std::string ToString(const TickMsg& tick_msg) { return MakeString(tick_msg); }
-std::ostream& operator<<(std::ostream& stream, const TickMsg& tick_msg) {
+std::string ToString(const MboMsg& mbo_msg) { return MakeString(mbo_msg); }
+std::ostream& operator<<(std::ostream& stream, const MboMsg& mbo_msg) {
   return StreamOpBuilder{stream}
       .SetSpacer("\n    ")
-      .SetTypeName("TickMsg")
+      .SetTypeName("MboMsg")
       .Build()
-      .AddField("hd", tick_msg.hd)
-      .AddField("order_id", tick_msg.order_id)
-      .AddField("price", tick_msg.price)
-      .AddField("size", tick_msg.size)
-      .AddField("flags", tick_msg.flags)
-      .AddField("channel_id", tick_msg.channel_id)
-      .AddField("action", tick_msg.action)
-      .AddField("side", tick_msg.side)
-      .AddField("ts_recv", tick_msg.ts_recv)
-      .AddField("ts_in_delta", tick_msg.ts_in_delta)
-      .AddField("sequence", tick_msg.sequence)
+      .AddField("hd", mbo_msg.hd)
+      .AddField("order_id", mbo_msg.order_id)
+      .AddField("price", mbo_msg.price)
+      .AddField("size", mbo_msg.size)
+      .AddField("flags", mbo_msg.flags)
+      .AddField("channel_id", mbo_msg.channel_id)
+      .AddField("action", mbo_msg.action)
+      .AddField("side", mbo_msg.side)
+      .AddField("ts_recv", mbo_msg.ts_recv)
+      .AddField("ts_in_delta", mbo_msg.ts_in_delta)
+      .AddField("sequence", mbo_msg.sequence)
       .Finish();
 }
 std::string ToString(const BidAskPair& ba_pair) { return MakeString(ba_pair); }

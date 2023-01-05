@@ -83,10 +83,10 @@ TEST_F(DbzParserTests, TestParseMbo) {
 
   const auto ch_record1 = channel_target_.ParseRecord();
   const auto f_record1 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record1.Holds<TickMsg>());
-  ASSERT_TRUE(f_record1.Holds<TickMsg>());
-  const auto& ch_mbo1 = ch_record1.Get<TickMsg>();
-  const auto& f_mbo1 = f_record1.Get<TickMsg>();
+  ASSERT_TRUE(ch_record1.Holds<MboMsg>());
+  ASSERT_TRUE(f_record1.Holds<MboMsg>());
+  const auto& ch_mbo1 = ch_record1.Get<MboMsg>();
+  const auto& f_mbo1 = f_record1.Get<MboMsg>();
   EXPECT_EQ(ch_mbo1, f_mbo1);
   EXPECT_EQ(ch_mbo1.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbo1.hd.product_id, 5482);
@@ -104,11 +104,11 @@ TEST_F(DbzParserTests, TestParseMbo) {
   EXPECT_EQ(ch_mbo1.sequence, 1170352);
 
   const auto ch_record2 = channel_target_.ParseRecord();
-  ASSERT_TRUE(ch_record2.Holds<TickMsg>());
+  ASSERT_TRUE(ch_record2.Holds<MboMsg>());
   const auto f_record2 = file_target_->ParseRecord();
-  ASSERT_TRUE(f_record2.Holds<TickMsg>());
-  const auto& ch_mbo2 = ch_record2.Get<TickMsg>();
-  const auto& f_mbo2 = f_record2.Get<TickMsg>();
+  ASSERT_TRUE(f_record2.Holds<MboMsg>());
+  const auto& ch_mbo2 = ch_record2.Get<MboMsg>();
+  const auto& f_mbo2 = f_record2.Get<MboMsg>();
   EXPECT_EQ(ch_mbo2, f_mbo2);
   EXPECT_EQ(ch_mbo2.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbo2.hd.product_id, 5482);
