@@ -602,5 +602,57 @@ TEST_F(DbzParserTests, TestParseOhlcv1S) {
   EXPECT_EQ(ch_ohlcv2.close, 372050000000000);
   EXPECT_EQ(ch_ohlcv2.volume, 13);
 }
+
+TEST_F(DbzParserTests, TestParseDefinition) {
+  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.definition.dbz");
+
+  const Metadata ch_metadata = channel_target_.ParseMetadata();
+  const Metadata f_metadata = file_target_->ParseMetadata();
+  EXPECT_EQ(ch_metadata, f_metadata);
+  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.dataset, dataset::kXnasItch);
+  EXPECT_EQ(ch_metadata.schema, Schema::Definition);
+  EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1664841600000000000);
+  EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1672790400000000000);
+  EXPECT_EQ(ch_metadata.limit, 0);
+  EXPECT_EQ(ch_metadata.record_count, 2);
+  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
+  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"MSFT"});
+  EXPECT_TRUE(ch_metadata.partial.empty());
+  EXPECT_TRUE(ch_metadata.not_found.empty());
+  EXPECT_EQ(ch_metadata.mappings.size(), 1);
+  const auto& mapping = ch_metadata.mappings.at(0);
+  EXPECT_EQ(mapping.native, "MSFT");
+  ASSERT_EQ(mapping.intervals.size(), 20);
+  const auto& interval = mapping.intervals.at(0);
+  EXPECT_EQ(interval.symbol, "7358");
+  EXPECT_EQ(interval.start_date, 20221004);
+  EXPECT_EQ(interval.end_date, 20221205);
+
+  const auto ch_record1 = channel_target_.ParseRecord();
+  const auto f_record1 = file_target_->ParseRecord();
+  ASSERT_TRUE(ch_record1.Holds<InstrumentDefMsg>());
+  ASSERT_TRUE(f_record1.Holds<InstrumentDefMsg>());
+  const auto& ch_def1 = ch_record1.Get<InstrumentDefMsg>();
+  const auto& f_def1 = f_record1.Get<InstrumentDefMsg>();
+  EXPECT_EQ(ch_def1, f_def1);
+  EXPECT_STREQ(ch_def1.exchange.data(), "XNAS");
+  EXPECT_STREQ(ch_def1.symbol.data(), "MSFT");
+  EXPECT_EQ(ch_def1.security_update_action, 'A');
+  EXPECT_EQ(ch_def1.min_lot_size_round_lot, 100);
+
+  const auto ch_record2 = channel_target_.ParseRecord();
+  const auto f_record2 = file_target_->ParseRecord();
+  ASSERT_TRUE(ch_record2.Holds<InstrumentDefMsg>());
+  ASSERT_TRUE(f_record2.Holds<InstrumentDefMsg>());
+  const auto& ch_def2 = ch_record2.Get<InstrumentDefMsg>();
+  const auto& f_def2 = f_record2.Get<InstrumentDefMsg>();
+  EXPECT_EQ(ch_def2, f_def2);
+  EXPECT_STREQ(ch_def2.exchange.data(), "XNAS");
+  EXPECT_STREQ(ch_def2.symbol.data(), "MSFT");
+  EXPECT_EQ(ch_def2.security_update_action, 'A');
+  EXPECT_EQ(ch_def2.min_lot_size_round_lot, 100);
+}
 }  // namespace test
 }  // namespace databento
