@@ -60,7 +60,7 @@ struct TickMsg {
   std::uint64_t order_id;
   std::int64_t price;
   std::uint32_t size;
-  std::int8_t flags;
+  std::uint8_t flags;
   std::uint8_t channel_id;
   char action;
   char side;
@@ -92,7 +92,7 @@ struct MbpMsg {
   std::uint32_t size;
   char action;
   char side;
-  std::int8_t flags;
+  std::uint8_t flags;
   // Depth of the actual book change.
   std::uint8_t depth;
   UnixNanos ts_recv;
@@ -110,7 +110,7 @@ struct TradeMsg {
   std::uint32_t size;
   char action;
   char side;
-  std::int8_t flags;
+  std::uint8_t flags;
   // Depth of the actual book change.
   std::uint8_t depth;
   UnixNanos ts_recv;

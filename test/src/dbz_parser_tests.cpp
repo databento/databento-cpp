@@ -95,7 +95,7 @@ TEST_F(DbzParserTests, TestParseMbo) {
   EXPECT_EQ(ch_mbo1.order_id, 647784973705);
   EXPECT_EQ(ch_mbo1.price, 3722750000000);
   EXPECT_EQ(ch_mbo1.size, 1);
-  EXPECT_EQ(ch_mbo1.flags, -128);
+  EXPECT_EQ(ch_mbo1.flags, 128);
   EXPECT_EQ(ch_mbo1.channel_id, 0);
   EXPECT_EQ(ch_mbo1.action, 'C');
   EXPECT_EQ(ch_mbo1.side, 'A');
@@ -117,7 +117,7 @@ TEST_F(DbzParserTests, TestParseMbo) {
   EXPECT_EQ(ch_mbo2.order_id, 647784973631);
   EXPECT_EQ(ch_mbo2.price, 3723000000000);
   EXPECT_EQ(ch_mbo2.size, 1);
-  EXPECT_EQ(ch_mbo2.flags, -128);
+  EXPECT_EQ(ch_mbo2.flags, 128);
   EXPECT_EQ(ch_mbo2.channel_id, 0);
   EXPECT_EQ(ch_mbo2.action, 'C');
   EXPECT_EQ(ch_mbo2.side, 'A');
@@ -161,7 +161,7 @@ TEST_F(DbzParserTests, TestParseMbp1) {
   EXPECT_EQ(ch_mbp1.size, 1);
   EXPECT_EQ(ch_mbp1.action, 'A');
   EXPECT_EQ(ch_mbp1.side, 'A');
-  EXPECT_EQ(ch_mbp1.flags, -128);
+  EXPECT_EQ(ch_mbp1.flags, 128);
   EXPECT_EQ(ch_mbp1.depth, 0);
   EXPECT_EQ(ch_mbp1.ts_recv.time_since_epoch().count(), 1609160400006136329);
   EXPECT_EQ(ch_mbp1.ts_in_delta.count(), 17214);
@@ -188,7 +188,7 @@ TEST_F(DbzParserTests, TestParseMbp1) {
   EXPECT_EQ(ch_mbp2.size, 1);
   EXPECT_EQ(ch_mbp2.action, 'A');
   EXPECT_EQ(ch_mbp2.side, 'A');
-  EXPECT_EQ(ch_mbp2.flags, -128);
+  EXPECT_EQ(ch_mbp2.flags, 128);
   EXPECT_EQ(ch_mbp2.depth, 0);
   EXPECT_EQ(ch_mbp2.ts_recv.time_since_epoch().count(), 1609160400006246513);
   EXPECT_EQ(ch_mbp2.ts_in_delta.count(), 18858);
@@ -236,7 +236,7 @@ TEST_F(DbzParserTests, TestParseMbp10) {
   EXPECT_EQ(ch_mbp1.size, 1);
   EXPECT_EQ(ch_mbp1.action, 'C');
   EXPECT_EQ(ch_mbp1.side, 'A');
-  EXPECT_EQ(ch_mbp1.flags, -128);
+  EXPECT_EQ(ch_mbp1.flags, 128);
   EXPECT_EQ(ch_mbp1.depth, 9);
   EXPECT_EQ(ch_mbp1.ts_recv.time_since_epoch().count(), 1609160400000704060);
   EXPECT_EQ(ch_mbp1.ts_in_delta.count(), 22993);
@@ -275,7 +275,7 @@ TEST_F(DbzParserTests, TestParseMbp10) {
   EXPECT_EQ(ch_mbp2.size, 1);
   EXPECT_EQ(ch_mbp2.action, 'C');
   EXPECT_EQ(ch_mbp2.side, 'B');
-  EXPECT_EQ(ch_mbp2.flags, -128);
+  EXPECT_EQ(ch_mbp2.flags, 128);
   EXPECT_EQ(ch_mbp2.depth, 1);
   EXPECT_EQ(ch_mbp2.ts_recv.time_since_epoch().count(), 1609160400000750544);
   EXPECT_EQ(ch_mbp2.ts_in_delta.count(), 20625);
@@ -335,7 +335,7 @@ TEST_F(DbzParserTests, TestParseTbbo) {
   EXPECT_EQ(ch_tbbo1.size, 5);
   EXPECT_EQ(ch_tbbo1.action, 'T');
   EXPECT_EQ(ch_tbbo1.side, 'A');
-  EXPECT_EQ(ch_tbbo1.flags, -127);
+  EXPECT_EQ(ch_tbbo1.flags, 129);
   EXPECT_EQ(ch_tbbo1.depth, 0);
   EXPECT_EQ(ch_tbbo1.ts_recv.time_since_epoch().count(), 1609160400099150057);
   EXPECT_EQ(ch_tbbo1.ts_in_delta.count(), 19251);
@@ -362,7 +362,7 @@ TEST_F(DbzParserTests, TestParseTbbo) {
   EXPECT_EQ(ch_tbbo2.size, 21);
   EXPECT_EQ(ch_tbbo2.action, 'T');
   EXPECT_EQ(ch_tbbo2.side, 'A');
-  EXPECT_EQ(ch_tbbo2.flags, -127);
+  EXPECT_EQ(ch_tbbo2.flags, 129);
   EXPECT_EQ(ch_tbbo2.depth, 0);
   EXPECT_EQ(ch_tbbo2.ts_recv.time_since_epoch().count(), 1609160400108142648);
   EXPECT_EQ(ch_tbbo2.ts_in_delta.count(), 20728);
@@ -410,7 +410,7 @@ TEST_F(DbzParserTests, TestParseTrades) {
   EXPECT_EQ(ch_trade1.size, 5);
   EXPECT_EQ(ch_trade1.action, 'T');
   EXPECT_EQ(ch_trade1.side, 'A');
-  EXPECT_EQ(ch_trade1.flags, -127);
+  EXPECT_EQ(ch_trade1.flags, 129);
   EXPECT_EQ(ch_trade1.depth, 0);
   EXPECT_EQ(ch_trade1.ts_recv.time_since_epoch().count(), 1609160400099150057);
   EXPECT_EQ(ch_trade1.ts_in_delta.count(), 19251);
@@ -431,7 +431,7 @@ TEST_F(DbzParserTests, TestParseTrades) {
   EXPECT_EQ(ch_trade2.size, 21);
   EXPECT_EQ(ch_trade2.action, 'T');
   EXPECT_EQ(ch_trade2.side, 'A');
-  EXPECT_EQ(ch_trade2.flags, -127);
+  EXPECT_EQ(ch_trade2.flags, 129);
   EXPECT_EQ(ch_trade2.depth, 0);
   EXPECT_EQ(ch_trade2.ts_recv.time_since_epoch().count(), 1609160400108142648);
   EXPECT_EQ(ch_trade2.ts_in_delta.count(), 20728);
