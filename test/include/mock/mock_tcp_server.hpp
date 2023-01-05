@@ -15,6 +15,7 @@ namespace mock {
 class MockTcpServer {
  public:
   MockTcpServer();
+  explicit MockTcpServer(std::function<void(MockTcpServer&)> serve_fn);
 
   static std::pair<std::uint16_t, int> InitSocket();
 
@@ -24,13 +25,14 @@ class MockTcpServer {
   // Wait for the server to receive data. Returns the data the server receives.
   std::string AwaitReceived() const;
 
- private:
-  void Serve();
-  int InitSocketAndSetPort();
   void Accept();
   void Receive();
   void Send();
   void Close();
+
+ private:
+  void Serve();
+  int InitSocketAndSetPort();
 
   std::uint16_t port_{};
   detail::ScopedFd socket_{};

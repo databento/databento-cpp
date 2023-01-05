@@ -42,37 +42,51 @@ void LiveBlocking::Subscribe(const std::string& dataset,
 
 void LiveBlocking::Start() { client_.WriteAll("start_session\n"); }
 
-const databento::Record& LiveBlocking::NextRecord() {
+const databento::Record& LiveBlocking::NextRecord() { return *NextRecord({}); }
+
+const databento::Record* LiveBlocking::NextRecord(
+    std::chrono::milliseconds timeout) {
   if (buffer_idx_ >= buffer_size_) {
-    buffer_size_ = client_.Read(buffer_.data(), buffer_.size());
-    if (buffer_size_ == 0) {
+    const auto read_res = client_.Read(buffer_.data(), buffer_.size(), timeout);
+    if (read_res.status == detail::TcpClient::Status::Timeout) {
+      return nullptr;
+    }
+    if (read_res.status == detail::TcpClient::Status::Closed) {
       throw LiveApiError{"Server closed the socket"};
     }
+    buffer_size_ = read_res.read_size;
     buffer_idx_ = 0;
   }
   // assume buffer_idx_ is record-aligned, first byte is length of next record
   const auto raw_length = static_cast<std::uint8_t>(buffer_[buffer_idx_]);
   const auto length = static_cast<std::size_t>(raw_length) * 4;
   if (buffer_idx_ + length > buffer_size_) {
-    // partial record
+    // only a partial record remaining in buffer. Shift unread bytes to
+    // beginning of buffer.
     std::copy(buffer_.cbegin() + buffer_idx_, buffer_.cend(), buffer_.begin());
-    buffer_idx_ = buffer_size_ - buffer_idx_;
-    const std::size_t read_size =
-        buffer_idx_ +
-        client_.Read(&buffer_[buffer_idx_], buffer_.size() - buffer_idx_);
-    if (read_size == 0) {
+    buffer_size_ -= buffer_idx_;
+    buffer_idx_ = 0;
+    const auto read_res = client_.Read(&buffer_[buffer_size_],
+                                       buffer_.size() - buffer_size_, timeout);
+    if (read_res.status == detail::TcpClient::Status::Timeout) {
+      return nullptr;
+    }
+    if (read_res.status == detail::TcpClient::Status::Closed) {
       throw LiveApiError{"Server closed the socket"};
     }
-    buffer_size_ = buffer_idx_ + read_size;
+    buffer_size_ += read_res.read_size;
+    if (buffer_size_ < length) {
+      return nullptr;
+    }
   }
   current_record_ =
       Record{reinterpret_cast<RecordHeader*>(&buffer_[buffer_idx_])};
   buffer_idx_ += length;
-  return current_record_;
+  return &current_record_;
 }
 
 std::string LiveBlocking::DecodeChallenge() {
-  buffer_size_ = client_.Read(buffer_.data(), buffer_.size());
+  buffer_size_ = client_.Read(buffer_.data(), buffer_.size()).read_size;
   if (buffer_size_ == 0) {
     throw LiveApiError{"Server closed socket during authentication"};
   }
@@ -87,7 +101,7 @@ std::string LiveBlocking::DecodeChallenge() {
   std::size_t find_start{};
   if (first_nl_pos + 1 == response.length()) {
     // read more
-    buffer_size_ = client_.Read(buffer_.data(), buffer_.size());
+    buffer_size_ = client_.Read(buffer_.data(), buffer_.size()).read_size;
     if (buffer_size_ == 0) {
       throw LiveApiError{"Server closed socket during authentication"};
     }
@@ -157,7 +171,8 @@ void LiveBlocking::DecodeAuthResp() {
   do {
     buffer_idx_ = buffer_size_;
     const auto read_size =
-        client_.Read(&buffer_[buffer_idx_], buffer_.size() - buffer_idx_);
+        client_.Read(&buffer_[buffer_idx_], buffer_.size() - buffer_idx_)
+            .read_size;
     if (read_size == 0) {
       throw LiveApiError{
           "Unexpected end of message received from server after replying to "

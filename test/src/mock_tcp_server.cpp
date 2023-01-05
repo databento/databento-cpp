@@ -1,8 +1,8 @@
 #include "mock/mock_tcp_server.hpp"
 
 #include <gtest/gtest.h>  // ASSERT_EQ
-#include <netinet/in.h>   // IPPROTO_TCP, sockaddr_in, ntohs
-#include <sys/socket.h>   // AF_INET, listen, recv, socket
+#include <netinet/in.h>   // IPPROTO_TCP, ntohs, sockaddr_in, TCP_NODELAY
+#include <sys/socket.h>   // AF_INET, listen, recv, setsocketopt, socket
 #include <unistd.h>       // close, socklen_t, write
 
 #include <thread>  // this_thread
@@ -12,7 +12,11 @@
 using databento::test::mock::MockTcpServer;
 
 MockTcpServer::MockTcpServer()
-    : socket_{InitSocketAndSetPort()}, thread_{[this] { this->Serve(); }} {}
+    : MockTcpServer([](MockTcpServer& self) { self.Serve(); }) {}
+
+MockTcpServer::MockTcpServer(std::function<void(MockTcpServer&)> serve_fn)
+    : socket_{InitSocketAndSetPort()},
+      thread_{std::move(serve_fn), std::ref(*this)} {}
 
 void MockTcpServer::SetSend(std::string send) {
   const std::lock_guard<std::mutex> lock{send_mutex_};
@@ -41,13 +45,21 @@ void MockTcpServer::Accept() {
   auto addr_len = static_cast<socklen_t>(sizeof(addr));
   conn_fd_ = detail::ScopedFd{
       ::accept(socket_.Get(), reinterpret_cast<sockaddr*>(&addr), &addr_len)};
+  // Disable Nagle's algorithm for finer control over when packets are sent
+  // during testing
+  const int flag = 1;
+  const auto res =
+      ::setsockopt(socket_.Get(), IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int));
+  if (res < 0) {
+    throw TcpError{errno, "Failed to disable Nagle's algorithm"};
+  }
 }
 
 void MockTcpServer::Receive() {
   const std::lock_guard<std::mutex> rec_guard{received_mutex_};
   received_.resize(1024);
   const auto read_size = ::recv(conn_fd_.Get(), &*received_.begin(), 1024, {});
-  if (read_size <= 0) {
+  if (read_size < 0) {
     throw TcpError{errno, "Server failed to read"};
   }
   received_.resize(static_cast<std::size_t>(read_size));
@@ -80,7 +92,7 @@ std::pair<std::uint16_t, int> MockTcpServer::InitSocket() {
                     &addr_size) == -1) {
     throw TcpError{errno, "Error fetching port"};
   }
-  auto port = ntohs(addr_actual.sin_port);
+  const auto port = ntohs(addr_actual.sin_port);
   if (::listen(fd, 1) != 0) {
     throw TcpError{errno, "Error listening on port"};
   }

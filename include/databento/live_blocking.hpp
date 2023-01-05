@@ -1,12 +1,13 @@
 #pragma once
 
 #include <array>
+#include <chrono>  // milliseconds
 #include <cstdint>
 #include <string>
 #include <vector>
 
 #include "databento/detail/tcp_client.hpp"  // TcpClient
-#include "databento/enums.hpp"              // LiveGateway
+#include "databento/enums.hpp"              // LiveGateway, Schema, SType
 #include "databento/record.hpp"             // Record
 
 namespace databento {
@@ -43,6 +44,12 @@ class LiveBlocking {
   //
   // This method should only be called after `Start`.
   const Record& NextRecord();
+  // Block on getting the next record. The returned pointer is valid until
+  // this method is called again. Will return `nullptr` if the `timeout` is
+  // reached.
+  //
+  // This method should only be called after `Start`.
+  const Record* NextRecord(std::chrono::milliseconds timeout);
 
  private:
   std::string Authenticate();

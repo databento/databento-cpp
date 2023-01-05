@@ -6,12 +6,10 @@
 #include <vector>
 
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
+#include "databento/enums.hpp"                 // LiveGateway, Schema, SType
 #include "databento/record.hpp"                // Record
 
 namespace databento {
-// Forward declare
-class LiveBlocking;
-
 // A client for interfacing with Databento's live market data API. This client
 // has a threaded event-driven API for receiving the next record.
 class LiveThreaded {

@@ -1,7 +1,8 @@
 #include "databento/live_threaded.hpp"
 
 #include <atomic>
-#include <utility>  // forward, move
+#include <chrono>   // milliseconds
+#include <utility>  // forward, move, swap
 
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
 #include "databento/live_blocking.hpp"         // LiveBlocking
@@ -49,10 +50,14 @@ void LiveThreaded::Start(Callback callback) {
 }
 
 void LiveThreaded::ProcessingThread(Impl* impl, Callback&& callback) {
+  constexpr std::chrono::milliseconds kTimeout{50};
   // Thread safety: non-const calls to `blocking` are only performed from this
   // thread
   impl->blocking.Start();
   while (impl->keep_going.load()) {
-    callback(impl->blocking.NextRecord());
+    const Record* rec = impl->blocking.NextRecord(kTimeout);
+    if (rec) {
+      callback(*rec);
+    }
   }
 }
