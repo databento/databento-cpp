@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include <httplib.h>
+#include <nlohmann/json_fwd.hpp>
 
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
-#include <nlohmann/json_fwd.hpp>
 #include <stdexcept>  // logic_error
 #include <thread>
 
@@ -19,7 +19,7 @@
 #include "databento/record.hpp"
 #include "databento/symbology.hpp"  // kAllSymbols
 #include "databento/timeseries.hpp"
-#include "mock/mock_server.hpp"
+#include "mock/mock_http_server.hpp"
 #include "temp_file.hpp"
 
 namespace databento {
@@ -28,7 +28,7 @@ constexpr auto kApiKey = "HIST_SECRET";
 
 class HistoricalTests : public ::testing::Test {
  protected:
-  mock::MockServer mock_server_{kApiKey};
+  mock::MockHttpServer mock_server_{kApiKey};
 };
 
 TEST_F(HistoricalTests, TestBatchSubmitJob) {
@@ -44,7 +44,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       {"end", "2022-07-03 00:00:00+00:00"},
       {"id", "GLBX-20221031-L3RVE95CV5"},
       {"is_example", false},
-      {"is_full_book", false},
+      {"is_full_universe", false},
       {"limit", nullptr},
       {"package_size", 2026761},
       {"packaging", "none"},
@@ -101,7 +101,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"end", "2022-09-27 00:00:00+00:00"},
        {"id", "CKXF"},
        {"is_example", false},
-       {"is_full_book", false},
+       {"is_full_universe", false},
        {"limit", nullptr},
        {"package_size", 2026761},
        {"packaging", "none"},
@@ -135,7 +135,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"end", "2022-09-27 00:00:00+00:00"},
        {"id", "8UPL"},
        {"is_example", false},
-       {"is_full_book", false},
+       {"is_full_universe", false},
        {"limit", nullptr},
        {"package_size", 2026761},
        {"packaging", "none"},
@@ -577,7 +577,7 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::unique_ptr<Metadata> metadata_ptr;
-  std::vector<TickMsg> mbo_records;
+  std::vector<MboMsg> mbo_records;
   target.TimeseriesStream(
       dataset::kGlbxMdp3,
       UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
@@ -589,7 +589,7 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
             std::unique_ptr<Metadata>{new Metadata(std::move(metadata))};
       },
       [&mbo_records](const Record& record) {
-        mbo_records.emplace_back(record.get<TickMsg>());
+        mbo_records.emplace_back(record.Get<MboMsg>());
         return KeepGoing::Continue;
       });
   EXPECT_EQ(metadata_ptr->record_count, 2);
@@ -617,7 +617,7 @@ TEST_F(HistoricalTests, TestTimeseriesStream_NoMetadataCallback) {
   target.TimeseriesStream(dataset::kGlbxMdp3, "2022-10-21T13:30",
                           "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
                           [&mbo_records](const Record& record) {
-                            mbo_records.emplace_back(record.get<TbboMsg>());
+                            mbo_records.emplace_back(record.Get<TbboMsg>());
                             return KeepGoing::Continue;
                           });
   EXPECT_EQ(mbo_records.size(), 2);
@@ -666,6 +666,28 @@ TEST_F(HistoricalTests, TestTimeseriesStream_CallbackException) {
                    [](Metadata&&) { throw std::logic_error{"Test failure"}; },
                    [](const Record&) { return KeepGoing::Continue; }),
                std::logic_error);
+}
+
+TEST_F(HistoricalTests, TestTimeseriesStreamCancellation) {
+  mock_server_.MockStreamDbz("/v0/timeseries.stream", {},
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  std::uint32_t call_count = 0;
+  target.TimeseriesStream(
+      dataset::kGlbxMdp3,
+      UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+      UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
+      Schema::Mbo, SType::Native, SType::ProductId, 2, [](Metadata&&) {},
+      [&call_count](const Record&) {
+        ++call_count;
+        return KeepGoing::Stop;
+      });
+  // Should gracefully exit after first record, even though there are two
+  // records in the file
+  ASSERT_EQ(call_count, 1);
 }
 
 TEST_F(HistoricalTests, TestTimeseriesStreamToFile) {

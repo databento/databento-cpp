@@ -83,11 +83,12 @@ enum class Delivery : std::uint8_t {
 };
 
 enum class Flag : std::uint8_t {
+  // Last message in the packet from the venue for a given `product_id`.
   kLast = 1 << 7,
-  kHalt = 1 << 6,
-  kReset = 1 << 5,
-  kDupId = 1 << 4,
-  kMbp = 1 << 3,
+  // Aggregated price level message, not an individual order.
+  kMbp = 1 << 4,
+  // The `ts_recv` value is inaccurate due to clock issues or packet reordering.
+  kBadTsRecv = 1 << 3,
 };
 
 // The current state of a batch job.

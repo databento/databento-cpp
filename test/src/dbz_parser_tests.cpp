@@ -83,10 +83,10 @@ TEST_F(DbzParserTests, TestParseMbo) {
 
   const auto ch_record1 = channel_target_.ParseRecord();
   const auto f_record1 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record1.holds<TickMsg>());
-  ASSERT_TRUE(f_record1.holds<TickMsg>());
-  const auto& ch_mbo1 = ch_record1.get<TickMsg>();
-  const auto& f_mbo1 = f_record1.get<TickMsg>();
+  ASSERT_TRUE(ch_record1.Holds<MboMsg>());
+  ASSERT_TRUE(f_record1.Holds<MboMsg>());
+  const auto& ch_mbo1 = ch_record1.Get<MboMsg>();
+  const auto& f_mbo1 = f_record1.Get<MboMsg>();
   EXPECT_EQ(ch_mbo1, f_mbo1);
   EXPECT_EQ(ch_mbo1.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbo1.hd.product_id, 5482);
@@ -95,7 +95,7 @@ TEST_F(DbzParserTests, TestParseMbo) {
   EXPECT_EQ(ch_mbo1.order_id, 647784973705);
   EXPECT_EQ(ch_mbo1.price, 3722750000000);
   EXPECT_EQ(ch_mbo1.size, 1);
-  EXPECT_EQ(ch_mbo1.flags, -128);
+  EXPECT_EQ(ch_mbo1.flags, 128);
   EXPECT_EQ(ch_mbo1.channel_id, 0);
   EXPECT_EQ(ch_mbo1.action, 'C');
   EXPECT_EQ(ch_mbo1.side, 'A');
@@ -104,11 +104,11 @@ TEST_F(DbzParserTests, TestParseMbo) {
   EXPECT_EQ(ch_mbo1.sequence, 1170352);
 
   const auto ch_record2 = channel_target_.ParseRecord();
-  ASSERT_TRUE(ch_record2.holds<TickMsg>());
+  ASSERT_TRUE(ch_record2.Holds<MboMsg>());
   const auto f_record2 = file_target_->ParseRecord();
-  ASSERT_TRUE(f_record2.holds<TickMsg>());
-  const auto& ch_mbo2 = ch_record2.get<TickMsg>();
-  const auto& f_mbo2 = f_record2.get<TickMsg>();
+  ASSERT_TRUE(f_record2.Holds<MboMsg>());
+  const auto& ch_mbo2 = ch_record2.Get<MboMsg>();
+  const auto& f_mbo2 = f_record2.Get<MboMsg>();
   EXPECT_EQ(ch_mbo2, f_mbo2);
   EXPECT_EQ(ch_mbo2.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbo2.hd.product_id, 5482);
@@ -117,7 +117,7 @@ TEST_F(DbzParserTests, TestParseMbo) {
   EXPECT_EQ(ch_mbo2.order_id, 647784973631);
   EXPECT_EQ(ch_mbo2.price, 3723000000000);
   EXPECT_EQ(ch_mbo2.size, 1);
-  EXPECT_EQ(ch_mbo2.flags, -128);
+  EXPECT_EQ(ch_mbo2.flags, 128);
   EXPECT_EQ(ch_mbo2.channel_id, 0);
   EXPECT_EQ(ch_mbo2.action, 'C');
   EXPECT_EQ(ch_mbo2.side, 'A');
@@ -148,10 +148,10 @@ TEST_F(DbzParserTests, TestParseMbp1) {
 
   const auto ch_record1 = channel_target_.ParseRecord();
   const auto f_record1 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record1.holds<Mbp1Msg>());
-  ASSERT_TRUE(f_record1.holds<Mbp1Msg>());
-  const auto& ch_mbp1 = ch_record1.get<Mbp1Msg>();
-  const auto& f_mbp1 = f_record1.get<Mbp1Msg>();
+  ASSERT_TRUE(ch_record1.Holds<Mbp1Msg>());
+  ASSERT_TRUE(f_record1.Holds<Mbp1Msg>());
+  const auto& ch_mbp1 = ch_record1.Get<Mbp1Msg>();
+  const auto& f_mbp1 = f_record1.Get<Mbp1Msg>();
   EXPECT_EQ(ch_mbp1, f_mbp1);
   EXPECT_EQ(ch_mbp1.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbp1.hd.product_id, 5482);
@@ -161,7 +161,7 @@ TEST_F(DbzParserTests, TestParseMbp1) {
   EXPECT_EQ(ch_mbp1.size, 1);
   EXPECT_EQ(ch_mbp1.action, 'A');
   EXPECT_EQ(ch_mbp1.side, 'A');
-  EXPECT_EQ(ch_mbp1.flags, -128);
+  EXPECT_EQ(ch_mbp1.flags, 128);
   EXPECT_EQ(ch_mbp1.depth, 0);
   EXPECT_EQ(ch_mbp1.ts_recv.time_since_epoch().count(), 1609160400006136329);
   EXPECT_EQ(ch_mbp1.ts_in_delta.count(), 17214);
@@ -175,10 +175,10 @@ TEST_F(DbzParserTests, TestParseMbp1) {
 
   const auto ch_record2 = channel_target_.ParseRecord();
   const auto f_record2 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record2.holds<Mbp1Msg>());
-  ASSERT_TRUE(f_record2.holds<Mbp1Msg>());
-  const auto& ch_mbp2 = ch_record2.get<Mbp1Msg>();
-  const auto& f_mbp2 = f_record2.get<Mbp1Msg>();
+  ASSERT_TRUE(ch_record2.Holds<Mbp1Msg>());
+  ASSERT_TRUE(f_record2.Holds<Mbp1Msg>());
+  const auto& ch_mbp2 = ch_record2.Get<Mbp1Msg>();
+  const auto& f_mbp2 = f_record2.Get<Mbp1Msg>();
   EXPECT_EQ(ch_mbp2, f_mbp2);
   EXPECT_EQ(ch_mbp2.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbp2.hd.product_id, 5482);
@@ -188,7 +188,7 @@ TEST_F(DbzParserTests, TestParseMbp1) {
   EXPECT_EQ(ch_mbp2.size, 1);
   EXPECT_EQ(ch_mbp2.action, 'A');
   EXPECT_EQ(ch_mbp2.side, 'A');
-  EXPECT_EQ(ch_mbp2.flags, -128);
+  EXPECT_EQ(ch_mbp2.flags, 128);
   EXPECT_EQ(ch_mbp2.depth, 0);
   EXPECT_EQ(ch_mbp2.ts_recv.time_since_epoch().count(), 1609160400006246513);
   EXPECT_EQ(ch_mbp2.ts_in_delta.count(), 18858);
@@ -223,10 +223,10 @@ TEST_F(DbzParserTests, TestParseMbp10) {
 
   const auto ch_record1 = channel_target_.ParseRecord();
   const auto f_record1 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record1.holds<Mbp10Msg>());
-  ASSERT_TRUE(f_record1.holds<Mbp10Msg>());
-  const auto& ch_mbp1 = ch_record1.get<Mbp10Msg>();
-  const auto& f_mbp1 = f_record1.get<Mbp10Msg>();
+  ASSERT_TRUE(ch_record1.Holds<Mbp10Msg>());
+  ASSERT_TRUE(f_record1.Holds<Mbp10Msg>());
+  const auto& ch_mbp1 = ch_record1.Get<Mbp10Msg>();
+  const auto& f_mbp1 = f_record1.Get<Mbp10Msg>();
   EXPECT_EQ(ch_mbp1, f_mbp1);
   EXPECT_EQ(ch_mbp1.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbp1.hd.product_id, 5482);
@@ -236,7 +236,7 @@ TEST_F(DbzParserTests, TestParseMbp10) {
   EXPECT_EQ(ch_mbp1.size, 1);
   EXPECT_EQ(ch_mbp1.action, 'C');
   EXPECT_EQ(ch_mbp1.side, 'A');
-  EXPECT_EQ(ch_mbp1.flags, -128);
+  EXPECT_EQ(ch_mbp1.flags, 128);
   EXPECT_EQ(ch_mbp1.depth, 9);
   EXPECT_EQ(ch_mbp1.ts_recv.time_since_epoch().count(), 1609160400000704060);
   EXPECT_EQ(ch_mbp1.ts_in_delta.count(), 22993);
@@ -262,10 +262,10 @@ TEST_F(DbzParserTests, TestParseMbp10) {
 
   const auto ch_record2 = channel_target_.ParseRecord();
   const auto f_record2 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record2.holds<Mbp10Msg>());
-  ASSERT_TRUE(f_record2.holds<Mbp10Msg>());
-  const auto& ch_mbp2 = ch_record2.get<Mbp10Msg>();
-  const auto& f_mbp2 = f_record2.get<Mbp10Msg>();
+  ASSERT_TRUE(ch_record2.Holds<Mbp10Msg>());
+  ASSERT_TRUE(f_record2.Holds<Mbp10Msg>());
+  const auto& ch_mbp2 = ch_record2.Get<Mbp10Msg>();
+  const auto& f_mbp2 = f_record2.Get<Mbp10Msg>();
   EXPECT_EQ(ch_mbp2, f_mbp2);
   EXPECT_EQ(ch_mbp2.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbp2.hd.product_id, 5482);
@@ -275,7 +275,7 @@ TEST_F(DbzParserTests, TestParseMbp10) {
   EXPECT_EQ(ch_mbp2.size, 1);
   EXPECT_EQ(ch_mbp2.action, 'C');
   EXPECT_EQ(ch_mbp2.side, 'B');
-  EXPECT_EQ(ch_mbp2.flags, -128);
+  EXPECT_EQ(ch_mbp2.flags, 128);
   EXPECT_EQ(ch_mbp2.depth, 1);
   EXPECT_EQ(ch_mbp2.ts_recv.time_since_epoch().count(), 1609160400000750544);
   EXPECT_EQ(ch_mbp2.ts_in_delta.count(), 20625);
@@ -322,10 +322,10 @@ TEST_F(DbzParserTests, TestParseTbbo) {
 
   const auto ch_record1 = channel_target_.ParseRecord();
   const auto f_record1 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record1.holds<TbboMsg>());
-  ASSERT_TRUE(f_record1.holds<TbboMsg>());
-  const auto& ch_tbbo1 = ch_record1.get<TbboMsg>();
-  const auto& f_tbbo1 = f_record1.get<TbboMsg>();
+  ASSERT_TRUE(ch_record1.Holds<TbboMsg>());
+  ASSERT_TRUE(f_record1.Holds<TbboMsg>());
+  const auto& ch_tbbo1 = ch_record1.Get<TbboMsg>();
+  const auto& f_tbbo1 = f_record1.Get<TbboMsg>();
   EXPECT_EQ(ch_tbbo1, f_tbbo1);
   EXPECT_EQ(ch_tbbo1.hd.publisher_id, 1);
   EXPECT_EQ(ch_tbbo1.hd.product_id, 5482);
@@ -335,7 +335,7 @@ TEST_F(DbzParserTests, TestParseTbbo) {
   EXPECT_EQ(ch_tbbo1.size, 5);
   EXPECT_EQ(ch_tbbo1.action, 'T');
   EXPECT_EQ(ch_tbbo1.side, 'A');
-  EXPECT_EQ(ch_tbbo1.flags, -127);
+  EXPECT_EQ(ch_tbbo1.flags, 129);
   EXPECT_EQ(ch_tbbo1.depth, 0);
   EXPECT_EQ(ch_tbbo1.ts_recv.time_since_epoch().count(), 1609160400099150057);
   EXPECT_EQ(ch_tbbo1.ts_in_delta.count(), 19251);
@@ -349,10 +349,10 @@ TEST_F(DbzParserTests, TestParseTbbo) {
 
   const auto ch_record2 = channel_target_.ParseRecord();
   const auto f_record2 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record2.holds<TbboMsg>());
-  ASSERT_TRUE(f_record2.holds<TbboMsg>());
-  const auto& ch_tbbo2 = ch_record2.get<TbboMsg>();
-  const auto& f_tbbo2 = f_record2.get<TbboMsg>();
+  ASSERT_TRUE(ch_record2.Holds<TbboMsg>());
+  ASSERT_TRUE(f_record2.Holds<TbboMsg>());
+  const auto& ch_tbbo2 = ch_record2.Get<TbboMsg>();
+  const auto& f_tbbo2 = f_record2.Get<TbboMsg>();
   EXPECT_EQ(ch_tbbo2, f_tbbo2);
   EXPECT_EQ(ch_tbbo2.hd.publisher_id, 1);
   EXPECT_EQ(ch_tbbo2.hd.product_id, 5482);
@@ -362,7 +362,7 @@ TEST_F(DbzParserTests, TestParseTbbo) {
   EXPECT_EQ(ch_tbbo2.size, 21);
   EXPECT_EQ(ch_tbbo2.action, 'T');
   EXPECT_EQ(ch_tbbo2.side, 'A');
-  EXPECT_EQ(ch_tbbo2.flags, -127);
+  EXPECT_EQ(ch_tbbo2.flags, 129);
   EXPECT_EQ(ch_tbbo2.depth, 0);
   EXPECT_EQ(ch_tbbo2.ts_recv.time_since_epoch().count(), 1609160400108142648);
   EXPECT_EQ(ch_tbbo2.ts_in_delta.count(), 20728);
@@ -397,10 +397,10 @@ TEST_F(DbzParserTests, TestParseTrades) {
 
   const auto ch_record1 = channel_target_.ParseRecord();
   const auto f_record1 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record1.holds<TradeMsg>());
-  ASSERT_TRUE(f_record1.holds<TradeMsg>());
-  const auto& ch_trade1 = ch_record1.get<TradeMsg>();
-  const auto& f_trade1 = f_record1.get<TradeMsg>();
+  ASSERT_TRUE(ch_record1.Holds<TradeMsg>());
+  ASSERT_TRUE(f_record1.Holds<TradeMsg>());
+  const auto& ch_trade1 = ch_record1.Get<TradeMsg>();
+  const auto& f_trade1 = f_record1.Get<TradeMsg>();
   EXPECT_EQ(ch_trade1, f_trade1);
   EXPECT_EQ(ch_trade1.hd.publisher_id, 1);
   EXPECT_EQ(ch_trade1.hd.product_id, 5482);
@@ -410,7 +410,7 @@ TEST_F(DbzParserTests, TestParseTrades) {
   EXPECT_EQ(ch_trade1.size, 5);
   EXPECT_EQ(ch_trade1.action, 'T');
   EXPECT_EQ(ch_trade1.side, 'A');
-  EXPECT_EQ(ch_trade1.flags, -127);
+  EXPECT_EQ(ch_trade1.flags, 129);
   EXPECT_EQ(ch_trade1.depth, 0);
   EXPECT_EQ(ch_trade1.ts_recv.time_since_epoch().count(), 1609160400099150057);
   EXPECT_EQ(ch_trade1.ts_in_delta.count(), 19251);
@@ -418,10 +418,10 @@ TEST_F(DbzParserTests, TestParseTrades) {
 
   const auto ch_record2 = channel_target_.ParseRecord();
   const auto f_record2 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record2.holds<TradeMsg>());
-  ASSERT_TRUE(f_record2.holds<TradeMsg>());
-  const auto& ch_trade2 = ch_record2.get<TradeMsg>();
-  const auto& f_trade2 = f_record2.get<TradeMsg>();
+  ASSERT_TRUE(ch_record2.Holds<TradeMsg>());
+  ASSERT_TRUE(f_record2.Holds<TradeMsg>());
+  const auto& ch_trade2 = ch_record2.Get<TradeMsg>();
+  const auto& f_trade2 = f_record2.Get<TradeMsg>();
   EXPECT_EQ(ch_trade2, f_trade2);
   EXPECT_EQ(ch_trade2.hd.publisher_id, 1);
   EXPECT_EQ(ch_trade2.hd.product_id, 5482);
@@ -431,7 +431,7 @@ TEST_F(DbzParserTests, TestParseTrades) {
   EXPECT_EQ(ch_trade2.size, 21);
   EXPECT_EQ(ch_trade2.action, 'T');
   EXPECT_EQ(ch_trade2.side, 'A');
-  EXPECT_EQ(ch_trade2.flags, -127);
+  EXPECT_EQ(ch_trade2.flags, 129);
   EXPECT_EQ(ch_trade2.depth, 0);
   EXPECT_EQ(ch_trade2.ts_recv.time_since_epoch().count(), 1609160400108142648);
   EXPECT_EQ(ch_trade2.ts_in_delta.count(), 20728);
@@ -460,10 +460,10 @@ TEST_F(DbzParserTests, TestParseOhlcv1H) {
 
   const auto ch_record1 = channel_target_.ParseRecord();
   const auto f_record1 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record1.holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record1.holds<OhlcvMsg>());
-  const auto& ch_ohlcv1 = ch_record1.get<OhlcvMsg>();
-  const auto& f_ohlcv1 = f_record1.get<OhlcvMsg>();
+  ASSERT_TRUE(ch_record1.Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record1.Holds<OhlcvMsg>());
+  const auto& ch_ohlcv1 = ch_record1.Get<OhlcvMsg>();
+  const auto& f_ohlcv1 = f_record1.Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv1, f_ohlcv1);
   EXPECT_EQ(ch_ohlcv1.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv1.hd.product_id, 5482);
@@ -477,10 +477,10 @@ TEST_F(DbzParserTests, TestParseOhlcv1H) {
 
   const auto ch_record2 = channel_target_.ParseRecord();
   const auto f_record2 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record2.holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record2.holds<OhlcvMsg>());
-  const auto& ch_ohlcv2 = ch_record2.get<OhlcvMsg>();
-  const auto& f_ohlcv2 = f_record2.get<OhlcvMsg>();
+  ASSERT_TRUE(ch_record2.Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record2.Holds<OhlcvMsg>());
+  const auto& ch_ohlcv2 = ch_record2.Get<OhlcvMsg>();
+  const auto& f_ohlcv2 = f_record2.Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv2, f_ohlcv2);
   EXPECT_EQ(ch_ohlcv2.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv2.hd.product_id, 5482);
@@ -515,10 +515,10 @@ TEST_F(DbzParserTests, TestParseOhlcv1M) {
 
   const auto ch_record1 = channel_target_.ParseRecord();
   const auto f_record1 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record1.holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record1.holds<OhlcvMsg>());
-  const auto& ch_ohlcv1 = ch_record1.get<OhlcvMsg>();
-  const auto& f_ohlcv1 = f_record1.get<OhlcvMsg>();
+  ASSERT_TRUE(ch_record1.Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record1.Holds<OhlcvMsg>());
+  const auto& ch_ohlcv1 = ch_record1.Get<OhlcvMsg>();
+  const auto& f_ohlcv1 = f_record1.Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv1, f_ohlcv1);
   EXPECT_EQ(ch_ohlcv1.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv1.hd.product_id, 5482);
@@ -532,10 +532,10 @@ TEST_F(DbzParserTests, TestParseOhlcv1M) {
 
   const auto ch_record2 = channel_target_.ParseRecord();
   const auto f_record2 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record2.holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record2.holds<OhlcvMsg>());
-  const auto& ch_ohlcv2 = ch_record2.get<OhlcvMsg>();
-  const auto& f_ohlcv2 = f_record2.get<OhlcvMsg>();
+  ASSERT_TRUE(ch_record2.Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record2.Holds<OhlcvMsg>());
+  const auto& ch_ohlcv2 = ch_record2.Get<OhlcvMsg>();
+  const auto& f_ohlcv2 = f_record2.Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv2, f_ohlcv2);
   EXPECT_EQ(ch_ohlcv2.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv2.hd.product_id, 5482);
@@ -570,10 +570,10 @@ TEST_F(DbzParserTests, TestParseOhlcv1S) {
 
   const auto ch_record1 = channel_target_.ParseRecord();
   const auto f_record1 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record1.holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record1.holds<OhlcvMsg>());
-  const auto& ch_ohlcv1 = ch_record1.get<OhlcvMsg>();
-  const auto& f_ohlcv1 = f_record1.get<OhlcvMsg>();
+  ASSERT_TRUE(ch_record1.Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record1.Holds<OhlcvMsg>());
+  const auto& ch_ohlcv1 = ch_record1.Get<OhlcvMsg>();
+  const auto& f_ohlcv1 = f_record1.Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv1, f_ohlcv1);
   EXPECT_EQ(ch_ohlcv1.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv1.hd.product_id, 5482);
@@ -587,10 +587,10 @@ TEST_F(DbzParserTests, TestParseOhlcv1S) {
 
   const auto ch_record2 = channel_target_.ParseRecord();
   const auto f_record2 = file_target_->ParseRecord();
-  ASSERT_TRUE(ch_record2.holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record2.holds<OhlcvMsg>());
-  const auto& ch_ohlcv2 = ch_record2.get<OhlcvMsg>();
-  const auto& f_ohlcv2 = f_record2.get<OhlcvMsg>();
+  ASSERT_TRUE(ch_record2.Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record2.Holds<OhlcvMsg>());
+  const auto& ch_ohlcv2 = ch_record2.Get<OhlcvMsg>();
+  const auto& f_ohlcv2 = f_record2.Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv2, f_ohlcv2);
   EXPECT_EQ(ch_ohlcv2.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv2.hd.product_id, 5482);
@@ -601,6 +601,58 @@ TEST_F(DbzParserTests, TestParseOhlcv1S) {
   EXPECT_EQ(ch_ohlcv2.low, 372050000000000);
   EXPECT_EQ(ch_ohlcv2.close, 372050000000000);
   EXPECT_EQ(ch_ohlcv2.volume, 13);
+}
+
+TEST_F(DbzParserTests, TestParseDefinition) {
+  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.definition.dbz");
+
+  const Metadata ch_metadata = channel_target_.ParseMetadata();
+  const Metadata f_metadata = file_target_->ParseMetadata();
+  EXPECT_EQ(ch_metadata, f_metadata);
+  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.dataset, dataset::kXnasItch);
+  EXPECT_EQ(ch_metadata.schema, Schema::Definition);
+  EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1664841600000000000);
+  EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1672790400000000000);
+  EXPECT_EQ(ch_metadata.limit, 0);
+  EXPECT_EQ(ch_metadata.record_count, 2);
+  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
+  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"MSFT"});
+  EXPECT_TRUE(ch_metadata.partial.empty());
+  EXPECT_TRUE(ch_metadata.not_found.empty());
+  EXPECT_EQ(ch_metadata.mappings.size(), 1);
+  const auto& mapping = ch_metadata.mappings.at(0);
+  EXPECT_EQ(mapping.native, "MSFT");
+  ASSERT_EQ(mapping.intervals.size(), 20);
+  const auto& interval = mapping.intervals.at(0);
+  EXPECT_EQ(interval.symbol, "7358");
+  EXPECT_EQ(interval.start_date, 20221004);
+  EXPECT_EQ(interval.end_date, 20221205);
+
+  const auto ch_record1 = channel_target_.ParseRecord();
+  const auto f_record1 = file_target_->ParseRecord();
+  ASSERT_TRUE(ch_record1.Holds<InstrumentDefMsg>());
+  ASSERT_TRUE(f_record1.Holds<InstrumentDefMsg>());
+  const auto& ch_def1 = ch_record1.Get<InstrumentDefMsg>();
+  const auto& f_def1 = f_record1.Get<InstrumentDefMsg>();
+  EXPECT_EQ(ch_def1, f_def1);
+  EXPECT_STREQ(ch_def1.exchange.data(), "XNAS");
+  EXPECT_STREQ(ch_def1.symbol.data(), "MSFT");
+  EXPECT_EQ(ch_def1.security_update_action, 'A');
+  EXPECT_EQ(ch_def1.min_lot_size_round_lot, 100);
+
+  const auto ch_record2 = channel_target_.ParseRecord();
+  const auto f_record2 = file_target_->ParseRecord();
+  ASSERT_TRUE(ch_record2.Holds<InstrumentDefMsg>());
+  ASSERT_TRUE(f_record2.Holds<InstrumentDefMsg>());
+  const auto& ch_def2 = ch_record2.Get<InstrumentDefMsg>();
+  const auto& f_def2 = f_record2.Get<InstrumentDefMsg>();
+  EXPECT_EQ(ch_def2, f_def2);
+  EXPECT_STREQ(ch_def2.exchange.data(), "XNAS");
+  EXPECT_STREQ(ch_def2.symbol.data(), "MSFT");
+  EXPECT_EQ(ch_def2.security_update_action, 'A');
+  EXPECT_EQ(ch_def2.min_lot_size_round_lot, 100);
 }
 }  // namespace test
 }  // namespace databento

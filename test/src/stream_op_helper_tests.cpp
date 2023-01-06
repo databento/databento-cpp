@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstdint>
 #include <sstream>
+#include <vector>
 
 #include "databento/constants.hpp"
 #include "databento/enums.hpp"
@@ -82,6 +84,15 @@ TEST(StreamOpHelperTests, TestIndent) {
         dbz,
         json
     })");
+}
+
+TEST(StreamOpHelperTests, TestCharArray) {
+  const std::array<char, 5> test_data{'U', 'S', 'D'};
+
+  std::ostringstream stream;
+  auto target = StreamOpBuilder{stream}.Build();
+  target.AddField("array", test_data).Finish();
+  ASSERT_EQ(stream.str(), R"({array = "USD"})");
 }
 }  // namespace test
 }  // namespace databento

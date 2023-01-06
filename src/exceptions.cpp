@@ -78,3 +78,12 @@ JsonResponseError JsonResponseError::TypeMismatch(
           << value.type_name() << " " << value << " for key " << key;
   return JsonResponseError{err_msg.str()};
 }
+
+using databento::LiveApiError;
+
+LiveApiError LiveApiError::UnexpectedMsg(const std::string& message,
+                                         const std::string& response) {
+  std::ostringstream err_msg;
+  err_msg << message << " with response '" << response << '\'';
+  return LiveApiError{err_msg.str()};
+}

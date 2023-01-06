@@ -7,24 +7,19 @@
 #include <thread>
 #include <vector>
 
+#include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/exceptions.hpp"
 
 namespace databento {
 namespace detail {
 namespace test {
-class ChannelTests : public testing::Test {
+class SharedChannelTests : public testing::Test {
  protected:
-  std::thread write_thread_;
+  ScopedThread write_thread_;
   SharedChannel target_;
 
  public:
-  void TearDown() override {
-    if (write_thread_.joinable()) {
-      write_thread_.join();
-    }
-  }
-
   void Write(const std::vector<std::string>& inputs) {
     for (const auto& input : inputs) {
       target_.Write(reinterpret_cast<const std::uint8_t*>(input.data()),
@@ -35,10 +30,10 @@ class ChannelTests : public testing::Test {
   }
 };
 
-TEST_F(ChannelTests, TestReadExact) {
-  write_thread_ = std::thread([this] {
+TEST_F(SharedChannelTests, TestReadExact) {
+  write_thread_ = ScopedThread{[this] {
     this->Write({"parse", "stream", "tests", "end"});
-  });
+  }};
   std::array<std::uint8_t, 16> buffer{};
   target_.ReadExact(buffer.data(), 3);
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "par");
@@ -49,7 +44,7 @@ TEST_F(ChannelTests, TestReadExact) {
   ASSERT_THROW(target_.ReadExact(buffer.data(), 1), DbzResponseError);
 }
 
-TEST_F(ChannelTests, TestReadExactAfterFinished) {
+TEST_F(SharedChannelTests, TestReadExactAfterFinished) {
   // write on same thread, so all reading happens after writing
   this->Write({"parse", "exact"});
   std::array<std::uint8_t, 16> buffer{};
@@ -61,7 +56,7 @@ TEST_F(ChannelTests, TestReadExactAfterFinished) {
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "act");
 }
 
-TEST_F(ChannelTests, TestInterleavedReadsAndWrites) {
+TEST_F(SharedChannelTests, TestInterleavedReadsAndWrites) {
   std::array<std::uint8_t, 16> buffer{};
   target_.Write(reinterpret_cast<const std::uint8_t*>("hello"), 5);
   ASSERT_EQ(target_.ReadSome(buffer.data(), buffer.size()), 5);
@@ -75,17 +70,17 @@ TEST_F(ChannelTests, TestInterleavedReadsAndWrites) {
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "longer message");
 }
 
-TEST_F(ChannelTests, TestReadSome) {
-  write_thread_ = std::thread([this] {
+TEST_F(SharedChannelTests, TestReadSome) {
+  write_thread_ = ScopedThread{[this] {
     this->Write({"parse", "stream", "tests", "some", "last"});
-  });
+  }};
   std::array<std::uint8_t, 16> buffer{};
   std::string res;
   // -1 to keep last null byte
   while (res.size() < 23) {
     auto read_size = target_.ReadSome(buffer.data(), buffer.size());
     res.append(reinterpret_cast<const char*>(buffer.data()), read_size);
-    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    std::this_thread::sleep_for(std::chrono::milliseconds{10});
     buffer = {};
   }
 

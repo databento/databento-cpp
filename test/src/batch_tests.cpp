@@ -59,7 +59,7 @@ TEST(BatchTests, TestBatchJobToString) {
     split_symbols = false,
     packaging = tar,
     delivery = download,
-    is_full_book = false,
+    is_full_universe = false,
     is_example = false,
     record_count = 10250,
     billed_size = 35000000,

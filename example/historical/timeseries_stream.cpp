@@ -29,7 +29,7 @@ int main() {
       databento::SType::ProductId, limit,
       [](databento::Metadata&& metadata) { std::cout << metadata << '\n'; },
       [](const databento::Record& record) {
-        const auto& trade_msg = record.get<databento::TradeMsg>();
+        const auto& trade_msg = record.Get<databento::TradeMsg>();
         std::cout << trade_msg << '\n';
         return databento::KeepGoing::Continue;
       });

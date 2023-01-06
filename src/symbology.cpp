@@ -1,10 +1,24 @@
 #include "databento/symbology.hpp"
 
+#include <numeric>  // accumulate
 #include <sstream>
 
-#include "stream_op_helper.hpp"
+#include "databento/exceptions.hpp"  // InvalidArgumentError
+#include "stream_op_helper.hpp"      // StreamOpBuilder
 
 namespace databento {
+std::string JoinSymbolStrings(const std::string& method_name,
+                              const std::vector<std::string>& symbols) {
+  if (symbols.empty()) {
+    throw InvalidArgumentError{method_name, "symbols", "Cannot be empty"};
+  }
+  return std::accumulate(symbols.begin(), symbols.end(), std::string{},
+                         [](std::string acc, const std::string& sym) {
+                           return acc.empty() ? sym
+                                              : std::move(acc) + ',' + sym;
+                         });
+}
+
 std::string ToString(const StrMappingInterval& mapping_interval) {
   return MakeString(mapping_interval);
 }

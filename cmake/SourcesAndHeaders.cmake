@@ -8,16 +8,19 @@ set(headers
   include/databento/enums.hpp
   include/databento/exceptions.hpp
   include/databento/historical.hpp
+  include/databento/live.hpp
+  include/databento/live_blocking.hpp
+  include/databento/live_threaded.hpp
   include/databento/metadata.hpp
   include/databento/record.hpp
   include/databento/symbology.hpp
   include/databento/timeseries.hpp
   include/databento/detail/file_stream.hpp
   include/databento/detail/http_client.hpp
+  include/databento/detail/scoped_fd.hpp
+  include/databento/detail/scoped_thread.hpp
   include/databento/detail/shared_channel.hpp
-  include/databento/detail/socket.hpp
   include/databento/detail/tcp_client.hpp
-  src/scoped_thread.hpp
   src/stream_op_helper.hpp
 )
 
@@ -30,12 +33,15 @@ set(sources
   src/exceptions.cpp
   src/file_bento.cpp
   src/historical.cpp
+  src/live.cpp
+  src/live_blocking.cpp
+  src/live_threaded.cpp
   src/metadata.cpp
   src/record.cpp
   src/symbology.cpp
   src/detail/file_stream.cpp
   src/detail/http_client.cpp
+  src/detail/scoped_fd.cpp
   src/detail/shared_channel.cpp
-  src/detail/socket.cpp
   src/detail/tcp_client.cpp
 )

@@ -1,4 +1,4 @@
-#include "mock/mock_server.hpp"
+#include "mock/mock_http_server.hpp"
 
 #include <fstream>    // ifstream
 #include <ios>        // streamsize
@@ -7,29 +7,30 @@
 #include <stdexcept>  // runtime_error
 #include <vector>
 
-using databento::mock::MockServer;
+using databento::mock::MockHttpServer;
 
-int MockServer::ListenOnThread() {
-  listen_thread_ = std::thread{[this] { this->server_.listen_after_bind(); }};
+int MockHttpServer::ListenOnThread() {
+  listen_thread_ =
+      detail::ScopedThread{[this] { this->server_.listen_after_bind(); }};
   return port_;
 }
 
-void MockServer::MockBadRequest(const std::string& path,
-                                const nlohmann::json& json) {
+void MockHttpServer::MockBadRequest(const std::string& path,
+                                    const nlohmann::json& json) {
   server_.Get(path, [json](const httplib::Request&, httplib::Response& resp) {
     resp.status = 400;
     resp.body = json.dump();
   });
 }
 
-void MockServer::MockGetJson(const std::string& path,
-                             const nlohmann::json& json) {
+void MockHttpServer::MockGetJson(const std::string& path,
+                                 const nlohmann::json& json) {
   this->MockGetJson(path, {}, json);
 }
 
-void MockServer::MockGetJson(const std::string& path,
-                             const std::map<std::string, std::string>& params,
-                             const nlohmann::json& json) {
+void MockHttpServer::MockGetJson(
+    const std::string& path, const std::map<std::string, std::string>& params,
+    const nlohmann::json& json) {
   server_.Get(path, [json, params](const httplib::Request& req,
                                    httplib::Response& resp) {
     if (!req.has_header("Authorization")) {
@@ -43,9 +44,9 @@ void MockServer::MockGetJson(const std::string& path,
   });
 }
 
-void MockServer::MockPostJson(const std::string& path,
-                              const std::map<std::string, std::string>& params,
-                              const nlohmann::json& json) {
+void MockHttpServer::MockPostJson(
+    const std::string& path, const std::map<std::string, std::string>& params,
+    const nlohmann::json& json) {
   server_.Post(path, [json, params](const httplib::Request& req,
                                     httplib::Response& resp) {
     if (!req.has_header("Authorization")) {
@@ -59,9 +60,9 @@ void MockServer::MockPostJson(const std::string& path,
   });
 }
 
-void MockServer::MockStreamDbz(const std::string& path,
-                               const std::map<std::string, std::string>& params,
-                               const std::string& dbz_path) {
+void MockHttpServer::MockStreamDbz(
+    const std::string& path, const std::map<std::string, std::string>& params,
+    const std::string& dbz_path) {
   constexpr std::size_t kChunkSize = 32;
 
   // Read contents into buffer
@@ -96,8 +97,9 @@ void MockServer::MockStreamDbz(const std::string& path,
   });
 }
 
-void MockServer::CheckParams(const std::map<std::string, std::string>& params,
-                             const httplib::Request& req) {
+void MockHttpServer::CheckParams(
+    const std::map<std::string, std::string>& params,
+    const httplib::Request& req) {
   for (const auto& param : params) {
     if (!req.has_param(param.first)) {
       std::ostringstream err_msg;

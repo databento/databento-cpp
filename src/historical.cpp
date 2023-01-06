@@ -1,30 +1,29 @@
 #include "databento/historical.hpp"
 
 #include <httplib.h>
+#include <nlohmann/json.hpp>
 
 #include <atomic>     // atomic<bool>
 #include <cstdlib>    // get_env
 #include <exception>  // exception, exception_ptr
 #include <fstream>    // ofstream
-#include <ios>
-#include <nlohmann/json.hpp>
-#include <numeric>  // accumulate
+#include <ios>        // ios::binary
+#include <numeric>    // accumulate
 #include <string>
 #include <utility>  // move
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/dbz_parser.hpp"
+#include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception, JsonResponseError
 #include "databento/file_bento.hpp"
 #include "databento/metadata.hpp"
 #include "databento/timeseries.hpp"
-#include "scoped_thread.hpp"
 
 using databento::Historical;
-using databento::HistoricalBuilder;
 
 namespace {
 std::string BuildBatchPath(const char* slug) {
@@ -48,19 +47,6 @@ void SetIfNotEmpty(httplib::Params* params, const std::string& key,
   if (!value.empty()) {
     params->emplace(key, value);
   }
-}
-
-std::string ToSymbolString(const std::string& method_name,
-                           const std::vector<std::string>& strings) {
-  if (strings.empty()) {
-    throw databento::InvalidArgumentError{method_name, "symbols",
-                                          "Cannot be empty"};
-  }
-  return std::accumulate(strings.begin(), strings.end(), std::string{},
-                         [](std::string acc, const std::string& str) {
-                           return acc.empty() ? str
-                                              : std::move(acc) + "," + str;
-                         });
 }
 
 void SetIfNotEmpty(httplib::Params* params, const std::string& key,
@@ -219,7 +205,7 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.split_symbols = ParseAt<bool>(endpoint, json, "split_symbols");
   res.packaging = FromCheckedAtString<Packaging>(endpoint, json, "packaging");
   res.delivery = FromCheckedAtString<Delivery>(endpoint, json, "delivery");
-  res.is_full_book = ParseAt<bool>(endpoint, json, "is_full_book");
+  res.is_full_universe = ParseAt<bool>(endpoint, json, "is_full_universe");
   res.is_example = ParseAt<bool>(endpoint, json, "is_example");
   res.record_count = ParseAt<std::size_t>(endpoint, json, "record_count");
   res.billed_size = ParseAt<std::size_t>(endpoint, json, "billed_size");
@@ -274,7 +260,7 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"dataset", dataset},
       {"start", ToString(start)},
       {"end", ToString(end)},
-      {"symbols", ToSymbolString(kBatchSubmitJobEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"encoding", "dbz"},
       {"split_duration", ToString(split_duration)},
@@ -296,7 +282,7 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"dataset", dataset},
       {"start", start},
       {"end", end},
-      {"symbols", ToSymbolString(kBatchSubmitJobEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"encoding", "dbz"},
       {"split_duration", ToString(split_duration)},
@@ -686,7 +672,7 @@ std::size_t Historical::MetadataGetRecordCount(
       {"dataset", dataset},
       {"start", ToString(start)},
       {"end", ToString(end)},
-      {"symbols", ToSymbolString(kMetadataGetRecordCountEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kMetadataGetRecordCountEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
   ::SetIfPositive(&params, "limit", limit);
@@ -700,7 +686,7 @@ std::size_t Historical::MetadataGetRecordCount(
       {"dataset", dataset},
       {"start", start},
       {"end", end},
-      {"symbols", ToSymbolString(kMetadataGetRecordCountEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kMetadataGetRecordCountEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
   ::SetIfPositive(&params, "limit", limit);
@@ -740,7 +726,7 @@ std::size_t Historical::MetadataGetBillableSize(
       {"dataset", dataset},
       {"start", ToString(start)},
       {"end", ToString(end)},
-      {"symbols", ToSymbolString(kMetadataGetBillableSizeEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kMetadataGetBillableSizeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
   ::SetIfPositive(&params, "limit", limit);
@@ -754,7 +740,7 @@ std::size_t Historical::MetadataGetBillableSize(
       {"dataset", dataset},
       {"start", start},
       {"end", end},
-      {"symbols", ToSymbolString(kMetadataGetBillableSizeEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kMetadataGetBillableSizeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
   ::SetIfPositive(&params, "limit", limit);
@@ -800,7 +786,7 @@ double Historical::MetadataGetCost(const std::string& dataset, UnixNanos start,
       {"dataset", dataset},
       {"start", ToString(start)},
       {"end", ToString(end)},
-      {"symbols", ToSymbolString(kMetadataGetCostEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kMetadataGetCostEndpoint, symbols)},
       {"mode", ToString(mode)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
@@ -818,7 +804,7 @@ double Historical::MetadataGetCost(const std::string& dataset,
       {"dataset", dataset},
       {"start", start},
       {"end", end},
-      {"symbols", ToSymbolString(kMetadataGetCostEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kMetadataGetCostEndpoint, symbols)},
       {"mode", ToString(mode)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
@@ -851,7 +837,7 @@ databento::SymbologyResolution Historical::SymbologyResolve(
   httplib::Params params{{"dataset", dataset},
                          {"start_date", start_date},
                          {"end_date", end_date},
-                         {"symbols", ToSymbolString(kEndpoint, symbols)},
+                         {"symbols", JoinSymbolStrings(kEndpoint, symbols)},
                          {"stype_in", ToString(stype_in)},
                          {"stype_out", ToString(stype_out)}};
   ::SetIfNotEmpty(&params, "default_value", default_value);
@@ -946,7 +932,7 @@ void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
       {"encoding", "dbz"},
       {"start", ToString(start)},
       {"end", ToString(end)},
-      {"symbols", ToSymbolString(kTimeseriesStreamEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kTimeseriesStreamEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
@@ -967,7 +953,7 @@ void Historical::TimeseriesStream(const std::string& dataset,
       {"encoding", "dbz"},
       {"start", start},
       {"end", end},
-      {"symbols", ToSymbolString(kTimeseriesStreamEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kTimeseriesStreamEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
@@ -982,10 +968,8 @@ void Historical::TimeseriesStream(const HttplibParams& params,
   detail::SharedChannel channel;
   DbzChannelParser dbz_parser{channel};
   std::exception_ptr exception_ptr{};
-  std::mutex exception_ptr_mutex;
-  // no initialized lambda captures until C++14
-  const ScopedThread stream{[this, &channel, &exception_ptr,
-                             &exception_ptr_mutex, &params, &should_continue] {
+  detail::ScopedThread stream{[this, &channel, &exception_ptr, &params,
+                               &should_continue] {
     try {
       this->client_.GetRawStream(
           kTimeseriesStreamPath, params,
@@ -997,7 +981,6 @@ void Historical::TimeseriesStream(const HttplibParams& params,
       channel.Finish();
     } catch (const std::exception&) {
       channel.Finish();
-      const std::lock_guard<std::mutex> guard{exception_ptr_mutex};
       // rethrowing here will cause the process to be terminated
       exception_ptr = std::current_exception();
     }
@@ -1009,13 +992,19 @@ void Historical::TimeseriesStream(const HttplibParams& params,
       metadata_callback(std::move(metadata));
     }
     for (auto i = 0UL; i < record_count; ++i) {
-      should_continue =
-          record_callback(dbz_parser.ParseRecord()) == KeepGoing::Continue;
+      const bool should_stop =
+          record_callback(dbz_parser.ParseRecord()) == KeepGoing::Stop;
+      if (should_stop) {
+        should_continue = false;
+        break;
+      }
     }
   } catch (const std::exception& exc) {
     should_continue = false;
-    // check if there's an exception from stream thread
-    const std::lock_guard<std::mutex> guard{exception_ptr_mutex};
+    // wait for thread to finish before checking for exceptions
+    stream.Join();
+    // check if there's an exception from stream thread. Thread safe because
+    // `stream` thread has been joined
     if (exception_ptr) {
       std::rethrow_exception(exception_ptr);
     }
@@ -1052,7 +1041,7 @@ databento::FileBento Historical::TimeseriesStreamToFile(
       {"encoding", "dbz"},
       {"start", ToString(start)},
       {"end", ToString(end)},
-      {"symbols", ToSymbolString(kTimeseriesStreamToFileEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kTimeseriesStreamToFileEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
@@ -1069,7 +1058,7 @@ databento::FileBento Historical::TimeseriesStreamToFile(
       {"encoding", "dbz"},
       {"start", start},
       {"end", end},
-      {"symbols", ToSymbolString(kTimeseriesStreamToFileEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kTimeseriesStreamToFileEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
@@ -1093,6 +1082,8 @@ databento::FileBento Historical::TimeseriesStreamToFile(
   }  // close out_file
   return FileBento{file_path};
 }
+
+using databento::HistoricalBuilder;
 
 HistoricalBuilder& HistoricalBuilder::SetKeyFromEnv() {
   char const* env_key = std::getenv("DATABENTO_API_KEY");

@@ -1,13 +1,15 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
-#include <ios>
-#include <ostream>
-#include <sstream>
+#include <cstring>  // strlen
+#include <ios>      // boolalpha
+#include <ostream>  // ostream
+#include <sstream>  // stringstream
 #include <string>
-#include <utility>
+#include <utility>  // move
 
-#include "databento/datetime.hpp"
+#include "databento/datetime.hpp"  // TimeDeltaNanos, UnixNanos
 
 namespace databento {
 template <typename T>
@@ -52,6 +54,14 @@ class StreamOpHelper {
   void FmtToStream(const TimeDeltaNanos& val) { stream_ << ToString(val); }
 
   void FmtToStream(const std::ostringstream& val) { stream_ << val.str(); }
+
+  template <std::size_t N>
+  void FmtToStream(const std::array<char, N>& val) {
+    stream_ << '"';
+    stream_.write(val.data(),
+                  static_cast<std::streamsize>(::strlen(val.data())));
+    stream_ << '"';
+  }
 
  public:
   StreamOpHelper(std::ostream& stream, const std::string& type_name,

@@ -17,7 +17,9 @@ verbose_message("Adding tests under ${CMAKE_PROJECT_NAME}Tests...")
 
 set(
   test_headers
-  include/mock/mock_server.hpp
+  include/mock/mock_http_server.hpp
+  include/mock/mock_lsg_server.hpp
+  include/mock/mock_tcp_server.hpp
   include/temp_file.hpp
 )
 
@@ -28,9 +30,15 @@ set(
   src/dbz_tests.cpp
   src/dbz_parser_tests.cpp
   src/historical_tests.cpp
+  src/live_tests.cpp
+  src/live_blocking_tests.cpp
+  src/live_threaded_tests.cpp
   src/metadata_tests.cpp
-  src/mock_server.cpp
+  src/mock_lsg_server.cpp
+  src/mock_http_server.cpp
+  src/mock_tcp_server.cpp
   src/record_tests.cpp
+  src/scoped_thread_tests.cpp
   src/shared_channel_tests.cpp
   src/stream_op_helper_tests.cpp
   src/symbology_tests.cpp
@@ -83,20 +91,40 @@ else()
   set(${CMAKE_PROJECT_NAME}_TEST_LIB ${CMAKE_PROJECT_NAME})
 endif()
 
-find_package(GTest REQUIRED)
+if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_GTEST)
+  find_package(GTest REQUIRED)
+  target_link_libraries(
+    ${PROJECT_NAME}
+    PUBLIC
+      GTest::GTest
+      GTest::Main
+      ${${CMAKE_PROJECT_NAME}_TEST_LIB}
+  )
 
-if(${CMAKE_PROJECT_NAME}_USE_GOOGLE_MOCK)
-  set(GOOGLE_MOCK_LIBRARIES GTest::gmock GTest::gmock_main)
+else()
+  include(FetchContent)
+  if(CMAKE_VERSION VERSION_LESS 3.24)
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
+    )
+  else()
+    # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
+      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+  endif()
+  FetchContent_MakeAvailable(googletest)
+  target_link_libraries(
+    ${PROJECT_NAME}
+    PUBLIC
+      gtest
+      gtest_main
+      ${${CMAKE_PROJECT_NAME}_TEST_LIB}
+  )
 endif()
-
-target_link_libraries(
-  ${PROJECT_NAME}
-  PUBLIC
-    GTest::GTest
-    GTest::Main
-    ${GOOGLE_MOCK_LIBRARIES}
-    ${${CMAKE_PROJECT_NAME}_TEST_LIB}
-)
 
 #
 # Add the unit tests

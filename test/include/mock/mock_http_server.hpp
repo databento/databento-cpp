@@ -1,29 +1,25 @@
 #pragma once
 
 #include <httplib.h>
+#include <nlohmann/json.hpp>
 
 #include <map>
-#include <nlohmann/json.hpp>
 #include <string>
-#include <thread>
+
+#include "databento/detail/scoped_thread.hpp"
 
 namespace databento {
 namespace mock {
-class MockServer {
+class MockHttpServer {
  public:
-  explicit MockServer(std::string api_key)
+  explicit MockHttpServer(std::string api_key)
       : port_{server_.bind_to_any_port("localhost")},
         api_key_{std::move(api_key)} {}
-  MockServer(MockServer&&) = delete;
-  MockServer& operator=(MockServer&&) = delete;
-  MockServer(const MockServer&) = delete;
-  MockServer& operator=(const MockServer&) = delete;
-  ~MockServer() {
-    server_.stop();
-    if (listen_thread_.joinable()) {
-      listen_thread_.join();
-    }
-  }
+  MockHttpServer(MockHttpServer&&) = delete;
+  MockHttpServer& operator=(MockHttpServer&&) = delete;
+  MockHttpServer(const MockHttpServer&) = delete;
+  MockHttpServer& operator=(const MockHttpServer&) = delete;
+  ~MockHttpServer() { server_.stop(); }
 
   int ListenOnThread();
   void MockBadRequest(const std::string& path, const nlohmann::json& json);
@@ -44,7 +40,7 @@ class MockServer {
 
   httplib::Server server_{};
   const int port_{};
-  std::thread listen_thread_;
+  detail::ScopedThread listen_thread_;
   std::string api_key_;
 };
 }  // namespace mock

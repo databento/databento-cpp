@@ -1,9 +1,9 @@
 #pragma once
 
 #include <httplib.h>
+#include <nlohmann/json.hpp>
 
 #include <cstdint>
-#include <nlohmann/json.hpp>
 #include <string>
 
 namespace databento {
