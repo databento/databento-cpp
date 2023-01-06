@@ -230,7 +230,7 @@ inline bool operator==(const MboMsg& lhs, const MboMsg& rhs) {
          lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
          lhs.sequence == rhs.sequence;
 }
-inline bool operator!=(const TickMsg& lhs, const TickMsg& rhs) {
+inline bool operator!=(const MboMsg& lhs, const MboMsg& rhs) {
   return !(lhs == rhs);
 }
 
