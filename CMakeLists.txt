@@ -217,12 +217,15 @@ add_clang_format_target()
 # Install library for easy downstream inclusion
 #
 
+set(targets ${PROJECT_NAME})
+if(NOT ${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_JSON)
+  list(APPEND targets nlohmann_json)
+endif()
+
 include(GNUInstallDirs)
 install(
   TARGETS
-    ${PROJECT_NAME}
-    # public dependency
-    nlohmann_json
+    ${targets}
   EXPORT
     ${PROJECT_NAME}Targets
   LIBRARY DESTINATION
