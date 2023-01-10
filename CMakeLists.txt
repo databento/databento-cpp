@@ -8,6 +8,15 @@ project("databento" VERSION 0.3.0 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
+# Main project check
+#
+
+set(IS_MAIN_PROJECT OFF)
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  set(IS_MAIN_PROJECT ON)
+endif()
+
+#
 # Set project options
 #
 
@@ -18,8 +27,13 @@ include(cmake/Utils.cmake)
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 
 if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "Defaulting to Debug build")
-  set(CMAKE_BUILD_TYPE "Debug")
+  if(IS_MAIN_PROJECT)
+    message(STATUS "Defaulting to Debug build")
+    set(CMAKE_BUILD_TYPE "Debug")
+  else()
+    message(STATUS "Defaulting to RelWithDebInfo build")
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+  endif()
 endif()
 
 #

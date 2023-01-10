@@ -1,5 +1,10 @@
 #pragma once
 
+// Ensure proper compilation when used outside of CMake, such
+// as when installed at the system level
+#ifndef CPPHTTPLIB_OPENSSL_SUPPORT
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#endif
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 

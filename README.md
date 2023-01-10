@@ -71,14 +71,16 @@ git clone https://github.com/databento/databento-cpp
 cd databento-cpp
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-  -DCMAKE_INSTALL_PREFIX='/usr'
+  -DCMAKE_INSTALL_PREFIX='/usr' \
+  -DDATABENTO_USE_EXTERNAL_JSON=ON \
+  -DDATABENTO_USE_EXTERNAL_HTTPLIB=ON
 cmake --build build --target databento
 cmake --install build
 ```
 
 Then in your project's `CMakeLists.txt`, add the following:
 ```cmake
-find_package(databento 0.1.0 REQUIRED)
+find_package(databento 0.3.0 REQUIRED)
 add_library(my_library)
 target_link_libraries(my_library PRIVATE databento::databento)
 ```
@@ -87,10 +89,11 @@ target_link_libraries(my_library PRIVATE databento::databento)
 
 The minimum C++ standard is C++11 and CMake 3.14.
 The library has the following dependencies:
-- [cpp-httplib (header only)](https://github.com/yhirose/cpp-httplib)
 - [OpenSSL](https://www.openssl.org/)
-- [nlohmann_json (header only)](https://github.com/nlohmann/json)
+- [Libcrypto](https://www.openssl.org/docs/man3.0/man7/crypto.html)
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
+- [nlohmann_json (header-only)](https://github.com/nlohmann/json)
+- [cpp-httplib (header-only)](https://github.com/yhirose/cpp-httplib)
 
 By default, cpp-httplib and nlohmann_json are downloaded by CMake as part of the build process.
 If you would like to use a local version of these libraries, enable the CMake flag

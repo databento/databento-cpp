@@ -27,7 +27,8 @@ endif()
 # Unit testing
 #
 
-option(${PROJECT_NAME_UPPERCASE}_ENABLE_UNIT_TESTING "Enable unit tests for the projects (from the `test` subfolder)." ON)
+# Default to ON if main project, otherwise OFF
+option(${PROJECT_NAME_UPPERCASE}_ENABLE_UNIT_TESTING "Enable unit tests for the projects (from the `test` subfolder)." ${IS_MAIN_PROJECT})
 option(${PROJECT_NAME_UPPERCASE}_ENABLE_EXAMPLES "Enable building examples for the project." OFF)
 
 #
@@ -49,9 +50,9 @@ option(${PROJECT_NAME_UPPERCASE}_ENABLE_CODE_COVERAGE "Enable code coverage thro
 #
 
 # Generate compile_commands.json for clang based tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ${IS_MAIN_PROJECT})
 
-option(${PROJECT_NAME_UPPERCASE}_VERBOSE_OUTPUT "Enable verbose output, allowing for a better understanding of each step taken." ON)
+option(${PROJECT_NAME_UPPERCASE}_VERBOSE_OUTPUT "Enable verbose output, allowing for a better understanding of each step taken." ${IS_MAIN_PROJECT})
 option(${PROJECT_NAME_UPPERCASE}_GENERATE_EXPORT_HEADER "Create a `project_export.h` file containing all exported symbols." OFF)
 
 # Export all symbols when building a shared library
