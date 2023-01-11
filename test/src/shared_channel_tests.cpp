@@ -16,8 +16,8 @@ namespace detail {
 namespace test {
 class SharedChannelTests : public testing::Test {
  protected:
-  ScopedThread write_thread_;
   SharedChannel target_;
+  ScopedThread write_thread_;
 
  public:
   void Write(const std::vector<std::string>& inputs) {
