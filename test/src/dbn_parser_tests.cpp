@@ -8,8 +8,8 @@
 #include <thread>
 
 #include "databento/constants.hpp"
-#include "databento/dbz.hpp"
-#include "databento/dbz_parser.hpp"
+#include "databento/dbn.hpp"
+#include "databento/dbn_parser.hpp"
 #include "databento/detail/file_stream.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
@@ -17,11 +17,11 @@
 
 namespace databento {
 namespace test {
-class DbzParserTests : public testing::Test {
+class DbnParserTests : public testing::Test {
  protected:
   detail::SharedChannel channel_;
-  DbzChannelParser channel_target_{channel_};
-  std::unique_ptr<DbzFileParser> file_target_;
+  DbnChannelParser channel_target_{channel_};
+  std::unique_ptr<DbnFileParser> file_target_;
   std::thread write_thread_;
 
   void TearDown() override {
@@ -45,7 +45,7 @@ class DbzParserTests : public testing::Test {
       channel_.Finish();
     }};
     // File setup
-    file_target_.reset(new DbzFileParser{detail::FileStream{file_path}});
+    file_target_.reset(new DbnFileParser{detail::FileStream{file_path}});
   }
 
   static void AssertMappings(const std::vector<SymbolMapping>& mappings) {
@@ -60,10 +60,10 @@ class DbzParserTests : public testing::Test {
   }
 };
 
-// Expected data for these tests obtained using the `dbz` CLI tool
+// Expected data for these tests obtained using the `dbn` CLI tool
 
-TEST_F(DbzParserTests, TestParseMbo) {
-  ReadFromFile(TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+TEST_F(DbnParserTests, TestParseMbo) {
+  ReadFromFile(TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
 
   const Metadata ch_metadata = channel_target_.ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -126,8 +126,8 @@ TEST_F(DbzParserTests, TestParseMbo) {
   EXPECT_EQ(ch_mbo2.sequence, 1170353);
 }
 
-TEST_F(DbzParserTests, TestParseMbp1) {
-  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.mbp-1.dbz");
+TEST_F(DbnParserTests, TestParseMbp1) {
+  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.mbp-1.dbn.zst");
 
   const Metadata ch_metadata = channel_target_.ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -201,8 +201,8 @@ TEST_F(DbzParserTests, TestParseMbp1) {
   EXPECT_EQ(ch_mbp2.booklevel[0].ask_ct, 10);
 }
 
-TEST_F(DbzParserTests, TestParseMbp10) {
-  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.mbp-10.dbz");
+TEST_F(DbnParserTests, TestParseMbp10) {
+  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.mbp-10.dbn.zst");
 
   const Metadata ch_metadata = channel_target_.ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -300,8 +300,8 @@ TEST_F(DbzParserTests, TestParseMbp10) {
   EXPECT_EQ(ch_mbp2.booklevel[2].ask_ct, 25);
 }
 
-TEST_F(DbzParserTests, TestParseTbbo) {
-  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.tbbo.dbz");
+TEST_F(DbnParserTests, TestParseTbbo) {
+  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
 
   const Metadata ch_metadata = channel_target_.ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -375,8 +375,8 @@ TEST_F(DbzParserTests, TestParseTbbo) {
   EXPECT_EQ(ch_tbbo2.booklevel[0].ask_ct, 15);
 }
 
-TEST_F(DbzParserTests, TestParseTrades) {
-  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.trades.dbz");
+TEST_F(DbnParserTests, TestParseTrades) {
+  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.trades.dbn.zst");
 
   const Metadata ch_metadata = channel_target_.ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -438,8 +438,8 @@ TEST_F(DbzParserTests, TestParseTrades) {
   EXPECT_EQ(ch_trade2.sequence, 1170414);
 }
 
-TEST_F(DbzParserTests, TestParseOhlcv1H) {
-  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.ohlcv-1h.dbz");
+TEST_F(DbnParserTests, TestParseOhlcv1H) {
+  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.ohlcv-1h.dbn.zst");
 
   const Metadata ch_metadata = channel_target_.ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -493,8 +493,8 @@ TEST_F(DbzParserTests, TestParseOhlcv1H) {
   EXPECT_EQ(ch_ohlcv2.volume, 112698);
 }
 
-TEST_F(DbzParserTests, TestParseOhlcv1M) {
-  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.ohlcv-1m.dbz");
+TEST_F(DbnParserTests, TestParseOhlcv1M) {
+  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.ohlcv-1m.dbn.zst");
 
   const Metadata ch_metadata = channel_target_.ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -548,8 +548,8 @@ TEST_F(DbzParserTests, TestParseOhlcv1M) {
   EXPECT_EQ(ch_ohlcv2.volume, 152);
 }
 
-TEST_F(DbzParserTests, TestParseOhlcv1S) {
-  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.ohlcv-1s.dbz");
+TEST_F(DbnParserTests, TestParseOhlcv1S) {
+  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.ohlcv-1s.dbn.zst");
 
   const Metadata ch_metadata = channel_target_.ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -603,8 +603,8 @@ TEST_F(DbzParserTests, TestParseOhlcv1S) {
   EXPECT_EQ(ch_ohlcv2.volume, 13);
 }
 
-TEST_F(DbzParserTests, TestParseDefinition) {
-  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.definition.dbz");
+TEST_F(DbnParserTests, TestParseDefinition) {
+  this->ReadFromFile(TEST_BUILD_DIR "/data/test_data.definition.dbn.zst");
 
   const Metadata ch_metadata = channel_target_.ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();

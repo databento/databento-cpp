@@ -42,7 +42,7 @@ enum class Schema : std::uint16_t {
 
 // Represents a data output encoding.
 enum class Encoding : std::uint8_t {
-  Dbz = 0,
+  Dbn = 0,
   Csv = 1,
   Json = 2,
 };

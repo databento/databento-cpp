@@ -24,9 +24,9 @@ struct SymbolMapping {
   std::vector<MappingInterval> intervals;
 };
 
-// Information about a DBZ file or response.
+// Information about a DBN file or response.
 struct Metadata {
-  // The DBZ schema version number.
+  // The DBN schema version number.
   std::uint8_t version;
   // The dataset name.
   std::string dataset;

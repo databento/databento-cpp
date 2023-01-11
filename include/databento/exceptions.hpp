@@ -125,10 +125,10 @@ class JsonResponseError : public Exception {
       : Exception{std::move(message)} {}
 };
 
-// Exception indicating an error parsing a DBZ response from the Databento API.
-class DbzResponseError : public Exception {
+// Exception indicating an error parsing a DBN response from the Databento API.
+class DbnResponseError : public Exception {
  public:
-  explicit DbzResponseError(std::string message)
+  explicit DbnResponseError(std::string message)
       : Exception{std::move(message)} {}
 };
 

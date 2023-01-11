@@ -2,8 +2,8 @@ set(headers
   include/databento/batch.hpp
   include/databento/constants.hpp
   include/databento/datetime.hpp
-  include/databento/dbz.hpp
-  include/databento/dbz_parser.hpp
+  include/databento/dbn.hpp
+  include/databento/dbn_parser.hpp
   include/databento/file_bento.hpp
   include/databento/enums.hpp
   include/databento/exceptions.hpp
@@ -27,8 +27,8 @@ set(headers
 set(sources
   src/batch.cpp
   src/datetime.cpp
-  src/dbz.cpp
-  src/dbz_parser.cpp
+  src/dbn.cpp
+  src/dbn_parser.cpp
   src/enums.cpp
   src/exceptions.cpp
   src/file_bento.cpp

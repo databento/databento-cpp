@@ -21,7 +21,7 @@ class LiveBuilder {
   LiveBuilder& SetKey(std::string key);
   LiveBuilder& SetGateway(LiveGateway gateway);
   // Whether to prepend an 8-byte nanosecond timestamp as a header before each
-  // DBZ message.
+  // DBN message.
   LiveBuilder& SetSendTsOut(bool send_ts_out);
   // Attempts to construct an instance of a blocking live client or throws an
   // exception.

@@ -51,7 +51,7 @@ endif()
 include(TestBigEndian)
 test_big_endian(IS_BIG_ENDIAN)
 if(IS_BIG_ENDIAN)
-  message(FATAL_ERROR "Big-endian platforms aren't supported because DBZ parsing assumes the data is little-endian and in native byte order.\n")
+  message(FATAL_ERROR "Big-endian platforms aren't supported because DBN parsing assumes the data is little-endian and in native byte order.\n")
 endif()
 
 #

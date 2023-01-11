@@ -41,7 +41,7 @@ TEST_F(SharedChannelTests, TestReadExact) {
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "sestream");
   target_.ReadExact(buffer.data(), 8);
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "testsend");
-  ASSERT_THROW(target_.ReadExact(buffer.data(), 1), DbzResponseError);
+  ASSERT_THROW(target_.ReadExact(buffer.data(), 1), DbnResponseError);
 }
 
 TEST_F(SharedChannelTests, TestReadExactAfterFinished) {

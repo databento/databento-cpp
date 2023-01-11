@@ -16,7 +16,8 @@ int main() {
   databento::FileBento file_bento = client.TimeseriesStreamToFile(
       databento::dataset::kGlbxMdp3, "2022-10-03T00:00", "2022-10-04T00:00",
       {"ESZ2"}, databento::Schema::Ohlcv1M, databento::SType::Native,
-      databento::SType::ProductId, limit, "ESZ2-ohlcv1m-20201003-20201004.dbz");
+      databento::SType::ProductId, limit,
+      "ESZ2-ohlcv1m-20201003-20201004.dbn.zst");
   file_bento.Replay([](const databento::Record record) {
     const auto& ohlcv_bar = record.Get<databento::OhlcvMsg>();
     std::cout << ohlcv_bar << '\n';

@@ -32,12 +32,12 @@ int main() {
   std::cout << '\n';
 
   const auto fields = client.MetadataListFields(
-      kGlbxMdp3, databento::Encoding::Dbz, databento::Schema::Trades);
+      kGlbxMdp3, databento::Encoding::Dbn, databento::Schema::Trades);
   std::cout << "Fields:\n";
-  const auto& dbz_trades_fields = fields.at("GLBX.MDP3")
-                                      .at(databento::Encoding::Dbz)
+  const auto& dbn_trades_fields = fields.at("GLBX.MDP3")
+                                      .at(databento::Encoding::Dbn)
                                       .at(databento::Schema::Trades);
-  for (const auto& field_and_type : dbz_trades_fields) {
+  for (const auto& field_and_type : dbn_trades_fields) {
     std::cout << "- " << field_and_type.first << ": " << field_and_type.second
               << '\n';
   }

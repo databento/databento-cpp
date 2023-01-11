@@ -6,7 +6,7 @@
 #include <sstream>  // stringstream
 #include <vector>
 
-#include "databento/exceptions.hpp"  // DbzResponseError
+#include "databento/exceptions.hpp"  // DbnResponseError
 
 namespace databento {
 namespace detail {
@@ -85,7 +85,7 @@ void SharedChannel::Channel::ReadExact(std::uint8_t* buffer,
     std::ostringstream err_msg;
     err_msg << "Reached end of the stream with only " << Size()
             << " bytes remaining";
-    throw DbzResponseError{err_msg.str()};
+    throw DbnResponseError{err_msg.str()};
   }
   stream_.read(reinterpret_cast<char*>(buffer),
                static_cast<std::streamsize>(length));

@@ -67,8 +67,8 @@ const char* ToString(Schema schema) {
 
 const char* ToString(Encoding encoding) {
   switch (encoding) {
-    case Encoding::Dbz: {
-      return "dbz";
+    case Encoding::Dbn: {
+      return "dbn";
     }
     case Encoding::Csv: {
       return "csv";
@@ -315,8 +315,8 @@ Schema FromString(const std::string& str) {
 
 template <>
 Encoding FromString(const std::string& str) {
-  if (str == "dbz") {
-    return Encoding::Dbz;
+  if (str == "dbn") {
+    return Encoding::Dbn;
   }
   if (str == "csv") {
     return Encoding::Csv;

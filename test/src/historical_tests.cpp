@@ -10,7 +10,7 @@
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
-#include "databento/dbz.hpp"
+#include "databento/dbn.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception
 #include "databento/file_bento.hpp"
@@ -40,7 +40,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       {"cost", 11.9089},
       {"dataset", "XNAS.ITCH"},
       {"delivery", "download"},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"end", "2022-07-03 00:00:00+00:00"},
       {"id", "GLBX-20221031-L3RVE95CV5"},
       {"is_example", false},
@@ -83,7 +83,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       dataset::kXnasItch, "2022-05-17", "2022-07-03", {"CLH3"}, Schema::Trades);
   EXPECT_EQ(res.symbols, std::vector<std::string>{"CLH3"});
   EXPECT_NEAR(res.cost, 11.908, 1e-2);
-  EXPECT_EQ(res.encoding, Encoding::Dbz);
+  EXPECT_EQ(res.encoding, Encoding::Dbn);
   // null handling
   EXPECT_EQ(res.split_size, 0);
 }
@@ -97,7 +97,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"cost", 11.9089},
        {"dataset", "GLBX.MDP3"},
        {"delivery", "download"},
-       {"encoding", "dbz"},
+       {"encoding", "dbn"},
        {"end", "2022-09-27 00:00:00+00:00"},
        {"id", "CKXF"},
        {"is_example", false},
@@ -131,7 +131,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"cost", 11.9089},
        {"dataset", "GLBX.MDP3"},
        {"delivery", "download"},
-       {"encoding", "dbz"},
+       {"encoding", "dbn"},
        {"end", "2022-09-27 00:00:00+00:00"},
        {"id", "8UPL"},
        {"is_example", false},
@@ -260,45 +260,45 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Full) {
 
 TEST_F(HistoricalTests, TestMetadataListFields) {
   const nlohmann::json kResp{{dataset::kGlbxMdp3,
-                              {{"dbz",
+                              {{"dbn",
                                 {{"trades",
                                   {{"length", "uint8_t"},
                                    {"rtype", "uint8_t"},
                                    {"dataset_id", "uint16_t"}}}}}}}};
   mock_server_.MockGetJson("/v0/metadata.list_fields",
                            {{"dataset", dataset::kGlbxMdp3},
-                            {"encoding", "dbz"},
+                            {"encoding", "dbn"},
                             {"schema", "trades"}},
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListFields(dataset::kGlbxMdp3, Encoding::Dbz,
+  const auto res = target.MetadataListFields(dataset::kGlbxMdp3, Encoding::Dbn,
                                              Schema::Trades);
   const FieldsByDatasetEncodingAndSchema kExp{
       {dataset::kGlbxMdp3,
-       {{Encoding::Dbz,
+       {{Encoding::Dbn,
          {{Schema::Trades,
            {{"length", "uint8_t"},
             {"rtype", "uint8_t"},
             {"dataset_id", "uint16_t"}}}}}}}};
   const auto& tradesRes =
-      res.at(dataset::kGlbxMdp3).at(Encoding::Dbz).at(Schema::Trades);
+      res.at(dataset::kGlbxMdp3).at(Encoding::Dbn).at(Schema::Trades);
   EXPECT_EQ(tradesRes.at("length"), "uint8_t");
   EXPECT_EQ(tradesRes.at("rtype"), "uint8_t");
   EXPECT_EQ(tradesRes.at("dataset_id"), "uint16_t");
 }
 
 TEST_F(HistoricalTests, TestMetadataListEncodings) {
-  const nlohmann::json kResp{"dbz", "csv", "json"};
+  const nlohmann::json kResp{"dbn", "csv", "json"};
   mock_server_.MockGetJson("/v0/metadata.list_encodings", kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListEncodings();
-  const std::vector<Encoding> kExp{Encoding::Dbz, Encoding::Csv,
+  const std::vector<Encoding> kExp{Encoding::Dbn, Encoding::Csv,
                                    Encoding::Json};
   EXPECT_EQ(res, kExp);
 }
@@ -561,17 +561,17 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
 }
 
 TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
-  mock_server_.MockStreamDbz("/v0/timeseries.stream",
+  mock_server_.MockStreamDbn("/v0/timeseries.stream",
                              {{"dataset", dataset::kGlbxMdp3},
                               {"symbols", "ESH1"},
                               {"schema", "mbo"},
                               {"start", "1609160400000711344"},
                               {"end", "1609160800000711344"},
-                              {"encoding", "dbz"},
+                              {"encoding", "dbn"},
                               {"stype_in", "native"},
                               {"stype_out", "product_id"},
                               {"limit", "2"}},
-                             TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
@@ -599,16 +599,16 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
 }
 
 TEST_F(HistoricalTests, TestTimeseriesStream_NoMetadataCallback) {
-  mock_server_.MockStreamDbz("/v0/timeseries.stream",
+  mock_server_.MockStreamDbn("/v0/timeseries.stream",
                              {{"dataset", dataset::kGlbxMdp3},
                               {"start", "2022-10-21T13:30"},
                               {"end", "2022-10-21T20:00"},
                               {"symbols", "CYZ2"},
                               {"schema", "tbbo"},
-                              {"encoding", "dbz"},
+                              {"encoding", "dbn"},
                               {"stype_in", "native"},
                               {"stype_out", "product_id"}},
-                             TEST_BUILD_DIR "/data/test_data.tbbo.dbz");
+                             TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
@@ -652,8 +652,8 @@ TEST_F(HistoricalTests, TestTimeseriesStream_BadRequest) {
 }
 
 TEST_F(HistoricalTests, TestTimeseriesStream_CallbackException) {
-  mock_server_.MockStreamDbz("/v0/timeseries.stream", {},
-                             TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+  mock_server_.MockStreamDbn("/v0/timeseries.stream", {},
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
@@ -669,8 +669,8 @@ TEST_F(HistoricalTests, TestTimeseriesStream_CallbackException) {
 }
 
 TEST_F(HistoricalTests, TestTimeseriesStreamCancellation) {
-  mock_server_.MockStreamDbz("/v0/timeseries.stream", {},
-                             TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+  mock_server_.MockStreamDbn("/v0/timeseries.stream", {},
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
@@ -691,16 +691,16 @@ TEST_F(HistoricalTests, TestTimeseriesStreamCancellation) {
 }
 
 TEST_F(HistoricalTests, TestTimeseriesStreamToFile) {
-  mock_server_.MockStreamDbz("/v0/timeseries.stream",
+  mock_server_.MockStreamDbn("/v0/timeseries.stream",
                              {{"dataset", dataset::kGlbxMdp3},
                               {"start", "2022-10-21T13:30"},
                               {"end", "2022-10-21T20:00"},
                               {"symbols", "CYZ2"},
                               {"schema", "tbbo"},
-                              {"encoding", "dbz"},
+                              {"encoding", "dbn"},
                               {"stype_in", "native"},
                               {"stype_out", "product_id"}},
-                             TEST_BUILD_DIR "/data/test_data.tbbo.dbz");
+                             TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",

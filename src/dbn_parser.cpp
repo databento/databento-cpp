@@ -1,4 +1,4 @@
-#include "databento/dbz_parser.hpp"
+#include "databento/dbn_parser.hpp"
 
 #include <zstd.h>
 
@@ -11,7 +11,7 @@
 #include "databento/exceptions.hpp"
 #include "databento/record.hpp"
 
-using databento::DbzParser;
+using databento::DbnParser;
 
 namespace {
 constexpr std::uint32_t kZstdMagicLowerBound = 0x184D2A50;
@@ -45,24 +45,24 @@ const char* Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
 }  // namespace
 
 template <typename Input>
-DbzParser<Input>::~DbzParser() {
+DbnParser<Input>::~DbnParser() {
   // nullptr ok
   ZSTD_freeDStream(z_dstream_);
 }
 
 template <typename Input>
-databento::Metadata DbzParser<Input>::ParseMetadata() {
+databento::Metadata DbnParser<Input>::ParseMetadata() {
   std::uint32_t magic{};
   input_.ReadExact(reinterpret_cast<std::uint8_t*>(&magic),
                    sizeof(std::uint32_t));
   if (magic < ::kZstdMagicLowerBound || magic > ::kZstdMagicUpperBound) {
-    throw DbzResponseError{"Invalid metadata: no zstd magic number"};
+    throw DbnResponseError{"Invalid metadata: no zstd magic number"};
   }
   std::uint32_t frame_size{};
   input_.ReadExact(reinterpret_cast<std::uint8_t*>(&frame_size),
                    sizeof(std::uint32_t));
   if (frame_size < ::kFixedMetadataLen) {
-    throw DbzResponseError{
+    throw DbnResponseError{
         "Frame length cannot be shorter than the fixed metadata size"};
   }
   std::vector<std::uint8_t> metadata_buffer(frame_size);
@@ -71,11 +71,11 @@ databento::Metadata DbzParser<Input>::ParseMetadata() {
   auto metadata_it = metadata_buffer.cbegin();
 
   if (std::strncmp(Consume(metadata_it, 3), "DBZ", 3) != 0) {
-    throw DbzResponseError{"Invalid version string"};
+    throw DbnResponseError{"Invalid version string"};
   }
   res.version = Consume<std::uint8_t>(metadata_it);
   if (res.version > ::kSchemaVersion) {
-    throw DbzResponseError{"Can't read newer version of DBZ"};
+    throw DbnResponseError{"Can't read newer version of DBN"};
   }
   res.dataset = std::string{Consume(metadata_it, kDatasetCstrLen)};
   res.schema = static_cast<Schema>(Consume<std::uint16_t>(metadata_it));
@@ -100,7 +100,7 @@ databento::Metadata DbzParser<Input>::ParseMetadata() {
   const std::size_t actual_size = ::ZSTD_decompress(
       var_buffer.data(), buffer_size, &*metadata_it, compressed_size);
   if (::ZSTD_isError(actual_size) == 1) {
-    throw DbzResponseError{
+    throw DbnResponseError{
         std::string{
             "Error decompressing zstd-compressed variable-length metadata: "} +
         ::ZSTD_getErrorName(actual_size)};
@@ -108,17 +108,17 @@ databento::Metadata DbzParser<Input>::ParseMetadata() {
   auto var_buffer_it = var_buffer.cbegin();
   const auto schema_definition_length = Consume<std::uint32_t>(var_buffer_it);
   if (schema_definition_length != 0) {
-    throw DbzResponseError{
-        "This version of dbz can't parse schema definitions"};
+    throw DbnResponseError{
+        "This version of dbn can't parse schema definitions"};
   }
   res.symbols =
-      DbzParser::ParseRepeatedSymbol(var_buffer_it, var_buffer.cend());
+      DbnParser::ParseRepeatedSymbol(var_buffer_it, var_buffer.cend());
   res.partial =
-      DbzParser::ParseRepeatedSymbol(var_buffer_it, var_buffer.cend());
+      DbnParser::ParseRepeatedSymbol(var_buffer_it, var_buffer.cend());
   res.not_found =
-      DbzParser::ParseRepeatedSymbol(var_buffer_it, var_buffer.cend());
+      DbnParser::ParseRepeatedSymbol(var_buffer_it, var_buffer.cend());
   res.mappings =
-      DbzParser::ParseSymbolMappings(var_buffer_it, var_buffer.cend());
+      DbnParser::ParseSymbolMappings(var_buffer_it, var_buffer.cend());
 
   // Change internal state based on metadata in preparation for parsing
   // records
@@ -136,7 +136,7 @@ databento::Metadata DbzParser<Input>::ParseMetadata() {
 
 // assumes ParseMetadata has been called
 template <typename Input>
-databento::Record DbzParser<Input>::ParseRecord() {
+databento::Record DbnParser<Input>::ParseRecord() {
   z_out_buffer_.pos = 0;
   do {
     // std::cout << "ReadSuggestion: " << read_suggestion_ << '\n';
@@ -165,7 +165,7 @@ databento::Record DbzParser<Input>::ParseRecord() {
     read_suggestion_ =
         ::ZSTD_decompressStream(z_dstream_, &z_out_buffer_, &z_in_buffer_);
     if (::ZSTD_isError(read_suggestion_)) {
-      throw DbzResponseError{std::string{"zstd error decompressing record: "} +
+      throw DbnResponseError{std::string{"zstd error decompressing record: "} +
                              ZSTD_getErrorName(read_suggestion_)};
     }
     if (read_suggestion_ == 0) {
@@ -176,22 +176,22 @@ databento::Record DbzParser<Input>::ParseRecord() {
 }
 
 template <typename Input>
-std::string DbzParser<Input>::ParseSymbol(
+std::string DbnParser<Input>::ParseSymbol(
     std::vector<std::uint8_t>::const_iterator& buffer_it) {
   return std::string{Consume(buffer_it, kSymbolCstrLen)};
 }
 
 template <typename Input>
-std::vector<std::string> DbzParser<Input>::ParseRepeatedSymbol(
+std::vector<std::string> DbnParser<Input>::ParseRepeatedSymbol(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   if (buffer_it + sizeof(std::uint32_t) > buffer_end_it) {
-    throw DbzResponseError{"Unexpected end of metadata buffer"};
+    throw DbnResponseError{"Unexpected end of metadata buffer"};
   }
   const auto count = std::size_t{Consume<std::uint32_t>(buffer_it)};
   if (buffer_it + static_cast<std::int64_t>(count * ::kSymbolCstrLen) >
       buffer_end_it) {
-    throw DbzResponseError{"Unexpected end of metadata buffer"};
+    throw DbnResponseError{"Unexpected end of metadata buffer"};
   }
   std::vector<std::string> res;
   res.reserve(count);
@@ -202,24 +202,24 @@ std::vector<std::string> DbzParser<Input>::ParseRepeatedSymbol(
 }
 
 template <typename Input>
-std::vector<databento::SymbolMapping> DbzParser<Input>::ParseSymbolMappings(
+std::vector<databento::SymbolMapping> DbnParser<Input>::ParseSymbolMappings(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   if (buffer_it + sizeof(std::uint32_t) > buffer_end_it) {
-    throw DbzResponseError{
+    throw DbnResponseError{
         "Unexpected end of metadata buffer while parsing mappings"};
   }
   const auto count = std::size_t{Consume<std::uint32_t>(buffer_it)};
   std::vector<SymbolMapping> res;
   res.reserve(count);
   for (std::size_t i = 0; i < count; ++i) {
-    res.emplace_back(DbzParser::ParseSymbolMapping(buffer_it, buffer_end_it));
+    res.emplace_back(DbnParser::ParseSymbolMapping(buffer_it, buffer_end_it));
   }
   return res;
 }
 
 template <typename Input>
-databento::SymbolMapping DbzParser<Input>::ParseSymbolMapping(
+databento::SymbolMapping DbnParser<Input>::ParseSymbolMapping(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   constexpr std::size_t kMinSymbolMappingEncodedLen =
@@ -228,7 +228,7 @@ databento::SymbolMapping DbzParser<Input>::ParseSymbolMapping(
       sizeof(std::uint32_t) * 2 + kSymbolCstrLen;
 
   if (buffer_it + kMinSymbolMappingEncodedLen > buffer_end_it) {
-    throw DbzResponseError{
+    throw DbnResponseError{
         "Unexpected end of metadata buffer while parsing symbol mapping"};
   }
   SymbolMapping res;
@@ -237,7 +237,7 @@ databento::SymbolMapping DbzParser<Input>::ParseSymbolMapping(
   const auto read_size =
       static_cast<std::ptrdiff_t>(interval_count * kMappingIntervalEncodedLen);
   if (buffer_it + read_size > buffer_end_it) {
-    throw DbzResponseError{
+    throw DbnResponseError{
         "Symbol mapping interval_count doesn't match size of buffer"};
   }
   res.intervals.reserve(interval_count);
@@ -253,6 +253,6 @@ databento::SymbolMapping DbzParser<Input>::ParseSymbolMapping(
 
 // explicit template instantiation
 namespace databento {
-template class DbzParser<detail::FileStream>;
-template class DbzParser<detail::SharedChannel>;
+template class DbnParser<detail::FileStream>;
+template class DbnParser<detail::SharedChannel>;
 }  // namespace databento

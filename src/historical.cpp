@@ -14,7 +14,7 @@
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
-#include "databento/dbz_parser.hpp"
+#include "databento/dbn_parser.hpp"
 #include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
@@ -262,7 +262,7 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"end", ToString(end)},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"split_duration", ToString(split_duration)},
       {"packaging", ToString(packaging)},
       {"delivery", ToString(delivery)},
@@ -284,7 +284,7 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"end", end},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"split_duration", ToString(split_duration)},
       {"packaging", ToString(packaging)},
       {"delivery", ToString(delivery)},
@@ -929,7 +929,7 @@ void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
                                   const RecordCallback& record_callback) {
   httplib::Params params{
       {"dataset", dataset},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"start", ToString(start)},
       {"end", ToString(end)},
       {"symbols", JoinSymbolStrings(kTimeseriesStreamEndpoint, symbols)},
@@ -950,7 +950,7 @@ void Historical::TimeseriesStream(const std::string& dataset,
                                   const RecordCallback& record_callback) {
   httplib::Params params{
       {"dataset", dataset},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"start", start},
       {"end", end},
       {"symbols", JoinSymbolStrings(kTimeseriesStreamEndpoint, symbols)},
@@ -966,7 +966,7 @@ void Historical::TimeseriesStream(const HttplibParams& params,
                                   const RecordCallback& record_callback) {
   std::atomic<bool> should_continue{true};
   detail::SharedChannel channel;
-  DbzChannelParser dbz_parser{channel};
+  DbnChannelParser dbn_parser{channel};
   std::exception_ptr exception_ptr{};
   detail::ScopedThread stream{[this, &channel, &exception_ptr, &params,
                                &should_continue] {
@@ -986,14 +986,14 @@ void Historical::TimeseriesStream(const HttplibParams& params,
     }
   }};
   try {
-    Metadata metadata = dbz_parser.ParseMetadata();
+    Metadata metadata = dbn_parser.ParseMetadata();
     const auto record_count = metadata.record_count;
     if (metadata_callback) {
       metadata_callback(std::move(metadata));
     }
     for (auto i = 0UL; i < record_count; ++i) {
       const bool should_stop =
-          record_callback(dbz_parser.ParseRecord()) == KeepGoing::Stop;
+          record_callback(dbn_parser.ParseRecord()) == KeepGoing::Stop;
       if (should_stop) {
         should_continue = false;
         break;
@@ -1038,7 +1038,7 @@ databento::FileBento Historical::TimeseriesStreamToFile(
     SType stype_out, std::size_t limit, const std::string& file_path) {
   httplib::Params params{
       {"dataset", dataset},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"start", ToString(start)},
       {"end", ToString(end)},
       {"symbols", JoinSymbolStrings(kTimeseriesStreamToFileEndpoint, symbols)},
@@ -1055,7 +1055,7 @@ databento::FileBento Historical::TimeseriesStreamToFile(
     const std::string& file_path) {
   httplib::Params params{
       {"dataset", dataset},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"start", start},
       {"end", end},
       {"symbols", JoinSymbolStrings(kTimeseriesStreamToFileEndpoint, symbols)},

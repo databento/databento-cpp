@@ -159,7 +159,7 @@ std::string LiveBlocking::GenerateCramReply(const std::string& challenge_key) {
 
 std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
   std::ostringstream reply_stream;
-  reply_stream << "auth=" << auth << "|encoding=dbz|"
+  reply_stream << "auth=" << auth << "|encoding=dbn|"
                << "ts_out=" << send_ts_out_ << '\n';
   return reply_stream.str();
 }

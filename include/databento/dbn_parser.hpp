@@ -8,26 +8,26 @@
 #include <type_traits>  // is_nothrow_move_constructible
 #include <vector>
 
-#include "databento/dbz.hpp"
+#include "databento/dbn.hpp"
 #include "databento/detail/file_stream.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/record.hpp"
 
 namespace databento {
-// DBZ parser. Use either the DbzChannelParser or DbzFileParser specialization.
+// DBN parser. Use either the DbnChannelParser or DbnFileParser specialization.
 template <typename Input>
-class DbzParser {
+class DbnParser {
  public:
-  explicit DbzParser(Input input) : input_{std::move(input)} {}
-  DbzParser(const DbzParser&) = delete;
-  DbzParser& operator=(const DbzParser&) = delete;
-  DbzParser(DbzParser&&) noexcept(
+  explicit DbnParser(Input input) : input_{std::move(input)} {}
+  DbnParser(const DbnParser&) = delete;
+  DbnParser& operator=(const DbnParser&) = delete;
+  DbnParser(DbnParser&&) noexcept(
       // in some STL implementations, ifstream is not noexcept move
       // constructible
       std::is_nothrow_move_constructible<Input>::value) = default;
-  DbzParser& operator=(DbzParser&&) noexcept(
+  DbnParser& operator=(DbnParser&&) noexcept(
       std::is_nothrow_move_constructible<Input>::value) = default;
-  ~DbzParser();
+  ~DbnParser();
 
   // Should only be called once
   Metadata ParseMetadata();
@@ -59,10 +59,10 @@ class DbzParser {
 };
 
 // forward declare template instantiation
-extern template class DbzParser<detail::SharedChannel>;
-extern template class DbzParser<detail::FileStream>;
-// DBZ parser that reads from a channel.
-using DbzChannelParser = DbzParser<detail::SharedChannel>;
-// DBZ parser that reads from a file.
-using DbzFileParser = DbzParser<detail::FileStream>;
+extern template class DbnParser<detail::SharedChannel>;
+extern template class DbnParser<detail::FileStream>;
+// DBN parser that reads from a channel.
+using DbnChannelParser = DbnParser<detail::SharedChannel>;
+// DBN parser that reads from a file.
+using DbnFileParser = DbnParser<detail::FileStream>;
 }  // namespace databento

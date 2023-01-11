@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
 #include "databento/constants.hpp"
-#include "databento/dbz.hpp"
+#include "databento/dbn.hpp"
 
 namespace databento {
 namespace test {
-TEST(DbzTests, TestMetadataToString) {
+TEST(DbnTests, TestMetadataToString) {
   const Metadata target{1,
                         dataset::kGlbxMdp3,
                         Schema::Ohlcv1D,
