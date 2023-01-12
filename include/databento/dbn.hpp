@@ -28,7 +28,7 @@ struct SymbolMapping {
 struct Metadata {
   // The DBN schema version number.
   std::uint8_t version;
-  // The dataset name.
+  // The dataset code.
   std::string dataset;
   // The data record schema. Specifies
   Schema schema;
