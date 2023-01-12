@@ -205,8 +205,6 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.split_symbols = ParseAt<bool>(endpoint, json, "split_symbols");
   res.packaging = FromCheckedAtString<Packaging>(endpoint, json, "packaging");
   res.delivery = FromCheckedAtString<Delivery>(endpoint, json, "delivery");
-  res.is_full_universe = ParseAt<bool>(endpoint, json, "is_full_universe");
-  res.is_example = ParseAt<bool>(endpoint, json, "is_example");
   res.record_count = ParseAt<std::size_t>(endpoint, json, "record_count");
   res.billed_size = ParseAt<std::size_t>(endpoint, json, "billed_size");
   res.actual_size = ParseAt<std::size_t>(endpoint, json, "actual_size");
