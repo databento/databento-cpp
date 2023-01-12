@@ -120,9 +120,17 @@ Tests are located in the `test` directory.
 They're written using [GoogleTest (gtest)](https://github.com/google/googletest).
 The test target is `databentoTests` and can be build and run with the following commands:
 ```sh
-cmake -S . -B build  # configure
+cmake -S . -B build -DDATABENTO_ENABLE_UNIT_TESTING=1  # configure
 cmake --build build --target databentoTests  # build
 build/test/databentoTests  # run
+```
+
+By default, it's assumed google test is installed already, if instead you'd like CMake to
+download it for you, disable the `DATABENTO_USE_EXTERNAL_GTEST` flag:
+```sh
+cmake -S . -B build \
+  -DDATABENTO_ENABLE_UNIT_TESTING=1 \
+  -DDATABENTO_USE_EXTERNAL_GTEST=0
 ```
 
 ### Formatting

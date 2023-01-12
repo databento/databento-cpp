@@ -28,7 +28,7 @@ endif()
 #
 
 # Default to ON if main project, otherwise OFF
-option(${PROJECT_NAME_UPPERCASE}_ENABLE_UNIT_TESTING "Enable unit tests for the projects (from the `test` subfolder)." ${IS_MAIN_PROJECT})
+option(${PROJECT_NAME_UPPERCASE}_ENABLE_UNIT_TESTING "Enable unit tests for the projects (from the `test` subfolder)." OFF)
 option(${PROJECT_NAME_UPPERCASE}_ENABLE_EXAMPLES "Enable building examples for the project." OFF)
 
 #

@@ -30,6 +30,7 @@ jobs:
           cmake -S . -B build \
             -GNinja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DDATABENTO_ENABLE_UNIT_TESTING=1 \
             -DDATABENTO_ENABLE_EXAMPLES=1 \
             -DDATABENTO_ENABLE_CLANG_TIDY=1
       - name: CMake build
@@ -51,6 +52,7 @@ jobs:
         run: |
           cmake -S . -B build \
             -GNinja \
+            -DDATABENTO_ENABLE_UNIT_TESTING=1 \
             -DDATABENTO_ENABLE_EXAMPLES=1 \
             -DOPENSSL_ROOT_DIR=$(brew --prefix openssl@3)
       - name: CMake build
