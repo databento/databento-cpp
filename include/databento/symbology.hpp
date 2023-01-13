@@ -8,7 +8,7 @@
 
 namespace databento {
 // Sentinel value for requesting all symbols
-static const std::vector<std::string> kAllSymbols{"*"};
+static const std::vector<std::string> kAllSymbols{"ALL_SYMBOLS"};
 
 struct StrMappingInterval {
   // YYYY-MM-DD
