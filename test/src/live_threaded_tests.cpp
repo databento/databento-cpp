@@ -17,7 +17,7 @@ class LiveThreadedTests : public testing::Test {
 };
 
 TEST_F(LiveThreadedTests, TestBasic) {
-  const MboMsg kRec{{sizeof(MboMsg) / 4, MboMsg::kTypeId, 1, 2, UnixNanos{}},
+  const MboMsg kRec{{sizeof(MboMsg) / 4, RType::Mbo, 1, 2, UnixNanos{}},
                     1,
                     2,
                     3,
@@ -49,7 +49,7 @@ TEST_F(LiveThreadedTests, TestBasic) {
 }
 
 TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
-  const MboMsg kRec{{sizeof(MboMsg) / 4, MboMsg::kTypeId, 1, 2, UnixNanos{}},
+  const MboMsg kRec{{sizeof(MboMsg) / 4, RType::Mbo, 1, 2, UnixNanos{}},
                     1,
                     2,
                     3,

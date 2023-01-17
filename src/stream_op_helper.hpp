@@ -10,6 +10,7 @@
 #include <utility>  // move
 
 #include "databento/datetime.hpp"  // TimeDeltaNanos, UnixNanos
+#include "databento/enums.hpp"     // RType
 
 namespace databento {
 template <typename T>
@@ -47,6 +48,11 @@ class StreamOpHelper {
   void FmtToStream(const std::int8_t& val) {
     // otherwise is formatted as a char
     stream_ << static_cast<std::int16_t>(val);
+  }
+
+  void FmtToStream(const RType& val) {
+    // otherwise is formatted as a char
+    stream_ << static_cast<std::uint16_t>(val);
   }
 
   void FmtToStream(const UnixNanos& val) { stream_ << ToString(val); }

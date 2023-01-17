@@ -122,13 +122,12 @@ databento::Metadata DbnParser<Input>::ParseMetadata() {
 
   // Change internal state based on metadata in preparation for parsing
   // records
-  rtype_ = Record::TypeIdFromSchema(res.schema);
   z_dstream_ = ::ZSTD_createDStream();
   read_suggestion_ = ::ZSTD_initDStream(z_dstream_);
   in_buffer_ = std::vector<std::uint8_t>(read_suggestion_);
   // set pos = size so first ParseRecord reads from input_
   z_in_buffer_ = {in_buffer_.data(), in_buffer_.size(), in_buffer_.size()};
-  out_buffer_ = std::vector<std::uint8_t>(Record::SizeOfType(rtype_));
+  out_buffer_ = std::vector<std::uint8_t>(Record::SizeOfSchema(res.schema));
   z_out_buffer_ = {out_buffer_.data(), out_buffer_.size(), 0};
 
   return res;

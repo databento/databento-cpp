@@ -82,6 +82,15 @@ enum class Delivery : std::uint8_t {
   Disk,
 };
 
+enum RType : std::uint8_t {
+  Mbp0 = 0x00,
+  Mbp1 = 0x01,
+  Mbp10 = 0x0a,
+  Ohlcv = 0x11,
+  InstrumentDef = 0x13,
+  Mbo = 0xa0,
+};
+
 enum class Flag : std::uint8_t {
   // Last message in the packet from the venue for a given `product_id`.
   kLast = 1 << 7,

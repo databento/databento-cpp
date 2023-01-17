@@ -21,8 +21,8 @@ class LiveBlockingTests : public testing::Test {
   static constexpr auto kKey = "32-character-with-lots-of-filler";
 
   template <typename T>
-  static RecordHeader DummyHeader() {
-    return {sizeof(T) / 4, T::kTypeId, 1, 1, UnixNanos{}};
+  static RecordHeader DummyHeader(RType rtype) {
+    return {sizeof(T) / 4, rtype, 1, 1, UnixNanos{}};
   }
 };
 
@@ -64,7 +64,7 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
 
 TEST_F(LiveBlockingTests, TestNextRecord) {
   constexpr auto kRecCount = 12;
-  const OhlcvMsg kRec{DummyHeader<OhlcvMsg>(), 1, 2, 3, 4, 5};
+  const OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv), 1, 2, 3, 4, 5};
   const mock::MockLsgServer mock_server{[kRec](mock::MockLsgServer& self) {
     self.Accept();
     self.Authenticate();
@@ -83,7 +83,7 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
 
 TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   constexpr std::chrono::milliseconds kTimeout{50};
-  const Mbp1Msg kRec{DummyHeader<Mbp1Msg>(),
+  const Mbp1Msg kRec{DummyHeader<Mbp1Msg>(RType::Mbp1),
                      1,
                      2,
                      'A',
@@ -145,9 +145,17 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
 }
 
 TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
-  const MboMsg kRec{
-      DummyHeader<MboMsg>(), 1,  2, 3, {}, 4, 'A', 'B', UnixNanos{},
-      TimeDeltaNanos{},      100};
+  const MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
+                    1,
+                    2,
+                    3,
+                    {},
+                    4,
+                    'A',
+                    'B',
+                    UnixNanos{},
+                    TimeDeltaNanos{},
+                    100};
 
   std::mutex mutex;
   std::condition_variable cv;
