@@ -107,7 +107,7 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
     self.SendRecord(kRec);
     {
       // notify client the first record's been sent
-      std::lock_guard<std::mutex> lock{send_mutex};
+      const std::lock_guard<std::mutex> lock{send_mutex};
       sent_first_msg = true;
       send_cv.notify_one();
     }
@@ -134,7 +134,7 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   EXPECT_EQ(rec, nullptr) << "Did not timeout when expected";
   {
     // notify server the timeout occurred
-    std::lock_guard<std::mutex> lock{receive_mutex};
+    const std::lock_guard<std::mutex> lock{receive_mutex};
     received_first_msg = true;
     receive_cv.notify_one();
   }
@@ -175,7 +175,7 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
   // partial read and timeout occurs here
   ASSERT_EQ(target.NextRecord(std::chrono::milliseconds{10}), nullptr);
   {
-    std::lock_guard<std::mutex> lock{mutex};
+    const std::lock_guard<std::mutex> lock{mutex};
     // notify server to send remaining part of record
     cv.notify_one();
   }

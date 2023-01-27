@@ -46,6 +46,7 @@ const databento::Record& LiveBlocking::NextRecord() { return *NextRecord({}); }
 
 const databento::Record* LiveBlocking::NextRecord(
     std::chrono::milliseconds timeout) {
+  // TODO(cg): Update to use DbnDecoder
   if (buffer_idx_ >= buffer_size_) {
     const auto read_res = client_.Read(buffer_.data(), buffer_.size(), timeout);
     if (read_res.status == detail::TcpClient::Status::Timeout) {

@@ -20,7 +20,6 @@ std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
                     .AddField("end", metadata.end)
                     .AddField("limit", metadata.limit)
                     .AddField("record_count", metadata.record_count)
-                    .AddField("compression", metadata.compression)
                     .AddField("stype_in", metadata.stype_in)
                     .AddField("stype_out", metadata.stype_out);
 
@@ -66,7 +65,7 @@ std::ostream& operator<<(std::ostream& stream, const SymbolMapping& mapping) {
       .SetSpacer(" ")
       .SetTypeName("SymbolMapping")
       .Build()
-      .AddField("native", mapping.native)
+      .AddField("native_symbol", mapping.native_symbol)
       .AddField("intervals",
                 static_cast<std::ostringstream&>(intervals_helper.Finish()))
       .Finish();

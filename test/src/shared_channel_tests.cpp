@@ -16,10 +16,6 @@ namespace detail {
 namespace test {
 class SharedChannelTests : public testing::Test {
  protected:
-  SharedChannel target_;
-  ScopedThread write_thread_;
-
- public:
   void Write(const std::vector<std::string>& inputs) {
     for (const auto& input : inputs) {
       target_.Write(reinterpret_cast<const std::uint8_t*>(input.data()),
@@ -28,6 +24,9 @@ class SharedChannelTests : public testing::Test {
     }
     target_.Finish();
   }
+
+  SharedChannel target_;
+  ScopedThread write_thread_;
 };
 
 TEST_F(SharedChannelTests, TestReadExact) {

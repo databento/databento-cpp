@@ -13,7 +13,6 @@ TEST(DbnTests, TestMetadataToString) {
                         {},
                         {},
                         73,
-                        Compression::None,
                         SType::Native,
                         SType::ProductId,
                         {"NGG3", "NGQ4"},
@@ -30,15 +29,14 @@ TEST(DbnTests, TestMetadataToString) {
     end = 0,
     limit = 0,
     record_count = 73,
-    compression = none,
     stype_in = native,
     stype_out = product_id,
     symbols = { "NGG3", "NGQ4" },
     partial = { "ng" },
     not_found = { "nf" },
     mappings = {
-        SymbolMapping { native = "NGG3", intervals = { MappingInterval { start_date = 20220601, end_date = 20220701, symbol = "3" } } },
-        SymbolMapping { native = "NGQ4", intervals = { MappingInterval { start_date = 20220601, end_date = 20220701, symbol = "4" } } }
+        SymbolMapping { native_symbol = "NGG3", intervals = { MappingInterval { start_date = 20220601, end_date = 20220701, symbol = "3" } } },
+        SymbolMapping { native_symbol = "NGQ4", intervals = { MappingInterval { start_date = 20220601, end_date = 20220701, symbol = "4" } } }
     }
 })");
 }

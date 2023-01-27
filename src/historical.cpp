@@ -14,7 +14,7 @@
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
-#include "databento/dbn_parser.hpp"
+#include "databento/dbn_decoder.hpp"
 #include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
@@ -964,7 +964,6 @@ void Historical::TimeseriesStream(const HttplibParams& params,
                                   const RecordCallback& record_callback) {
   std::atomic<bool> should_continue{true};
   detail::SharedChannel channel;
-  DbnChannelParser dbn_parser{channel};
   std::exception_ptr exception_ptr{};
   detail::ScopedThread stream{[this, &channel, &exception_ptr, &params,
                                &should_continue] {
@@ -984,14 +983,15 @@ void Historical::TimeseriesStream(const HttplibParams& params,
     }
   }};
   try {
-    Metadata metadata = dbn_parser.ParseMetadata();
+    DbnDecoder dbn_decoder{channel};
+    Metadata metadata = dbn_decoder.ParseMetadata();
     const auto record_count = metadata.record_count;
     if (metadata_callback) {
       metadata_callback(std::move(metadata));
     }
     for (auto i = 0UL; i < record_count; ++i) {
       const bool should_stop =
-          record_callback(dbn_parser.ParseRecord()) == KeepGoing::Stop;
+          record_callback(dbn_decoder.ParseRecord()) == KeepGoing::Stop;
       if (should_stop) {
         should_continue = false;
         break;

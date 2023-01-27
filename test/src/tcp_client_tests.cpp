@@ -79,26 +79,27 @@ TEST_F(TcpClientTests, TestReadClose) {
 TEST_F(TcpClientTests, TestReadTimeout) {
   std::mutex mutex;
   std::condition_variable cv;
-  mock::MockTcpServer mock_server{[&mutex, &cv](mock::MockTcpServer& server) {
-    // simulate slow or delayed send
-    server.Accept();
-    server.SetSend("hello");
-    // wait for timeout
-    {
-      std::unique_lock<std::mutex> lock{mutex};
-      cv.wait(lock);
-    }
-    // then send
-    server.Send();
-    server.Close();
-  }};
+  const mock::MockTcpServer mock_server{
+      [&mutex, &cv](mock::MockTcpServer& server) {
+        // simulate slow or delayed send
+        server.Accept();
+        server.SetSend("hello");
+        // wait for timeout
+        {
+          std::unique_lock<std::mutex> lock{mutex};
+          cv.wait(lock);
+        }
+        // then send
+        server.Send();
+        server.Close();
+      }};
   target_ = {"127.0.0.1", mock_server.Port()};
 
   std::array<char, 10> buffer{0};
   const auto res =
       target_.Read(buffer.data(), buffer.size(), std::chrono::milliseconds{5});
   {
-    std::lock_guard<std::mutex> lock{mutex};
+    const std::lock_guard<std::mutex> lock{mutex};
     cv.notify_one();
   }
   EXPECT_EQ(res.status, detail::TcpClient::Status::Timeout);
@@ -106,7 +107,7 @@ TEST_F(TcpClientTests, TestReadTimeout) {
 }
 
 TEST_F(TcpClientTests, TestReadCloseNoTimeout) {
-  mock::MockTcpServer mock_server{[](mock::MockTcpServer& server) {
+  const mock::MockTcpServer mock_server{[](mock::MockTcpServer& server) {
     server.Accept();
     server.Close();
   }};

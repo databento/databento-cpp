@@ -82,13 +82,15 @@ enum class Delivery : std::uint8_t {
   Disk,
 };
 
+// A sentinel value for different DBN record types. Not an enum class
+// because it's not exhaustive; additional RTypes could be added in the future.
 enum RType : std::uint8_t {
   Mbp0 = 0x00,
   Mbp1 = 0x01,
-  Mbp10 = 0x0a,
+  Mbp10 = 0x0A,
   Ohlcv = 0x11,
   InstrumentDef = 0x13,
-  Mbo = 0xa0,
+  Mbo = 0xA0,
 };
 
 enum class Flag : std::uint8_t {
