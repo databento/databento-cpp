@@ -12,8 +12,8 @@ TEST(RecordTests, TestMbp10MsgToString) {
   Mbp10Msg target{RecordHeader{50, RType::Mbp10, 1, 1, UnixNanos{}},
                   100000000,
                   10,
-                  'A',
-                  'B',
+                  Action::Add,
+                  Side::Bid,
                   {},
                   0,
                   UnixNanos{},
@@ -30,12 +30,12 @@ TEST(RecordTests, TestMbp10MsgToString) {
   }
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(Mbp10Msg {
-    hd = RecordHeader { length = 50, rtype = 10, publisher_id = 1, product_id = 1, ts_event = 0 },
+    hd = RecordHeader { length = 50, rtype = Mbp10, publisher_id = 1, product_id = 1, ts_event = 0 },
     price = 100000000,
     size = 10,
-    action = 'A',
-    side = 'B',
-    flags = 0,
+    action = Add,
+    side = Bid,
+    flags = 0b00000000,
     depth = 0,
     ts_recv = 0,
     ts_in_delta = 100,
@@ -122,7 +122,7 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
       {}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(InstrumentDefMsg {
-    hd = RecordHeader { length = 90, rtype = 19, publisher_id = 1, product_id = 1, ts_event = 0 },
+    hd = RecordHeader { length = 90, rtype = InstrumentDef, publisher_id = 1, product_id = 1, ts_event = 0 },
     ts_recv = 0,
     min_price_increment = 1,
     display_factor = 2,

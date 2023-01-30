@@ -95,8 +95,8 @@ TEST_F(DbnDecoderTests, TestParseMbo) {
     EXPECT_EQ(ch_mbo1.size, 1);
     EXPECT_EQ(ch_mbo1.flags, 128);
     EXPECT_EQ(ch_mbo1.channel_id, 0);
-    EXPECT_EQ(ch_mbo1.action, 'C');
-    EXPECT_EQ(ch_mbo1.side, 'A');
+    EXPECT_EQ(ch_mbo1.action, Action::Cancel);
+    EXPECT_EQ(ch_mbo1.side, Side::Ask);
     EXPECT_EQ(ch_mbo1.ts_recv.time_since_epoch().count(), 1609160400000704060);
     EXPECT_EQ(ch_mbo1.ts_in_delta.count(), 22993);
     EXPECT_EQ(ch_mbo1.sequence, 1170352);
@@ -117,8 +117,8 @@ TEST_F(DbnDecoderTests, TestParseMbo) {
     EXPECT_EQ(ch_mbo2.size, 1);
     EXPECT_EQ(ch_mbo2.flags, 128);
     EXPECT_EQ(ch_mbo2.channel_id, 0);
-    EXPECT_EQ(ch_mbo2.action, 'C');
-    EXPECT_EQ(ch_mbo2.side, 'A');
+    EXPECT_EQ(ch_mbo2.action, Action::Cancel);
+    EXPECT_EQ(ch_mbo2.side, Side::Ask);
     EXPECT_EQ(ch_mbo2.ts_recv.time_since_epoch().count(), 1609160400000711344);
     EXPECT_EQ(ch_mbo2.ts_in_delta.count(), 19621);
     EXPECT_EQ(ch_mbo2.sequence, 1170353);
@@ -161,8 +161,8 @@ TEST_F(DbnDecoderTests, TestParseMbp1) {
               1609160400006001487);
     EXPECT_EQ(ch_mbp1.price, 3720500000000);
     EXPECT_EQ(ch_mbp1.size, 1);
-    EXPECT_EQ(ch_mbp1.action, 'A');
-    EXPECT_EQ(ch_mbp1.side, 'A');
+    EXPECT_EQ(ch_mbp1.action, Action::Add);
+    EXPECT_EQ(ch_mbp1.side, Side::Ask);
     EXPECT_EQ(ch_mbp1.flags, 128);
     EXPECT_EQ(ch_mbp1.depth, 0);
     EXPECT_EQ(ch_mbp1.ts_recv.time_since_epoch().count(), 1609160400006136329);
@@ -188,8 +188,8 @@ TEST_F(DbnDecoderTests, TestParseMbp1) {
               1609160400006146661);
     EXPECT_EQ(ch_mbp2.price, 3720500000000);
     EXPECT_EQ(ch_mbp2.size, 1);
-    EXPECT_EQ(ch_mbp2.action, 'A');
-    EXPECT_EQ(ch_mbp2.side, 'A');
+    EXPECT_EQ(ch_mbp2.action, Action::Add);
+    EXPECT_EQ(ch_mbp2.side, Side::Ask);
     EXPECT_EQ(ch_mbp2.flags, 128);
     EXPECT_EQ(ch_mbp2.depth, 0);
     EXPECT_EQ(ch_mbp2.ts_recv.time_since_epoch().count(), 1609160400006246513);
@@ -240,8 +240,8 @@ TEST_F(DbnDecoderTests, TestParseMbp10) {
               1609160400000429831);
     EXPECT_EQ(ch_mbp1.price, 3722750000000);
     EXPECT_EQ(ch_mbp1.size, 1);
-    EXPECT_EQ(ch_mbp1.action, 'C');
-    EXPECT_EQ(ch_mbp1.side, 'A');
+    EXPECT_EQ(ch_mbp1.action, Action::Cancel);
+    EXPECT_EQ(ch_mbp1.side, Side::Ask);
     EXPECT_EQ(ch_mbp1.flags, 128);
     EXPECT_EQ(ch_mbp1.depth, 9);
     EXPECT_EQ(ch_mbp1.ts_recv.time_since_epoch().count(), 1609160400000704060);
@@ -279,8 +279,8 @@ TEST_F(DbnDecoderTests, TestParseMbp10) {
               1609160400000435673);
     EXPECT_EQ(ch_mbp2.price, 3720000000000);
     EXPECT_EQ(ch_mbp2.size, 1);
-    EXPECT_EQ(ch_mbp2.action, 'C');
-    EXPECT_EQ(ch_mbp2.side, 'B');
+    EXPECT_EQ(ch_mbp2.action, Action::Cancel);
+    EXPECT_EQ(ch_mbp2.side, Side::Bid);
     EXPECT_EQ(ch_mbp2.flags, 128);
     EXPECT_EQ(ch_mbp2.depth, 1);
     EXPECT_EQ(ch_mbp2.ts_recv.time_since_epoch().count(), 1609160400000750544);
@@ -343,8 +343,8 @@ TEST_F(DbnDecoderTests, TestParseTbbo) {
               1609160400098821953);
     EXPECT_EQ(ch_tbbo1.price, 3720250000000);
     EXPECT_EQ(ch_tbbo1.size, 5);
-    EXPECT_EQ(ch_tbbo1.action, 'T');
-    EXPECT_EQ(ch_tbbo1.side, 'A');
+    EXPECT_EQ(ch_tbbo1.action, Action::Trade);
+    EXPECT_EQ(ch_tbbo1.side, Side::Ask);
     EXPECT_EQ(ch_tbbo1.flags, 129);
     EXPECT_EQ(ch_tbbo1.depth, 0);
     EXPECT_EQ(ch_tbbo1.ts_recv.time_since_epoch().count(), 1609160400099150057);
@@ -370,8 +370,8 @@ TEST_F(DbnDecoderTests, TestParseTbbo) {
               1609160400107665963);
     EXPECT_EQ(ch_tbbo2.price, 3720250000000);
     EXPECT_EQ(ch_tbbo2.size, 21);
-    EXPECT_EQ(ch_tbbo2.action, 'T');
-    EXPECT_EQ(ch_tbbo2.side, 'A');
+    EXPECT_EQ(ch_tbbo2.action, Action::Trade);
+    EXPECT_EQ(ch_tbbo2.side, Side::Ask);
     EXPECT_EQ(ch_tbbo2.flags, 129);
     EXPECT_EQ(ch_tbbo2.depth, 0);
     EXPECT_EQ(ch_tbbo2.ts_recv.time_since_epoch().count(), 1609160400108142648);
@@ -422,8 +422,8 @@ TEST_F(DbnDecoderTests, TestParseTrades) {
               1609160400098821953);
     EXPECT_EQ(ch_trade1.price, 3720250000000);
     EXPECT_EQ(ch_trade1.size, 5);
-    EXPECT_EQ(ch_trade1.action, 'T');
-    EXPECT_EQ(ch_trade1.side, 'A');
+    EXPECT_EQ(ch_trade1.action, Action::Trade);
+    EXPECT_EQ(ch_trade1.side, Side::Ask);
     EXPECT_EQ(ch_trade1.flags, 129);
     EXPECT_EQ(ch_trade1.depth, 0);
     EXPECT_EQ(ch_trade1.ts_recv.time_since_epoch().count(),
@@ -444,8 +444,8 @@ TEST_F(DbnDecoderTests, TestParseTrades) {
               1609160400107665963);
     EXPECT_EQ(ch_trade2.price, 3720250000000);
     EXPECT_EQ(ch_trade2.size, 21);
-    EXPECT_EQ(ch_trade2.action, 'T');
-    EXPECT_EQ(ch_trade2.side, 'A');
+    EXPECT_EQ(ch_trade2.action, Action::Trade);
+    EXPECT_EQ(ch_trade2.side, Side::Ask);
     EXPECT_EQ(ch_trade2.flags, 129);
     EXPECT_EQ(ch_trade2.depth, 0);
     EXPECT_EQ(ch_trade2.ts_recv.time_since_epoch().count(),

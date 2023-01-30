@@ -23,8 +23,8 @@ TEST_F(LiveThreadedTests, TestBasic) {
                     3,
                     0,
                     4,
-                    'A',
-                    'B',
+                    Action::Add,
+                    Side::Bid,
                     UnixNanos{},
                     TimeDeltaNanos{},
                     100};
@@ -55,8 +55,8 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
                     3,
                     0,
                     4,
-                    'A',
-                    'B',
+                    Action::Add,
+                    Side::Bid,
                     UnixNanos{},
                     TimeDeltaNanos{},
                     100};

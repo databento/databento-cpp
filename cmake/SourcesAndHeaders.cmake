@@ -7,6 +7,7 @@ set(headers
   include/databento/file_bento.hpp
   include/databento/enums.hpp
   include/databento/exceptions.hpp
+  include/databento/flag_set.hpp
   include/databento/historical.hpp
   include/databento/ireadable.hpp
   include/databento/live.hpp

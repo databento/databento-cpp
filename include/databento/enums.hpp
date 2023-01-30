@@ -82,26 +82,6 @@ enum class Delivery : std::uint8_t {
   Disk,
 };
 
-// A sentinel value for different DBN record types. Not an enum class
-// because it's not exhaustive; additional RTypes could be added in the future.
-enum RType : std::uint8_t {
-  Mbp0 = 0x00,
-  Mbp1 = 0x01,
-  Mbp10 = 0x0A,
-  Ohlcv = 0x11,
-  InstrumentDef = 0x13,
-  Mbo = 0xA0,
-};
-
-enum class Flag : std::uint8_t {
-  // Last message in the packet from the venue for a given `product_id`.
-  kLast = 1 << 7,
-  // Aggregated price level message, not an individual order.
-  kMbp = 1 << 4,
-  // The `ts_recv` value is inaccurate due to clock issues or packet reordering.
-  kBadTsRecv = 1 << 3,
-};
-
 // The current state of a batch job.
 enum class JobState : std::uint8_t {
   Received,
@@ -117,6 +97,45 @@ enum class DatasetCondition : std::uint8_t {
   Bad,
 };
 
+// Sentinel values for different DBN record types.
+//
+// Additional rtypes may be added in the future.
+enum RType : std::uint8_t {
+  Mbp0 = 0x00,
+  Mbp1 = 0x01,
+  Mbp10 = 0x0a,
+  Ohlcv = 0x11,
+  InstrumentDef = 0x13,
+  Mbo = 0xa0,
+};
+
+// A tick action.
+//
+// Additional actions may be added in the future.
+enum Action : char {
+  // An existing order was modified.
+  Modify = 'M',
+  // A trade executed.
+  Trade = 'T',
+  // An order was cancelled.
+  Cancel = 'C',
+  // A new order was added.
+  Add = 'A',
+  // Reset the book; clear all orders for an instrument.
+  Clear = 'R',
+};
+
+// A side of the market. The side of the market for resting orders, or the side
+// of the aggressor for trades.
+enum class Side : char {
+  // A sell order.
+  Ask = 'A',
+  // A buy order.
+  Bid = 'B',
+  // None or unknown.
+  None = 'N',
+};
+
 // Convert a HistoricalGateway to a URL.
 const char* UrlFromGateway(HistoricalGateway gateway);
 
@@ -130,6 +149,9 @@ const char* ToString(Packaging packaging);
 const char* ToString(Delivery delivery);
 const char* ToString(JobState state);
 const char* ToString(DatasetCondition condition);
+const char* ToString(RType rtype);
+const char* ToString(Action action);
+const char* ToString(Side side);
 
 std::ostream& operator<<(std::ostream& out, Schema schema);
 std::ostream& operator<<(std::ostream& out, Encoding encoding);
@@ -141,6 +163,9 @@ std::ostream& operator<<(std::ostream& out, Packaging packaging);
 std::ostream& operator<<(std::ostream& out, Delivery delivery);
 std::ostream& operator<<(std::ostream& out, JobState state);
 std::ostream& operator<<(std::ostream& out, DatasetCondition condition);
+std::ostream& operator<<(std::ostream& out, RType rtype);
+std::ostream& operator<<(std::ostream& out, Action action);
+std::ostream& operator<<(std::ostream& out, Side side);
 
 template <typename T>
 T FromString(const std::string& str);

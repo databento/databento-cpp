@@ -50,11 +50,6 @@ class StreamOpHelper {
     stream_ << static_cast<std::int16_t>(val);
   }
 
-  void FmtToStream(const RType& val) {
-    // otherwise is formatted as a char
-    stream_ << static_cast<std::uint16_t>(val);
-  }
-
   void FmtToStream(const UnixNanos& val) { stream_ << ToString(val); }
 
   void FmtToStream(const TimeDeltaNanos& val) { stream_ << ToString(val); }

@@ -8,6 +8,7 @@
 
 #include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
+#include "databento/flag_set.hpp"
 
 namespace databento {
 // Common data for all Databento Records.
@@ -62,10 +63,10 @@ struct MboMsg {
   std::uint64_t order_id;
   std::int64_t price;
   std::uint32_t size;
-  std::uint8_t flags;
+  FlagSet flags;
   std::uint8_t channel_id;
-  char action;
-  char side;
+  Action action;
+  Side side;
   UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
@@ -96,9 +97,9 @@ struct MbpMsg {
   RecordHeader hd;
   std::int64_t price;
   std::uint32_t size;
-  char action;
-  char side;
-  std::uint8_t flags;
+  Action action;
+  Side side;
+  FlagSet flags;
   // Depth of the actual book change.
   std::uint8_t depth;
   UnixNanos ts_recv;
@@ -114,9 +115,9 @@ struct TradeMsg {
   RecordHeader hd;
   std::int64_t price;
   std::uint32_t size;
-  char action;
-  char side;
-  std::uint8_t flags;
+  Action action;
+  Side side;
+  FlagSet flags;
   // Depth of the actual book change.
   std::uint8_t depth;
   UnixNanos ts_recv;

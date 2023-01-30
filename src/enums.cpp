@@ -221,6 +221,72 @@ const char* ToString(DatasetCondition condition) {
   }
 }
 
+const char* ToString(RType rtype) {
+  switch (rtype) {
+    case RType::Mbp0: {
+      return "Mbp0";
+    }
+    case RType::Mbp1: {
+      return "Mbp1";
+    }
+    case RType::Mbp10: {
+      return "Mbp10";
+    }
+    case RType::Ohlcv: {
+      return "Ohlcv";
+    }
+    case RType::InstrumentDef: {
+      return "InstrumentDef";
+    }
+    case RType::Mbo: {
+      return "Mbo";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(Action action) {
+  switch (action) {
+    case Action::Modify: {
+      return "Modify";
+    }
+    case Action::Trade: {
+      return "Trade";
+    }
+    case Action::Cancel: {
+      return "Cancel";
+    }
+    case Action::Add: {
+      return "Add";
+    }
+    case Action::Clear: {
+      return "Clear";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(Side side) {
+  switch (side) {
+    case Side::Ask: {
+      return "Ask";
+    }
+    case Side::Bid: {
+      return "Bid";
+    }
+    case Side::None: {
+      return "None";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
 std::ostream& operator<<(std::ostream& out, Schema schema) {
   out << ToString(schema);
   return out;
@@ -268,6 +334,21 @@ std::ostream& operator<<(std::ostream& out, JobState state) {
 
 std::ostream& operator<<(std::ostream& out, DatasetCondition condition) {
   out << ToString(condition);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, RType rtype) {
+  out << ToString(rtype);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, Action action) {
+  out << ToString(action);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, Side side) {
+  out << ToString(side);
   return out;
 }
 
