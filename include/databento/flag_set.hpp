@@ -21,8 +21,8 @@ class FlagSet {
 
   constexpr FlagSet() = default;
 
-  constexpr FlagSet(
-      std::uint8_t repr)  // cppcheck-suppress noExplicitConstructor
+  constexpr FlagSet(  // cppcheck-suppress noExplicitConstructor
+      std::uint8_t repr)
       : repr_{repr} {}
 
   constexpr FlagSet operator~() const { return FlagSet(~repr_); }
