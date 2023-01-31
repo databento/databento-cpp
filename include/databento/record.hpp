@@ -220,6 +220,24 @@ struct InstrumentDefMsg {
 static_assert(sizeof(InstrumentDefMsg) == 360,
               "InstrumentDefMsg size must match C");
 
+// An error message from the Live Subscription Gateway (LSG). This will never
+// be present in historical data.
+struct ErrorMsg {
+  RecordHeader hd;
+  std::array<char, 64> err;
+};
+
+/// A symbol mapping message.
+struct SymbolMappingMsg {
+  RecordHeader hd;
+  std::array<char, 22> stype_in_symbol;
+  std::array<char, 22> stype_out_symbol;
+  // padding for alignment
+  std::array<char, 4> dummy;
+  UnixNanos start_ts;
+  UnixNanos end_ts;
+};
+
 inline bool operator==(const RecordHeader& lhs, const RecordHeader& rhs) {
   return lhs.length == rhs.length && lhs.rtype == rhs.rtype &&
          lhs.publisher_id == rhs.publisher_id &&
@@ -305,6 +323,24 @@ inline bool operator!=(const InstrumentDefMsg& lhs,
   return !(lhs == rhs);
 }
 
+inline bool operator==(const ErrorMsg& lhs, const ErrorMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.err == rhs.err;
+}
+inline bool operator!=(const ErrorMsg& lhs, const ErrorMsg& rhs) {
+  return !(lhs == rhs);
+}
+
+inline bool operator==(const SymbolMappingMsg& lhs,
+                       const SymbolMappingMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.stype_in_symbol == rhs.stype_in_symbol &&
+         lhs.stype_out_symbol == rhs.stype_out_symbol &&
+         lhs.start_ts == rhs.start_ts && lhs.end_ts == rhs.end_ts;
+}
+inline bool operator!=(const SymbolMappingMsg& lhs,
+                       const SymbolMappingMsg& rhs) {
+  return !(lhs == rhs);
+}
+
 std::string ToString(const RecordHeader& header);
 std::ostream& operator<<(std::ostream& stream, const RecordHeader& header);
 std::string ToString(const MboMsg& mbo_msg);
@@ -318,4 +354,9 @@ std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg);
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instr_def_msg);
+std::string ToString(const ErrorMsg& err_msg);
+std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg);
+std::string ToString(const SymbolMappingMsg& symbol_mapping_msg);
+std::ostream& operator<<(std::ostream& stream,
+                         const SymbolMappingMsg& symbol_mapping_msg);
 }  // namespace databento

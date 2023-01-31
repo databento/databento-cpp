@@ -361,4 +361,32 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("tick_rule", instr_def_msg.tick_rule)
       .Finish();
 }
+
+std::string ToString(const ErrorMsg& err_msg) { return MakeString(err_msg); }
+std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("ErrorMsg")
+      .Build()
+      .AddField("hd", err_msg.hd)
+      .AddField("err", err_msg.err)
+      .Finish();
+}
+
+std::string ToString(const SymbolMappingMsg& symbol_mapping_msg) {
+  return MakeString(symbol_mapping_msg);
+}
+std::ostream& operator<<(std::ostream& stream,
+                         const SymbolMappingMsg& symbol_mapping_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("SymbolMappingMsg")
+      .Build()
+      .AddField("hd", symbol_mapping_msg.hd)
+      .AddField("stype_in_symbol", symbol_mapping_msg.stype_in_symbol)
+      .AddField("stype_out_symbol", symbol_mapping_msg.stype_out_symbol)
+      .AddField("start_ts", symbol_mapping_msg.start_ts)
+      .AddField("end_ts", symbol_mapping_msg.end_ts)
+      .Finish();
+}
 }  // namespace databento

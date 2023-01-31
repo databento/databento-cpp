@@ -100,18 +100,24 @@ enum class DatasetCondition : std::uint8_t {
 // Sentinel values for different DBN record types.
 //
 // Additional rtypes may be added in the future.
+namespace rtype {
 enum RType : std::uint8_t {
   Mbp0 = 0x00,
   Mbp1 = 0x01,
-  Mbp10 = 0x0a,
+  Mbp10 = 0x0A,
   Ohlcv = 0x11,
   InstrumentDef = 0x13,
-  Mbo = 0xa0,
+  Error = 0x15,
+  SymbolMapping = 0x16,
+  Mbo = 0xA0,
 };
+}  // namespace rtype
+using rtype::RType;
 
 // A tick action.
 //
 // Additional actions may be added in the future.
+namespace action {
 enum Action : char {
   // An existing order was modified.
   Modify = 'M',
@@ -124,6 +130,8 @@ enum Action : char {
   // Reset the book; clear all orders for an instrument.
   Clear = 'R',
 };
+}  // namespace action
+using action::Action;
 
 // A side of the market. The side of the market for resting orders, or the side
 // of the aggressor for trades.
