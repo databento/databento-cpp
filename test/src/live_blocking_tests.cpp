@@ -27,22 +27,26 @@ class LiveBlockingTests : public testing::Test {
 };
 
 TEST_F(LiveBlockingTests, TestAuthentication) {
-  const mock::MockLsgServer mock_server{[](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-  }};
+  const mock::MockLsgServer mock_server{dataset::kXnasItch,
+                                        [](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                        }};
 
-  const LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
+  const LiveBlocking target{kKey, dataset::kXnasItch, "127.0.0.1",
+                            mock_server.Port(), false};
 }
 
 TEST_F(LiveBlockingTests, TestStart) {
-  const mock::MockLsgServer mock_server{[](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-    self.Start();
-  }};
+  const mock::MockLsgServer mock_server{dataset::kGlbxMdp3,
+                                        [](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          self.Start();
+                                        }};
 
-  LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
+  LiveBlocking target{kKey, dataset::kGlbxMdp3, "127.0.0.1", mock_server.Port(),
+                      false};
   target.Start();
 }
 
@@ -52,28 +56,31 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
   constexpr auto kSchema = Schema::Ohlcv1M;
   constexpr auto kSType = SType::Native;
 
-  const mock::MockLsgServer mock_server{[&kSymbols](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-    self.Subscribe(kDataset, kSymbols, kSchema, kSType);
-  }};
+  const mock::MockLsgServer mock_server{
+      kDataset, [&kSymbols](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.Subscribe(kSymbols, kSchema, kSType);
+      }};
 
-  LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
-  target.Subscribe(kDataset, kSymbols, kSchema, kSType);
+  LiveBlocking target{kKey, kDataset, "127.0.0.1", mock_server.Port(), false};
+  target.Subscribe(kSymbols, kSchema, kSType);
 }
 
 TEST_F(LiveBlockingTests, TestNextRecord) {
   constexpr auto kRecCount = 12;
   const OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv), 1, 2, 3, 4, 5};
-  const mock::MockLsgServer mock_server{[kRec](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-    for (size_t i = 0; i < kRecCount; ++i) {
-      self.SendRecord(kRec);
-    }
-  }};
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, [kRec](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        for (size_t i = 0; i < kRecCount; ++i) {
+          self.SendRecord(kRec);
+        }
+      }};
 
-  LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
+  LiveBlocking target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
+                      false};
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
     ASSERT_TRUE(rec.Holds<OhlcvMsg>()) << "Failed on call " << i;
@@ -101,26 +108,28 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   bool received_first_msg = false;
   std::mutex receive_mutex;
   std::condition_variable receive_cv;
-  const mock::MockLsgServer mock_server{[&](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-    self.SendRecord(kRec);
-    {
-      // notify client the first record's been sent
-      const std::lock_guard<std::mutex> lock{send_mutex};
-      sent_first_msg = true;
-      send_cv.notify_one();
-    }
-    {
-      // wait for client to read first record
-      std::unique_lock<std::mutex> lock{receive_mutex};
-      receive_cv.wait(lock,
-                      [&received_first_msg] { return received_first_msg; });
-    }
-    self.SendRecord(kRec);
-  }};
+  const mock::MockLsgServer mock_server{
+      dataset::kGlbxMdp3, [&](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.SendRecord(kRec);
+        {
+          // notify client the first record's been sent
+          const std::lock_guard<std::mutex> lock{send_mutex};
+          sent_first_msg = true;
+          send_cv.notify_one();
+        }
+        {
+          // wait for client to read first record
+          std::unique_lock<std::mutex> lock{receive_mutex};
+          receive_cv.wait(lock,
+                          [&received_first_msg] { return received_first_msg; });
+        }
+        self.SendRecord(kRec);
+      }};
 
-  LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
+  LiveBlocking target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
+                      false};
   {
     // wait for server to send first record to avoid flaky timeouts
     std::unique_lock<std::mutex> lock{send_mutex};
@@ -160,7 +169,7 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
   std::mutex mutex;
   std::condition_variable cv;
   const mock::MockLsgServer mock_server{
-      [kRec, &mutex, &cv](mock::MockLsgServer& self) {
+      dataset::kGlbxMdp3, [kRec, &mutex, &cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.SendRecord(kRec);
@@ -168,7 +177,8 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
         self.SplitSendRecord(kRec, mutex, cv);
       }};
 
-  LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
+  LiveBlocking target{kKey, dataset::kGlbxMdp3, "127.0.0.1", mock_server.Port(),
+                      false};
   auto rec = target.NextRecord();
   ASSERT_TRUE(rec.Holds<MboMsg>());
   EXPECT_EQ(rec.Get<MboMsg>(), kRec);

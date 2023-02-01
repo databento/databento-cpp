@@ -10,13 +10,6 @@ enum class HistoricalGateway : std::uint8_t {
   Bo1,
 };
 
-// Represents a live data center gateway location.
-enum class LiveGateway : std::uint8_t {
-  Origin = 0,
-  Ny4,
-  Dc3,
-};
-
 // Represents a data feed mode.
 enum class FeedMode : std::uint8_t {
   Historical,

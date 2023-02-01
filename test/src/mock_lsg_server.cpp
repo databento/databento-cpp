@@ -12,8 +12,10 @@
 
 using databento::test::mock::MockLsgServer;
 
-MockLsgServer::MockLsgServer(std::function<void(MockLsgServer&)> serve_fn)
-    : socket_{InitSocketAndSetPort()},
+MockLsgServer::MockLsgServer(std::string dataset,
+                             std::function<void(MockLsgServer&)> serve_fn)
+    : dataset_{std::move(dataset)},
+      socket_{InitSocketAndSetPort()},
       thread_{std::move(serve_fn), std::ref(*this)} {}
 
 void MockLsgServer::Accept() {
@@ -59,11 +61,10 @@ void MockLsgServer::Authenticate() {
   Send("success=1|session_id=5|\n");
 }
 
-void MockLsgServer::Subscribe(const std::string& dataset,
-                              const std::vector<std::string>& symbols,
+void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
                               Schema schema, SType stype) {
   const auto received = Receive();
-  EXPECT_NE(received.find("dataset=" + dataset), std::string::npos);
+  EXPECT_NE(received.find("dataset=" + dataset_), std::string::npos);
   EXPECT_NE(
       received.find("symbols=" +
                     JoinSymbolStrings("MockLsgServer::Subscribe", symbols)),

@@ -29,13 +29,15 @@ LiveThreaded& LiveThreaded::operator=(LiveThreaded&& rhs) noexcept {
 
 LiveThreaded::~LiveThreaded() { impl_->keep_going = false; }
 
-LiveThreaded::LiveThreaded(std::string key, LiveGateway gateway,
+LiveThreaded::LiveThreaded(std::string key, std::string dataset,
                            bool send_ts_out)
-    : impl_{new Impl{std::move(key), gateway, send_ts_out}} {}
+    : impl_{new Impl{std::move(key), std::move(dataset), send_ts_out}} {}
 
-LiveThreaded::LiveThreaded(std::string key, std::string gateway,
-                           std::uint16_t port, bool send_ts_out)
-    : impl_{new Impl{std::move(key), std::move(gateway), port, send_ts_out}} {}
+LiveThreaded::LiveThreaded(std::string key, std::string dataset,
+                           std::string gateway, std::uint16_t port,
+                           bool send_ts_out)
+    : impl_{new Impl{std::move(key), std::move(dataset), std::move(gateway),
+                     port, send_ts_out}} {}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 

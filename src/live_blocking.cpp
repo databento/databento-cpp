@@ -3,7 +3,9 @@
 #include <openssl/sha.h>  // SHA256, SHA256_DIGEST_LENGTH
 
 #include <algorithm>  // copy
-#include <ios>        //hex, setfill, setw
+#include <cctype>
+#include <ios>  //hex, setfill, setw
+#include <sstream>
 
 #include "databento/constants.hpp"   //  kApiKeyLength
 #include "databento/exceptions.hpp"  // LiveApiError
@@ -16,23 +18,25 @@ namespace {
 constexpr std::size_t kBucketIdLength = 5;
 }  // namespace
 
-// TODO(cg): gateway resolution
-LiveBlocking::LiveBlocking(std::string key, LiveGateway, bool send_ts_out)
-    : LiveBlocking{std::move(key), "127.0.0.1", 8080, send_ts_out} {}
+LiveBlocking::LiveBlocking(std::string key, std::string dataset,
+                           bool send_ts_out)
+    : LiveBlocking{std::move(key), std::move(dataset), DetermineGateway(), 80,
+                   send_ts_out} {}
 
-LiveBlocking::LiveBlocking(std::string key, std::string gateway,
-                           std::uint16_t port, bool send_ts_out)
+LiveBlocking::LiveBlocking(std::string key, std::string dataset,
+                           std::string gateway, std::uint16_t port,
+                           bool send_ts_out)
     : key_{std::move(key)},
+      dataset_{std::move(dataset)},
       gateway_{std::move(gateway)},
       send_ts_out_{send_ts_out},
       client_{gateway_, port},
       session_id_{this->Authenticate()} {}
 
-void LiveBlocking::Subscribe(const std::string& dataset,
-                             const std::vector<std::string>& symbols,
+void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in) {
   std::ostringstream sub_msg;
-  sub_msg << "dataset=" << dataset << "|schema=" << ToString(schema)
+  sub_msg << "dataset=" << dataset_ << "|schema=" << ToString(schema)
           << "|stype_in=" << ToString(stype_in) << "|symbols="
           << JoinSymbolStrings("LiveBlocking::Subscribe", symbols);
   sub_msg << '\n';
@@ -127,6 +131,15 @@ std::string LiveBlocking::DecodeChallenge() {
                                       challenge_line);
   }
   return challenge_line.substr(equal_pos + 1);
+}
+
+std::string LiveBlocking::DetermineGateway() const {
+  std::ostringstream gateway;
+  for (const char c : dataset_) {
+    gateway << (c == '.' ? '_' : std::tolower(c));
+  }
+  gateway << ".lsg.databento.com";
+  return gateway.str();
 }
 
 std::string LiveBlocking::Authenticate() {

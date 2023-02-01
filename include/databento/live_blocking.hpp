@@ -7,22 +7,24 @@
 #include <vector>
 
 #include "databento/detail/tcp_client.hpp"  // TcpClient
-#include "databento/enums.hpp"              // LiveGateway, Schema, SType
+#include "databento/enums.hpp"              // Schema, SType
 #include "databento/record.hpp"             // Record
 
 namespace databento {
 // A client for interfacing with Databento's live market data API. This client
-// has a blocking API for getting the next record.
+// has a blocking API for getting the next record. Unlike Historical, each
+// instance of LiveBlocking is associated with a particular dataset.
 class LiveBlocking {
  public:
-  LiveBlocking(std::string key, LiveGateway gateway, bool send_ts_out);
-  LiveBlocking(std::string key, std::string gateway, std::uint16_t port,
-               bool send_ts_out);
+  LiveBlocking(std::string key, std::string dataset, bool send_ts_out);
+  LiveBlocking(std::string key, std::string dataset, std::string gateway,
+               std::uint16_t port, bool send_ts_out);
   /*
    * Getters
    */
 
   const std::string& Key() const { return key_; }
+  const std::string& Dataset() const { return dataset_; }
   const std::string& Gateway() const { return gateway_; }
 
   /*
@@ -32,8 +34,7 @@ class LiveBlocking {
   // Add a new subscription. A single client instance supports multiple
   // subscriptions. Note there is no unsubscribe method. Subscriptions end
   // when the client disconnects in its destructor.
-  void Subscribe(const std::string& dataset,
-                 const std::vector<std::string>& symbols, Schema schema,
+  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype_in);
   // Notifies the gateway to start sending messages for all subscriptions.
   //
@@ -52,6 +53,7 @@ class LiveBlocking {
   const Record* NextRecord(std::chrono::milliseconds timeout);
 
  private:
+  std::string DetermineGateway() const;
   std::string Authenticate();
   std::string DecodeChallenge();
   std::string GenerateCramReply(const std::string& challenge_key);
@@ -61,6 +63,7 @@ class LiveBlocking {
   static constexpr std::size_t kMaxStrLen = 24L * 1024;
 
   std::string key_;
+  std::string dataset_;
   std::string gateway_;
   bool send_ts_out_;
   detail::TcpClient client_;

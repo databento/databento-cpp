@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "databento/constants.hpp"   // dataset
 #include "databento/exceptions.hpp"  // Exception, InvalidArgumentError
 #include "databento/live.hpp"
 #include "mock/mock_tcp_server.hpp"  // MockTcpServer
@@ -14,11 +15,11 @@ TEST(LiveBuilderTests, TestBasic) {
   GTEST_SKIP();
   const auto client = databento::LiveBuilder()
                           .SetKey(kKey)
-                          .SetGateway(databento::LiveGateway::Origin)
+                          .SetDataset(databento::dataset::kXnasItch)
                           .BuildBlocking();
   EXPECT_EQ(client.Key(), kKey);
   // TODO(cg): update when live gateway URLs are known
-  // EXPECT_EQ(client.Gateway(), "https://hist.databento.com");
+  // EXPECT_EQ(client.Gateway(), "https://xnas_itch.lsg.databento.com");
 }
 
 TEST(LiveBuilderTests, TestShortKey) {

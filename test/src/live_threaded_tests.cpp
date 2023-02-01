@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <thread>  // this_thread
 
+#include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/live_threaded.hpp"
 #include "databento/record.hpp"
@@ -28,15 +29,17 @@ TEST_F(LiveThreadedTests, TestBasic) {
                     UnixNanos{},
                     TimeDeltaNanos{},
                     100};
-  const mock::MockLsgServer mock_server{[&kRec](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-    self.Start();
-    self.SendRecord(kRec);
-    self.SendRecord(kRec);
-  }};
+  const mock::MockLsgServer mock_server{dataset::kGlbxMdp3,
+                                        [&kRec](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          self.Start();
+                                          self.SendRecord(kRec);
+                                          self.SendRecord(kRec);
+                                        }};
 
-  LiveThreaded target{kKey, "127.0.0.1", mock_server.Port(), false};
+  LiveThreaded target{kKey, dataset::kGlbxMdp3, "127.0.0.1", mock_server.Port(),
+                      false};
   std::atomic<std::uint32_t> call_count{};
   target.Start([&call_count, &kRec](const Record& rec) {
     ++call_count;
@@ -62,7 +65,7 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
                     100};
   std::atomic<std::uint32_t> call_count{};
   const mock::MockLsgServer mock_server{
-      [&kRec, &call_count](mock::MockLsgServer& self) {
+      dataset::kXnasItch, [&kRec, &call_count](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Start();
@@ -75,7 +78,8 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
         self.SendRecord(kRec);
       }};
 
-  LiveThreaded target{kKey, "127.0.0.1", mock_server.Port(), false};
+  LiveThreaded target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
+                      false};
   target.Start([&call_count, &kRec](const Record& rec) {
     ++call_count;
     ASSERT_TRUE(rec.Holds<MboMsg>());

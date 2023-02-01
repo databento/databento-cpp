@@ -2,7 +2,6 @@
 
 #include <string>
 
-#include "databento/enums.hpp"  // LiveGateway
 #include "databento/live_blocking.hpp"
 #include "databento/live_threaded.hpp"
 
@@ -19,7 +18,7 @@ class LiveBuilder {
   // program.
   LiveBuilder& SetKeyFromEnv();
   LiveBuilder& SetKey(std::string key);
-  LiveBuilder& SetGateway(LiveGateway gateway);
+  LiveBuilder& SetDataset(std::string dataset);
   // Whether to prepend an 8-byte nanosecond timestamp as a header before each
   // DBN message.
   LiveBuilder& SetSendTsOut(bool send_ts_out);
@@ -31,8 +30,10 @@ class LiveBuilder {
   LiveThreaded BuildThreaded();
 
  private:
+  void Validate() const;
+
   std::string key_;
-  LiveGateway gateway_{LiveGateway::Origin};
+  std::string dataset_;
   bool send_ts_out_{false};
 };
 }  // namespace databento
