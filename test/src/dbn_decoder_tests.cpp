@@ -14,6 +14,7 @@
 #include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
+#include "databento/exceptions.hpp"
 #include "databento/record.hpp"
 
 namespace databento {
@@ -25,7 +26,10 @@ class DbnDecoderTests : public testing::Test {
   std::unique_ptr<DbnDecoder> channel_target_;
   detail::ScopedThread write_thread_;
 
-  void ReadFromFile(const std::string& file_path) {
+  void ReadFromFile(const std::string& schema_str,
+                    const std::string& extension) {
+    const std::string file_path =
+        TEST_BUILD_DIR "/data/test_data." + schema_str + extension;
     // Channel setup
     write_thread_ = detail::ScopedThread{[this, file_path] {
       std::ifstream input_file{file_path, std::ios::binary | std::ios::ate};
@@ -56,28 +60,36 @@ class DbnDecoderTests : public testing::Test {
   }
 };
 
-// Generates a name for the parameterized test case depending on whether the
-// file path ends in .zst
-std::string NameGenerator(const testing::TestParamInfo<const char*>& info) {
-  const auto size = ::strlen(info.param);
-  return ::strncmp(info.param + size - 4, ".zst", 4) == 0 ? "Zstd"
-                                                          : "Uncompressed";
+TEST_F(DbnDecoderTests, TestDecodeDbz) {
+  try {
+    ReadFromFile("mbo", ".dbz");
+
+    FAIL() << "Decoding DBZ should throw";
+  } catch (const DbnResponseError& err) {
+    ASSERT_STREQ(err.what(),
+                 "Legacy DBZ encoding is not supported. Please use the dbn CLI "
+                 "tool to convert it to DBN.");
+  }
 }
+
+class DbnDecoderSchemaTests : public DbnDecoderTests,
+                              public testing::WithParamInterface<const char*> {
+};
+
+INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderSchemaTests,
+                         testing::Values(".dbn", ".dbn.zst"),
+                         [](const testing::TestParamInfo<const char*>& info) {
+                           const auto size = ::strlen(info.param);
+                           return ::strncmp(info.param + size - 3, "zst", 3) ==
+                                          0
+                                      ? "Zstd"
+                                      : "Uncompressed";
+                         });
 
 // Expected data for these tests obtained using the `dbn` CLI tool
 
-class DbnDecoderMboTests : public DbnDecoderTests,
-                           public testing::WithParamInterface<const char*> {};
-
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderMboTests,
-                         testing::Values(TEST_BUILD_DIR
-                                         "/data/test_data.mbo.dbn",
-                                         TEST_BUILD_DIR
-                                         "/data/test_data.mbo.dbn.zst"),
-                         NameGenerator);
-
-TEST_P(DbnDecoderMboTests, TestDecodeMbo) {
-  ReadFromFile(GetParam());
+TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
+  ReadFromFile("mbo", GetParam());
 
   const Metadata ch_metadata = channel_target_->ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -140,18 +152,8 @@ TEST_P(DbnDecoderMboTests, TestDecodeMbo) {
   EXPECT_EQ(ch_mbo2.sequence, 1170353);
 }
 
-class DbnDecoderMbp1Tests : public DbnDecoderTests,
-                            public testing::WithParamInterface<const char*> {};
-
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderMbp1Tests,
-                         testing::Values(TEST_BUILD_DIR
-                                         "/data/test_data.mbp-1.dbn",
-                                         TEST_BUILD_DIR
-                                         "/data/test_data.mbp-1.dbn.zst"),
-                         NameGenerator);
-
-TEST_P(DbnDecoderMbp1Tests, TestDecodeMbp1) {
-  ReadFromFile(GetParam());
+TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
+  ReadFromFile("mbp-1", GetParam());
 
   const Metadata ch_metadata = channel_target_->ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -225,18 +227,8 @@ TEST_P(DbnDecoderMbp1Tests, TestDecodeMbp1) {
   EXPECT_EQ(ch_mbp2.booklevel[0].ask_ct, 10);
 }
 
-class DbnDecoderMbp10Tests : public DbnDecoderTests,
-                             public testing::WithParamInterface<const char*> {};
-
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderMbp10Tests,
-                         testing::Values(TEST_BUILD_DIR
-                                         "/data/test_data.mbp-10.dbn",
-                                         TEST_BUILD_DIR
-                                         "/data/test_data.mbp-10.dbn.zst"),
-                         NameGenerator);
-
-TEST_P(DbnDecoderMbp10Tests, TestDecodeMbp10) {
-  ReadFromFile(GetParam());
+TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
+  ReadFromFile("mbp-10", GetParam());
 
   const Metadata ch_metadata = channel_target_->ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -334,18 +326,8 @@ TEST_P(DbnDecoderMbp10Tests, TestDecodeMbp10) {
   EXPECT_EQ(ch_mbp2.booklevel[2].ask_ct, 25);
 }
 
-class DbnDecoderTbboTests : public DbnDecoderTests,
-                            public testing::WithParamInterface<const char*> {};
-
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderTbboTests,
-                         testing::Values(TEST_BUILD_DIR
-                                         "/data/test_data.tbbo.dbn",
-                                         TEST_BUILD_DIR
-                                         "/data/test_data.tbbo.dbn.zst"),
-                         NameGenerator);
-
-TEST_P(DbnDecoderTbboTests, TestDecodeTbbo) {
-  ReadFromFile(GetParam());
+TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
+  ReadFromFile("tbbo", GetParam());
 
   const Metadata ch_metadata = channel_target_->ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -419,19 +401,8 @@ TEST_P(DbnDecoderTbboTests, TestDecodeTbbo) {
   EXPECT_EQ(ch_tbbo2.booklevel[0].ask_ct, 15);
 }
 
-class DbnDecoderTradesTests : public DbnDecoderTests,
-                              public testing::WithParamInterface<const char*> {
-};
-
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderTradesTests,
-                         testing::Values(TEST_BUILD_DIR
-                                         "/data/test_data.trades.dbn",
-                                         TEST_BUILD_DIR
-                                         "/data/test_data.trades.dbn.zst"),
-                         NameGenerator);
-
-TEST_P(DbnDecoderTradesTests, TestDecodeTrades) {
-  ReadFromFile(GetParam());
+TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
+  ReadFromFile("trades", GetParam());
 
   const Metadata ch_metadata = channel_target_->ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -493,19 +464,8 @@ TEST_P(DbnDecoderTradesTests, TestDecodeTrades) {
   EXPECT_EQ(ch_trade2.sequence, 1170414);
 }
 
-class DbnDecoderOhlcv1DTests : public DbnDecoderTests,
-                               public testing::WithParamInterface<const char*> {
-};
-
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderOhlcv1DTests,
-                         testing::Values(TEST_BUILD_DIR
-                                         "/data/test_data.ohlcv-1d.dbn",
-                                         TEST_BUILD_DIR
-                                         "/data/test_data.ohlcv-1d.dbn.zst"),
-                         NameGenerator);
-
-TEST_P(DbnDecoderOhlcv1DTests, TestDecodeOhlcv1D) {
-  ReadFromFile(GetParam());
+TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1D) {
+  ReadFromFile("ohlcv-1d", GetParam());
 
   const Metadata ch_metadata = channel_target_->ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -525,19 +485,8 @@ TEST_P(DbnDecoderOhlcv1DTests, TestDecodeOhlcv1D) {
   AssertMappings(ch_metadata.mappings);
 }
 
-class DbnDecoderOhlcv1HTests : public DbnDecoderTests,
-                               public testing::WithParamInterface<const char*> {
-};
-
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderOhlcv1HTests,
-                         testing::Values(TEST_BUILD_DIR
-                                         "/data/test_data.ohlcv-1h.dbn",
-                                         TEST_BUILD_DIR
-                                         "/data/test_data.ohlcv-1h.dbn.zst"),
-                         NameGenerator);
-
-TEST_P(DbnDecoderOhlcv1HTests, TestDecodeOhlcv1H) {
-  ReadFromFile(GetParam());
+TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
+  ReadFromFile("ohlcv-1h", GetParam());
 
   const Metadata ch_metadata = channel_target_->ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -591,19 +540,8 @@ TEST_P(DbnDecoderOhlcv1HTests, TestDecodeOhlcv1H) {
   EXPECT_EQ(ch_ohlcv2.volume, 112698);
 }
 
-class DbnDecoderOhlcv1MTests : public DbnDecoderTests,
-                               public testing::WithParamInterface<const char*> {
-};
-
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderOhlcv1MTests,
-                         testing::Values(TEST_BUILD_DIR
-                                         "/data/test_data.ohlcv-1m.dbn",
-                                         TEST_BUILD_DIR
-                                         "/data/test_data.ohlcv-1m.dbn.zst"),
-                         NameGenerator);
-
-TEST_P(DbnDecoderOhlcv1MTests, TestDecodeOhlcv1M) {
-  ReadFromFile(GetParam());
+TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
+  ReadFromFile("ohlcv-1m", GetParam());
 
   const Metadata ch_metadata = channel_target_->ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -657,19 +595,8 @@ TEST_P(DbnDecoderOhlcv1MTests, TestDecodeOhlcv1M) {
   EXPECT_EQ(ch_ohlcv2.volume, 152);
 }
 
-class DbnDecoderOhlcv1STests : public DbnDecoderTests,
-                               public testing::WithParamInterface<const char*> {
-};
-
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderOhlcv1STests,
-                         testing::Values(TEST_BUILD_DIR
-                                         "/data/test_data.ohlcv-1s.dbn",
-                                         TEST_BUILD_DIR
-                                         "/data/test_data.ohlcv-1s.dbn.zst"),
-                         NameGenerator);
-
-TEST_P(DbnDecoderOhlcv1STests, TestDecodeOhlcv1S) {
-  ReadFromFile(GetParam());
+TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
+  ReadFromFile("ohlcv-1s", GetParam());
 
   const Metadata ch_metadata = channel_target_->ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();
@@ -723,19 +650,8 @@ TEST_P(DbnDecoderOhlcv1STests, TestDecodeOhlcv1S) {
   EXPECT_EQ(ch_ohlcv2.volume, 13);
 }
 
-class DbnDecoderDefinitionTests
-    : public DbnDecoderTests,
-      public testing::WithParamInterface<const char*> {};
-
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderDefinitionTests,
-                         testing::Values(TEST_BUILD_DIR
-                                         "/data/test_data.definition.dbn",
-                                         TEST_BUILD_DIR
-                                         "/data/test_data.definition.dbn.zst"),
-                         NameGenerator);
-
-TEST_P(DbnDecoderDefinitionTests, TestDecodeDefinition) {
-  ReadFromFile(GetParam());
+TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
+  ReadFromFile("definition", GetParam());
 
   const Metadata ch_metadata = channel_target_->ParseMetadata();
   const Metadata f_metadata = file_target_->ParseMetadata();

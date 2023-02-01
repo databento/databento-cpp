@@ -167,6 +167,14 @@ bool DbnDecoder::DetectCompression() {
   if (x == kZstdMagicNumber) {
     return true;
   }
+  // Zstandard skippable frames begin with 0x184D2A5? where the last 8 bits can
+  // be set to any value
+  constexpr auto kZstdSkippableFrame = 0x184D2A50;
+  if ((x & kZstdSkippableFrame) == kZstdSkippableFrame) {
+    throw DbnResponseError{
+        "Legacy DBZ encoding is not supported. Please use the dbn CLI tool to "
+        "convert it to DBN."};
+  }
   throw DbnResponseError{
       "Couldn't detect input type. It doesn't appear to be Zstd or "
       "DBN."};
