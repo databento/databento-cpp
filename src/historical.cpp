@@ -1,8 +1,10 @@
 #include "databento/historical.hpp"
 
+#include <dirent.h>  // opendir
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
+#include <algorithm>  // find_if
 #include <atomic>     // atomic<bool>
 #include <cstdlib>    // get_env
 #include <exception>  // exception, exception_ptr
@@ -218,6 +220,13 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.ts_expiration = ParseAt<std::string>(endpoint, json, "ts_expiration");
   return res;
 }
+
+std::string PathJoin(const std::string& dir, const std::string& path) {
+  if (dir[dir.length() - 1] == '/') {
+    return dir + path;
+  }
+  return dir + '/' + path;
+}
 }  // namespace
 
 Historical::Historical(std::string key, HistoricalGateway gateway)
@@ -332,6 +341,97 @@ std::vector<databento::BatchJob> Historical::BatchListJobs(
     jobs.emplace_back(::Parse(kEndpoint, job_json.value()));
   }
   return jobs;
+}
+
+std::vector<databento::BatchFileDesc> Historical::BatchListFiles(
+    const std::string& job_id) {
+  static const std::string kEndpoint = "Historical::BatchListFiles";
+  static const std::string kPath = ::BuildBatchPath(".list_files");
+
+  const nlohmann::json json =
+      client_.GetJson(kPath, httplib::Params{{"job_id", job_id}});
+  if (!json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
+  }
+  std::vector<BatchFileDesc> files;
+  files.reserve(json.size());
+  for (const auto& file_json : json.items()) {
+    const auto& file_obj = file_json.value();
+    BatchFileDesc file_desc;
+    file_desc.filename =
+        ::ParseAt<std::string>(kEndpoint, file_obj, "filename");
+    file_desc.size = ::ParseAt<std::size_t>(kEndpoint, file_obj, "size");
+    file_desc.hash = ::ParseAt<std::string>(kEndpoint, file_obj, "hash");
+    const auto& url_obj = ::CheckedAt(kEndpoint, file_obj, "urls");
+    file_desc.https_url = ::ParseAt<std::string>(kEndpoint, url_obj, "https");
+    file_desc.ftp_url = ::ParseAt<std::string>(kEndpoint, url_obj, "ftp");
+    files.emplace_back(file_desc);
+  }
+  return files;
+}
+
+void Historical::BatchDownload(const std::string& output_dir,
+                               const std::string& job_id) {
+  if (::opendir(output_dir.c_str()) == nullptr) {
+    const int ret = ::mkdir(output_dir.c_str(), 0777);
+    if (ret != 0) {
+      throw Exception{std::string{"Unable to create output directory: "} +
+                      ::strerror(errno)};
+    }
+  }
+
+  const auto file_descs = BatchListFiles(job_id);
+  for (const auto& file_desc : file_descs) {
+    const std::string output_path = PathJoin(output_dir, file_desc.filename);
+    DownloadFile(file_desc.https_url, output_path);
+  }
+}
+void Historical::BatchDownload(const std::string& output_dir,
+                               const std::string& job_id,
+                               const std::string& filename_to_download) {
+  const auto file_descs = BatchListFiles(job_id);
+  const auto file_desc_it =
+      std::find_if(file_descs.begin(), file_descs.end(),
+                   [&filename_to_download](const BatchFileDesc& file_desc) {
+                     return file_desc.filename == filename_to_download;
+                   });
+  if (file_desc_it == file_descs.end()) {
+    throw InvalidArgumentError{"Historical::BatchDownload",
+                               "filename_to_download",
+                               "Filename not found for batch job " + job_id};
+  }
+  const std::string output_path = PathJoin(output_dir, file_desc_it->filename);
+  DownloadFile(file_desc_it->https_url, output_path);
+}
+
+void Historical::DownloadFile(const std::string& url,
+                              const std::string& output_path) {
+  static const std::string kEndpoint = "Historical::BatchDownload";
+  // extract path from URL
+  const auto protocol_divider = url.find("://");
+  std::string path;
+  if (protocol_divider == std::string::npos) {
+    const auto slash = url.find_first_of('/');
+    if (slash == std::string::npos) {
+      throw InvalidArgumentError{"Historical::DownloadFile", "url",
+                                 "No slashes"};
+    }
+    path = url.substr(slash);
+  } else {
+    const auto slash = url.find('/', protocol_divider + 3);
+    if (slash == std::string::npos) {
+      throw InvalidArgumentError{"Historical::DownloadFile", "url",
+                                 "No slashes"};
+    }
+    path = url.substr(slash);
+  }
+
+  client_.GetRawStream(
+      path, {}, [&output_path](const char* data, std::size_t length) {
+        std::ofstream out_file{output_path};
+        out_file.write(data, static_cast<std::streamsize>(length));
+        return KeepGoing::Continue;
+      });
 }
 
 std::map<std::string, std::int32_t> Historical::MetadataListPublishers() {

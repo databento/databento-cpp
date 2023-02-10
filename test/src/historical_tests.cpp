@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <stdexcept>  // logic_error
 #include <thread>
+#include <utility>  // move
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
@@ -162,6 +163,92 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
   const std::vector<std::string> symbols{"GEZ2", "GEH3"};
   EXPECT_EQ(res[1].symbols, symbols);
   EXPECT_EQ(res[0].ts_expiration, "2022-11-30 15:27:10.148788+00:00");
+}
+
+TEST_F(HistoricalTests, TestBatchListFiles) {
+  const auto kJobId = "job123";
+  const nlohmann::json kResp{
+      {{"filename", "test.json"},
+       {"size", 2148},
+       {"hash", "9e7fe0b36"},
+       {"urls",
+        {{"https", "https://api.databento.com/v0/job_id/test.json"},
+         {"ftp", "ftp://ftp.databento.com/job_id/test.json"}}}}};
+  mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}}, kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.BatchListFiles(kJobId);
+  ASSERT_EQ(res.size(), 1);
+  const auto& file_desc = res[0];
+  ASSERT_EQ(file_desc.filename, "test.json");
+  ASSERT_EQ(file_desc.size, 2148);
+  ASSERT_EQ(file_desc.hash, "9e7fe0b36");
+  ASSERT_EQ(file_desc.https_url,
+            "https://api.databento.com/v0/job_id/test.json");
+  ASSERT_EQ(file_desc.ftp_url, "ftp://ftp.databento.com/job_id/test.json");
+}
+
+static const nlohmann::json kListFilesResp{
+    {{"filename", "test.dbn"},
+     {"size", {}},
+     {"hash", {}},
+     {"urls",
+      {{"https", "https://api.databento.com/v0/job_id/test.dbn"},
+       {"ftp", "ftp://fpt.databento.com/job_id/test.dbn"}}}},
+    {{"filename", "test_metadata.json"},
+     {"size", {}},
+     {"hash", {}},
+     {"urls",
+      {{"https", "https://api.databento.com/v0/job_id/test_metadata.json"},
+       {"ftp", "ftp://ftp.databento.com/job_id/test_metadata.json"}}}}};
+
+TEST_F(HistoricalTests, TestBatchDownloadAll) {
+  const auto kJobId = "job123";
+  const TempFile temp_metadata_file{TEST_BUILD_DIR "/test_metadata.json"};
+  const TempFile temp_dbn_file{TEST_BUILD_DIR "/test.dbn"};
+  mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
+                           kListFilesResp);
+  mock_server_.MockStreamDbn("/v0/job_id/test.dbn", {},
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbn");
+  mock_server_.MockGetJson("/v0/job_id/test_metadata.json", {{"key", "value"}});
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  ASSERT_FALSE(temp_metadata_file.Exists());
+  ASSERT_FALSE(temp_dbn_file.Exists());
+  target.BatchDownload(TEST_BUILD_DIR, kJobId);
+  EXPECT_TRUE(temp_metadata_file.Exists());
+  EXPECT_TRUE(temp_dbn_file.Exists());
+}
+
+TEST_F(HistoricalTests, TestBatchDownloadSingle) {
+  const auto kJobId = "654";
+  const TempFile temp_metadata_file{TEST_BUILD_DIR "/test_metadata.json"};
+  mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
+                           kListFilesResp);
+  mock_server_.MockGetJson("/v0/job_id/test_metadata.json", {{"key", "value"}});
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  ASSERT_FALSE(temp_metadata_file.Exists());
+  target.BatchDownload(TEST_BUILD_DIR, kJobId, "test_metadata.json");
+  EXPECT_TRUE(temp_metadata_file.Exists());
+}
+
+TEST_F(HistoricalTests, TestBatchDownloadSingleInvalidFile) {
+  const auto kJobId = "654";
+  mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
+                           kListFilesResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  ASSERT_THROW(target.BatchDownload(TEST_BUILD_DIR, kJobId, "test_metadata.js"),
+               InvalidArgumentError);
 }
 
 TEST_F(HistoricalTests, TestMetadataListPublishers) {

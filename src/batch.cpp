@@ -51,4 +51,21 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .AddField("ts_expiration", batch_job.ts_expiration)
       .Finish();
 }
+
+std::string ToString(const BatchFileDesc& file_desc) {
+  return MakeString(file_desc);
+}
+
+std::ostream& operator<<(std::ostream& stream, const BatchFileDesc& file_desc) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("BatchFileDesc")
+      .Build()
+      .AddField("filename", file_desc.filename)
+      .AddField("size", file_desc.size)
+      .AddField("hash", file_desc.hash)
+      .AddField("https_url", file_desc.https_url)
+      .AddField("ftp_url", file_desc.ftp_url)
+      .Finish();
+}
 }  // namespace databento

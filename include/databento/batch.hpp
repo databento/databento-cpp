@@ -9,6 +9,7 @@
 #include "databento/enums.hpp"  // JobState, Delivery, Packaging, Schema, SType
 
 namespace databento {
+// Description of a batch job.
 struct BatchJob {
   std::string id;
   std::string user_id;
@@ -50,6 +51,17 @@ struct BatchJob {
   std::string ts_expiration;
 };
 
+// Description of a batch file.
+struct BatchFileDesc {
+  std::string filename;
+  std::size_t size;
+  std::string hash;
+  std::string https_url;
+  std::string ftp_url;
+};
+
 std::string ToString(const BatchJob& batch_job);
 std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job);
+std::string ToString(const BatchFileDesc& file_desc);
+std::ostream& operator<<(std::ostream& stream, const BatchFileDesc& file_desc);
 }  // namespace databento
