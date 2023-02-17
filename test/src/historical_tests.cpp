@@ -641,8 +641,8 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
   EXPECT_EQ(esm2_mapping.symbol, "3403");
 }
 
-TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
-  mock_server_.MockStreamDbn("/v0/timeseries.stream",
+TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
+  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
                              {{"dataset", dataset::kGlbxMdp3},
                               {"symbols", "ESH1"},
                               {"schema", "mbo"},
@@ -659,7 +659,7 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
                                static_cast<std::uint16_t>(port)};
   std::unique_ptr<Metadata> metadata_ptr;
   std::vector<MboMsg> mbo_records;
-  target.TimeseriesStream(
+  target.TimeseriesGetRange(
       dataset::kGlbxMdp3,
       UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
@@ -679,8 +679,8 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
   EXPECT_EQ(mbo_records.size(), 2);
 }
 
-TEST_F(HistoricalTests, TestTimeseriesStream_NoMetadataCallback) {
-  mock_server_.MockStreamDbn("/v0/timeseries.stream",
+TEST_F(HistoricalTests, TestTimeseriesGetRange_NoMetadataCallback) {
+  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
                              {{"dataset", dataset::kGlbxMdp3},
                               {"start", "2022-10-21T13:30"},
                               {"end", "2022-10-21T20:00"},
@@ -695,51 +695,51 @@ TEST_F(HistoricalTests, TestTimeseriesStream_NoMetadataCallback) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::vector<TbboMsg> mbo_records;
-  target.TimeseriesStream(dataset::kGlbxMdp3, "2022-10-21T13:30",
-                          "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
-                          [&mbo_records](const Record& record) {
-                            mbo_records.emplace_back(record.Get<TbboMsg>());
-                            return KeepGoing::Continue;
-                          });
+  target.TimeseriesGetRange(dataset::kGlbxMdp3, "2022-10-21T13:30",
+                            "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
+                            [&mbo_records](const Record& record) {
+                              mbo_records.emplace_back(record.Get<TbboMsg>());
+                              return KeepGoing::Continue;
+                            });
   EXPECT_EQ(mbo_records.size(), 2);
 }
 
 // should get helpful message if there's a problem with the request
-TEST_F(HistoricalTests, TestTimeseriesStream_BadRequest) {
+TEST_F(HistoricalTests, TestTimeseriesGetRange_BadRequest) {
   const nlohmann::json resp{
       {"detail", "Authorization failed: illegal chars in username."}};
-  mock_server_.MockBadRequest("/v0/timeseries.stream", resp);
+  mock_server_.MockBadRequest("/v0/timeseries.get_range", resp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   try {
-    target.TimeseriesStream(
+    target.TimeseriesGetRange(
         dataset::kGlbxMdp3,
         UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
         UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"E5"},
         Schema::Mbo, SType::Smart, SType::ProductId, 2, [](Metadata&&) {},
         [](const Record&) { return KeepGoing::Continue; });
-    FAIL() << "Call to TimeseriesStream was supposed to throw";
+    FAIL() << "Call to TimeseriesGetRange was supposed to throw";
   } catch (const std::exception& exc) {
     ASSERT_STREQ(
         exc.what(),
         "Received an error response from request to "
-        "/v0/timeseries.stream with status 400 and body "
+        "/v0/timeseries.get_range with status 400 and body "
         "'{\"detail\":\"Authorization failed: illegal chars in username.\"}'"
 
     );
   }
 }
 
-TEST_F(HistoricalTests, TestTimeseriesStream_CallbackException) {
-  mock_server_.MockStreamDbn("/v0/timeseries.stream", {},
+TEST_F(HistoricalTests, TestTimeseriesGetRange_CallbackException) {
+  mock_server_.MockStreamDbn("/v0/timeseries.get_range", {},
                              TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  ASSERT_THROW(target.TimeseriesStream(
+  ASSERT_THROW(target.TimeseriesGetRange(
                    dataset::kGlbxMdp3,
                    UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
                    UnixNanos{std::chrono::nanoseconds{1609160800000711344}},
@@ -749,15 +749,15 @@ TEST_F(HistoricalTests, TestTimeseriesStream_CallbackException) {
                std::logic_error);
 }
 
-TEST_F(HistoricalTests, TestTimeseriesStreamCancellation) {
-  mock_server_.MockStreamDbn("/v0/timeseries.stream", {},
+TEST_F(HistoricalTests, TestTimeseriesGetRangeCancellation) {
+  mock_server_.MockStreamDbn("/v0/timeseries.get_range", {},
                              TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::uint32_t call_count = 0;
-  target.TimeseriesStream(
+  target.TimeseriesGetRange(
       dataset::kGlbxMdp3,
       UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
@@ -771,8 +771,8 @@ TEST_F(HistoricalTests, TestTimeseriesStreamCancellation) {
   ASSERT_EQ(call_count, 1);
 }
 
-TEST_F(HistoricalTests, TestTimeseriesStreamToFile) {
-  mock_server_.MockStreamDbn("/v0/timeseries.stream",
+TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
+  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
                              {{"dataset", dataset::kGlbxMdp3},
                               {"start", "2022-10-21T13:30"},
                               {"end", "2022-10-21T20:00"},
@@ -787,11 +787,11 @@ TEST_F(HistoricalTests, TestTimeseriesStreamToFile) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const TempFile temp_file{testing::TempDir() + "/" + __FUNCTION__};
-  target.TimeseriesStreamToFile(dataset::kGlbxMdp3, "2022-10-21T13:30",
-                                "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
-                                temp_file.Path());
+  target.TimeseriesGetRangeToFile(dataset::kGlbxMdp3, "2022-10-21T13:30",
+                                  "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
+                                  temp_file.Path());
   // running it a second time should overwrite previous data
-  FileBento bento = target.TimeseriesStreamToFile(
+  FileBento bento = target.TimeseriesGetRangeToFile(
       dataset::kGlbxMdp3, "2022-10-21T13:30", "2022-10-21T20:00", {"CYZ2"},
       Schema::Tbbo, temp_file.Path());
   std::size_t counter{};

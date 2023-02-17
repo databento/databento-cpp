@@ -13,7 +13,7 @@
 int main() {
   auto client = databento::HistoricalBuilder{}.SetKeyFromEnv().Build();
   const auto limit = 1000;
-  databento::FileBento file_bento = client.TimeseriesStreamToFile(
+  databento::FileBento file_bento = client.TimeseriesGetRangeToFile(
       databento::dataset::kGlbxMdp3, "2022-10-03T00:00", "2022-10-04T00:00",
       {"ESZ2"}, databento::Schema::Ohlcv1M, databento::SType::Native,
       databento::SType::ProductId, limit,

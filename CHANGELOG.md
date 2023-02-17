@@ -3,6 +3,7 @@
 ## 0.4.0 - TBD
 - Renamed DBZ to DBN
   - Renamed `DbzParser` to `DbnDecoder`
+- Renamed `TimeseriesStream` to `TimeseriesGetRange`
 - Refactored rtypes
 - Added live gateway resolution
 - Added `SymbolMappingMsg` and `ErrorMsg` records

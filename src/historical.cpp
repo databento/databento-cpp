@@ -996,72 +996,74 @@ databento::SymbologyResolution Historical::SymbologyResolve(
   return res;
 }
 
-static const std::string kTimeseriesStreamEndpoint =
-    "Historical::TimeseriesStream";
-static const std::string kTimeseriesStreamPath =
-    ::BuildTimeseriesPath(".stream");
+static const std::string kTimeseriesGetRangeEndpoint =
+    "Historical::TimeseriesGetRange";
+static const std::string kTimeseriesGetRangePath =
+    ::BuildTimeseriesPath(".get_range");
 
-void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
-                                  UnixNanos end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema,
-                                  const RecordCallback& record_callback) {
-  this->TimeseriesStream(dataset, start, end, symbols, schema, kDefaultSTypeIn,
-                         kDefaultSTypeOut, {}, {}, record_callback);
+void Historical::TimeseriesGetRange(const std::string& dataset, UnixNanos start,
+                                    UnixNanos end,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema,
+                                    const RecordCallback& record_callback) {
+  this->TimeseriesGetRange(dataset, start, end, symbols, schema,
+                           kDefaultSTypeIn, kDefaultSTypeOut, {}, {},
+                           record_callback);
 }
-void Historical::TimeseriesStream(const std::string& dataset,
-                                  const std::string& start,
-                                  const std::string& end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema,
-                                  const RecordCallback& record_callback) {
-  this->TimeseriesStream(dataset, start, end, symbols, schema, kDefaultSTypeIn,
-                         kDefaultSTypeOut, {}, {}, record_callback);
+void Historical::TimeseriesGetRange(const std::string& dataset,
+                                    const std::string& start,
+                                    const std::string& end,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema,
+                                    const RecordCallback& record_callback) {
+  this->TimeseriesGetRange(dataset, start, end, symbols, schema,
+                           kDefaultSTypeIn, kDefaultSTypeOut, {}, {},
+                           record_callback);
 }
-void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
-                                  UnixNanos end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema, SType stype_in,
-                                  SType stype_out, std::size_t limit,
-                                  const MetadataCallback& metadata_callback,
-                                  const RecordCallback& record_callback) {
+void Historical::TimeseriesGetRange(const std::string& dataset, UnixNanos start,
+                                    UnixNanos end,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema, SType stype_in,
+                                    SType stype_out, std::size_t limit,
+                                    const MetadataCallback& metadata_callback,
+                                    const RecordCallback& record_callback) {
   httplib::Params params{
       {"dataset", dataset},
       {"encoding", "dbn"},
       {"start", ToString(start)},
       {"end", ToString(end)},
-      {"symbols", JoinSymbolStrings(kTimeseriesStreamEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kTimeseriesGetRangeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "limit", limit);
 
-  this->TimeseriesStream(params, metadata_callback, record_callback);
+  this->TimeseriesGetRange(params, metadata_callback, record_callback);
 }
-void Historical::TimeseriesStream(const std::string& dataset,
-                                  const std::string& start,
-                                  const std::string& end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema, SType stype_in,
-                                  SType stype_out, std::size_t limit,
-                                  const MetadataCallback& metadata_callback,
-                                  const RecordCallback& record_callback) {
+void Historical::TimeseriesGetRange(const std::string& dataset,
+                                    const std::string& start,
+                                    const std::string& end,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema, SType stype_in,
+                                    SType stype_out, std::size_t limit,
+                                    const MetadataCallback& metadata_callback,
+                                    const RecordCallback& record_callback) {
   httplib::Params params{
       {"dataset", dataset},
       {"encoding", "dbn"},
       {"start", start},
       {"end", end},
-      {"symbols", JoinSymbolStrings(kTimeseriesStreamEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kTimeseriesGetRangeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "limit", limit);
 
-  this->TimeseriesStream(params, metadata_callback, record_callback);
+  this->TimeseriesGetRange(params, metadata_callback, record_callback);
 }
-void Historical::TimeseriesStream(const HttplibParams& params,
-                                  const MetadataCallback& metadata_callback,
-                                  const RecordCallback& record_callback) {
+void Historical::TimeseriesGetRange(const HttplibParams& params,
+                                    const MetadataCallback& metadata_callback,
+                                    const RecordCallback& record_callback) {
   std::atomic<bool> should_continue{true};
   detail::SharedChannel channel;
   std::exception_ptr exception_ptr{};
@@ -1069,7 +1071,7 @@ void Historical::TimeseriesStream(const HttplibParams& params,
                                &should_continue] {
     try {
       this->client_.GetRawStream(
-          kTimeseriesStreamPath, params,
+          kTimeseriesGetRangePath, params,
           [channel, &should_continue](const char* data,
                                       std::size_t length) mutable {
             channel.Write(reinterpret_cast<const std::uint8_t*>(data), length);
@@ -1111,26 +1113,26 @@ void Historical::TimeseriesStream(const HttplibParams& params,
   }
 }
 
-static const std::string kTimeseriesStreamToFileEndpoint =
-    "Historical::TimeseriesStreamToFile";
+static const std::string kTimeseriesGetRangeToFileEndpoint =
+    "Historical::TimeseriesGetRangeToFile";
 
-databento::FileBento Historical::TimeseriesStreamToFile(
+databento::FileBento Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema,
     const std::string& file_path) {
-  return this->TimeseriesStreamToFile(dataset, start, end, symbols, schema,
-                                      kDefaultSTypeIn, kDefaultSTypeOut, {},
-                                      file_path);
+  return this->TimeseriesGetRangeToFile(dataset, start, end, symbols, schema,
+                                        kDefaultSTypeIn, kDefaultSTypeOut, {},
+                                        file_path);
 }
-databento::FileBento Historical::TimeseriesStreamToFile(
+databento::FileBento Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema, const std::string& file_path) {
-  return this->TimeseriesStreamToFile(dataset, start, end, symbols, schema,
-                                      kDefaultSTypeIn, kDefaultSTypeOut, {},
-                                      file_path);
+  return this->TimeseriesGetRangeToFile(dataset, start, end, symbols, schema,
+                                        kDefaultSTypeIn, kDefaultSTypeOut, {},
+                                        file_path);
 }
-databento::FileBento Historical::TimeseriesStreamToFile(
+databento::FileBento Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     SType stype_out, std::size_t limit, const std::string& file_path) {
@@ -1139,14 +1141,15 @@ databento::FileBento Historical::TimeseriesStreamToFile(
       {"encoding", "dbn"},
       {"start", ToString(start)},
       {"end", ToString(end)},
-      {"symbols", JoinSymbolStrings(kTimeseriesStreamToFileEndpoint, symbols)},
+      {"symbols",
+       JoinSymbolStrings(kTimeseriesGetRangeToFileEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "limit", limit);
-  return this->TimeseriesStreamToFile(params, file_path);
+  return this->TimeseriesGetRangeToFile(params, file_path);
 }
-databento::FileBento Historical::TimeseriesStreamToFile(
+databento::FileBento Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema, SType stype_in, SType stype_out, std::size_t limit,
@@ -1156,23 +1159,24 @@ databento::FileBento Historical::TimeseriesStreamToFile(
       {"encoding", "dbn"},
       {"start", start},
       {"end", end},
-      {"symbols", JoinSymbolStrings(kTimeseriesStreamToFileEndpoint, symbols)},
+      {"symbols",
+       JoinSymbolStrings(kTimeseriesGetRangeToFileEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "limit", limit);
-  return this->TimeseriesStreamToFile(params, file_path);
+  return this->TimeseriesGetRangeToFile(params, file_path);
 }
-databento::FileBento Historical::TimeseriesStreamToFile(
+databento::FileBento Historical::TimeseriesGetRangeToFile(
     const HttplibParams& params, const std::string& file_path) {
   {
     std::ofstream out_file{file_path, std::ios::binary};
     if (out_file.fail()) {
-      throw InvalidArgumentError{kTimeseriesStreamEndpoint, "file_path",
+      throw InvalidArgumentError{kTimeseriesGetRangeEndpoint, "file_path",
                                  "Non-existent or invalid file"};
     }
     this->client_.GetRawStream(
-        kTimeseriesStreamPath, params,
+        kTimeseriesGetRangePath, params,
         [&out_file](const char* data, std::size_t length) {
           out_file.write(data, static_cast<std::streamsize>(length));
           return true;

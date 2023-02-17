@@ -23,7 +23,7 @@ int main() {
   const databento::UnixNanos start = DateToUnixNanos(2022, 10, 3);
   const databento::UnixNanos end = DateToUnixNanos(2022, 10, 4);
   const auto limit = 1000;
-  client.TimeseriesStream(
+  client.TimeseriesGetRange(
       databento::dataset::kGlbxMdp3, start, end, {"ESZ2"},
       databento::Schema::Trades, databento::SType::Native,
       databento::SType::ProductId, limit,
