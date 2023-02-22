@@ -221,6 +221,16 @@ databento::BatchJob Parse(const std::string& endpoint,
   return res;
 }
 
+void TryCreateDir(const std::string& dir) {
+  if (::opendir(dir.c_str()) == nullptr) {
+    const int ret = ::mkdir(dir.c_str(), 0777);
+    if (ret != 0) {
+      throw databento::Exception{std::string{"Unable to create directory "} +
+                                 dir + ": " + ::strerror(errno)};
+    }
+  }
+}
+
 std::string PathJoin(const std::string& dir, const std::string& path) {
   if (dir[dir.length() - 1] == '/') {
     return dir + path;
@@ -372,23 +382,21 @@ std::vector<databento::BatchFileDesc> Historical::BatchListFiles(
 
 void Historical::BatchDownload(const std::string& output_dir,
                                const std::string& job_id) {
-  if (::opendir(output_dir.c_str()) == nullptr) {
-    const int ret = ::mkdir(output_dir.c_str(), 0777);
-    if (ret != 0) {
-      throw Exception{std::string{"Unable to create output directory: "} +
-                      ::strerror(errno)};
-    }
-  }
-
+  TryCreateDir(output_dir);
+  const std::string job_dir = PathJoin(output_dir, job_id);
+  TryCreateDir(job_dir);
   const auto file_descs = BatchListFiles(job_id);
   for (const auto& file_desc : file_descs) {
-    const std::string output_path = PathJoin(output_dir, file_desc.filename);
+    const std::string output_path = PathJoin(job_dir, file_desc.filename);
     DownloadFile(file_desc.https_url, output_path);
   }
 }
 void Historical::BatchDownload(const std::string& output_dir,
                                const std::string& job_id,
                                const std::string& filename_to_download) {
+  TryCreateDir(output_dir);
+  const std::string job_dir = PathJoin(output_dir, job_id);
+  TryCreateDir(job_dir);
   const auto file_descs = BatchListFiles(job_id);
   const auto file_desc_it =
       std::find_if(file_descs.begin(), file_descs.end(),
@@ -400,7 +408,7 @@ void Historical::BatchDownload(const std::string& output_dir,
                                "filename_to_download",
                                "Filename not found for batch job " + job_id};
   }
-  const std::string output_path = PathJoin(output_dir, file_desc_it->filename);
+  const std::string output_path = PathJoin(job_dir, file_desc_it->filename);
   DownloadFile(file_desc_it->https_url, output_path);
 }
 

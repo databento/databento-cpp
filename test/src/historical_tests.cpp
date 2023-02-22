@@ -206,8 +206,9 @@ static const nlohmann::json kListFilesResp{
 
 TEST_F(HistoricalTests, TestBatchDownloadAll) {
   const auto kJobId = "job123";
-  const TempFile temp_metadata_file{TEST_BUILD_DIR "/test_metadata.json"};
-  const TempFile temp_dbn_file{TEST_BUILD_DIR "/test.dbn"};
+  const TempFile temp_metadata_file{TEST_BUILD_DIR
+                                    "/job123/test_metadata.json"};
+  const TempFile temp_dbn_file{TEST_BUILD_DIR "/job123/test.dbn"};
   mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
                            kListFilesResp);
   mock_server_.MockStreamDbn("/v0/job_id/test.dbn", {},
@@ -226,7 +227,7 @@ TEST_F(HistoricalTests, TestBatchDownloadAll) {
 
 TEST_F(HistoricalTests, TestBatchDownloadSingle) {
   const auto kJobId = "654";
-  const TempFile temp_metadata_file{TEST_BUILD_DIR "/test_metadata.json"};
+  const TempFile temp_metadata_file{TEST_BUILD_DIR "/654/test_metadata.json"};
   mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
                            kListFilesResp);
   mock_server_.MockGetJson("/v0/job_id/test_metadata.json", {{"key", "value"}});
