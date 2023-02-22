@@ -1094,14 +1094,14 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
   }};
   try {
     DbnDecoder dbn_decoder{channel};
-    Metadata metadata = dbn_decoder.ParseMetadata();
+    Metadata metadata = dbn_decoder.DecodeMetadata();
     const auto record_count = metadata.record_count;
     if (metadata_callback) {
       metadata_callback(std::move(metadata));
     }
     for (auto i = 0UL; i < record_count; ++i) {
       const bool should_stop =
-          record_callback(dbn_decoder.ParseRecord()) == KeepGoing::Stop;
+          record_callback(dbn_decoder.DecodeRecord()) == KeepGoing::Stop;
       if (should_stop) {
         should_continue = false;
         break;

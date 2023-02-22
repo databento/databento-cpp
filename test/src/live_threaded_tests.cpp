@@ -6,6 +6,8 @@
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
+#include "databento/dbn.hpp"
+#include "databento/enums.hpp"
 #include "databento/live_threaded.hpp"
 #include "databento/record.hpp"
 #include "mock/mock_lsg_server.hpp"
@@ -33,7 +35,7 @@ TEST_F(LiveThreadedTests, TestBasic) {
                                         [&kRec](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
-                                          self.Start();
+                                          self.Start(Schema::Mbo);
                                           self.SendRecord(kRec);
                                           self.SendRecord(kRec);
                                         }};
@@ -52,6 +54,7 @@ TEST_F(LiveThreadedTests, TestBasic) {
 }
 
 TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
+  constexpr auto kSchema = Schema::Ohlcv1M;
   const MboMsg kRec{{sizeof(MboMsg) / 4, RType::Mbo, 1, 2, UnixNanos{}},
                     1,
                     2,
@@ -68,7 +71,7 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
       dataset::kXnasItch, [&kRec, &call_count](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Start();
+        self.Start(kSchema);
         self.SendRecord(kRec);
         while (call_count < 1) {
           std::this_thread::yield();
@@ -80,11 +83,13 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
 
   LiveThreaded target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
                       false};
-  target.Start([&call_count, &kRec](const Record& rec) {
-    ++call_count;
-    ASSERT_TRUE(rec.Holds<MboMsg>());
-    EXPECT_EQ(rec.Get<MboMsg>(), kRec);
-  });
+  const Metadata metadata =
+      target.Start([&call_count, &kRec](const Record& rec) {
+        ++call_count;
+        ASSERT_TRUE(rec.Holds<MboMsg>());
+        EXPECT_EQ(rec.Get<MboMsg>(), kRec);
+      });
+  EXPECT_EQ(metadata.schema, kSchema);
   while (call_count < 2) {
     std::this_thread::yield();
   }

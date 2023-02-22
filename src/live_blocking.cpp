@@ -7,7 +7,8 @@
 #include <ios>  //hex, setfill, setw
 #include <sstream>
 
-#include "databento/constants.hpp"   //  kApiKeyLength
+#include "databento/constants.hpp"  //  kApiKeyLength
+#include "databento/dbn_decoder.hpp"
 #include "databento/exceptions.hpp"  // LiveApiError
 #include "databento/record.hpp"      // Record
 #include "databento/symbology.hpp"   // JoinSymbolStrings
@@ -44,54 +45,50 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
   client_.WriteAll(sub_msg.str());
 }
 
-void LiveBlocking::Start() { client_.WriteAll("start_session\n"); }
+databento::Metadata LiveBlocking::Start() {
+  constexpr auto kMetadataPreludeSize = 8;
+  client_.WriteAll("start_session\n");
+  client_.ReadExact(buffer_.data(), kMetadataPreludeSize);
+  const auto version_and_size = DbnDecoder::DecodeMetadataVersionAndSize(
+      reinterpret_cast<std::uint8_t*>(buffer_.data()), kMetadataPreludeSize);
+  std::vector<std::uint8_t> meta_buffer(version_and_size.second);
+  client_.ReadExact(reinterpret_cast<char*>(meta_buffer.data()),
+                    version_and_size.second);
+  return DbnDecoder::DecodeMetadataFields(version_and_size.first, meta_buffer);
+}
 
 const databento::Record& LiveBlocking::NextRecord() { return *NextRecord({}); }
 
 const databento::Record* LiveBlocking::NextRecord(
     std::chrono::milliseconds timeout) {
-  // TODO(cg): Update to use DbnDecoder
-  if (buffer_idx_ >= buffer_size_) {
-    const auto read_res = client_.Read(buffer_.data(), buffer_.size(), timeout);
+  // need some unread unread_bytes
+  const auto unread_bytes = buffer_size_ - buffer_idx_;
+  if (unread_bytes == 0) {
+    const auto read_res = FillBuffer(timeout);
     if (read_res.status == detail::TcpClient::Status::Timeout) {
       return nullptr;
     }
     if (read_res.status == detail::TcpClient::Status::Closed) {
-      throw LiveApiError{"Server closed the socket"};
+      throw DbnResponseError{"Reached end of DBN stream"};
     }
-    buffer_size_ = read_res.read_size;
-    buffer_idx_ = 0;
   }
-  // assume buffer_idx_ is record-aligned, first byte is length of next record
-  const auto raw_length = static_cast<std::uint8_t>(buffer_[buffer_idx_]);
-  const auto length = static_cast<std::size_t>(raw_length) * 4;
-  if (buffer_idx_ + length > buffer_size_) {
-    // only a partial record remaining in buffer. Shift unread bytes to
-    // beginning of buffer.
-    std::copy(buffer_.cbegin() + buffer_idx_, buffer_.cend(), buffer_.begin());
-    buffer_size_ -= buffer_idx_;
-    buffer_idx_ = 0;
-    const auto read_res = client_.Read(&buffer_[buffer_size_],
-                                       buffer_.size() - buffer_size_, timeout);
+  // check length
+  while (buffer_size_ - buffer_idx_ < BufferRecordHeader()->Size()) {
+    const auto read_res = FillBuffer(timeout);
     if (read_res.status == detail::TcpClient::Status::Timeout) {
       return nullptr;
     }
     if (read_res.status == detail::TcpClient::Status::Closed) {
-      throw LiveApiError{"Server closed the socket"};
-    }
-    buffer_size_ += read_res.read_size;
-    if (buffer_size_ < length) {
-      return nullptr;
+      throw DbnResponseError{"Reached end of DBN stream"};
     }
   }
-  current_record_ =
-      Record{reinterpret_cast<RecordHeader*>(&buffer_[buffer_idx_])};
-  buffer_idx_ += length;
+  current_record_ = Record{BufferRecordHeader()};
+  buffer_idx_ += current_record_.Size();
   return &current_record_;
 }
 
 std::string LiveBlocking::DecodeChallenge() {
-  buffer_size_ = client_.Read(buffer_.data(), buffer_.size()).read_size;
+  buffer_size_ = client_.ReadSome(buffer_.data(), buffer_.size()).read_size;
   if (buffer_size_ == 0) {
     throw LiveApiError{"Server closed socket during authentication"};
   }
@@ -106,7 +103,7 @@ std::string LiveBlocking::DecodeChallenge() {
   std::size_t find_start{};
   if (first_nl_pos + 1 == response.length()) {
     // read more
-    buffer_size_ = client_.Read(buffer_.data(), buffer_.size()).read_size;
+    buffer_size_ = client_.ReadSome(buffer_.data(), buffer_.size()).read_size;
     if (buffer_size_ == 0) {
       throw LiveApiError{"Server closed socket during authentication"};
     }
@@ -185,7 +182,7 @@ void LiveBlocking::DecodeAuthResp() {
   do {
     buffer_idx_ = buffer_size_;
     const auto read_size =
-        client_.Read(&buffer_[buffer_idx_], buffer_.size() - buffer_idx_)
+        client_.ReadSome(&buffer_[buffer_idx_], buffer_.size() - buffer_idx_)
             .read_size;
     if (read_size == 0) {
       throw LiveApiError{
@@ -232,4 +229,21 @@ void LiveBlocking::DecodeAuthResp() {
     throw InvalidArgumentError{"LiveBlocking::Live", "key",
                                "Failed to authenticate: " + err_details};
   }
+}
+
+databento::detail::TcpClient::Result LiveBlocking::FillBuffer(
+    std::chrono::milliseconds timeout) {
+  // Shift data forward
+  std::copy(buffer_.cbegin() + static_cast<std::ptrdiff_t>(buffer_idx_),
+            buffer_.cend(), buffer_.begin());
+  buffer_size_ -= buffer_idx_;
+  buffer_idx_ = 0;
+  const auto read_res = client_.ReadSome(
+      &buffer_[buffer_size_], buffer_.size() - buffer_size_, timeout);
+  buffer_size_ += read_res.read_size;
+  return read_res;
+}
+
+databento::RecordHeader* LiveBlocking::BufferRecordHeader() {
+  return reinterpret_cast<RecordHeader*>(&buffer_[buffer_idx_]);
 }

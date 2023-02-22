@@ -91,8 +91,8 @@ INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderSchemaTests,
 TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   ReadFromFile("mbo", GetParam());
 
-  const Metadata ch_metadata = channel_target_->ParseMetadata();
-  const Metadata f_metadata = file_target_->ParseMetadata();
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
@@ -107,8 +107,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
 
-  const auto ch_record1 = channel_target_->ParseRecord();
-  const auto f_record1 = file_target_->ParseRecord();
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record1.Holds<MboMsg>());
   ASSERT_TRUE(f_record1.Holds<MboMsg>());
   const auto& ch_mbo1 = ch_record1.Get<MboMsg>();
@@ -129,9 +129,9 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   EXPECT_EQ(ch_mbo1.ts_in_delta.count(), 22993);
   EXPECT_EQ(ch_mbo1.sequence, 1170352);
 
-  const auto ch_record2 = channel_target_->ParseRecord();
+  const auto ch_record2 = channel_target_->DecodeRecord();
   ASSERT_TRUE(ch_record2.Holds<MboMsg>());
-  const auto f_record2 = file_target_->ParseRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
   ASSERT_TRUE(f_record2.Holds<MboMsg>());
   const auto& ch_mbo2 = ch_record2.Get<MboMsg>();
   const auto& f_mbo2 = f_record2.Get<MboMsg>();
@@ -155,8 +155,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
 TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   ReadFromFile("mbp-1", GetParam());
 
-  const Metadata ch_metadata = channel_target_->ParseMetadata();
-  const Metadata f_metadata = file_target_->ParseMetadata();
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
@@ -172,8 +172,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   EXPECT_TRUE(ch_metadata.not_found.empty());
   AssertMappings(ch_metadata.mappings);
 
-  const auto ch_record1 = channel_target_->ParseRecord();
-  const auto f_record1 = file_target_->ParseRecord();
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record1.Holds<Mbp1Msg>());
   ASSERT_TRUE(f_record1.Holds<Mbp1Msg>());
   const auto& ch_mbp1 = ch_record1.Get<Mbp1Msg>();
@@ -199,8 +199,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   EXPECT_EQ(ch_mbp1.booklevel[0].bid_ct, 15);
   EXPECT_EQ(ch_mbp1.booklevel[0].ask_ct, 9);
 
-  const auto ch_record2 = channel_target_->ParseRecord();
-  const auto f_record2 = file_target_->ParseRecord();
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record2.Holds<Mbp1Msg>());
   ASSERT_TRUE(f_record2.Holds<Mbp1Msg>());
   const auto& ch_mbp2 = ch_record2.Get<Mbp1Msg>();
@@ -230,8 +230,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
 TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   ReadFromFile("mbp-10", GetParam());
 
-  const Metadata ch_metadata = channel_target_->ParseMetadata();
-  const Metadata f_metadata = file_target_->ParseMetadata();
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
@@ -247,8 +247,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_TRUE(ch_metadata.not_found.empty());
   AssertMappings(ch_metadata.mappings);
 
-  const auto ch_record1 = channel_target_->ParseRecord();
-  const auto f_record1 = file_target_->ParseRecord();
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record1.Holds<Mbp10Msg>());
   ASSERT_TRUE(f_record1.Holds<Mbp10Msg>());
   const auto& ch_mbp1 = ch_record1.Get<Mbp10Msg>();
@@ -286,8 +286,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_EQ(ch_mbp1.booklevel[2].bid_ct, 23);
   EXPECT_EQ(ch_mbp1.booklevel[2].ask_ct, 25);
 
-  const auto ch_record2 = channel_target_->ParseRecord();
-  const auto f_record2 = file_target_->ParseRecord();
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record2.Holds<Mbp10Msg>());
   ASSERT_TRUE(f_record2.Holds<Mbp10Msg>());
   const auto& ch_mbp2 = ch_record2.Get<Mbp10Msg>();
@@ -329,8 +329,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
 TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   ReadFromFile("tbbo", GetParam());
 
-  const Metadata ch_metadata = channel_target_->ParseMetadata();
-  const Metadata f_metadata = file_target_->ParseMetadata();
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
@@ -346,8 +346,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   EXPECT_TRUE(ch_metadata.not_found.empty());
   AssertMappings(ch_metadata.mappings);
 
-  const auto ch_record1 = channel_target_->ParseRecord();
-  const auto f_record1 = file_target_->ParseRecord();
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record1.Holds<TbboMsg>());
   ASSERT_TRUE(f_record1.Holds<TbboMsg>());
   const auto& ch_tbbo1 = ch_record1.Get<TbboMsg>();
@@ -373,8 +373,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   EXPECT_EQ(ch_tbbo1.booklevel[0].bid_ct, 16);
   EXPECT_EQ(ch_tbbo1.booklevel[0].ask_ct, 6);
 
-  const auto ch_record2 = channel_target_->ParseRecord();
-  const auto f_record2 = file_target_->ParseRecord();
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record2.Holds<TbboMsg>());
   ASSERT_TRUE(f_record2.Holds<TbboMsg>());
   const auto& ch_tbbo2 = ch_record2.Get<TbboMsg>();
@@ -404,8 +404,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
 TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   ReadFromFile("trades", GetParam());
 
-  const Metadata ch_metadata = channel_target_->ParseMetadata();
-  const Metadata f_metadata = file_target_->ParseMetadata();
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
@@ -421,8 +421,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   EXPECT_TRUE(ch_metadata.not_found.empty());
   AssertMappings(ch_metadata.mappings);
 
-  const auto ch_record1 = channel_target_->ParseRecord();
-  const auto f_record1 = file_target_->ParseRecord();
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record1.Holds<TradeMsg>());
   ASSERT_TRUE(f_record1.Holds<TradeMsg>());
   const auto& ch_trade1 = ch_record1.Get<TradeMsg>();
@@ -442,8 +442,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   EXPECT_EQ(ch_trade1.ts_in_delta.count(), 19251);
   EXPECT_EQ(ch_trade1.sequence, 1170380);
 
-  const auto ch_record2 = channel_target_->ParseRecord();
-  const auto f_record2 = file_target_->ParseRecord();
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record2.Holds<TradeMsg>());
   ASSERT_TRUE(f_record2.Holds<TradeMsg>());
   const auto& ch_trade2 = ch_record2.Get<TradeMsg>();
@@ -467,8 +467,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1D) {
   ReadFromFile("ohlcv-1d", GetParam());
 
-  const Metadata ch_metadata = channel_target_->ParseMetadata();
-  const Metadata f_metadata = file_target_->ParseMetadata();
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
@@ -488,8 +488,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1D) {
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
   ReadFromFile("ohlcv-1h", GetParam());
 
-  const Metadata ch_metadata = channel_target_->ParseMetadata();
-  const Metadata f_metadata = file_target_->ParseMetadata();
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
@@ -505,8 +505,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
   EXPECT_TRUE(ch_metadata.not_found.empty());
   AssertMappings(ch_metadata.mappings);
 
-  const auto ch_record1 = channel_target_->ParseRecord();
-  const auto f_record1 = file_target_->ParseRecord();
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record1.Holds<OhlcvMsg>());
   ASSERT_TRUE(f_record1.Holds<OhlcvMsg>());
   const auto& ch_ohlcv1 = ch_record1.Get<OhlcvMsg>();
@@ -522,8 +522,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
   EXPECT_EQ(ch_ohlcv1.close, 372225000000000);
   EXPECT_EQ(ch_ohlcv1.volume, 9385);
 
-  const auto ch_record2 = channel_target_->ParseRecord();
-  const auto f_record2 = file_target_->ParseRecord();
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record2.Holds<OhlcvMsg>());
   ASSERT_TRUE(f_record2.Holds<OhlcvMsg>());
   const auto& ch_ohlcv2 = ch_record2.Get<OhlcvMsg>();
@@ -543,8 +543,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
   ReadFromFile("ohlcv-1m", GetParam());
 
-  const Metadata ch_metadata = channel_target_->ParseMetadata();
-  const Metadata f_metadata = file_target_->ParseMetadata();
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
@@ -560,8 +560,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
   EXPECT_TRUE(ch_metadata.not_found.empty());
   AssertMappings(ch_metadata.mappings);
 
-  const auto ch_record1 = channel_target_->ParseRecord();
-  const auto f_record1 = file_target_->ParseRecord();
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record1.Holds<OhlcvMsg>());
   ASSERT_TRUE(f_record1.Holds<OhlcvMsg>());
   const auto& ch_ohlcv1 = ch_record1.Get<OhlcvMsg>();
@@ -577,8 +577,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
   EXPECT_EQ(ch_ohlcv1.close, 372100000000000);
   EXPECT_EQ(ch_ohlcv1.volume, 353);
 
-  const auto ch_record2 = channel_target_->ParseRecord();
-  const auto f_record2 = file_target_->ParseRecord();
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record2.Holds<OhlcvMsg>());
   ASSERT_TRUE(f_record2.Holds<OhlcvMsg>());
   const auto& ch_ohlcv2 = ch_record2.Get<OhlcvMsg>();
@@ -598,8 +598,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
   ReadFromFile("ohlcv-1s", GetParam());
 
-  const Metadata ch_metadata = channel_target_->ParseMetadata();
-  const Metadata f_metadata = file_target_->ParseMetadata();
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
@@ -615,8 +615,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
   EXPECT_TRUE(ch_metadata.not_found.empty());
   AssertMappings(ch_metadata.mappings);
 
-  const auto ch_record1 = channel_target_->ParseRecord();
-  const auto f_record1 = file_target_->ParseRecord();
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record1.Holds<OhlcvMsg>());
   ASSERT_TRUE(f_record1.Holds<OhlcvMsg>());
   const auto& ch_ohlcv1 = ch_record1.Get<OhlcvMsg>();
@@ -632,8 +632,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
   EXPECT_EQ(ch_ohlcv1.close, 372050000000000);
   EXPECT_EQ(ch_ohlcv1.volume, 57);
 
-  const auto ch_record2 = channel_target_->ParseRecord();
-  const auto f_record2 = file_target_->ParseRecord();
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record2.Holds<OhlcvMsg>());
   ASSERT_TRUE(f_record2.Holds<OhlcvMsg>());
   const auto& ch_ohlcv2 = ch_record2.Get<OhlcvMsg>();
@@ -653,8 +653,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
 TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   ReadFromFile("definition", GetParam());
 
-  const Metadata ch_metadata = channel_target_->ParseMetadata();
-  const Metadata f_metadata = file_target_->ParseMetadata();
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kXnasItch);
@@ -677,8 +677,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_EQ(interval.start_date, 20221004);
   EXPECT_EQ(interval.end_date, 20221205);
 
-  const auto ch_record1 = channel_target_->ParseRecord();
-  const auto f_record1 = file_target_->ParseRecord();
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record1.Holds<InstrumentDefMsg>());
   ASSERT_TRUE(f_record1.Holds<InstrumentDefMsg>());
   const auto& ch_def1 = ch_record1.Get<InstrumentDefMsg>();
@@ -689,8 +689,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_EQ(ch_def1.security_update_action, 'A');
   EXPECT_EQ(ch_def1.min_lot_size_round_lot, 100);
 
-  const auto ch_record2 = channel_target_->ParseRecord();
-  const auto f_record2 = file_target_->ParseRecord();
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
   ASSERT_TRUE(ch_record2.Holds<InstrumentDefMsg>());
   ASSERT_TRUE(f_record2.Holds<InstrumentDefMsg>());
   const auto& ch_def2 = ch_record2.Get<InstrumentDefMsg>();

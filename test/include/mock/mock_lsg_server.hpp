@@ -1,5 +1,8 @@
 #pragma once
 
+#include <gtest/gtest.h>  // EXPECT_EQ
+#include <unistd.h>       // write
+
 #include <condition_variable>
 #include <functional>  // function
 #include <mutex>
@@ -25,8 +28,8 @@ class MockLsgServer {
   void Authenticate();
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype);
-  void Start();
-  void Send(const std::string& msg);
+  void Start(Schema schema);
+  std::size_t Send(const std::string& msg);
   template <typename Rec>
   void SendRecord(Rec rec) {
     const std::string rec_str{reinterpret_cast<const char*>(&rec), sizeof(rec)};
@@ -53,6 +56,13 @@ class MockLsgServer {
  private:
   int InitSocketAndSetPort();
   std::string Receive();
+
+  template <typename T>
+  std::size_t SendBytes(T bytes) {
+    const auto write_size = ::write(conn_fd_.Get(), &bytes, sizeof(bytes));
+    EXPECT_EQ(write_size, sizeof(bytes)) << ::strerror(errno);
+    return static_cast<std::size_t>(write_size);
+  }
 
   std::string dataset_;
   std::uint16_t port_{};

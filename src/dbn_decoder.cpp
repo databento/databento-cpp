@@ -70,27 +70,34 @@ DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input)
   }
 }
 
-databento::Metadata DbnDecoder::ParseMetadata() {
+std::pair<std::uint8_t, std::size_t> DbnDecoder::DecodeMetadataVersionAndSize(
+    const std::uint8_t* buffer, std::size_t size) {
+  if (size < 8) {
+    throw DbnResponseError{"Buffer too small to decode version and size"};
+  }
+  if (std::strncmp(reinterpret_cast<const char*>(buffer), kDbnPrefix, 3) != 0) {
+    throw DbnResponseError{"Missing DBN prefix"};
+  }
+  const auto version = buffer[3];
+  const auto frame_size = *reinterpret_cast<const std::uint32_t*>(&buffer[4]);
+  if (frame_size < ::kFixedMetadataLen) {
+    throw DbnResponseError{
+        "Frame length cannot be shorter than the fixed metadata size"};
+  }
+  return {version, static_cast<std::size_t>(frame_size)};
+}
+
+databento::Metadata DbnDecoder::DecodeMetadataFields(
+    std::uint8_t version, const std::vector<std::uint8_t>& buffer) {
   Metadata res;
-  // already read first 4 bytes
-  res.version = buffer_[3];
+  res.version = version;
   if (res.version > kSchemaVersion) {
     throw DbnResponseError{
         "Can't decode newer version of DBN. Decoder version is " +
         std::to_string(kSchemaVersion) + ", input version is " +
         std::to_string(res.version)};
   }
-  input_->ReadExact(buffer_.data(), 4);
-  auto buffer_it = buffer_.cbegin();
-  const auto length = Consume<std::uint32_t>(buffer_it);
-  if (length < ::kFixedMetadataLen) {
-    throw DbnResponseError{
-        "Frame length cannot be shorter than the fixed metadata size"};
-  }
-  buffer_.resize(length);
-  // iterator invalidated
-  buffer_it = buffer_.cbegin();
-  input_->ReadExact(buffer_.data(), length);
+  auto buffer_it = buffer.cbegin();
   res.dataset = std::string{Consume(buffer_it, kDatasetCstrLen)};
   res.schema = static_cast<Schema>(Consume<std::uint16_t>(buffer_it));
   res.start =
@@ -109,17 +116,27 @@ databento::Metadata DbnDecoder::ParseMetadata() {
     throw DbnResponseError{
         "This version of dbn can't parse schema definitions"};
   }
-  res.symbols = DbnDecoder::ParseRepeatedSymbol(buffer_it, buffer_.cend());
-  res.partial = DbnDecoder::ParseRepeatedSymbol(buffer_it, buffer_.cend());
-  res.not_found = DbnDecoder::ParseRepeatedSymbol(buffer_it, buffer_.cend());
-  res.mappings = DbnDecoder::ParseSymbolMappings(buffer_it, buffer_.cend());
-  buffer_idx_ = buffer_.size();
+  res.symbols = DbnDecoder::DecodeRepeatedSymbol(buffer_it, buffer.cend());
+  res.partial = DbnDecoder::DecodeRepeatedSymbol(buffer_it, buffer.cend());
+  res.not_found = DbnDecoder::DecodeRepeatedSymbol(buffer_it, buffer.cend());
+  res.mappings = DbnDecoder::DecodeSymbolMappings(buffer_it, buffer.cend());
 
   return res;
 }
 
+databento::Metadata DbnDecoder::DecodeMetadata() {
+  // already read first 4 bytes detecting compression
+  input_->ReadExact(&buffer_[4], 4);
+  const auto version_and_size =
+      DbnDecoder::DecodeMetadataVersionAndSize(buffer_.data(), 8);
+  buffer_.resize(version_and_size.second);
+  input_->ReadExact(buffer_.data(), version_and_size.second);
+  buffer_idx_ = buffer_.size();
+  return DbnDecoder::DecodeMetadataFields(version_and_size.first, buffer_);
+}
+
 // assumes ParseMetadata has been called
-databento::Record DbnDecoder::ParseRecord() {
+databento::Record DbnDecoder::DecodeRecord() {
   // need some unread unread_bytes
   const auto unread_bytes = buffer_.size() - buffer_idx_;
   if (unread_bytes == 0) {
@@ -128,13 +145,13 @@ databento::Record DbnDecoder::ParseRecord() {
     }
   }
   // check length
-  while (buffer_.size() < BufferRecordHeader()->Size()) {
+  while (buffer_.size() - buffer_idx_ < BufferRecordHeader()->Size()) {
     if (FillBuffer() == 0) {
       throw DbnResponseError{"Reached end of DBN stream"};
     }
   }
   Record res{BufferRecordHeader()};
-  buffer_idx_ += BufferRecordHeader()->Size();
+  buffer_idx_ += res.Size();
   return res;
 }
 
@@ -167,12 +184,13 @@ bool DbnDecoder::DetectCompression() {
   if (x == kZstdMagicNumber) {
     return true;
   }
-  // Zstandard skippable frames begin with 0x184D2A5? where the last 8 bits can
-  // be set to any value
+  // Zstandard skippable frames begin with 0x184D2A5? where the last 8 bits
+  // can be set to any value
   constexpr auto kZstdSkippableFrame = 0x184D2A50;
   if ((x & kZstdSkippableFrame) == kZstdSkippableFrame) {
     throw DbnResponseError{
-        "Legacy DBZ encoding is not supported. Please use the dbn CLI tool to "
+        "Legacy DBZ encoding is not supported. Please use the dbn CLI tool "
+        "to "
         "convert it to DBN."};
   }
   throw DbnResponseError{
@@ -180,31 +198,33 @@ bool DbnDecoder::DetectCompression() {
       "DBN."};
 }
 
-std::string DbnDecoder::ParseSymbol(
+std::string DbnDecoder::DecodeSymbol(
     std::vector<std::uint8_t>::const_iterator& buffer_it) {
   return std::string{Consume(buffer_it, kSymbolCstrLen)};
 }
 
-std::vector<std::string> DbnDecoder::ParseRepeatedSymbol(
+std::vector<std::string> DbnDecoder::DecodeRepeatedSymbol(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   if (buffer_it + sizeof(std::uint32_t) > buffer_end_it) {
-    throw DbnResponseError{"Unexpected end of metadata buffer"};
+    throw DbnResponseError{
+        "Unexpected end of metadata buffer while parsing symbol"};
   }
   const auto count = std::size_t{Consume<std::uint32_t>(buffer_it)};
   if (buffer_it + static_cast<std::int64_t>(count * ::kSymbolCstrLen) >
       buffer_end_it) {
-    throw DbnResponseError{"Unexpected end of metadata buffer"};
+    throw DbnResponseError{
+        "Unexpected end of metadata buffer while parsing symbol"};
   }
   std::vector<std::string> res;
   res.reserve(count);
   for (std::size_t i = 0; i < count; ++i) {
-    res.emplace_back(ParseSymbol(buffer_it));
+    res.emplace_back(DecodeSymbol(buffer_it));
   }
   return res;
 }
 
-std::vector<databento::SymbolMapping> DbnDecoder::ParseSymbolMappings(
+std::vector<databento::SymbolMapping> DbnDecoder::DecodeSymbolMappings(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   if (buffer_it + sizeof(std::uint32_t) > buffer_end_it) {
@@ -215,12 +235,12 @@ std::vector<databento::SymbolMapping> DbnDecoder::ParseSymbolMappings(
   std::vector<SymbolMapping> res;
   res.reserve(count);
   for (std::size_t i = 0; i < count; ++i) {
-    res.emplace_back(DbnDecoder::ParseSymbolMapping(buffer_it, buffer_end_it));
+    res.emplace_back(DbnDecoder::DecodeSymbolMapping(buffer_it, buffer_end_it));
   }
   return res;
 }
 
-databento::SymbolMapping DbnDecoder::ParseSymbolMapping(
+databento::SymbolMapping DbnDecoder::DecodeSymbolMapping(
     std::vector<std::uint8_t>::const_iterator& buffer_it,
     std::vector<std::uint8_t>::const_iterator buffer_end_it) {
   constexpr std::size_t kMinSymbolMappingEncodedLen =
@@ -234,7 +254,7 @@ databento::SymbolMapping DbnDecoder::ParseSymbolMapping(
         "mapping"};
   }
   SymbolMapping res;
-  res.native_symbol = ParseSymbol(buffer_it);
+  res.native_symbol = DecodeSymbol(buffer_it);
   const auto interval_count = std::size_t{Consume<std::uint32_t>(buffer_it)};
   const auto read_size =
       static_cast<std::ptrdiff_t>(interval_count * kMappingIntervalEncodedLen);
@@ -247,7 +267,7 @@ databento::SymbolMapping DbnDecoder::ParseSymbolMapping(
     MappingInterval interval;
     interval.start_date = Consume<std::uint32_t>(buffer_it);
     interval.end_date = Consume<std::uint32_t>(buffer_it);
-    interval.symbol = ParseSymbol(buffer_it);
+    interval.symbol = DecodeSymbol(buffer_it);
     res.intervals.emplace_back(std::move(interval));
   }
   return res;

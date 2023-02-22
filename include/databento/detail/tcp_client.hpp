@@ -25,11 +25,12 @@ class TcpClient {
 
   void WriteAll(const std::string& str);
   void WriteAll(const char* buffer, std::size_t size);
-  Result Read(char* buffer, std::size_t max_size);
+  void ReadExact(char* buffer, std::size_t size);
+  Result ReadSome(char* buffer, std::size_t max_size);
   // Passing a timeout of 0 will block until data is available of the socket is
   // closed, the same behavior as the Read overload without a timeout.
-  Result Read(char* buffer, std::size_t max_size,
-              std::chrono::milliseconds timeout);
+  Result ReadSome(char* buffer, std::size_t max_size,
+                  std::chrono::milliseconds timeout);
 
  private:
   static int InitSocket(const std::string& gateway, std::uint16_t port);

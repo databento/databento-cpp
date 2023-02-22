@@ -30,7 +30,14 @@ void TcpClient::WriteAll(const char* buffer, std::size_t size) {
   } while (size > 0);
 }
 
-TcpClient::Result TcpClient::Read(char* buffer, std::size_t max_size) {
+void TcpClient::ReadExact(char* buffer, std::size_t size) {
+  const ::ssize_t res = ::recv(socket_.Get(), buffer, size, MSG_WAITALL);
+  if (res != static_cast<::ssize_t>(size)) {
+    throw TcpError{errno, "Error reading from socket"};
+  }
+}
+
+TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size) {
   const ::ssize_t res = ::read(socket_.Get(), buffer, max_size);
   if (res < 0) {
     throw TcpError{errno, "Error reading from socket"};
@@ -39,8 +46,8 @@ TcpClient::Result TcpClient::Read(char* buffer, std::size_t max_size) {
           res == 0 ? Status::Closed : Status::Ok};
 }
 
-TcpClient::Result TcpClient::Read(char* buffer, std::size_t max_size,
-                                  std::chrono::milliseconds timeout) {
+TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size,
+                                      std::chrono::milliseconds timeout) {
   pollfd fds{socket_.Get(), POLLHUP | POLLIN, {}};
   // passing a timeout of -1 blocks indefinitely, which is the equivalent of
   // having no timeout
@@ -49,7 +56,7 @@ TcpClient::Result TcpClient::Read(char* buffer, std::size_t max_size,
   while (true) {
     const int poll_status = ::poll(&fds, 1, timeout_ms);
     if (poll_status > 0) {
-      return Read(buffer, max_size);
+      return ReadSome(buffer, max_size);
     }
     if (poll_status == 0) {
       return {0, Status::Timeout};

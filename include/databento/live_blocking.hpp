@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "databento/dbn.hpp"                // Metadata
 #include "databento/detail/tcp_client.hpp"  // TcpClient
 #include "databento/enums.hpp"              // Schema, SType
 #include "databento/record.hpp"             // Record
@@ -39,7 +40,7 @@ class LiveBlocking {
   // Notifies the gateway to start sending messages for all subscriptions.
   //
   // This method should only be called once per instance.
-  void Start();
+  Metadata Start();
   // Block on getting the next record. The returned reference is valid until
   // this method is called again.
   //
@@ -59,6 +60,8 @@ class LiveBlocking {
   std::string GenerateCramReply(const std::string& challenge_key);
   std::string EncodeAuthReq(const std::string& auth);
   void DecodeAuthResp();
+  detail::TcpClient::Result FillBuffer(std::chrono::milliseconds timeout);
+  RecordHeader* BufferRecordHeader();
 
   static constexpr std::size_t kMaxStrLen = 24L * 1024;
 

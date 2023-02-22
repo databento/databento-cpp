@@ -38,16 +38,19 @@ TEST_F(LiveBlockingTests, TestAuthentication) {
 }
 
 TEST_F(LiveBlockingTests, TestStart) {
+  constexpr auto kSchema = Schema::Mbo;
   const mock::MockLsgServer mock_server{dataset::kGlbxMdp3,
                                         [](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
-                                          self.Start();
+                                          self.Start(kSchema);
                                         }};
 
   LiveBlocking target{kKey, dataset::kGlbxMdp3, "127.0.0.1", mock_server.Port(),
                       false};
-  target.Start();
+  const auto metadata = target.Start();
+  ASSERT_EQ(metadata.schema, kSchema);
+  ASSERT_EQ(metadata.dataset, dataset::kGlbxMdp3);
 }
 
 TEST_F(LiveBlockingTests, TestSubscribe) {

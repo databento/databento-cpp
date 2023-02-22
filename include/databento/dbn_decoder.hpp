@@ -20,21 +20,28 @@ class DbnDecoder {
   explicit DbnDecoder(detail::FileStream file_stream);
   explicit DbnDecoder(std::unique_ptr<IReadable> input);
 
+  // Decode metadata from the given buffer.
+  static Metadata DecodeMetadata(const std::vector<std::uint8_t>& buffer);
+  static std::pair<std::uint8_t, std::size_t> DecodeMetadataVersionAndSize(
+      const std::uint8_t* buffer, std::size_t size);
+  static Metadata DecodeMetadataFields(std::uint8_t version,
+                                       const std::vector<std::uint8_t>& buffer);
+
   // Should only be called once
-  Metadata ParseMetadata();
+  Metadata DecodeMetadata();
   // Lifetime of returned Record is until next call to ParseRecord.
-  Record ParseRecord();
+  Record DecodeRecord();
 
  private:
-  static std::string ParseSymbol(
+  static std::string DecodeSymbol(
       std::vector<std::uint8_t>::const_iterator& buffer_it);
-  static std::vector<std::string> ParseRepeatedSymbol(
+  static std::vector<std::string> DecodeRepeatedSymbol(
       std::vector<std::uint8_t>::const_iterator& buffer_it,
       std::vector<std::uint8_t>::const_iterator buffer_end_it);
-  static std::vector<SymbolMapping> ParseSymbolMappings(
+  static std::vector<SymbolMapping> DecodeSymbolMappings(
       std::vector<std::uint8_t>::const_iterator& buffer_it,
       std::vector<std::uint8_t>::const_iterator buffer_end_it);
-  static SymbolMapping ParseSymbolMapping(
+  static SymbolMapping DecodeSymbolMapping(
       std::vector<std::uint8_t>::const_iterator& buffer_it,
       std::vector<std::uint8_t>::const_iterator buffer_end_it);
   bool DetectCompression();

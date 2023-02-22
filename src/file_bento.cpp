@@ -11,13 +11,13 @@ FileBento::FileBento(const std::string& file_path)
 
 void FileBento::Replay(const MetadataCallback& metadata_callback,
                        const RecordCallback& record_callback) {
-  auto metadata = parser_.ParseMetadata();
+  auto metadata = parser_.DecodeMetadata();
   const auto record_count = metadata.record_count;
   if (metadata_callback) {
     metadata_callback(std::move(metadata));
   }
   for (std::size_t i = 0; i < record_count; ++i) {
-    const auto record = parser_.ParseRecord();
+    const auto record = parser_.DecodeRecord();
     if (record_callback(record) == KeepGoing::Stop) {
       break;
     }
