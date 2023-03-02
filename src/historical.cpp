@@ -722,17 +722,24 @@ double Historical::MetadataListUnitPrices(const std::string& dataset,
 }
 
 databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
+    const std::string& dataset) {
+  return MetadataGetDatasetCondition(httplib::Params{{"dataset", dataset}});
+}
+databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
     const std::string& dataset, const std::string& start_date,
     const std::string& end_date) {
+  return MetadataGetDatasetCondition(httplib::Params{{"dataset", dataset},
+                                                     {"start_date", start_date},
+                                                     {"end_date", end_date}});
+}
+databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
+    const httplib::Params& params) {
   static const std::string kEndpoint =
       "Historical::MetadataGetDatasetCondition";
   static const std::string kPath =
       ::BuildMetadataPath(".get_dataset_condition");
 
-  const nlohmann::json json =
-      client_.GetJson(kPath, httplib::Params{{"dataset", dataset},
-                                             {"start_date", start_date},
-                                             {"end_date", end_date}});
+  const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
   }
@@ -751,7 +758,9 @@ databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
   return {FromCheckedAtString<DatasetCondition>(kEndpoint, json, "condition"),
           std::move(details),
           ParseAt<std::string>(kEndpoint, json, "adjusted_start_date"),
-          ParseAt<std::string>(kEndpoint, json, "adjusted_end_date")};
+          ParseAt<std::string>(kEndpoint, json, "adjusted_end_date"),
+          ParseAt<std::string>(kEndpoint, json, "available_start_date"),
+          ParseAt<std::string>(kEndpoint, json, "available_end_date")};
 }
 
 static const std::string kMetadataGetRecordCountEndpoint =

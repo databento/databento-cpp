@@ -406,7 +406,9 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
         {{"date", "2022-11-09"}, {"condition", "bad"}},
         {{"date", "2022-11-10"}, {"condition", "available"}}}},
       {"adjusted_start_date", "2022-11-07"},
-      {"adjusted_end_date", "2022-11-10"}};
+      {"adjusted_end_date", "2022-11-10"},
+      {"available_start_date", "2017-05-21"},
+      {"available_end_date", "2023-03-01"}};
   mock_server_.MockGetJson("/v0/metadata.get_dataset_condition",
                            {{"dataset", dataset::kXnasItch},
                             {"start_date", "2022-11-06"},
@@ -430,6 +432,8 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
   EXPECT_EQ(res.details[3].condition, DatasetCondition::Available);
   EXPECT_EQ(res.adjusted_start_date, "2022-11-07");
   EXPECT_EQ(res.adjusted_end_date, "2022-11-10");
+  EXPECT_EQ(res.available_start_date, "2017-05-21");
+  EXPECT_EQ(res.available_end_date, "2023-03-01");
 }
 
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {

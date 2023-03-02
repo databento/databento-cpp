@@ -5,6 +5,7 @@
   - Renamed `DbzParser` to `DbnDecoder`
 - Renamed `TimeseriesStream` to `TimeseriesGetRange`
 - Refactored rtypes
+  - Introduced separate rtypes for each OHLCV schema
 - Added live gateway resolution
 - Added `SymbolMappingMsg` and `ErrorMsg` records
 - Improved API for `flags` record fields
@@ -14,7 +15,10 @@
 - Removed `is_full_universe` and `is_example` fields from `BatchJob`
 - Disabled unit testing by default
 - Added `PKGBUILD` to demonstrate installation
-- Introduced separate rtypes for each OHLCV schema
+- Made `start_date` and `end_date` optional for
+  `Historical::MetadataGetDatasetCondition`
+- Added `available_start_date` and `available_end_date` to
+  `DatasetConditionInfo`
 
 ## 0.3.0 - 2023-01-06
 - Added support for definition schema
