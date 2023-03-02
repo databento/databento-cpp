@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 - TBD
+## 0.4.0 - 2023-03-02
 - Renamed DBZ to DBN
   - Renamed `DbzParser` to `DbnDecoder`
 - Renamed `TimeseriesStream` to `TimeseriesGetRange`
