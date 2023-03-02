@@ -68,11 +68,17 @@ RType Record::RTypeFromSchema(const Schema schema) {
     case Schema::Tbbo: {
       return RType::Mbp1;
     }
-    case Schema::Ohlcv1S:  // fallthrough
-    case Schema::Ohlcv1M:  // fallthrough
-    case Schema::Ohlcv1H:  // fallthrough
+    case Schema::Ohlcv1S: {
+      return RType::Ohlcv1S;
+    }
+    case Schema::Ohlcv1M: {
+      return RType::Ohlcv1M;
+    }
+    case Schema::Ohlcv1H: {
+      return RType::Ohlcv1H;
+    }
     case Schema::Ohlcv1D: {
-      return RType::Ohlcv;
+      return RType::Ohlcv1D;
     }
     case Schema::Definition: {
       return RType::InstrumentDef;

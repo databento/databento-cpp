@@ -107,6 +107,7 @@ struct MbpMsg {
   std::uint32_t sequence;
   std::array<BidAskPair, N> booklevel;
 };
+
 }  // namespace detail
 
 struct TradeMsg {
@@ -136,7 +137,18 @@ static_assert(sizeof(Mbp1Msg) == sizeof(TradeMsg) + sizeof(BidAskPair),
 
 // Aggregate of open, high, low, and close prices with volume.
 struct OhlcvMsg {
-  static bool HasRType(RType rtype) { return rtype == RType::Ohlcv; }
+  static bool HasRType(RType rtype) {
+    switch (rtype) {
+      case RType::OhlcvDeprecated:  // fallthrough
+      case RType::Ohlcv1S:          // fallthrough
+      case RType::Ohlcv1M:          // fallthrough
+      case RType::Ohlcv1H:          // fallthrough
+      case RType::Ohlcv1D:
+        return true;
+      default:
+        return false;
+    }
+  }
 
   RecordHeader hd;
   std::int64_t open;

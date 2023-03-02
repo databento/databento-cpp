@@ -98,7 +98,12 @@ enum RType : std::uint8_t {
   Mbp0 = 0x00,
   Mbp1 = 0x01,
   Mbp10 = 0x0A,
-  Ohlcv = 0x11,
+  // Deprecated in 0.4.0. Separated into separate rtypes for each OHLCV schema.
+  OhlcvDeprecated = 0x11,
+  Ohlcv1S = 0x20,
+  Ohlcv1M = 0x21,
+  Ohlcv1H = 0x22,
+  Ohlcv1D = 0x23,
   InstrumentDef = 0x13,
   Error = 0x15,
   SymbolMapping = 0x16,

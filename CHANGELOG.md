@@ -14,6 +14,7 @@
 - Removed `is_full_universe` and `is_example` fields from `BatchJob`
 - Disabled unit testing by default
 - Added `PKGBUILD` to demonstrate installation
+- Introduced separate rtypes for each OHLCV schema
 
 ## 0.3.0 - 2023-01-06
 - Added support for definition schema

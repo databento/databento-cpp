@@ -72,7 +72,7 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
 
 TEST_F(LiveBlockingTests, TestNextRecord) {
   constexpr auto kRecCount = 12;
-  const OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv), 1, 2, 3, 4, 5};
+  const OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
   const mock::MockLsgServer mock_server{
       dataset::kXnasItch, [kRec](mock::MockLsgServer& self) {
         self.Accept();

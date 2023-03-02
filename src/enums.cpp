@@ -232,8 +232,20 @@ const char* ToString(RType rtype) {
     case RType::Mbp10: {
       return "Mbp10";
     }
-    case RType::Ohlcv: {
-      return "Ohlcv";
+    case RType::OhlcvDeprecated: {
+      return "OhlcvDeprecated";
+    }
+    case RType::Ohlcv1S: {
+      return "Ohlcv1S";
+    }
+    case RType::Ohlcv1M: {
+      return "Ohlcv1M";
+    }
+    case RType::Ohlcv1H: {
+      return "Ohlcv1H";
+    }
+    case RType::Ohlcv1D: {
+      return "Ohlcv1D";
     }
     case RType::InstrumentDef: {
       return "InstrumentDef";
