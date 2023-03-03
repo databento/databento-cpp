@@ -1,7 +1,7 @@
 # databento-cpp
 
 [![test](https://github.com/databento/databento-cpp/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/databento/databento-cpp/actions/workflows/build.yaml)
-![license](https://img.shields.io/github/license/databento/databento-cpp?color=blue)
+[![license](https://img.shields.io/github/license/databento/databento-cpp?color=blue)](./LICENSE)
 
 The official C++ client library for [Databento](https://databento.com).
 The client supports both streaming live and historical data through similar interfaces.
