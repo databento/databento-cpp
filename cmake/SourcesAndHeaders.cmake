@@ -2,12 +2,14 @@ set(headers
   include/databento/batch.hpp
   include/databento/constants.hpp
   include/databento/datetime.hpp
-  include/databento/dbz.hpp
-  include/databento/dbz_parser.hpp
+  include/databento/dbn.hpp
+  include/databento/dbn_decoder.hpp
   include/databento/file_bento.hpp
   include/databento/enums.hpp
   include/databento/exceptions.hpp
+  include/databento/flag_set.hpp
   include/databento/historical.hpp
+  include/databento/ireadable.hpp
   include/databento/live.hpp
   include/databento/live_blocking.hpp
   include/databento/live_threaded.hpp
@@ -21,14 +23,15 @@ set(headers
   include/databento/detail/scoped_thread.hpp
   include/databento/detail/shared_channel.hpp
   include/databento/detail/tcp_client.hpp
+  include/databento/detail/zstd_stream.hpp
   src/stream_op_helper.hpp
 )
 
 set(sources
   src/batch.cpp
   src/datetime.cpp
-  src/dbz.cpp
-  src/dbz_parser.cpp
+  src/dbn.cpp
+  src/dbn_decoder.cpp
   src/enums.cpp
   src/exceptions.cpp
   src/file_bento.cpp
@@ -44,4 +47,5 @@ set(sources
   src/detail/scoped_fd.cpp
   src/detail/shared_channel.cpp
   src/detail/tcp_client.cpp
+  src/detail/zstd_stream.cpp
 )

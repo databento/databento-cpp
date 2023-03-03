@@ -1,0 +1,38 @@
+# Maintainer: Databento <support@databento.com>
+_pkgname=databento-cpp
+pkgname=databento-cpp-git
+pkgver=0.4.0
+pkgrel=1
+pkgdesc="Official C++ client for Databento"
+arch=('any')
+url="https://github.com/databento/databento-cpp"
+license=('Apache-2.0')
+depends=('cpp-httplib' 'openssl' 'nlohmann-json' 'zstd')
+makedepends=('cmake' 'gtest')
+source=("${_pkgname}::git+${url}.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  "${_pkgname}/scripts/get_version.sh"
+}
+
+prepare() {
+  cmake -S "${_pkgname}" -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX='/usr' \
+    -DDATABENTO_USE_EXTERNAL_JSON=ON \
+    -DDATABENTO_USE_EXTERNAL_HTTPLIB=ON \
+    -Wno-dev
+}
+
+build() {
+  cmake --build build
+}
+
+check() {
+  ctest --test-dir build --output-on-failure
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+}

@@ -29,13 +29,15 @@ LiveThreaded& LiveThreaded::operator=(LiveThreaded&& rhs) noexcept {
 
 LiveThreaded::~LiveThreaded() { impl_->keep_going = false; }
 
-LiveThreaded::LiveThreaded(std::string key, LiveGateway gateway,
+LiveThreaded::LiveThreaded(std::string key, std::string dataset,
                            bool send_ts_out)
-    : impl_{new Impl{std::move(key), gateway, send_ts_out}} {}
+    : impl_{new Impl{std::move(key), std::move(dataset), send_ts_out}} {}
 
-LiveThreaded::LiveThreaded(std::string key, std::string gateway,
-                           std::uint16_t port, bool send_ts_out)
-    : impl_{new Impl{std::move(key), std::move(gateway), port, send_ts_out}} {}
+LiveThreaded::LiveThreaded(std::string key, std::string dataset,
+                           std::string gateway, std::uint16_t port,
+                           bool send_ts_out)
+    : impl_{new Impl{std::move(key), std::move(dataset), std::move(gateway),
+                     port, send_ts_out}} {}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 
@@ -43,17 +45,18 @@ const std::string& LiveThreaded::Gateway() const {
   return impl_->blocking.Gateway();
 }
 
-void LiveThreaded::Start(Callback callback) {
+databento::Metadata LiveThreaded::Start(Callback callback) {
   // Safe to pass raw pointer because `thread_` cannot outlive `impl_`
+  auto metadata = impl_->blocking.Start();
   thread_ = detail::ScopedThread{&LiveThreaded::ProcessingThread, impl_.get(),
                                  std::move(callback)};
+  return metadata;
 }
 
 void LiveThreaded::ProcessingThread(Impl* impl, Callback&& callback) {
   constexpr std::chrono::milliseconds kTimeout{50};
   // Thread safety: non-const calls to `blocking` are only performed from this
   // thread
-  impl->blocking.Start();
   while (impl->keep_going.load()) {
     const Record* rec = impl->blocking.NextRecord(kTimeout);
     if (rec) {

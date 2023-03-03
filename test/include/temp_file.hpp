@@ -1,5 +1,8 @@
 #pragma once
 
+#include <gtest/gtest.h>  // EXPECT_EQ
+#include <unistd.h>       // access
+
 #include <cassert>  // assert
 #include <cstdio>   // remove
 #include <fstream>  // ifstream
@@ -15,7 +18,7 @@ class TempFile {
  public:
   explicit TempFile(std::string path) : path_{std::move(path)} {
     std::ifstream f{path_};
-    if (f.good()) {
+    if (Exists()) {
       throw InvalidArgumentError{"TempFile::TempFile", "path",
                                  "path shouldn't already exist"};
     }
@@ -24,9 +27,18 @@ class TempFile {
   TempFile& operator=(const TempFile&) = delete;
   TempFile(TempFile&&) = default;
   TempFile& operator=(TempFile&&) = default;
-  ~TempFile() { assert(std::remove(path_.c_str()) == 0); }
+  ~TempFile() {
+    const int ret = std::remove(path_.c_str());
+    EXPECT_EQ(ret, 0) << "TempFile couldn't remove file at " << path_ << ": "
+                      << ::strerror(errno);
+  }
 
   const std::string& Path() const { return path_; }
+
+  bool Exists() const {
+    std::ifstream f{path_};
+    return f.good();
+  }
 
  private:
   std::string path_;

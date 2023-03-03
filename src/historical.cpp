@@ -1,8 +1,10 @@
 #include "databento/historical.hpp"
 
+#include <dirent.h>  // opendir
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
+#include <algorithm>  // find_if
 #include <atomic>     // atomic<bool>
 #include <cstdlib>    // get_env
 #include <exception>  // exception, exception_ptr
@@ -14,7 +16,7 @@
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
-#include "databento/dbz_parser.hpp"
+#include "databento/dbn_decoder.hpp"
 #include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
@@ -205,8 +207,6 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.split_symbols = ParseAt<bool>(endpoint, json, "split_symbols");
   res.packaging = FromCheckedAtString<Packaging>(endpoint, json, "packaging");
   res.delivery = FromCheckedAtString<Delivery>(endpoint, json, "delivery");
-  res.is_full_universe = ParseAt<bool>(endpoint, json, "is_full_universe");
-  res.is_example = ParseAt<bool>(endpoint, json, "is_example");
   res.record_count = ParseAt<std::size_t>(endpoint, json, "record_count");
   res.billed_size = ParseAt<std::size_t>(endpoint, json, "billed_size");
   res.actual_size = ParseAt<std::size_t>(endpoint, json, "actual_size");
@@ -219,6 +219,23 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.ts_process_done = ParseAt<std::string>(endpoint, json, "ts_process_done");
   res.ts_expiration = ParseAt<std::string>(endpoint, json, "ts_expiration");
   return res;
+}
+
+void TryCreateDir(const std::string& dir) {
+  if (::opendir(dir.c_str()) == nullptr) {
+    const int ret = ::mkdir(dir.c_str(), 0777);
+    if (ret != 0) {
+      throw databento::Exception{std::string{"Unable to create directory "} +
+                                 dir + ": " + ::strerror(errno)};
+    }
+  }
+}
+
+std::string PathJoin(const std::string& dir, const std::string& path) {
+  if (dir[dir.length() - 1] == '/') {
+    return dir + path;
+  }
+  return dir + '/' + path;
 }
 }  // namespace
 
@@ -262,7 +279,7 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"end", ToString(end)},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"split_duration", ToString(split_duration)},
       {"packaging", ToString(packaging)},
       {"delivery", ToString(delivery)},
@@ -284,7 +301,7 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"end", end},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"split_duration", ToString(split_duration)},
       {"packaging", ToString(packaging)},
       {"delivery", ToString(delivery)},
@@ -334,6 +351,95 @@ std::vector<databento::BatchJob> Historical::BatchListJobs(
     jobs.emplace_back(::Parse(kEndpoint, job_json.value()));
   }
   return jobs;
+}
+
+std::vector<databento::BatchFileDesc> Historical::BatchListFiles(
+    const std::string& job_id) {
+  static const std::string kEndpoint = "Historical::BatchListFiles";
+  static const std::string kPath = ::BuildBatchPath(".list_files");
+
+  const nlohmann::json json =
+      client_.GetJson(kPath, httplib::Params{{"job_id", job_id}});
+  if (!json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
+  }
+  std::vector<BatchFileDesc> files;
+  files.reserve(json.size());
+  for (const auto& file_json : json.items()) {
+    const auto& file_obj = file_json.value();
+    BatchFileDesc file_desc;
+    file_desc.filename =
+        ::ParseAt<std::string>(kEndpoint, file_obj, "filename");
+    file_desc.size = ::ParseAt<std::size_t>(kEndpoint, file_obj, "size");
+    file_desc.hash = ::ParseAt<std::string>(kEndpoint, file_obj, "hash");
+    const auto& url_obj = ::CheckedAt(kEndpoint, file_obj, "urls");
+    file_desc.https_url = ::ParseAt<std::string>(kEndpoint, url_obj, "https");
+    file_desc.ftp_url = ::ParseAt<std::string>(kEndpoint, url_obj, "ftp");
+    files.emplace_back(file_desc);
+  }
+  return files;
+}
+
+void Historical::BatchDownload(const std::string& output_dir,
+                               const std::string& job_id) {
+  TryCreateDir(output_dir);
+  const std::string job_dir = PathJoin(output_dir, job_id);
+  TryCreateDir(job_dir);
+  const auto file_descs = BatchListFiles(job_id);
+  for (const auto& file_desc : file_descs) {
+    const std::string output_path = PathJoin(job_dir, file_desc.filename);
+    DownloadFile(file_desc.https_url, output_path);
+  }
+}
+void Historical::BatchDownload(const std::string& output_dir,
+                               const std::string& job_id,
+                               const std::string& filename_to_download) {
+  TryCreateDir(output_dir);
+  const std::string job_dir = PathJoin(output_dir, job_id);
+  TryCreateDir(job_dir);
+  const auto file_descs = BatchListFiles(job_id);
+  const auto file_desc_it =
+      std::find_if(file_descs.begin(), file_descs.end(),
+                   [&filename_to_download](const BatchFileDesc& file_desc) {
+                     return file_desc.filename == filename_to_download;
+                   });
+  if (file_desc_it == file_descs.end()) {
+    throw InvalidArgumentError{"Historical::BatchDownload",
+                               "filename_to_download",
+                               "Filename not found for batch job " + job_id};
+  }
+  const std::string output_path = PathJoin(job_dir, file_desc_it->filename);
+  DownloadFile(file_desc_it->https_url, output_path);
+}
+
+void Historical::DownloadFile(const std::string& url,
+                              const std::string& output_path) {
+  static const std::string kEndpoint = "Historical::BatchDownload";
+  // extract path from URL
+  const auto protocol_divider = url.find("://");
+  std::string path;
+  if (protocol_divider == std::string::npos) {
+    const auto slash = url.find_first_of('/');
+    if (slash == std::string::npos) {
+      throw InvalidArgumentError{"Historical::DownloadFile", "url",
+                                 "No slashes"};
+    }
+    path = url.substr(slash);
+  } else {
+    const auto slash = url.find('/', protocol_divider + 3);
+    if (slash == std::string::npos) {
+      throw InvalidArgumentError{"Historical::DownloadFile", "url",
+                                 "No slashes"};
+    }
+    path = url.substr(slash);
+  }
+
+  client_.GetRawStream(
+      path, {}, [&output_path](const char* data, std::size_t length) {
+        std::ofstream out_file{output_path};
+        out_file.write(data, static_cast<std::streamsize>(length));
+        return KeepGoing::Continue;
+      });
 }
 
 std::map<std::string, std::int32_t> Historical::MetadataListPublishers() {
@@ -616,17 +722,24 @@ double Historical::MetadataListUnitPrices(const std::string& dataset,
 }
 
 databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
+    const std::string& dataset) {
+  return MetadataGetDatasetCondition(httplib::Params{{"dataset", dataset}});
+}
+databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
     const std::string& dataset, const std::string& start_date,
     const std::string& end_date) {
+  return MetadataGetDatasetCondition(httplib::Params{{"dataset", dataset},
+                                                     {"start_date", start_date},
+                                                     {"end_date", end_date}});
+}
+databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
+    const httplib::Params& params) {
   static const std::string kEndpoint =
       "Historical::MetadataGetDatasetCondition";
   static const std::string kPath =
       ::BuildMetadataPath(".get_dataset_condition");
 
-  const nlohmann::json json =
-      client_.GetJson(kPath, httplib::Params{{"dataset", dataset},
-                                             {"start_date", start_date},
-                                             {"end_date", end_date}});
+  const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
   }
@@ -645,7 +758,9 @@ databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
   return {FromCheckedAtString<DatasetCondition>(kEndpoint, json, "condition"),
           std::move(details),
           ParseAt<std::string>(kEndpoint, json, "adjusted_start_date"),
-          ParseAt<std::string>(kEndpoint, json, "adjusted_end_date")};
+          ParseAt<std::string>(kEndpoint, json, "adjusted_end_date"),
+          ParseAt<std::string>(kEndpoint, json, "available_start_date"),
+          ParseAt<std::string>(kEndpoint, json, "available_end_date")};
 }
 
 static const std::string kMetadataGetRecordCountEndpoint =
@@ -898,81 +1013,82 @@ databento::SymbologyResolution Historical::SymbologyResolve(
   return res;
 }
 
-static const std::string kTimeseriesStreamEndpoint =
-    "Historical::TimeseriesStream";
-static const std::string kTimeseriesStreamPath =
-    ::BuildTimeseriesPath(".stream");
+static const std::string kTimeseriesGetRangeEndpoint =
+    "Historical::TimeseriesGetRange";
+static const std::string kTimeseriesGetRangePath =
+    ::BuildTimeseriesPath(".get_range");
 
-void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
-                                  UnixNanos end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema,
-                                  const RecordCallback& record_callback) {
-  this->TimeseriesStream(dataset, start, end, symbols, schema, kDefaultSTypeIn,
-                         kDefaultSTypeOut, {}, {}, record_callback);
+void Historical::TimeseriesGetRange(const std::string& dataset, UnixNanos start,
+                                    UnixNanos end,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema,
+                                    const RecordCallback& record_callback) {
+  this->TimeseriesGetRange(dataset, start, end, symbols, schema,
+                           kDefaultSTypeIn, kDefaultSTypeOut, {}, {},
+                           record_callback);
 }
-void Historical::TimeseriesStream(const std::string& dataset,
-                                  const std::string& start,
-                                  const std::string& end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema,
-                                  const RecordCallback& record_callback) {
-  this->TimeseriesStream(dataset, start, end, symbols, schema, kDefaultSTypeIn,
-                         kDefaultSTypeOut, {}, {}, record_callback);
+void Historical::TimeseriesGetRange(const std::string& dataset,
+                                    const std::string& start,
+                                    const std::string& end,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema,
+                                    const RecordCallback& record_callback) {
+  this->TimeseriesGetRange(dataset, start, end, symbols, schema,
+                           kDefaultSTypeIn, kDefaultSTypeOut, {}, {},
+                           record_callback);
 }
-void Historical::TimeseriesStream(const std::string& dataset, UnixNanos start,
-                                  UnixNanos end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema, SType stype_in,
-                                  SType stype_out, std::size_t limit,
-                                  const MetadataCallback& metadata_callback,
-                                  const RecordCallback& record_callback) {
+void Historical::TimeseriesGetRange(const std::string& dataset, UnixNanos start,
+                                    UnixNanos end,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema, SType stype_in,
+                                    SType stype_out, std::size_t limit,
+                                    const MetadataCallback& metadata_callback,
+                                    const RecordCallback& record_callback) {
   httplib::Params params{
       {"dataset", dataset},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"start", ToString(start)},
       {"end", ToString(end)},
-      {"symbols", JoinSymbolStrings(kTimeseriesStreamEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kTimeseriesGetRangeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "limit", limit);
 
-  this->TimeseriesStream(params, metadata_callback, record_callback);
+  this->TimeseriesGetRange(params, metadata_callback, record_callback);
 }
-void Historical::TimeseriesStream(const std::string& dataset,
-                                  const std::string& start,
-                                  const std::string& end,
-                                  const std::vector<std::string>& symbols,
-                                  Schema schema, SType stype_in,
-                                  SType stype_out, std::size_t limit,
-                                  const MetadataCallback& metadata_callback,
-                                  const RecordCallback& record_callback) {
+void Historical::TimeseriesGetRange(const std::string& dataset,
+                                    const std::string& start,
+                                    const std::string& end,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema, SType stype_in,
+                                    SType stype_out, std::size_t limit,
+                                    const MetadataCallback& metadata_callback,
+                                    const RecordCallback& record_callback) {
   httplib::Params params{
       {"dataset", dataset},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"start", start},
       {"end", end},
-      {"symbols", JoinSymbolStrings(kTimeseriesStreamEndpoint, symbols)},
+      {"symbols", JoinSymbolStrings(kTimeseriesGetRangeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "limit", limit);
 
-  this->TimeseriesStream(params, metadata_callback, record_callback);
+  this->TimeseriesGetRange(params, metadata_callback, record_callback);
 }
-void Historical::TimeseriesStream(const HttplibParams& params,
-                                  const MetadataCallback& metadata_callback,
-                                  const RecordCallback& record_callback) {
+void Historical::TimeseriesGetRange(const HttplibParams& params,
+                                    const MetadataCallback& metadata_callback,
+                                    const RecordCallback& record_callback) {
   std::atomic<bool> should_continue{true};
   detail::SharedChannel channel;
-  DbzChannelParser dbz_parser{channel};
   std::exception_ptr exception_ptr{};
   detail::ScopedThread stream{[this, &channel, &exception_ptr, &params,
                                &should_continue] {
     try {
       this->client_.GetRawStream(
-          kTimeseriesStreamPath, params,
+          kTimeseriesGetRangePath, params,
           [channel, &should_continue](const char* data,
                                       std::size_t length) mutable {
             channel.Write(reinterpret_cast<const std::uint8_t*>(data), length);
@@ -986,14 +1102,15 @@ void Historical::TimeseriesStream(const HttplibParams& params,
     }
   }};
   try {
-    Metadata metadata = dbz_parser.ParseMetadata();
+    DbnDecoder dbn_decoder{channel};
+    Metadata metadata = dbn_decoder.DecodeMetadata();
     const auto record_count = metadata.record_count;
     if (metadata_callback) {
       metadata_callback(std::move(metadata));
     }
     for (auto i = 0UL; i < record_count; ++i) {
       const bool should_stop =
-          record_callback(dbz_parser.ParseRecord()) == KeepGoing::Stop;
+          record_callback(dbn_decoder.DecodeRecord()) == KeepGoing::Stop;
       if (should_stop) {
         should_continue = false;
         break;
@@ -1013,68 +1130,70 @@ void Historical::TimeseriesStream(const HttplibParams& params,
   }
 }
 
-static const std::string kTimeseriesStreamToFileEndpoint =
-    "Historical::TimeseriesStreamToFile";
+static const std::string kTimeseriesGetRangeToFileEndpoint =
+    "Historical::TimeseriesGetRangeToFile";
 
-databento::FileBento Historical::TimeseriesStreamToFile(
+databento::FileBento Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema,
     const std::string& file_path) {
-  return this->TimeseriesStreamToFile(dataset, start, end, symbols, schema,
-                                      kDefaultSTypeIn, kDefaultSTypeOut, {},
-                                      file_path);
+  return this->TimeseriesGetRangeToFile(dataset, start, end, symbols, schema,
+                                        kDefaultSTypeIn, kDefaultSTypeOut, {},
+                                        file_path);
 }
-databento::FileBento Historical::TimeseriesStreamToFile(
+databento::FileBento Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema, const std::string& file_path) {
-  return this->TimeseriesStreamToFile(dataset, start, end, symbols, schema,
-                                      kDefaultSTypeIn, kDefaultSTypeOut, {},
-                                      file_path);
+  return this->TimeseriesGetRangeToFile(dataset, start, end, symbols, schema,
+                                        kDefaultSTypeIn, kDefaultSTypeOut, {},
+                                        file_path);
 }
-databento::FileBento Historical::TimeseriesStreamToFile(
+databento::FileBento Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     SType stype_out, std::size_t limit, const std::string& file_path) {
   httplib::Params params{
       {"dataset", dataset},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"start", ToString(start)},
       {"end", ToString(end)},
-      {"symbols", JoinSymbolStrings(kTimeseriesStreamToFileEndpoint, symbols)},
+      {"symbols",
+       JoinSymbolStrings(kTimeseriesGetRangeToFileEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "limit", limit);
-  return this->TimeseriesStreamToFile(params, file_path);
+  return this->TimeseriesGetRangeToFile(params, file_path);
 }
-databento::FileBento Historical::TimeseriesStreamToFile(
+databento::FileBento Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema, SType stype_in, SType stype_out, std::size_t limit,
     const std::string& file_path) {
   httplib::Params params{
       {"dataset", dataset},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"start", start},
       {"end", end},
-      {"symbols", JoinSymbolStrings(kTimeseriesStreamToFileEndpoint, symbols)},
+      {"symbols",
+       JoinSymbolStrings(kTimeseriesGetRangeToFileEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
   ::SetIfPositive(&params, "limit", limit);
-  return this->TimeseriesStreamToFile(params, file_path);
+  return this->TimeseriesGetRangeToFile(params, file_path);
 }
-databento::FileBento Historical::TimeseriesStreamToFile(
+databento::FileBento Historical::TimeseriesGetRangeToFile(
     const HttplibParams& params, const std::string& file_path) {
   {
     std::ofstream out_file{file_path, std::ios::binary};
     if (out_file.fail()) {
-      throw InvalidArgumentError{kTimeseriesStreamEndpoint, "file_path",
+      throw InvalidArgumentError{kTimeseriesGetRangeEndpoint, "file_path",
                                  "Non-existent or invalid file"};
     }
     this->client_.GetRawStream(
-        kTimeseriesStreamPath, params,
+        kTimeseriesGetRangePath, params,
         [&out_file](const char* data, std::size_t length) {
           out_file.write(data, static_cast<std::streamsize>(length));
           return true;

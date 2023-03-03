@@ -28,8 +28,8 @@ LiveBuilder& LiveBuilder::SetKey(std::string key) {
   return *this;
 }
 
-LiveBuilder& LiveBuilder::SetGateway(LiveGateway gateway) {
-  gateway_ = gateway;
+LiveBuilder& LiveBuilder::SetDataset(std::string dataset) {
+  dataset_ = std::move(dataset);
   return *this;
 }
 
@@ -39,15 +39,22 @@ LiveBuilder& LiveBuilder::SetSendTsOut(bool send_ts_out) {
 }
 
 databento::LiveBlocking LiveBuilder::BuildBlocking() {
-  if (key_.empty()) {
-    throw Exception{"'key' is unset"};
-  }
-  return databento::LiveBlocking{std::move(key_), gateway_, send_ts_out_};
+  Validate();
+  return databento::LiveBlocking{std::move(key_), std::move(dataset_),
+                                 send_ts_out_};
 }
 
 databento::LiveThreaded LiveBuilder::BuildThreaded() {
+  Validate();
+  return databento::LiveThreaded{std::move(key_), std::move(dataset_),
+                                 send_ts_out_};
+}
+
+void LiveBuilder::Validate() const {
   if (key_.empty()) {
     throw Exception{"'key' is unset"};
   }
-  return databento::LiveThreaded{std::move(key_), gateway_, send_ts_out_};
+  if (dataset_.empty()) {
+    throw Exception{"'dataset' is unset"};
+  }
 }

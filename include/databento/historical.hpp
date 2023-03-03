@@ -61,6 +61,10 @@ class Historical {
                                       UnixNanos since);
   std::vector<BatchJob> BatchListJobs(const std::vector<JobState>& states,
                                       const std::string& since);
+  std::vector<BatchFileDesc> BatchListFiles(const std::string& job_id);
+  void BatchDownload(const std::string& output_dir, const std::string& job_id);
+  void BatchDownload(const std::string& output_dir, const std::string& job_id,
+                     const std::string& filename_to_download);
 
   /*
    * Metadata API
@@ -89,6 +93,7 @@ class Historical {
                                          Schema schema);
   double MetadataListUnitPrices(const std::string& dataset, FeedMode mode,
                                 Schema schema);
+  DatasetConditionInfo MetadataGetDatasetCondition(const std::string& dataset);
   DatasetConditionInfo MetadataGetDatasetCondition(
       const std::string& dataset, const std::string& start_date,
       const std::string& end_date);
@@ -174,13 +179,14 @@ class Historical {
   //
   // NOTE: This method spawns a thread, however, the callbacks will be called
   // from the current thread.
-  void TimeseriesStream(const std::string& dataset, UnixNanos start,
-                        UnixNanos end, const std::vector<std::string>& symbols,
-                        Schema schema, const RecordCallback& record_callback);
-  void TimeseriesStream(const std::string& dataset, const std::string& start,
-                        const std::string& end,
-                        const std::vector<std::string>& symbols, Schema schema,
-                        const RecordCallback& record_callback);
+  void TimeseriesGetRange(const std::string& dataset, UnixNanos start,
+                          UnixNanos end,
+                          const std::vector<std::string>& symbols,
+                          Schema schema, const RecordCallback& record_callback);
+  void TimeseriesGetRange(const std::string& dataset, const std::string& start,
+                          const std::string& end,
+                          const std::vector<std::string>& symbols,
+                          Schema schema, const RecordCallback& record_callback);
   // Stream historical market data to `record_callback`. `metadata_callback`
   // will be called exactly once, before any calls to `record_callback`.
   // This method will return only after all data has been returned or
@@ -188,60 +194,66 @@ class Historical {
   //
   // NOTE: This method spawns a thread, however, the callbacks will be called
   // from the current thread.
-  void TimeseriesStream(const std::string& dataset, UnixNanos start,
-                        UnixNanos end, const std::vector<std::string>& symbols,
-                        Schema schema, SType stype_in, SType stype_out,
-                        std::size_t limit,
-                        const MetadataCallback& metadata_callback,
-                        const RecordCallback& record_callback);
-  void TimeseriesStream(const std::string& dataset, const std::string& start,
-                        const std::string& end,
-                        const std::vector<std::string>& symbols, Schema schema,
-                        SType stype_in, SType stype_out, std::size_t limit,
-                        const MetadataCallback& metadata_callback,
-                        const RecordCallback& record_callback);
+  void TimeseriesGetRange(const std::string& dataset, UnixNanos start,
+                          UnixNanos end,
+                          const std::vector<std::string>& symbols,
+                          Schema schema, SType stype_in, SType stype_out,
+                          std::size_t limit,
+                          const MetadataCallback& metadata_callback,
+                          const RecordCallback& record_callback);
+  void TimeseriesGetRange(const std::string& dataset, const std::string& start,
+                          const std::string& end,
+                          const std::vector<std::string>& symbols,
+                          Schema schema, SType stype_in, SType stype_out,
+                          std::size_t limit,
+                          const MetadataCallback& metadata_callback,
+                          const RecordCallback& record_callback);
   // Stream historical market data to a file at `path`. Returns a `FileBento`
   // object for replaying the data in `file_path`.
   //
   // If a file at `file_path` already exists, it will be overwritten.
-  FileBento TimeseriesStreamToFile(const std::string& dataset, UnixNanos start,
-                                   UnixNanos end,
-                                   const std::vector<std::string>& symbols,
-                                   Schema schema, const std::string& file_path);
-  FileBento TimeseriesStreamToFile(const std::string& dataset,
-                                   const std::string& start,
-                                   const std::string& end,
-                                   const std::vector<std::string>& symbols,
-                                   Schema schema, const std::string& file_path);
-  FileBento TimeseriesStreamToFile(const std::string& dataset, UnixNanos start,
-                                   UnixNanos end,
-                                   const std::vector<std::string>& symbols,
-                                   Schema schema, SType stype_in,
-                                   SType stype_out, std::size_t limit,
-                                   const std::string& file_path);
-  FileBento TimeseriesStreamToFile(const std::string& dataset,
-                                   const std::string& start,
-                                   const std::string& end,
-                                   const std::vector<std::string>& symbols,
-                                   Schema schema, SType stype_in,
-                                   SType stype_out, std::size_t limit,
-                                   const std::string& file_path);
+  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
+                                     UnixNanos start, UnixNanos end,
+                                     const std::vector<std::string>& symbols,
+                                     Schema schema,
+                                     const std::string& file_path);
+  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
+                                     const std::string& start,
+                                     const std::string& end,
+                                     const std::vector<std::string>& symbols,
+                                     Schema schema,
+                                     const std::string& file_path);
+  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
+                                     UnixNanos start, UnixNanos end,
+                                     const std::vector<std::string>& symbols,
+                                     Schema schema, SType stype_in,
+                                     SType stype_out, std::size_t limit,
+                                     const std::string& file_path);
+  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
+                                     const std::string& start,
+                                     const std::string& end,
+                                     const std::vector<std::string>& symbols,
+                                     Schema schema, SType stype_in,
+                                     SType stype_out, std::size_t limit,
+                                     const std::string& file_path);
 
  private:
   using HttplibParams = std::multimap<std::string, std::string>;
 
   BatchJob BatchSubmitJob(const HttplibParams& params);
+  void DownloadFile(const std::string& url, const std::string& output_path);
   std::vector<BatchJob> BatchListJobs(const HttplibParams& params);
+  DatasetConditionInfo MetadataGetDatasetCondition(const HttplibParams& params);
   std::size_t MetadataGetRecordCount(const HttplibParams& params);
   std::size_t MetadataGetBillableSize(const HttplibParams& params);
   double MetadataGetCost(const HttplibParams& params);
   FieldsByDatasetEncodingAndSchema MetadataListFields(
       const HttplibParams& params);
-  void TimeseriesStream(const HttplibParams& params,
-                        const MetadataCallback& metadata_callback,
-                        const RecordCallback& record_callback);
-  FileBento TimeseriesStreamToFile(const HttplibParams& params,
-                                   const std::string& file_path);
+  void TimeseriesGetRange(const HttplibParams& params,
+                          const MetadataCallback& metadata_callback,
+                          const RecordCallback& record_callback);
+  FileBento TimeseriesGetRangeToFile(const HttplibParams& params,
+                                     const std::string& file_path);
 
   const std::string key_;
   const std::string gateway_;

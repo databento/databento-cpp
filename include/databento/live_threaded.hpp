@@ -5,20 +5,23 @@
 #include <string>
 #include <vector>
 
+#include "databento/dbn.hpp"                   // Metadata
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
-#include "databento/enums.hpp"                 // LiveGateway, Schema, SType
+#include "databento/enums.hpp"                 // Schema, SType
 #include "databento/record.hpp"                // Record
 
 namespace databento {
 // A client for interfacing with Databento's live market data API. This client
-// has a threaded event-driven API for receiving the next record.
+// has a threaded event-driven API for receiving the next record. Unlike
+// Historical, each instance of LiveThreaded is associated with a particular
+// dataset.
 class LiveThreaded {
  public:
   using Callback = std::function<void(const Record&)>;
 
-  LiveThreaded(std::string key, LiveGateway gateway, bool send_ts_out);
-  LiveThreaded(std::string key, std::string gateway, std::uint16_t port,
-               bool send_ts_out);
+  LiveThreaded(std::string key, std::string dataset, bool send_ts_out);
+  LiveThreaded(std::string key, std::string dataset, std::string gateway,
+               std::uint16_t port, bool send_ts_out);
   LiveThreaded(const LiveThreaded&) = delete;
   LiveThreaded& operator=(const LiveThreaded&) = delete;
   LiveThreaded(LiveThreaded&& other) noexcept;
@@ -46,7 +49,7 @@ class LiveThreaded {
   // `callback` will be called for updates to all subscriptions.
   //
   // This method should only be called once per instance.
-  void Start(Callback callback);
+  Metadata Start(Callback callback);
 
  private:
   struct Impl;

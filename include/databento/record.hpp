@@ -8,6 +8,7 @@
 
 #include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
+#include "databento/flag_set.hpp"
 
 namespace databento {
 // Common data for all Databento Records.
@@ -15,13 +16,15 @@ struct RecordHeader {
   // The length of the message in 32-bit words.
   std::uint8_t length;
   // The record type.
-  std::uint8_t rtype;
+  RType rtype;
   // The publisher ID assigned by Databento.
   std::uint16_t publisher_id;
   // The product ID assigned by the venue.
   std::uint32_t product_id;
   // The exchange timestamp in UNIX epoch nanoseconds.
   UnixNanos ts_event;
+
+  std::size_t Size() const;
 };
 
 class Record {
@@ -32,7 +35,7 @@ class Record {
 
   template <typename T>
   bool Holds() const {
-    return record_->rtype == T::kTypeId;
+    return T::HasRType(record_->rtype);
   }
 
   template <typename T>
@@ -45,8 +48,8 @@ class Record {
   }
 
   std::size_t Size() const;
-  static std::size_t SizeOfType(std::uint8_t rtype);
-  static std::uint8_t TypeIdFromSchema(Schema schema);
+  static std::size_t SizeOfSchema(Schema schema);
+  static RType RTypeFromSchema(Schema schema);
 
  private:
   RecordHeader* record_;
@@ -54,16 +57,16 @@ class Record {
 
 // Market-by-order (MBO) message.
 struct MboMsg {
-  static constexpr std::uint8_t kTypeId = 0xA0;
+  static bool HasRType(RType rtype) { return rtype == RType::Mbo; }
 
   RecordHeader hd;
   std::uint64_t order_id;
   std::int64_t price;
   std::uint32_t size;
-  std::uint8_t flags;
+  FlagSet flags;
   std::uint8_t channel_id;
-  char action;
-  char side;
+  Action action;
+  Side side;
   UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
@@ -85,14 +88,18 @@ static_assert(sizeof(BidAskPair) == 32, "BidAskPair size must match C");
 namespace detail {
 template <std::size_t N>
 struct MbpMsg {
-  static constexpr std::uint8_t kTypeId = N;
+  static_assert(N <= 15, "The maximum number of levels in an MbpMsg is 15");
+
+  static bool HasRType(RType rtype) {
+    return static_cast<std::uint8_t>(rtype) == N;
+  }
 
   RecordHeader hd;
   std::int64_t price;
   std::uint32_t size;
-  char action;
-  char side;
-  std::uint8_t flags;
+  Action action;
+  Side side;
+  FlagSet flags;
   // Depth of the actual book change.
   std::uint8_t depth;
   UnixNanos ts_recv;
@@ -100,17 +107,18 @@ struct MbpMsg {
   std::uint32_t sequence;
   std::array<BidAskPair, N> booklevel;
 };
+
 }  // namespace detail
 
 struct TradeMsg {
-  static constexpr std::uint8_t kTypeId = 0;
+  static bool HasRType(RType rtype) { return rtype == RType::Mbp0; }
 
   RecordHeader hd;
   std::int64_t price;
   std::uint32_t size;
-  char action;
-  char side;
-  std::uint8_t flags;
+  Action action;
+  Side side;
+  FlagSet flags;
   // Depth of the actual book change.
   std::uint8_t depth;
   UnixNanos ts_recv;
@@ -129,7 +137,18 @@ static_assert(sizeof(Mbp1Msg) == sizeof(TradeMsg) + sizeof(BidAskPair),
 
 // Aggregate of open, high, low, and close prices with volume.
 struct OhlcvMsg {
-  static constexpr std::uint8_t kTypeId = 0x11;
+  static bool HasRType(RType rtype) {
+    switch (rtype) {
+      case RType::OhlcvDeprecated:  // fallthrough
+      case RType::Ohlcv1S:          // fallthrough
+      case RType::Ohlcv1M:          // fallthrough
+      case RType::Ohlcv1H:          // fallthrough
+      case RType::Ohlcv1D:
+        return true;
+      default:
+        return false;
+    }
+  }
 
   RecordHeader hd;
   std::int64_t open;
@@ -143,7 +162,7 @@ static_assert(sizeof(OhlcvMsg) == 56, "OhlcvMsg size must match C");
 
 // Instrument definition.
 struct InstrumentDefMsg {
-  static constexpr std::uint8_t kTypeId = 0x13;
+  static bool HasRType(RType rtype) { return rtype == RType::InstrumentDef; }
 
   RecordHeader hd;
   UnixNanos ts_recv;
@@ -212,6 +231,24 @@ struct InstrumentDefMsg {
 
 static_assert(sizeof(InstrumentDefMsg) == 360,
               "InstrumentDefMsg size must match C");
+
+// An error message from the Live Subscription Gateway (LSG). This will never
+// be present in historical data.
+struct ErrorMsg {
+  RecordHeader hd;
+  std::array<char, 64> err;
+};
+
+/// A symbol mapping message.
+struct SymbolMappingMsg {
+  RecordHeader hd;
+  std::array<char, 22> stype_in_symbol;
+  std::array<char, 22> stype_out_symbol;
+  // padding for alignment
+  std::array<char, 4> dummy;
+  UnixNanos start_ts;
+  UnixNanos end_ts;
+};
 
 inline bool operator==(const RecordHeader& lhs, const RecordHeader& rhs) {
   return lhs.length == rhs.length && lhs.rtype == rhs.rtype &&
@@ -298,6 +335,24 @@ inline bool operator!=(const InstrumentDefMsg& lhs,
   return !(lhs == rhs);
 }
 
+inline bool operator==(const ErrorMsg& lhs, const ErrorMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.err == rhs.err;
+}
+inline bool operator!=(const ErrorMsg& lhs, const ErrorMsg& rhs) {
+  return !(lhs == rhs);
+}
+
+inline bool operator==(const SymbolMappingMsg& lhs,
+                       const SymbolMappingMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.stype_in_symbol == rhs.stype_in_symbol &&
+         lhs.stype_out_symbol == rhs.stype_out_symbol &&
+         lhs.start_ts == rhs.start_ts && lhs.end_ts == rhs.end_ts;
+}
+inline bool operator!=(const SymbolMappingMsg& lhs,
+                       const SymbolMappingMsg& rhs) {
+  return !(lhs == rhs);
+}
+
 std::string ToString(const RecordHeader& header);
 std::ostream& operator<<(std::ostream& stream, const RecordHeader& header);
 std::string ToString(const MboMsg& mbo_msg);
@@ -311,4 +366,9 @@ std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg);
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instr_def_msg);
+std::string ToString(const ErrorMsg& err_msg);
+std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg);
+std::string ToString(const SymbolMappingMsg& symbol_mapping_msg);
+std::ostream& operator<<(std::ostream& stream,
+                         const SymbolMappingMsg& symbol_mapping_msg);
 }  // namespace databento

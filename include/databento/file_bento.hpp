@@ -3,12 +3,12 @@
 #include <memory>  // unique_ptr
 #include <string>
 
-#include "databento/dbz.hpp"         // Metadata
-#include "databento/dbz_parser.hpp"  // DbzFileParser
-#include "databento/timeseries.hpp"  // MetadataCallback, RecordCallback
+#include "databento/dbn.hpp"          // Metadata
+#include "databento/dbn_decoder.hpp"  // DbnDecoder
+#include "databento/timeseries.hpp"   // MetadataCallback, RecordCallback
 
 namespace databento {
-// A reader for DBZ files.
+// A reader for DBN files.
 class FileBento {
  public:
   explicit FileBento(const std::string& file_path);
@@ -18,6 +18,6 @@ class FileBento {
   void Replay(const RecordCallback& record_callback);
 
  private:
-  DbzFileParser parser_;
+  DbnDecoder parser_;
 };
 }  // namespace databento

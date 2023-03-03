@@ -39,8 +39,6 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .AddField("split_symbols", batch_job.split_symbols)
       .AddField("packaging", batch_job.packaging)
       .AddField("delivery", batch_job.delivery)
-      .AddField("is_full_universe", batch_job.is_full_universe)
-      .AddField("is_example", batch_job.is_example)
       .AddField("record_count", batch_job.record_count)
       .AddField("billed_size", batch_job.billed_size)
       .AddField("actual_size", batch_job.actual_size)
@@ -51,6 +49,23 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .AddField("ts_process_start", batch_job.ts_process_start)
       .AddField("ts_process_done", batch_job.ts_process_done)
       .AddField("ts_expiration", batch_job.ts_expiration)
+      .Finish();
+}
+
+std::string ToString(const BatchFileDesc& file_desc) {
+  return MakeString(file_desc);
+}
+
+std::ostream& operator<<(std::ostream& stream, const BatchFileDesc& file_desc) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("BatchFileDesc")
+      .Build()
+      .AddField("filename", file_desc.filename)
+      .AddField("size", file_desc.size)
+      .AddField("hash", file_desc.hash)
+      .AddField("https_url", file_desc.https_url)
+      .AddField("ftp_url", file_desc.ftp_url)
       .Finish();
 }
 }  // namespace databento

@@ -10,6 +10,7 @@
 #include <utility>  // move
 
 #include "databento/datetime.hpp"  // TimeDeltaNanos, UnixNanos
+#include "databento/enums.hpp"     // RType
 
 namespace databento {
 template <typename T>

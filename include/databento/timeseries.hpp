@@ -2,7 +2,7 @@
 
 #include <functional>  // function
 
-#include "databento/dbz.hpp"     // Metadata
+#include "databento/dbn.hpp"     // Metadata
 #include "databento/record.hpp"  // Record
 
 namespace databento {

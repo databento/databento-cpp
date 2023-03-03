@@ -30,9 +30,9 @@ class MockHttpServer {
   void MockPostJson(const std::string& path,
                     const std::map<std::string, std::string>& params,
                     const nlohmann::json& json);
-  void MockStreamDbz(const std::string& path,
+  void MockStreamDbn(const std::string& path,
                      const std::map<std::string, std::string>& params,
-                     const std::string& dbz_path);
+                     const std::string& dbn_path);
 
  private:
   static void CheckParams(const std::map<std::string, std::string>& params,

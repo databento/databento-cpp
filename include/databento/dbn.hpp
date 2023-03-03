@@ -19,16 +19,16 @@ struct MappingInterval {
 
 struct SymbolMapping {
   // The native symbol.
-  std::string native;
+  std::string native_symbol;
   // The mappings of `native` for different date ranges.
   std::vector<MappingInterval> intervals;
 };
 
-// Information about a DBZ file or response.
+// Information about a DBN file or response.
 struct Metadata {
-  // The DBZ schema version number.
+  // The DBN schema version number.
   std::uint8_t version;
-  // The dataset name.
+  // The dataset code.
   std::string dataset;
   // The data record schema. Specifies
   Schema schema;
@@ -42,8 +42,6 @@ struct Metadata {
   std::uint64_t limit;
   // The total number of records.
   std::uint64_t record_count;
-  // The data compression format (if any).
-  Compression compression;
   // The input symbology type.
   SType stype_in;
   // The output symbology type.
@@ -65,15 +63,15 @@ inline bool operator==(const MappingInterval& lhs, const MappingInterval& rhs) {
 }
 
 inline bool operator==(const SymbolMapping& lhs, const SymbolMapping& rhs) {
-  return lhs.native == rhs.native && lhs.intervals == rhs.intervals;
+  return lhs.native_symbol == rhs.native_symbol &&
+         lhs.intervals == rhs.intervals;
 }
 
 inline bool operator==(const Metadata& lhs, const Metadata& rhs) {
   return lhs.version == rhs.version && lhs.dataset == rhs.dataset &&
          lhs.schema == rhs.schema && lhs.start == rhs.start &&
          lhs.end == rhs.end && lhs.limit == rhs.limit &&
-         lhs.record_count == rhs.record_count &&
-         lhs.compression == rhs.compression && lhs.stype_in == rhs.stype_in &&
+         lhs.record_count == rhs.record_count && lhs.stype_in == rhs.stype_in &&
          lhs.stype_out == rhs.stype_out && lhs.symbols == rhs.symbols &&
          lhs.partial == rhs.partial && lhs.not_found == rhs.not_found &&
          lhs.mappings == rhs.mappings;

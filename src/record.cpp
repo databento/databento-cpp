@@ -7,66 +7,85 @@
 #include "stream_op_helper.hpp"
 
 using databento::Record;
+using databento::RecordHeader;
+using databento::RType;
 
-std::size_t Record::Size() const { return Record::SizeOfType(record_->rtype); }
+std::size_t RecordHeader::Size() const {
+  return static_cast<size_t>(length) * 4;
+}
 
-std::size_t Record::SizeOfType(const std::uint8_t rtype) {
-  switch (rtype) {
-    case MboMsg::kTypeId: {
+std::size_t Record::Size() const { return record_->Size(); }
+
+std::size_t Record::SizeOfSchema(const Schema schema) {
+  switch (schema) {
+    case Schema::Mbo: {
       return sizeof(MboMsg);
     }
-    case TradeMsg::kTypeId: {
-      return sizeof(TradeMsg);
-    }
-    case Mbp1Msg::kTypeId: {
+    case Schema::Mbp1: {
       return sizeof(Mbp1Msg);
     }
-    case Mbp10Msg::kTypeId: {
+    case Schema::Mbp10: {
       return sizeof(Mbp10Msg);
     }
-    case OhlcvMsg::kTypeId: {
+    case Schema::Trades: {
+      return sizeof(TradeMsg);
+    }
+    case Schema::Tbbo: {
+      return sizeof(Mbp1Msg);
+    }
+    case Schema::Ohlcv1S:  // fallthrough
+    case Schema::Ohlcv1M:  // fallthrough
+    case Schema::Ohlcv1H:  // fallthrough
+    case Schema::Ohlcv1D: {
       return sizeof(OhlcvMsg);
     }
-    case InstrumentDefMsg::kTypeId: {
+    case Schema::Definition: {
       return sizeof(InstrumentDefMsg);
     }
     default: {
       throw InvalidArgumentError{
-          "Record::SizeOfType", "rtype",
-          "unknown value '" + std::to_string(rtype) + "'"};
+          "Record::SizeOfSchema", "schema",
+          "unknown value '" +
+              std::to_string(static_cast<std::uint16_t>(schema)) + "'"};
     }
   }
 }
 
-std::uint8_t Record::TypeIdFromSchema(const Schema schema) {
+RType Record::RTypeFromSchema(const Schema schema) {
   switch (schema) {
     case Schema::Mbo: {
-      return MboMsg::kTypeId;
+      return RType::Mbo;
     }
     case Schema::Mbp1: {
-      return Mbp1Msg::kTypeId;
+      return RType::Mbp1;
     }
     case Schema::Mbp10: {
-      return Mbp10Msg::kTypeId;
+      return RType::Mbp10;
     }
     case Schema::Trades: {
-      return TradeMsg::kTypeId;
+      return RType::Mbp0;
     }
     case Schema::Tbbo: {
-      return TbboMsg::kTypeId;
+      return RType::Mbp1;
     }
-    case Schema::Ohlcv1D:
-    case Schema::Ohlcv1H:
-    case Schema::Ohlcv1M:
     case Schema::Ohlcv1S: {
-      return OhlcvMsg::kTypeId;
+      return RType::Ohlcv1S;
+    }
+    case Schema::Ohlcv1M: {
+      return RType::Ohlcv1M;
+    }
+    case Schema::Ohlcv1H: {
+      return RType::Ohlcv1H;
+    }
+    case Schema::Ohlcv1D: {
+      return RType::Ohlcv1D;
     }
     case Schema::Definition: {
-      return InstrumentDefMsg::kTypeId;
+      return RType::InstrumentDef;
     }
     default: {
       throw InvalidArgumentError{
-          "Record::TypeIdFromSchema", "schema",
+          "Record::RTypeFromSchema", "schema",
           "unknown value '" +
               std::to_string(static_cast<std::uint16_t>(schema)) + "'"};
     }
@@ -346,6 +365,34 @@ std::ostream& operator<<(std::ostream& stream,
                 instr_def_msg.contract_multiplier_unit)
       .AddField("flow_schedule_type", instr_def_msg.flow_schedule_type)
       .AddField("tick_rule", instr_def_msg.tick_rule)
+      .Finish();
+}
+
+std::string ToString(const ErrorMsg& err_msg) { return MakeString(err_msg); }
+std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("ErrorMsg")
+      .Build()
+      .AddField("hd", err_msg.hd)
+      .AddField("err", err_msg.err)
+      .Finish();
+}
+
+std::string ToString(const SymbolMappingMsg& symbol_mapping_msg) {
+  return MakeString(symbol_mapping_msg);
+}
+std::ostream& operator<<(std::ostream& stream,
+                         const SymbolMappingMsg& symbol_mapping_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("SymbolMappingMsg")
+      .Build()
+      .AddField("hd", symbol_mapping_msg.hd)
+      .AddField("stype_in_symbol", symbol_mapping_msg.stype_in_symbol)
+      .AddField("stype_out_symbol", symbol_mapping_msg.stype_out_symbol)
+      .AddField("start_ts", symbol_mapping_msg.start_ts)
+      .AddField("end_ts", symbol_mapping_msg.end_ts)
       .Finish();
 }
 }  // namespace databento

@@ -67,8 +67,8 @@ const char* ToString(Schema schema) {
 
 const char* ToString(Encoding encoding) {
   switch (encoding) {
-    case Encoding::Dbz: {
-      return "dbz";
+    case Encoding::Dbn: {
+      return "dbn";
     }
     case Encoding::Csv: {
       return "csv";
@@ -221,6 +221,84 @@ const char* ToString(DatasetCondition condition) {
   }
 }
 
+const char* ToString(RType rtype) {
+  switch (rtype) {
+    case RType::Mbp0: {
+      return "Mbp0";
+    }
+    case RType::Mbp1: {
+      return "Mbp1";
+    }
+    case RType::Mbp10: {
+      return "Mbp10";
+    }
+    case RType::OhlcvDeprecated: {
+      return "OhlcvDeprecated";
+    }
+    case RType::Ohlcv1S: {
+      return "Ohlcv1S";
+    }
+    case RType::Ohlcv1M: {
+      return "Ohlcv1M";
+    }
+    case RType::Ohlcv1H: {
+      return "Ohlcv1H";
+    }
+    case RType::Ohlcv1D: {
+      return "Ohlcv1D";
+    }
+    case RType::InstrumentDef: {
+      return "InstrumentDef";
+    }
+    case RType::Mbo: {
+      return "Mbo";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(Action action) {
+  switch (action) {
+    case Action::Modify: {
+      return "Modify";
+    }
+    case Action::Trade: {
+      return "Trade";
+    }
+    case Action::Cancel: {
+      return "Cancel";
+    }
+    case Action::Add: {
+      return "Add";
+    }
+    case Action::Clear: {
+      return "Clear";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(Side side) {
+  switch (side) {
+    case Side::Ask: {
+      return "Ask";
+    }
+    case Side::Bid: {
+      return "Bid";
+    }
+    case Side::None: {
+      return "None";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
 std::ostream& operator<<(std::ostream& out, Schema schema) {
   out << ToString(schema);
   return out;
@@ -271,6 +349,21 @@ std::ostream& operator<<(std::ostream& out, DatasetCondition condition) {
   return out;
 }
 
+std::ostream& operator<<(std::ostream& out, RType rtype) {
+  out << ToString(rtype);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, Action action) {
+  out << ToString(action);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, Side side) {
+  out << ToString(side);
+  return out;
+}
+
 template <>
 Schema FromString(const std::string& str) {
   if (str == "mbo") {
@@ -315,8 +408,8 @@ Schema FromString(const std::string& str) {
 
 template <>
 Encoding FromString(const std::string& str) {
-  if (str == "dbz") {
-    return Encoding::Dbz;
+  if (str == "dbn") {
+    return Encoding::Dbn;
   }
   if (str == "csv") {
     return Encoding::Csv;

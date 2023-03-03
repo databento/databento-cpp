@@ -16,10 +16,6 @@ namespace detail {
 namespace test {
 class SharedChannelTests : public testing::Test {
  protected:
-  ScopedThread write_thread_;
-  SharedChannel target_;
-
- public:
   void Write(const std::vector<std::string>& inputs) {
     for (const auto& input : inputs) {
       target_.Write(reinterpret_cast<const std::uint8_t*>(input.data()),
@@ -28,6 +24,9 @@ class SharedChannelTests : public testing::Test {
     }
     target_.Finish();
   }
+
+  SharedChannel target_;
+  ScopedThread write_thread_;
 };
 
 TEST_F(SharedChannelTests, TestReadExact) {
@@ -41,7 +40,7 @@ TEST_F(SharedChannelTests, TestReadExact) {
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "sestream");
   target_.ReadExact(buffer.data(), 8);
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "testsend");
-  ASSERT_THROW(target_.ReadExact(buffer.data(), 1), DbzResponseError);
+  ASSERT_THROW(target_.ReadExact(buffer.data(), 1), DbnResponseError);
 }
 
 TEST_F(SharedChannelTests, TestReadExactAfterFinished) {

@@ -27,8 +27,9 @@ set(
   test_sources
   src/batch_tests.cpp
   src/datetime_tests.cpp
-  src/dbz_tests.cpp
-  src/dbz_parser_tests.cpp
+  src/dbn_tests.cpp
+  src/dbn_decoder_tests.cpp
+  src/flag_set_tests.cpp
   src/historical_tests.cpp
   src/live_tests.cpp
   src/live_blocking_tests.cpp

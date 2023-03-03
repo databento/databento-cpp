@@ -21,29 +21,36 @@ class LiveBlockingTests : public testing::Test {
   static constexpr auto kKey = "32-character-with-lots-of-filler";
 
   template <typename T>
-  static RecordHeader DummyHeader() {
-    return {sizeof(T) / 4, T::kTypeId, 1, 1, UnixNanos{}};
+  static RecordHeader DummyHeader(RType rtype) {
+    return {sizeof(T) / 4, rtype, 1, 1, UnixNanos{}};
   }
 };
 
 TEST_F(LiveBlockingTests, TestAuthentication) {
-  const mock::MockLsgServer mock_server{[](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-  }};
+  const mock::MockLsgServer mock_server{dataset::kXnasItch,
+                                        [](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                        }};
 
-  const LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
+  const LiveBlocking target{kKey, dataset::kXnasItch, "127.0.0.1",
+                            mock_server.Port(), false};
 }
 
 TEST_F(LiveBlockingTests, TestStart) {
-  const mock::MockLsgServer mock_server{[](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-    self.Start();
-  }};
+  constexpr auto kSchema = Schema::Mbo;
+  const mock::MockLsgServer mock_server{dataset::kGlbxMdp3,
+                                        [](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          self.Start(kSchema);
+                                        }};
 
-  LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
-  target.Start();
+  LiveBlocking target{kKey, dataset::kGlbxMdp3, "127.0.0.1", mock_server.Port(),
+                      false};
+  const auto metadata = target.Start();
+  ASSERT_EQ(metadata.schema, kSchema);
+  ASSERT_EQ(metadata.dataset, dataset::kGlbxMdp3);
 }
 
 TEST_F(LiveBlockingTests, TestSubscribe) {
@@ -52,28 +59,31 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
   constexpr auto kSchema = Schema::Ohlcv1M;
   constexpr auto kSType = SType::Native;
 
-  const mock::MockLsgServer mock_server{[&kSymbols](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-    self.Subscribe(kDataset, kSymbols, kSchema, kSType);
-  }};
+  const mock::MockLsgServer mock_server{
+      kDataset, [&kSymbols](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.Subscribe(kSymbols, kSchema, kSType);
+      }};
 
-  LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
-  target.Subscribe(kDataset, kSymbols, kSchema, kSType);
+  LiveBlocking target{kKey, kDataset, "127.0.0.1", mock_server.Port(), false};
+  target.Subscribe(kSymbols, kSchema, kSType);
 }
 
 TEST_F(LiveBlockingTests, TestNextRecord) {
   constexpr auto kRecCount = 12;
-  const OhlcvMsg kRec{DummyHeader<OhlcvMsg>(), 1, 2, 3, 4, 5};
-  const mock::MockLsgServer mock_server{[kRec](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-    for (size_t i = 0; i < kRecCount; ++i) {
-      self.SendRecord(kRec);
-    }
-  }};
+  const OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, [kRec](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        for (size_t i = 0; i < kRecCount; ++i) {
+          self.SendRecord(kRec);
+        }
+      }};
 
-  LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
+  LiveBlocking target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
+                      false};
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
     ASSERT_TRUE(rec.Holds<OhlcvMsg>()) << "Failed on call " << i;
@@ -83,11 +93,11 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
 
 TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   constexpr std::chrono::milliseconds kTimeout{50};
-  const Mbp1Msg kRec{DummyHeader<Mbp1Msg>(),
+  const Mbp1Msg kRec{DummyHeader<Mbp1Msg>(RType::Mbp1),
                      1,
                      2,
-                     'A',
-                     'B',
+                     Action::Add,
+                     Side::Bid,
                      {},
                      1,
                      UnixNanos{},
@@ -101,26 +111,28 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   bool received_first_msg = false;
   std::mutex receive_mutex;
   std::condition_variable receive_cv;
-  const mock::MockLsgServer mock_server{[&](mock::MockLsgServer& self) {
-    self.Accept();
-    self.Authenticate();
-    self.SendRecord(kRec);
-    {
-      // notify client the first record's been sent
-      std::lock_guard<std::mutex> lock{send_mutex};
-      sent_first_msg = true;
-      send_cv.notify_one();
-    }
-    {
-      // wait for client to read first record
-      std::unique_lock<std::mutex> lock{receive_mutex};
-      receive_cv.wait(lock,
-                      [&received_first_msg] { return received_first_msg; });
-    }
-    self.SendRecord(kRec);
-  }};
+  const mock::MockLsgServer mock_server{
+      dataset::kGlbxMdp3, [&](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.SendRecord(kRec);
+        {
+          // notify client the first record's been sent
+          const std::lock_guard<std::mutex> lock{send_mutex};
+          sent_first_msg = true;
+          send_cv.notify_one();
+        }
+        {
+          // wait for client to read first record
+          std::unique_lock<std::mutex> lock{receive_mutex};
+          receive_cv.wait(lock,
+                          [&received_first_msg] { return received_first_msg; });
+        }
+        self.SendRecord(kRec);
+      }};
 
-  LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
+  LiveBlocking target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
+                      false};
   {
     // wait for server to send first record to avoid flaky timeouts
     std::unique_lock<std::mutex> lock{send_mutex};
@@ -134,7 +146,7 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   EXPECT_EQ(rec, nullptr) << "Did not timeout when expected";
   {
     // notify server the timeout occurred
-    std::lock_guard<std::mutex> lock{receive_mutex};
+    const std::lock_guard<std::mutex> lock{receive_mutex};
     received_first_msg = true;
     receive_cv.notify_one();
   }
@@ -145,14 +157,22 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
 }
 
 TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
-  const MboMsg kRec{
-      DummyHeader<MboMsg>(), 1,  2, 3, {}, 4, 'A', 'B', UnixNanos{},
-      TimeDeltaNanos{},      100};
+  const MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
+                    1,
+                    2,
+                    3,
+                    {},
+                    4,
+                    Action::Add,
+                    Side::Bid,
+                    UnixNanos{},
+                    TimeDeltaNanos{},
+                    100};
 
   std::mutex mutex;
   std::condition_variable cv;
   const mock::MockLsgServer mock_server{
-      [kRec, &mutex, &cv](mock::MockLsgServer& self) {
+      dataset::kGlbxMdp3, [kRec, &mutex, &cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.SendRecord(kRec);
@@ -160,14 +180,15 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
         self.SplitSendRecord(kRec, mutex, cv);
       }};
 
-  LiveBlocking target{kKey, "127.0.0.1", mock_server.Port(), false};
+  LiveBlocking target{kKey, dataset::kGlbxMdp3, "127.0.0.1", mock_server.Port(),
+                      false};
   auto rec = target.NextRecord();
   ASSERT_TRUE(rec.Holds<MboMsg>());
   EXPECT_EQ(rec.Get<MboMsg>(), kRec);
   // partial read and timeout occurs here
   ASSERT_EQ(target.NextRecord(std::chrono::milliseconds{10}), nullptr);
   {
-    std::lock_guard<std::mutex> lock{mutex};
+    const std::lock_guard<std::mutex> lock{mutex};
     // notify server to send remaining part of record
     cv.notify_one();
   }

@@ -7,10 +7,11 @@
 #include <cstdlib>
 #include <stdexcept>  // logic_error
 #include <thread>
+#include <utility>  // move
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
-#include "databento/dbz.hpp"
+#include "databento/dbn.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception
 #include "databento/file_bento.hpp"
@@ -40,11 +41,9 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       {"cost", 11.9089},
       {"dataset", "XNAS.ITCH"},
       {"delivery", "download"},
-      {"encoding", "dbz"},
+      {"encoding", "dbn"},
       {"end", "2022-07-03 00:00:00+00:00"},
       {"id", "GLBX-20221031-L3RVE95CV5"},
-      {"is_example", false},
-      {"is_full_universe", false},
       {"limit", nullptr},
       {"package_size", 2026761},
       {"packaging", "none"},
@@ -83,7 +82,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       dataset::kXnasItch, "2022-05-17", "2022-07-03", {"CLH3"}, Schema::Trades);
   EXPECT_EQ(res.symbols, std::vector<std::string>{"CLH3"});
   EXPECT_NEAR(res.cost, 11.908, 1e-2);
-  EXPECT_EQ(res.encoding, Encoding::Dbz);
+  EXPECT_EQ(res.encoding, Encoding::Dbn);
   // null handling
   EXPECT_EQ(res.split_size, 0);
 }
@@ -97,11 +96,9 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"cost", 11.9089},
        {"dataset", "GLBX.MDP3"},
        {"delivery", "download"},
-       {"encoding", "dbz"},
+       {"encoding", "dbn"},
        {"end", "2022-09-27 00:00:00+00:00"},
        {"id", "CKXF"},
-       {"is_example", false},
-       {"is_full_universe", false},
        {"limit", nullptr},
        {"package_size", 2026761},
        {"packaging", "none"},
@@ -131,11 +128,9 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"cost", 11.9089},
        {"dataset", "GLBX.MDP3"},
        {"delivery", "download"},
-       {"encoding", "dbz"},
+       {"encoding", "dbn"},
        {"end", "2022-09-27 00:00:00+00:00"},
        {"id", "8UPL"},
-       {"is_example", false},
-       {"is_full_universe", false},
        {"limit", nullptr},
        {"package_size", 2026761},
        {"packaging", "none"},
@@ -168,6 +163,93 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
   const std::vector<std::string> symbols{"GEZ2", "GEH3"};
   EXPECT_EQ(res[1].symbols, symbols);
   EXPECT_EQ(res[0].ts_expiration, "2022-11-30 15:27:10.148788+00:00");
+}
+
+TEST_F(HistoricalTests, TestBatchListFiles) {
+  const auto kJobId = "job123";
+  const nlohmann::json kResp{
+      {{"filename", "test.json"},
+       {"size", 2148},
+       {"hash", "9e7fe0b36"},
+       {"urls",
+        {{"https", "https://api.databento.com/v0/job_id/test.json"},
+         {"ftp", "ftp://ftp.databento.com/job_id/test.json"}}}}};
+  mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}}, kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.BatchListFiles(kJobId);
+  ASSERT_EQ(res.size(), 1);
+  const auto& file_desc = res[0];
+  ASSERT_EQ(file_desc.filename, "test.json");
+  ASSERT_EQ(file_desc.size, 2148);
+  ASSERT_EQ(file_desc.hash, "9e7fe0b36");
+  ASSERT_EQ(file_desc.https_url,
+            "https://api.databento.com/v0/job_id/test.json");
+  ASSERT_EQ(file_desc.ftp_url, "ftp://ftp.databento.com/job_id/test.json");
+}
+
+static const nlohmann::json kListFilesResp{
+    {{"filename", "test.dbn"},
+     {"size", {}},
+     {"hash", {}},
+     {"urls",
+      {{"https", "https://api.databento.com/v0/job_id/test.dbn"},
+       {"ftp", "ftp://fpt.databento.com/job_id/test.dbn"}}}},
+    {{"filename", "test_metadata.json"},
+     {"size", {}},
+     {"hash", {}},
+     {"urls",
+      {{"https", "https://api.databento.com/v0/job_id/test_metadata.json"},
+       {"ftp", "ftp://ftp.databento.com/job_id/test_metadata.json"}}}}};
+
+TEST_F(HistoricalTests, TestBatchDownloadAll) {
+  const auto kJobId = "job123";
+  const TempFile temp_metadata_file{TEST_BUILD_DIR
+                                    "/job123/test_metadata.json"};
+  const TempFile temp_dbn_file{TEST_BUILD_DIR "/job123/test.dbn"};
+  mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
+                           kListFilesResp);
+  mock_server_.MockStreamDbn("/v0/job_id/test.dbn", {},
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbn");
+  mock_server_.MockGetJson("/v0/job_id/test_metadata.json", {{"key", "value"}});
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  ASSERT_FALSE(temp_metadata_file.Exists());
+  ASSERT_FALSE(temp_dbn_file.Exists());
+  target.BatchDownload(TEST_BUILD_DIR, kJobId);
+  EXPECT_TRUE(temp_metadata_file.Exists());
+  EXPECT_TRUE(temp_dbn_file.Exists());
+}
+
+TEST_F(HistoricalTests, TestBatchDownloadSingle) {
+  const auto kJobId = "654";
+  const TempFile temp_metadata_file{TEST_BUILD_DIR "/654/test_metadata.json"};
+  mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
+                           kListFilesResp);
+  mock_server_.MockGetJson("/v0/job_id/test_metadata.json", {{"key", "value"}});
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  ASSERT_FALSE(temp_metadata_file.Exists());
+  target.BatchDownload(TEST_BUILD_DIR, kJobId, "test_metadata.json");
+  EXPECT_TRUE(temp_metadata_file.Exists());
+}
+
+TEST_F(HistoricalTests, TestBatchDownloadSingleInvalidFile) {
+  const auto kJobId = "654";
+  mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
+                           kListFilesResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  ASSERT_THROW(target.BatchDownload(TEST_BUILD_DIR, kJobId, "test_metadata.js"),
+               InvalidArgumentError);
 }
 
 TEST_F(HistoricalTests, TestMetadataListPublishers) {
@@ -260,45 +342,45 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Full) {
 
 TEST_F(HistoricalTests, TestMetadataListFields) {
   const nlohmann::json kResp{{dataset::kGlbxMdp3,
-                              {{"dbz",
+                              {{"dbn",
                                 {{"trades",
                                   {{"length", "uint8_t"},
                                    {"rtype", "uint8_t"},
                                    {"dataset_id", "uint16_t"}}}}}}}};
   mock_server_.MockGetJson("/v0/metadata.list_fields",
                            {{"dataset", dataset::kGlbxMdp3},
-                            {"encoding", "dbz"},
+                            {"encoding", "dbn"},
                             {"schema", "trades"}},
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListFields(dataset::kGlbxMdp3, Encoding::Dbz,
+  const auto res = target.MetadataListFields(dataset::kGlbxMdp3, Encoding::Dbn,
                                              Schema::Trades);
   const FieldsByDatasetEncodingAndSchema kExp{
       {dataset::kGlbxMdp3,
-       {{Encoding::Dbz,
+       {{Encoding::Dbn,
          {{Schema::Trades,
            {{"length", "uint8_t"},
             {"rtype", "uint8_t"},
             {"dataset_id", "uint16_t"}}}}}}}};
   const auto& tradesRes =
-      res.at(dataset::kGlbxMdp3).at(Encoding::Dbz).at(Schema::Trades);
+      res.at(dataset::kGlbxMdp3).at(Encoding::Dbn).at(Schema::Trades);
   EXPECT_EQ(tradesRes.at("length"), "uint8_t");
   EXPECT_EQ(tradesRes.at("rtype"), "uint8_t");
   EXPECT_EQ(tradesRes.at("dataset_id"), "uint16_t");
 }
 
 TEST_F(HistoricalTests, TestMetadataListEncodings) {
-  const nlohmann::json kResp{"dbz", "csv", "json"};
+  const nlohmann::json kResp{"dbn", "csv", "json"};
   mock_server_.MockGetJson("/v0/metadata.list_encodings", kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListEncodings();
-  const std::vector<Encoding> kExp{Encoding::Dbz, Encoding::Csv,
+  const std::vector<Encoding> kExp{Encoding::Dbn, Encoding::Csv,
                                    Encoding::Json};
   EXPECT_EQ(res, kExp);
 }
@@ -324,7 +406,9 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
         {{"date", "2022-11-09"}, {"condition", "bad"}},
         {{"date", "2022-11-10"}, {"condition", "available"}}}},
       {"adjusted_start_date", "2022-11-07"},
-      {"adjusted_end_date", "2022-11-10"}};
+      {"adjusted_end_date", "2022-11-10"},
+      {"available_start_date", "2017-05-21"},
+      {"available_end_date", "2023-03-01"}};
   mock_server_.MockGetJson("/v0/metadata.get_dataset_condition",
                            {{"dataset", dataset::kXnasItch},
                             {"start_date", "2022-11-06"},
@@ -348,6 +432,8 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
   EXPECT_EQ(res.details[3].condition, DatasetCondition::Available);
   EXPECT_EQ(res.adjusted_start_date, "2022-11-07");
   EXPECT_EQ(res.adjusted_end_date, "2022-11-10");
+  EXPECT_EQ(res.available_start_date, "2017-05-21");
+  EXPECT_EQ(res.available_end_date, "2023-03-01");
 }
 
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {
@@ -560,25 +646,25 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
   EXPECT_EQ(esm2_mapping.symbol, "3403");
 }
 
-TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
-  mock_server_.MockStreamDbz("/v0/timeseries.stream",
+TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
+  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
                              {{"dataset", dataset::kGlbxMdp3},
                               {"symbols", "ESH1"},
                               {"schema", "mbo"},
                               {"start", "1609160400000711344"},
                               {"end", "1609160800000711344"},
-                              {"encoding", "dbz"},
+                              {"encoding", "dbn"},
                               {"stype_in", "native"},
                               {"stype_out", "product_id"},
                               {"limit", "2"}},
-                             TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::unique_ptr<Metadata> metadata_ptr;
   std::vector<MboMsg> mbo_records;
-  target.TimeseriesStream(
+  target.TimeseriesGetRange(
       dataset::kGlbxMdp3,
       UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
@@ -598,67 +684,67 @@ TEST_F(HistoricalTests, TestTimeseriesStream_Basic) {
   EXPECT_EQ(mbo_records.size(), 2);
 }
 
-TEST_F(HistoricalTests, TestTimeseriesStream_NoMetadataCallback) {
-  mock_server_.MockStreamDbz("/v0/timeseries.stream",
+TEST_F(HistoricalTests, TestTimeseriesGetRange_NoMetadataCallback) {
+  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
                              {{"dataset", dataset::kGlbxMdp3},
                               {"start", "2022-10-21T13:30"},
                               {"end", "2022-10-21T20:00"},
                               {"symbols", "CYZ2"},
                               {"schema", "tbbo"},
-                              {"encoding", "dbz"},
+                              {"encoding", "dbn"},
                               {"stype_in", "native"},
                               {"stype_out", "product_id"}},
-                             TEST_BUILD_DIR "/data/test_data.tbbo.dbz");
+                             TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::vector<TbboMsg> mbo_records;
-  target.TimeseriesStream(dataset::kGlbxMdp3, "2022-10-21T13:30",
-                          "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
-                          [&mbo_records](const Record& record) {
-                            mbo_records.emplace_back(record.Get<TbboMsg>());
-                            return KeepGoing::Continue;
-                          });
+  target.TimeseriesGetRange(dataset::kGlbxMdp3, "2022-10-21T13:30",
+                            "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
+                            [&mbo_records](const Record& record) {
+                              mbo_records.emplace_back(record.Get<TbboMsg>());
+                              return KeepGoing::Continue;
+                            });
   EXPECT_EQ(mbo_records.size(), 2);
 }
 
 // should get helpful message if there's a problem with the request
-TEST_F(HistoricalTests, TestTimeseriesStream_BadRequest) {
+TEST_F(HistoricalTests, TestTimeseriesGetRange_BadRequest) {
   const nlohmann::json resp{
       {"detail", "Authorization failed: illegal chars in username."}};
-  mock_server_.MockBadRequest("/v0/timeseries.stream", resp);
+  mock_server_.MockBadRequest("/v0/timeseries.get_range", resp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   try {
-    target.TimeseriesStream(
+    target.TimeseriesGetRange(
         dataset::kGlbxMdp3,
         UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
         UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"E5"},
         Schema::Mbo, SType::Smart, SType::ProductId, 2, [](Metadata&&) {},
         [](const Record&) { return KeepGoing::Continue; });
-    FAIL() << "Call to TimeseriesStream was supposed to throw";
+    FAIL() << "Call to TimeseriesGetRange was supposed to throw";
   } catch (const std::exception& exc) {
     ASSERT_STREQ(
         exc.what(),
         "Received an error response from request to "
-        "/v0/timeseries.stream with status 400 and body "
+        "/v0/timeseries.get_range with status 400 and body "
         "'{\"detail\":\"Authorization failed: illegal chars in username.\"}'"
 
     );
   }
 }
 
-TEST_F(HistoricalTests, TestTimeseriesStream_CallbackException) {
-  mock_server_.MockStreamDbz("/v0/timeseries.stream", {},
-                             TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+TEST_F(HistoricalTests, TestTimeseriesGetRange_CallbackException) {
+  mock_server_.MockStreamDbn("/v0/timeseries.get_range", {},
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  ASSERT_THROW(target.TimeseriesStream(
+  ASSERT_THROW(target.TimeseriesGetRange(
                    dataset::kGlbxMdp3,
                    UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
                    UnixNanos{std::chrono::nanoseconds{1609160800000711344}},
@@ -668,15 +754,15 @@ TEST_F(HistoricalTests, TestTimeseriesStream_CallbackException) {
                std::logic_error);
 }
 
-TEST_F(HistoricalTests, TestTimeseriesStreamCancellation) {
-  mock_server_.MockStreamDbz("/v0/timeseries.stream", {},
-                             TEST_BUILD_DIR "/data/test_data.mbo.dbz");
+TEST_F(HistoricalTests, TestTimeseriesGetRangeCancellation) {
+  mock_server_.MockStreamDbn("/v0/timeseries.get_range", {},
+                             TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::uint32_t call_count = 0;
-  target.TimeseriesStream(
+  target.TimeseriesGetRange(
       dataset::kGlbxMdp3,
       UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
@@ -690,27 +776,27 @@ TEST_F(HistoricalTests, TestTimeseriesStreamCancellation) {
   ASSERT_EQ(call_count, 1);
 }
 
-TEST_F(HistoricalTests, TestTimeseriesStreamToFile) {
-  mock_server_.MockStreamDbz("/v0/timeseries.stream",
+TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
+  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
                              {{"dataset", dataset::kGlbxMdp3},
                               {"start", "2022-10-21T13:30"},
                               {"end", "2022-10-21T20:00"},
                               {"symbols", "CYZ2"},
                               {"schema", "tbbo"},
-                              {"encoding", "dbz"},
+                              {"encoding", "dbn"},
                               {"stype_in", "native"},
                               {"stype_out", "product_id"}},
-                             TEST_BUILD_DIR "/data/test_data.tbbo.dbz");
+                             TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const TempFile temp_file{testing::TempDir() + "/" + __FUNCTION__};
-  target.TimeseriesStreamToFile(dataset::kGlbxMdp3, "2022-10-21T13:30",
-                                "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
-                                temp_file.Path());
+  target.TimeseriesGetRangeToFile(dataset::kGlbxMdp3, "2022-10-21T13:30",
+                                  "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
+                                  temp_file.Path());
   // running it a second time should overwrite previous data
-  FileBento bento = target.TimeseriesStreamToFile(
+  FileBento bento = target.TimeseriesGetRangeToFile(
       dataset::kGlbxMdp3, "2022-10-21T13:30", "2022-10-21T20:00", {"CYZ2"},
       Schema::Tbbo, temp_file.Path());
   std::size_t counter{};

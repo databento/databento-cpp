@@ -60,13 +60,13 @@ void MockHttpServer::MockPostJson(
   });
 }
 
-void MockHttpServer::MockStreamDbz(
+void MockHttpServer::MockStreamDbn(
     const std::string& path, const std::map<std::string, std::string>& params,
-    const std::string& dbz_path) {
+    const std::string& dbn_path) {
   constexpr std::size_t kChunkSize = 32;
 
   // Read contents into buffer
-  std::ifstream input_file{dbz_path, std::ios::binary | std::ios::ate};
+  std::ifstream input_file{dbn_path, std::ios::binary | std::ios::ate};
   const auto size = static_cast<std::size_t>(input_file.tellg());
   input_file.seekg(0, std::ios::beg);
   std::vector<char> buffer(size);
@@ -81,7 +81,7 @@ void MockHttpServer::MockStreamDbz(
     }
     CheckParams(params, req);
     resp.status = 200;
-    resp.set_header("Content-Disposition", "attachment; filename=test.dbz");
+    resp.set_header("Content-Disposition", "attachment; filename=test.dbn.zst");
     resp.set_content_provider(
         "application/octet-stream",
         [buffer, kChunkSize](const std::size_t offset,

@@ -4,8 +4,17 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.3.0 LANGUAGES CXX)
+project("databento" VERSION 0.4.0 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
+
+#
+# Main project check
+#
+
+set(IS_MAIN_PROJECT OFF)
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  set(IS_MAIN_PROJECT ON)
+endif()
 
 #
 # Set project options
@@ -18,8 +27,13 @@ include(cmake/Utils.cmake)
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
 
 if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "Defaulting to Debug build")
-  set(CMAKE_BUILD_TYPE "Debug")
+  if(IS_MAIN_PROJECT)
+    message(STATUS "Defaulting to Debug build")
+    set(CMAKE_BUILD_TYPE "Debug")
+  else()
+    message(STATUS "Defaulting to RelWithDebInfo build")
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+  endif()
 endif()
 
 #
@@ -37,7 +51,7 @@ endif()
 include(TestBigEndian)
 test_big_endian(IS_BIG_ENDIAN)
 if(IS_BIG_ENDIAN)
-  message(FATAL_ERROR "Big-endian platforms aren't supported because DBZ parsing assumes the data is little-endian and in native byte order.\n")
+  message(FATAL_ERROR "Big-endian platforms aren't supported because DBN parsing assumes the data is little-endian and in native byte order.\n")
 endif()
 
 #
@@ -203,12 +217,15 @@ add_clang_format_target()
 # Install library for easy downstream inclusion
 #
 
+set(targets ${PROJECT_NAME})
+if(NOT ${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_JSON)
+  list(APPEND targets nlohmann_json)
+endif()
+
 include(GNUInstallDirs)
 install(
   TARGETS
-    ${PROJECT_NAME}
-    # public dependency
-    nlohmann_json
+    ${targets}
   EXPORT
     ${PROJECT_NAME}Targets
   LIBRARY DESTINATION

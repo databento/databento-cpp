@@ -69,7 +69,7 @@ TEST(StreamOpHelperTests, TestWithVector) {
 }
 
 TEST(StreamOpHelperTests, TestIndent) {
-  const std::vector<Encoding> test_data{Encoding::Csv, Encoding::Dbz,
+  const std::vector<Encoding> test_data{Encoding::Csv, Encoding::Dbn,
                                         Encoding::Json};
 
   std::ostringstream stream;
@@ -81,7 +81,7 @@ TEST(StreamOpHelperTests, TestIndent) {
   target.Finish();
   ASSERT_EQ(stream.str(), R"({
         csv,
-        dbz,
+        dbn,
         json
     })");
 }
