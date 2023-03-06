@@ -92,10 +92,10 @@ The library has the following dependencies:
 - [OpenSSL](https://www.openssl.org/)
 - [Libcrypto](https://www.openssl.org/docs/man3.0/man7/crypto.html)
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
-- [nlohmann_json (header-only)](https://github.com/nlohmann/json)
+- [nlohmann\_json (header-only)](https://github.com/nlohmann/json)
 - [cpp-httplib (header-only)](https://github.com/yhirose/cpp-httplib)
 
-By default, cpp-httplib and nlohmann_json are downloaded by CMake as part of the build process.
+By default, cpp-httplib and nlohmann\_json are downloaded by CMake as part of the build process.
 If you would like to use a local version of these libraries, enable the CMake flag
 `DATABENTO_ENABLE_EXTERNAL_HTTPLIB` or `DATABENTO_ENABLE_EXTERNAL_JSON`.
 

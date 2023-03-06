@@ -721,46 +721,43 @@ double Historical::MetadataListUnitPrices(const std::string& dataset,
   return json;
 }
 
-databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
+databento::DatasetConditionInfo Historical::MetadataListDatasetConditions(
     const std::string& dataset) {
-  return MetadataGetDatasetCondition(httplib::Params{{"dataset", dataset}});
+  return MetadataListDatasetConditions(httplib::Params{{"dataset", dataset}});
 }
-databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
+
+databento::DatasetConditionInfo Historical::MetadataListDatasetConditions(
     const std::string& dataset, const std::string& start_date,
     const std::string& end_date) {
-  return MetadataGetDatasetCondition(httplib::Params{{"dataset", dataset},
-                                                     {"start_date", start_date},
-                                                     {"end_date", end_date}});
+  return MetadataListDatasetConditions(
+      httplib::Params{{"dataset", dataset},
+                      {"start_date", start_date},
+                      {"end_date", end_date}});
 }
-databento::DatasetConditionInfo Historical::MetadataGetDatasetCondition(
+
+databento::DatasetConditionInfo Historical::MetadataListDatasetConditions(
     const httplib::Params& params) {
   static const std::string kEndpoint =
-      "Historical::MetadataGetDatasetCondition";
+      "Historical::MetadataListDatasetConditions";
   static const std::string kPath =
-      ::BuildMetadataPath(".get_dataset_condition");
-
+      ::BuildMetadataPath(".list_dataset_conditions");
   const nlohmann::json json = client_.GetJson(kPath, params);
-  if (!json.is_object()) {
-    throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
-  }
-  const auto& details_json = CheckedAt(kEndpoint, json, "details");
-  if (!details_json.is_array()) {
-    throw JsonResponseError::TypeMismatch(kEndpoint, "details array", json);
+  if (!json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
   std::vector<DatasetConditionDetail> details;
-  details.reserve(details_json.size());
-  for (const auto& detail_json : details_json.items()) {
-    details.emplace_back(DatasetConditionDetail{
-        ParseAt<std::string>(kEndpoint, detail_json.value(), "date"),
-        FromCheckedAtString<DatasetCondition>(kEndpoint, detail_json.value(),
-                                              "condition")});
+  details.reserve(json.size());
+  for (const auto& detail_json : json) {
+    if (!detail_json.is_object()) {
+      throw JsonResponseError::TypeMismatch(kEndpoint, "object", detail_json);
+    }
+    const std::string date =
+        ParseAt<std::string>(kEndpoint, detail_json, "date");
+    const DatasetCondition condition = FromCheckedAtString<DatasetCondition>(
+        kEndpoint, detail_json, "condition");
+    details.emplace_back(DatasetConditionDetail{date, condition});
   }
-  return {FromCheckedAtString<DatasetCondition>(kEndpoint, json, "condition"),
-          std::move(details),
-          ParseAt<std::string>(kEndpoint, json, "adjusted_start_date"),
-          ParseAt<std::string>(kEndpoint, json, "adjusted_end_date"),
-          ParseAt<std::string>(kEndpoint, json, "available_start_date"),
-          ParseAt<std::string>(kEndpoint, json, "available_end_date")};
+  return DatasetConditionInfo{std::move(details)};
 }
 
 static const std::string kMetadataGetRecordCountEndpoint =

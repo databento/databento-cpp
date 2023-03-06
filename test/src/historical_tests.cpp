@@ -397,19 +397,13 @@ TEST_F(HistoricalTests, TestMetadataListCompressions) {
   EXPECT_EQ(res, kExp);
 }
 
-TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
+TEST_F(HistoricalTests, TestMetadataListDatasetConditions) {
   const nlohmann::json kResp{
-      {"condition", "bad"},
-      {"details",
-       {{{"date", "2022-11-07"}, {"condition", "available"}},
-        {{"date", "2022-11-08"}, {"condition", "bad"}},
-        {{"date", "2022-11-09"}, {"condition", "bad"}},
-        {{"date", "2022-11-10"}, {"condition", "available"}}}},
-      {"adjusted_start_date", "2022-11-07"},
-      {"adjusted_end_date", "2022-11-10"},
-      {"available_start_date", "2017-05-21"},
-      {"available_end_date", "2023-03-01"}};
-  mock_server_.MockGetJson("/v0/metadata.get_dataset_condition",
+      {{"date", "2022-11-07"}, {"condition", "available"}},
+      {{"date", "2022-11-08"}, {"condition", "bad"}},
+      {{"date", "2022-11-09"}, {"condition", "bad"}},
+      {{"date", "2022-11-10"}, {"condition", "available"}}};
+  mock_server_.MockGetJson("/v0/metadata.list_dataset_conditions",
                            {{"dataset", dataset::kXnasItch},
                             {"start_date", "2022-11-06"},
                             {"end_date", "2022-11-10"}},
@@ -418,22 +412,17 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataGetDatasetCondition(
+  const auto res = target.MetadataListDatasetConditions(
       dataset::kXnasItch, "2022-11-06", "2022-11-10");
-  EXPECT_EQ(res.condition, DatasetCondition::Bad);
   ASSERT_EQ(res.details.size(), 4);
-  EXPECT_EQ(res.details[0].date, res.adjusted_start_date);
+  EXPECT_EQ(res.details[0].date, "2022-11-07");
   EXPECT_EQ(res.details[1].date, "2022-11-08");
   EXPECT_EQ(res.details[2].date, "2022-11-09");
-  EXPECT_EQ(res.details[3].date, res.adjusted_end_date);
+  EXPECT_EQ(res.details[3].date, "2022-11-10");
   EXPECT_EQ(res.details[0].condition, DatasetCondition::Available);
   EXPECT_EQ(res.details[1].condition, DatasetCondition::Bad);
   EXPECT_EQ(res.details[2].condition, DatasetCondition::Bad);
   EXPECT_EQ(res.details[3].condition, DatasetCondition::Available);
-  EXPECT_EQ(res.adjusted_start_date, "2022-11-07");
-  EXPECT_EQ(res.adjusted_end_date, "2022-11-10");
-  EXPECT_EQ(res.available_start_date, "2017-05-21");
-  EXPECT_EQ(res.available_end_date, "2023-03-01");
 }
 
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {

@@ -24,14 +24,8 @@ struct DatasetConditionDetail {
 };
 
 struct DatasetConditionInfo {
-  // Overall condition for the date range.
-  DatasetCondition condition;
-  // The dataset condition by date.
+  // The dataset condition by date
   std::vector<DatasetConditionDetail> details;
-  std::string adjusted_start_date;
-  std::string adjusted_end_date;
-  std::string available_start_date;
-  std::string available_end_date;
 };
 
 std::string ToString(const DatasetConditionDetail& condition_detail);

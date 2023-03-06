@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.0 - TBD
+- Renamed `metadata.get_dataset_condition` to `metadata.list_dataset_conditions`
+
 ## 0.4.0 - 2023-03-02
 - Renamed DBZ to DBN
   - Renamed `DbzParser` to `DbnDecoder`
