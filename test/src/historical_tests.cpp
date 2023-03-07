@@ -412,17 +412,17 @@ TEST_F(HistoricalTests, TestMetadataListDatasetConditions) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListDatasetConditions(
+  const auto conditions = target.MetadataListDatasetConditions(
       dataset::kXnasItch, "2022-11-06", "2022-11-10");
-  ASSERT_EQ(res.details.size(), 4);
-  EXPECT_EQ(res.details[0].date, "2022-11-07");
-  EXPECT_EQ(res.details[1].date, "2022-11-08");
-  EXPECT_EQ(res.details[2].date, "2022-11-09");
-  EXPECT_EQ(res.details[3].date, "2022-11-10");
-  EXPECT_EQ(res.details[0].condition, DatasetCondition::Available);
-  EXPECT_EQ(res.details[1].condition, DatasetCondition::Bad);
-  EXPECT_EQ(res.details[2].condition, DatasetCondition::Bad);
-  EXPECT_EQ(res.details[3].condition, DatasetCondition::Available);
+  ASSERT_EQ(conditions.size(), 4);
+  EXPECT_EQ(conditions[0].date, "2022-11-07");
+  EXPECT_EQ(conditions[1].date, "2022-11-08");
+  EXPECT_EQ(conditions[2].date, "2022-11-09");
+  EXPECT_EQ(conditions[3].date, "2022-11-10");
+  EXPECT_EQ(conditions[0].condition, DatasetCondition::Available);
+  EXPECT_EQ(conditions[1].condition, DatasetCondition::Bad);
+  EXPECT_EQ(conditions[2].condition, DatasetCondition::Bad);
+  EXPECT_EQ(conditions[3].condition, DatasetCondition::Available);
 }
 
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {

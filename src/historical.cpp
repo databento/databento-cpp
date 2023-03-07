@@ -721,22 +721,23 @@ double Historical::MetadataListUnitPrices(const std::string& dataset,
   return json;
 }
 
-databento::DatasetConditionInfo Historical::MetadataListDatasetConditions(
-    const std::string& dataset) {
+std::vector<databento::DatasetConditionDetail>
+Historical::MetadataListDatasetConditions(const std::string& dataset) {
   return MetadataListDatasetConditions(httplib::Params{{"dataset", dataset}});
 }
 
-databento::DatasetConditionInfo Historical::MetadataListDatasetConditions(
-    const std::string& dataset, const std::string& start_date,
-    const std::string& end_date) {
+std::vector<databento::DatasetConditionDetail>
+Historical::MetadataListDatasetConditions(const std::string& dataset,
+                                          const std::string& start_date,
+                                          const std::string& end_date) {
   return MetadataListDatasetConditions(
       httplib::Params{{"dataset", dataset},
                       {"start_date", start_date},
                       {"end_date", end_date}});
 }
 
-databento::DatasetConditionInfo Historical::MetadataListDatasetConditions(
-    const httplib::Params& params) {
+std::vector<databento::DatasetConditionDetail>
+Historical::MetadataListDatasetConditions(const httplib::Params& params) {
   static const std::string kEndpoint =
       "Historical::MetadataListDatasetConditions";
   static const std::string kPath =
@@ -757,7 +758,7 @@ databento::DatasetConditionInfo Historical::MetadataListDatasetConditions(
         kEndpoint, detail_json, "condition");
     details.emplace_back(DatasetConditionDetail{date, condition});
   }
-  return DatasetConditionInfo{std::move(details)};
+  return details;
 }
 
 static const std::string kMetadataGetRecordCountEndpoint =

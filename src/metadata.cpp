@@ -18,26 +18,4 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("condition", condition_detail.condition)
       .Finish();
 }
-
-std::string ToString(const DatasetConditionInfo& condition) {
-  return MakeString(condition);
-}
-std::ostream& operator<<(std::ostream& stream,
-                         const DatasetConditionInfo& condition) {
-  std::ostringstream details_stream;
-  auto details_helper = StreamOpBuilder{details_stream}
-                            .SetSpacer("\n    ")
-                            .SetIndent("    ")
-                            .Build();
-  for (const auto& detail : condition.details) {
-    details_helper.AddItem(detail);
-  }
-  return StreamOpBuilder{stream}
-      .SetSpacer("\n    ")
-      .SetTypeName("DatasetConditionInfo")
-      .Build()
-      .AddField("details",
-                static_cast<std::ostringstream&>(details_helper.Finish()))
-      .Finish();
-}
 }  // namespace databento

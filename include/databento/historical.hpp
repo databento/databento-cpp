@@ -11,7 +11,7 @@
 #include "databento/detail/http_client.hpp"  // HttpClient
 #include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Packaging, Schema, SType
 #include "databento/file_bento.hpp"
-#include "databento/metadata.hpp"  // DatasetConditionInfo, FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema, PriceBySchema
+#include "databento/metadata.hpp"  // DatasetConditionDetail, FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema, PriceBySchema
 #include "databento/symbology.hpp"  // SymbologyResolution
 #include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
 
@@ -93,9 +93,9 @@ class Historical {
                                          Schema schema);
   double MetadataListUnitPrices(const std::string& dataset, FeedMode mode,
                                 Schema schema);
-  DatasetConditionInfo MetadataListDatasetConditions(
+  std::vector<DatasetConditionDetail> MetadataListDatasetConditions(
       const std::string& dataset);
-  DatasetConditionInfo MetadataListDatasetConditions(
+  std::vector<DatasetConditionDetail> MetadataListDatasetConditions(
       const std::string& dataset, const std::string& start_date,
       const std::string& end_date);
   std::size_t MetadataGetRecordCount(const std::string& dataset,
@@ -244,7 +244,7 @@ class Historical {
   BatchJob BatchSubmitJob(const HttplibParams& params);
   void DownloadFile(const std::string& url, const std::string& output_path);
   std::vector<BatchJob> BatchListJobs(const HttplibParams& params);
-  DatasetConditionInfo MetadataListDatasetConditions(
+  std::vector<DatasetConditionDetail> MetadataListDatasetConditions(
       const HttplibParams& params);
   std::size_t MetadataGetRecordCount(const HttplibParams& params);
   std::size_t MetadataGetBillableSize(const HttplibParams& params);

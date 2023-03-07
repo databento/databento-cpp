@@ -50,9 +50,13 @@ int main() {
   }
   std::cout << '\n';
 
-  const auto dataset_condition = client.MetadataListDatasetConditions(
+  const auto dataset_conditions = client.MetadataListDatasetConditions(
       "GLBX.MDP3", "2019-06-01", "2019-08-01");
-  std::cout << dataset_condition << "\n\n";
+  std::cout << "Conditions:\n";
+  for (const auto& dataset_condition : dataset_conditions) {
+    std::cout << "- " << dataset_condition << "\n";
+  }
+  std::cout << '\n';
 
   const auto compressions = client.MetadataListCompressions();
   std::cout << "Compressions:\n";
