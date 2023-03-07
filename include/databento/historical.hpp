@@ -11,7 +11,7 @@
 #include "databento/detail/http_client.hpp"  // HttpClient
 #include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Packaging, Schema, SType
 #include "databento/file_bento.hpp"
-#include "databento/metadata.hpp"  // DatasetConditionDetail, FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema, PriceBySchema
+#include "databento/metadata.hpp"  // DatasetConditionDetail, DatasetRange, FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema, PriceBySchema
 #include "databento/symbology.hpp"  // SymbologyResolution
 #include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
 
@@ -98,6 +98,7 @@ class Historical {
   std::vector<DatasetConditionDetail> MetadataListDatasetConditions(
       const std::string& dataset, const std::string& start_date,
       const std::string& end_date);
+  DatasetRange MetadataGetDatasetRange(const std::string& dataset);
   std::size_t MetadataGetRecordCount(const std::string& dataset,
                                      UnixNanos start, UnixNanos end,
                                      const std::vector<std::string>& symbols,

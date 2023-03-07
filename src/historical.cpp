@@ -761,6 +761,18 @@ Historical::MetadataListDatasetConditions(const httplib::Params& params) {
   return details;
 }
 
+databento::DatasetRange Historical::MetadataGetDatasetRange(
+    const std::string& dataset) {
+  static const std::string kEndpoint = "Historical::GetDatasetRange";
+  static const std::string kPath = ::BuildMetadataPath(".get_dataset_range");
+  const nlohmann::json json = client_.GetJson(kPath, {{"dataset", dataset}});
+  if (!json.is_object()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
+  }
+  return DatasetRange{ParseAt<std::string>(kEndpoint, json, "start_date"),
+                      ParseAt<std::string>(kEndpoint, json, "end_date")};
+}
+
 static const std::string kMetadataGetRecordCountEndpoint =
     "Historical::MetadataGetRecordCount";
 

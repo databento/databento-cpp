@@ -18,4 +18,18 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("condition", condition_detail.condition)
       .Finish();
 }
+
+std::string ToString(const DatasetRange& dataset_range) {
+  return MakeString(dataset_range);
+}
+std::ostream& operator<<(std::ostream& stream,
+                         const DatasetRange& dataset_range) {
+  return StreamOpBuilder{stream}
+      .SetSpacer(" ")
+      .SetTypeName("DatasetRange")
+      .Build()
+      .AddField("start_date", dataset_range.start_date)
+      .AddField("end_date", dataset_range.end_date)
+      .Finish();
+}
 }  // namespace databento

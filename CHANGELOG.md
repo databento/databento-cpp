@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.5.0 - TBD
+- Added `Historical::MetadataGetDatasetRange`
 - Renamed `MetadataGetDatasetCondition` to `MetadataListDatasetConditions`
 
 ## 0.4.0 - 2023-03-02
@@ -36,7 +37,7 @@
 - Renamed `is_full_book` to `is_full_universe`
 
 ## 0.2.0 - 2022-12-01
-- Added dataset condition endpoint
+- Added `Historical::MetadataGetDatasetCondition`
 - Improved Zstd CMake integration
 - Fixed requesting all symbols for a dataset
 

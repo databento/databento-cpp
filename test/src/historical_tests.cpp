@@ -470,6 +470,21 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_FeedMode) {
   }
 }
 
+TEST_F(HistoricalTests, TestMetadataListUnitPrices_FullySpecified) {
+  const nlohmann::json kResp = 43.21;
+  mock_server_.MockGetJson(
+      "/v0/metadata.list_unit_prices",
+      {{"dataset", dataset::kGlbxMdp3}, {"schema", "mbo"}, {"mode", "live"}},
+      kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3,
+                                                 FeedMode::Live, Schema::Mbo);
+  EXPECT_DOUBLE_EQ(res, kResp);
+}
+
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Schema) {
   const nlohmann::json kResp{{"historical-streaming", {{"mbo", 21.05}}},
                              {"historical", {{"mbo", 19.95}}},
@@ -493,19 +508,37 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_Schema) {
   }
 }
 
-TEST_F(HistoricalTests, TestMetadataListUnitPrices_FullySpecified) {
-  const nlohmann::json kResp = 43.21;
-  mock_server_.MockGetJson(
-      "/v0/metadata.list_unit_prices",
-      {{"dataset", dataset::kGlbxMdp3}, {"schema", "mbo"}, {"mode", "live"}},
-      kResp);
+TEST_F(HistoricalTests, TestMetadataGetDatasetRange) {
+  const nlohmann::json kResp = {{"start_date", "2017-05-21"},
+                                {"end_date", "2022-12-01"}};
+  mock_server_.MockGetJson("/v0/metadata.get_dataset_range",
+                           {{"dataset", dataset::kXnasItch}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3,
-                                                 FeedMode::Live, Schema::Mbo);
-  EXPECT_DOUBLE_EQ(res, 43.21);
+  const auto res = target.MetadataGetDatasetRange(dataset::kXnasItch);
+  EXPECT_EQ(res.start_date, "2017-05-21");
+  EXPECT_EQ(res.end_date, "2022-12-01");
+}
+
+TEST_F(HistoricalTests, TestMetadataGetRecordCount) {
+  const nlohmann::json kResp = 42;
+  mock_server_.MockGetJson("/v0/metadata.get_record_count",
+                           {{"dataset", dataset::kGlbxMdp3},
+                            {"symbols", "ESZ3,ESH4"},
+                            {"start", "2020-06-06T00:00"},
+                            {"end", "2021-03-02T00:00"},
+                            {"schema", "trades"}},
+                           kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.MetadataGetRecordCount(
+      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00",
+      {"ESZ3", "ESH4"}, Schema::Trades);
+  ASSERT_EQ(res, kResp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
@@ -513,6 +546,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
   mock_server_.MockGetJson("/v0/metadata.get_billable_size",
                            {{"dataset", dataset::kGlbxMdp3},
                             {"start", "2020-06-06T00:00"},
+                            {"symbols", "ALL_SYMBOLS"},
                             {"end", "2021-03-02T00:00"},
                             {"schema", "trades"}},
                            kResp);
@@ -523,7 +557,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
   const auto res = target.MetadataGetBillableSize(
       dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00", kAllSymbols,
       Schema::Trades);
-  ASSERT_EQ(res, 44688);
+  ASSERT_EQ(res, kResp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
@@ -543,7 +577,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
   const auto res = target.MetadataGetBillableSize(
       dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00", {"NG", "LNQ"},
       Schema::Tbbo, SType::Smart, {});
-  ASSERT_EQ(res, 55238);
+  ASSERT_EQ(res, kResp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
@@ -562,7 +596,7 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
   const auto res = target.MetadataGetCost(
       dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00",
       {"MESN1", "MESQ1"}, Schema::Trades);
-  ASSERT_DOUBLE_EQ(res, 0.65783);
+  ASSERT_DOUBLE_EQ(res, kResp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
@@ -584,7 +618,7 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
       target.MetadataGetCost(dataset::kGlbxMdp3, "2020-06-06T00:00",
                              "2021-03-02T00:00", {"MES", "SPY"}, Schema::Tbbo,
                              FeedMode::HistoricalStreaming, SType::Smart, {});
-  ASSERT_DOUBLE_EQ(res, 0.714);
+  ASSERT_DOUBLE_EQ(res, kResp);
 }
 
 TEST_F(HistoricalTests, TestSymbologyResolve) {
