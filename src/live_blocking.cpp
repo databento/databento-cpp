@@ -37,8 +37,8 @@ LiveBlocking::LiveBlocking(std::string key, std::string dataset,
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in) {
   std::ostringstream sub_msg;
-  sub_msg << "dataset=" << dataset_ << "|schema=" << ToString(schema)
-          << "|stype_in=" << ToString(stype_in) << "|symbols="
+  sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
+          << "|symbols="
           << JoinSymbolStrings("LiveBlocking::Subscribe", symbols);
   sub_msg << '\n';
 
@@ -170,7 +170,7 @@ std::string LiveBlocking::GenerateCramReply(const std::string& challenge_key) {
 
 std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
   std::ostringstream reply_stream;
-  reply_stream << "auth=" << auth << "|encoding=dbn|"
+  reply_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
                << "ts_out=" << send_ts_out_ << '\n';
   return reply_stream.str();
 }

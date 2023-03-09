@@ -112,7 +112,7 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   std::mutex receive_mutex;
   std::condition_variable receive_cv;
   const mock::MockLsgServer mock_server{
-      dataset::kGlbxMdp3, [&](mock::MockLsgServer& self) {
+      dataset::kXnasItch, [&](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.SendRecord(kRec);
