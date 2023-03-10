@@ -397,13 +397,13 @@ TEST_F(HistoricalTests, TestMetadataListCompressions) {
   EXPECT_EQ(res, kExp);
 }
 
-TEST_F(HistoricalTests, TestMetadataListDatasetConditions) {
+TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
   const nlohmann::json kResp{
       {{"date", "2022-11-07"}, {"condition", "available"}},
       {{"date", "2022-11-08"}, {"condition", "bad"}},
       {{"date", "2022-11-09"}, {"condition", "bad"}},
       {{"date", "2022-11-10"}, {"condition", "available"}}};
-  mock_server_.MockGetJson("/v0/metadata.list_dataset_conditions",
+  mock_server_.MockGetJson("/v0/metadata.get_dataset_condition",
                            {{"dataset", dataset::kXnasItch},
                             {"start_date", "2022-11-06"},
                             {"end_date", "2022-11-10"}},
@@ -412,7 +412,7 @@ TEST_F(HistoricalTests, TestMetadataListDatasetConditions) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto conditions = target.MetadataListDatasetConditions(
+  const auto conditions = target.MetadataGetDatasetCondition(
       dataset::kXnasItch, "2022-11-06", "2022-11-10");
   ASSERT_EQ(conditions.size(), 4);
   EXPECT_EQ(conditions[0].date, "2022-11-07");

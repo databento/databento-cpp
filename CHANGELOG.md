@@ -2,7 +2,7 @@
 
 ## 0.5.0 - TBD
 - Added `Historical::MetadataGetDatasetRange`
-- Renamed `MetadataGetDatasetCondition` to `MetadataListDatasetConditions`
+- Changed `MetadataGetDatasetCondition` to return `vector<DatasetConditionDetail>`
 
 ## 0.4.0 - 2023-03-02
 - Renamed DBZ to DBN

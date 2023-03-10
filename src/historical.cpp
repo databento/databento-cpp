@@ -722,26 +722,25 @@ double Historical::MetadataListUnitPrices(const std::string& dataset,
 }
 
 std::vector<databento::DatasetConditionDetail>
-Historical::MetadataListDatasetConditions(const std::string& dataset) {
-  return MetadataListDatasetConditions(httplib::Params{{"dataset", dataset}});
+Historical::MetadataGetDatasetCondition(const std::string& dataset) {
+  return MetadataGetDatasetCondition(httplib::Params{{"dataset", dataset}});
 }
 
 std::vector<databento::DatasetConditionDetail>
-Historical::MetadataListDatasetConditions(const std::string& dataset,
-                                          const std::string& start_date,
-                                          const std::string& end_date) {
-  return MetadataListDatasetConditions(
-      httplib::Params{{"dataset", dataset},
-                      {"start_date", start_date},
-                      {"end_date", end_date}});
+Historical::MetadataGetDatasetCondition(const std::string& dataset,
+                                        const std::string& start_date,
+                                        const std::string& end_date) {
+  return MetadataGetDatasetCondition(httplib::Params{{"dataset", dataset},
+                                                     {"start_date", start_date},
+                                                     {"end_date", end_date}});
 }
 
 std::vector<databento::DatasetConditionDetail>
-Historical::MetadataListDatasetConditions(const httplib::Params& params) {
+Historical::MetadataGetDatasetCondition(const httplib::Params& params) {
   static const std::string kEndpoint =
-      "Historical::MetadataListDatasetConditions";
+      "Historical::MetadataGetDatasetCondition";
   static const std::string kPath =
-      ::BuildMetadataPath(".list_dataset_conditions");
+      ::BuildMetadataPath(".get_dataset_condition");
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_array()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);

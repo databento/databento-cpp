@@ -93,9 +93,9 @@ class Historical {
                                          Schema schema);
   double MetadataListUnitPrices(const std::string& dataset, FeedMode mode,
                                 Schema schema);
-  std::vector<DatasetConditionDetail> MetadataListDatasetConditions(
+  std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const std::string& dataset);
-  std::vector<DatasetConditionDetail> MetadataListDatasetConditions(
+  std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const std::string& dataset, const std::string& start_date,
       const std::string& end_date);
   DatasetRange MetadataGetDatasetRange(const std::string& dataset);
@@ -245,7 +245,7 @@ class Historical {
   BatchJob BatchSubmitJob(const HttplibParams& params);
   void DownloadFile(const std::string& url, const std::string& output_path);
   std::vector<BatchJob> BatchListJobs(const HttplibParams& params);
-  std::vector<DatasetConditionDetail> MetadataListDatasetConditions(
+  std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const HttplibParams& params);
   std::size_t MetadataGetRecordCount(const HttplibParams& params);
   std::size_t MetadataGetBillableSize(const HttplibParams& params);

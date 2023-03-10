@@ -50,7 +50,7 @@ int main() {
   }
   std::cout << '\n';
 
-  const auto dataset_conditions = client.MetadataListDatasetConditions(
+  const auto dataset_conditions = client.MetadataGetDatasetCondition(
       "GLBX.MDP3", "2019-06-01", "2019-08-01");
   std::cout << "Conditions:\n";
   for (const auto& dataset_condition : dataset_conditions) {
