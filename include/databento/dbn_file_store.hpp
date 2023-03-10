@@ -9,9 +9,9 @@
 
 namespace databento {
 // A reader for DBN files.
-class FileBento {
+class DbnFileStore {
  public:
-  explicit FileBento(const std::string& file_path);
+  explicit DbnFileStore(const std::string& file_path);
 
   void Replay(const MetadataCallback& metadata_callback,
               const RecordCallback& record_callback);

@@ -3,6 +3,7 @@
 ## 0.5.0 - TBD
 - Added `Historical::MetadataGetDatasetRange`
 - Changed `MetadataGetDatasetCondition` to return `vector<DatasetConditionDetail>`
+- Renamed `FileBento` to `DbnFileStore`
 
 ## 0.4.0 - 2023-03-02
 - Renamed DBZ to DBN

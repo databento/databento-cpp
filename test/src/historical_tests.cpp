@@ -12,9 +12,9 @@
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/dbn.hpp"
+#include "databento/dbn_file_store.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception
-#include "databento/file_bento.hpp"
 #include "databento/historical.hpp"
 #include "databento/metadata.hpp"
 #include "databento/record.hpp"
@@ -819,7 +819,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
                                   "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
                                   temp_file.Path());
   // running it a second time should overwrite previous data
-  FileBento bento = target.TimeseriesGetRangeToFile(
+  DbnFileStore bento = target.TimeseriesGetRangeToFile(
       dataset::kGlbxMdp3, "2022-10-21T13:30", "2022-10-21T20:00", {"CYZ2"},
       Schema::Tbbo, temp_file.Path());
   std::size_t counter{};

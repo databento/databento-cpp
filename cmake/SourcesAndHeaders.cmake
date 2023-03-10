@@ -4,7 +4,7 @@ set(headers
   include/databento/datetime.hpp
   include/databento/dbn.hpp
   include/databento/dbn_decoder.hpp
-  include/databento/file_bento.hpp
+  include/databento/dbn_file_store.hpp
   include/databento/enums.hpp
   include/databento/exceptions.hpp
   include/databento/flag_set.hpp
@@ -34,7 +34,7 @@ set(sources
   src/dbn_decoder.cpp
   src/enums.cpp
   src/exceptions.cpp
-  src/file_bento.cpp
+  src/dbn_file_store.cpp
   src/historical.cpp
   src/live.cpp
   src/live_blocking.cpp

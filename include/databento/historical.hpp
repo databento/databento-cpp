@@ -6,11 +6,11 @@
 #include <string>
 #include <vector>
 
-#include "databento/batch.hpp"               // BatchJob
-#include "databento/datetime.hpp"            // UnixNanos
+#include "databento/batch.hpp"     // BatchJob
+#include "databento/datetime.hpp"  // UnixNanos
+#include "databento/dbn_file_store.hpp"
 #include "databento/detail/http_client.hpp"  // HttpClient
 #include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Packaging, Schema, SType
-#include "databento/file_bento.hpp"
 #include "databento/metadata.hpp"  // DatasetConditionDetail, DatasetRange, FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema, PriceBySchema
 #include "databento/symbology.hpp"  // SymbologyResolution
 #include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
@@ -210,34 +210,34 @@ class Historical {
                           std::size_t limit,
                           const MetadataCallback& metadata_callback,
                           const RecordCallback& record_callback);
-  // Stream historical market data to a file at `path`. Returns a `FileBento`
+  // Stream historical market data to a file at `path`. Returns a `DbnFileStore`
   // object for replaying the data in `file_path`.
   //
   // If a file at `file_path` already exists, it will be overwritten.
-  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
-                                     UnixNanos start, UnixNanos end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema,
-                                     const std::string& file_path);
-  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
-                                     const std::string& start,
-                                     const std::string& end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema,
-                                     const std::string& file_path);
-  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
-                                     UnixNanos start, UnixNanos end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema, SType stype_in,
-                                     SType stype_out, std::size_t limit,
-                                     const std::string& file_path);
-  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
-                                     const std::string& start,
-                                     const std::string& end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema, SType stype_in,
-                                     SType stype_out, std::size_t limit,
-                                     const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                        UnixNanos start, UnixNanos end,
+                                        const std::vector<std::string>& symbols,
+                                        Schema schema,
+                                        const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                        const std::string& start,
+                                        const std::string& end,
+                                        const std::vector<std::string>& symbols,
+                                        Schema schema,
+                                        const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                        UnixNanos start, UnixNanos end,
+                                        const std::vector<std::string>& symbols,
+                                        Schema schema, SType stype_in,
+                                        SType stype_out, std::size_t limit,
+                                        const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                        const std::string& start,
+                                        const std::string& end,
+                                        const std::vector<std::string>& symbols,
+                                        Schema schema, SType stype_in,
+                                        SType stype_out, std::size_t limit,
+                                        const std::string& file_path);
 
  private:
   using HttplibParams = std::multimap<std::string, std::string>;
@@ -255,8 +255,8 @@ class Historical {
   void TimeseriesGetRange(const HttplibParams& params,
                           const MetadataCallback& metadata_callback,
                           const RecordCallback& record_callback);
-  FileBento TimeseriesGetRangeToFile(const HttplibParams& params,
-                                     const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(const HttplibParams& params,
+                                        const std::string& file_path);
 
   const std::string key_;
   const std::string gateway_;

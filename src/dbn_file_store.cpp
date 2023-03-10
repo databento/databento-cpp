@@ -1,16 +1,16 @@
-#include "databento/file_bento.hpp"
+#include "databento/dbn_file_store.hpp"
 
 #include <utility>  // move
 
 #include "databento/detail/file_stream.hpp"
 
-using databento::FileBento;
+using databento::DbnFileStore;
 
-FileBento::FileBento(const std::string& file_path)
+DbnFileStore::DbnFileStore(const std::string& file_path)
     : parser_{detail::FileStream{file_path}} {}
 
-void FileBento::Replay(const MetadataCallback& metadata_callback,
-                       const RecordCallback& record_callback) {
+void DbnFileStore::Replay(const MetadataCallback& metadata_callback,
+                          const RecordCallback& record_callback) {
   auto metadata = parser_.DecodeMetadata();
   const auto record_count = metadata.record_count;
   if (metadata_callback) {
@@ -24,6 +24,6 @@ void FileBento::Replay(const MetadataCallback& metadata_callback,
   }
 }
 
-void FileBento::Replay(const RecordCallback& record_callback) {
+void DbnFileStore::Replay(const RecordCallback& record_callback) {
   Replay({}, record_callback);
 }
