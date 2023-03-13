@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 - TBD
+## 0.5.0 - 2023-03-13
 - Added `Historical::MetadataGetDatasetRange`
 - Changed `MetadataGetDatasetCondition` to return `vector<DatasetConditionDetail>`
 - Removed `MetadataListCompressions` (redundant with docs)

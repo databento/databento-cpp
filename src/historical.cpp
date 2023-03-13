@@ -491,8 +491,7 @@ std::vector<databento::Schema> Historical::MetadataListSchemas(
     const std::string& dataset) {
   static const std::string kEndpoint = "Historical::MetadataListSchemas";
   static const std::string kPath = ::BuildMetadataPath(".list_schemas");
-  httplib::Params params{{"dataset", dataset}};
-  const nlohmann::json json = client_.GetJson(kPath, params);
+  const nlohmann::json json = client_.GetJson(kPath, {{"dataset", dataset}});
   if (!json.is_array()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
