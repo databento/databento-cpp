@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 - 2023-03-13
+- Added `Historical::MetadataGetDatasetRange`
+- Changed `MetadataGetDatasetCondition` to return `vector<DatasetConditionDetail>`
+- Removed `MetadataListCompressions` (redundant with docs)
+- Removed `MetadataListEncodings` (redundant with docs)
+- Removed optional `start` and `end` params from `MetadataListSchemas` (redundant)
+- Renamed `FileBento` to `DbnFileStore`
+
 ## 0.4.0 - 2023-03-02
 - Renamed DBZ to DBN
   - Renamed `DbzParser` to `DbnDecoder`
@@ -33,7 +41,7 @@
 - Renamed `is_full_book` to `is_full_universe`
 
 ## 0.2.0 - 2022-12-01
-- Added dataset condition endpoint
+- Added `Historical::MetadataGetDatasetCondition`
 - Improved Zstd CMake integration
 - Fixed requesting all symbols for a dataset
 

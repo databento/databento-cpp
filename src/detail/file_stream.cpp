@@ -8,7 +8,7 @@ using databento::detail::FileStream;
 
 FileStream::FileStream(const std::string& file_path) : stream_{file_path} {
   if (stream_.fail()) {
-    throw InvalidArgumentError{"FileBento", "file_path",
+    throw InvalidArgumentError{"DbnFileStore", "file_path",
                                "Non-existent or invalid file"};
   }
 }

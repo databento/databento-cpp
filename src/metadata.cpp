@@ -19,30 +19,17 @@ std::ostream& operator<<(std::ostream& stream,
       .Finish();
 }
 
-std::string ToString(const DatasetConditionInfo& condition) {
-  return MakeString(condition);
+std::string ToString(const DatasetRange& dataset_range) {
+  return MakeString(dataset_range);
 }
 std::ostream& operator<<(std::ostream& stream,
-                         const DatasetConditionInfo& condition) {
-  std::ostringstream details_stream;
-  auto details_helper = StreamOpBuilder{details_stream}
-                            .SetSpacer("\n    ")
-                            .SetIndent("    ")
-                            .Build();
-  for (const auto& detail : condition.details) {
-    details_helper.AddItem(detail);
-  }
+                         const DatasetRange& dataset_range) {
   return StreamOpBuilder{stream}
-      .SetSpacer("\n    ")
-      .SetTypeName("DatasetConditionInfo")
+      .SetSpacer(" ")
+      .SetTypeName("DatasetRange")
       .Build()
-      .AddField("condition", condition.condition)
-      .AddField("details",
-                static_cast<std::ostringstream&>(details_helper.Finish()))
-      .AddField("adjusted_start_date", condition.adjusted_start_date)
-      .AddField("adjusted_end_date", condition.adjusted_end_date)
-      .AddField("available_start_date", condition.available_start_date)
-      .AddField("available_end_date", condition.available_end_date)
+      .AddField("start_date", dataset_range.start_date)
+      .AddField("end_date", dataset_range.end_date)
       .Finish();
 }
 }  // namespace databento

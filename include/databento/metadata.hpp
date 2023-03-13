@@ -23,21 +23,15 @@ struct DatasetConditionDetail {
   DatasetCondition condition;
 };
 
-struct DatasetConditionInfo {
-  // Overall condition for the date range.
-  DatasetCondition condition;
-  // The dataset condition by date.
-  std::vector<DatasetConditionDetail> details;
-  std::string adjusted_start_date;
-  std::string adjusted_end_date;
-  std::string available_start_date;
-  std::string available_end_date;
+struct DatasetRange {
+  std::string start_date;
+  std::string end_date;
 };
 
 std::string ToString(const DatasetConditionDetail& condition_detail);
 std::ostream& operator<<(std::ostream& stream,
                          const DatasetConditionDetail& condition_detail);
-std::string ToString(const DatasetConditionInfo& condition);
+std::string ToString(const DatasetRange& dataset_range);
 std::ostream& operator<<(std::ostream& stream,
-                         const DatasetConditionInfo& condition);
+                         const DatasetRange& dataset_range);
 }  // namespace databento

@@ -60,6 +60,7 @@ void MockLsgServer::Authenticate() {
     EXPECT_TRUE((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))
         << "Expected hex character";
   }
+  EXPECT_NE(received.find("dataset=" + dataset_), std::string::npos);
   EXPECT_NE(received.find("encoding=dbn"), std::string::npos);
   EXPECT_NE(received.find("ts_out=0"), std::string::npos);
   Send("success=1|session_id=5|\n");
@@ -68,7 +69,6 @@ void MockLsgServer::Authenticate() {
 void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
                               Schema schema, SType stype) {
   const auto received = Receive();
-  EXPECT_NE(received.find("dataset=" + dataset_), std::string::npos);
   EXPECT_NE(
       received.find("symbols=" +
                     JoinSymbolStrings("MockLsgServer::Subscribe", symbols)),

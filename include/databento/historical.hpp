@@ -6,12 +6,12 @@
 #include <string>
 #include <vector>
 
-#include "databento/batch.hpp"               // BatchJob
-#include "databento/datetime.hpp"            // UnixNanos
+#include "databento/batch.hpp"     // BatchJob
+#include "databento/datetime.hpp"  // UnixNanos
+#include "databento/dbn_file_store.hpp"
 #include "databento/detail/http_client.hpp"  // HttpClient
 #include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Packaging, Schema, SType
-#include "databento/file_bento.hpp"
-#include "databento/metadata.hpp"  // DatasetConditionInfo, FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema, PriceBySchema
+#include "databento/metadata.hpp"  // DatasetConditionDetail, DatasetRange, FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema, PriceBySchema
 #include "databento/symbology.hpp"  // SymbologyResolution
 #include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
 
@@ -76,16 +76,11 @@ class Historical {
   std::vector<std::string> MetadataListDatasets(const std::string& start_date,
                                                 const std::string& end_date);
   std::vector<Schema> MetadataListSchemas(const std::string& dataset);
-  std::vector<Schema> MetadataListSchemas(const std::string& dataset,
-                                          const std::string& start_date,
-                                          const std::string& end_date);
   FieldsByDatasetEncodingAndSchema MetadataListFields();
   FieldsByDatasetEncodingAndSchema MetadataListFields(
       const std::string& dataset);
   FieldsByDatasetEncodingAndSchema MetadataListFields(
       const std::string& dataset, Encoding encoding, Schema schema);
-  std::vector<Encoding> MetadataListEncodings();
-  std::vector<Compression> MetadataListCompressions();
   PriceByFeedModeAndSchema MetadataListUnitPrices(const std::string& dataset);
   PriceBySchema MetadataListUnitPrices(const std::string& dataset,
                                        FeedMode mode);
@@ -93,10 +88,12 @@ class Historical {
                                          Schema schema);
   double MetadataListUnitPrices(const std::string& dataset, FeedMode mode,
                                 Schema schema);
-  DatasetConditionInfo MetadataGetDatasetCondition(const std::string& dataset);
-  DatasetConditionInfo MetadataGetDatasetCondition(
+  std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
+      const std::string& dataset);
+  std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const std::string& dataset, const std::string& start_date,
       const std::string& end_date);
+  DatasetRange MetadataGetDatasetRange(const std::string& dataset);
   std::size_t MetadataGetRecordCount(const std::string& dataset,
                                      UnixNanos start, UnixNanos end,
                                      const std::vector<std::string>& symbols,
@@ -208,34 +205,34 @@ class Historical {
                           std::size_t limit,
                           const MetadataCallback& metadata_callback,
                           const RecordCallback& record_callback);
-  // Stream historical market data to a file at `path`. Returns a `FileBento`
+  // Stream historical market data to a file at `path`. Returns a `DbnFileStore`
   // object for replaying the data in `file_path`.
   //
   // If a file at `file_path` already exists, it will be overwritten.
-  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
-                                     UnixNanos start, UnixNanos end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema,
-                                     const std::string& file_path);
-  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
-                                     const std::string& start,
-                                     const std::string& end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema,
-                                     const std::string& file_path);
-  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
-                                     UnixNanos start, UnixNanos end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema, SType stype_in,
-                                     SType stype_out, std::size_t limit,
-                                     const std::string& file_path);
-  FileBento TimeseriesGetRangeToFile(const std::string& dataset,
-                                     const std::string& start,
-                                     const std::string& end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema, SType stype_in,
-                                     SType stype_out, std::size_t limit,
-                                     const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                        UnixNanos start, UnixNanos end,
+                                        const std::vector<std::string>& symbols,
+                                        Schema schema,
+                                        const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                        const std::string& start,
+                                        const std::string& end,
+                                        const std::vector<std::string>& symbols,
+                                        Schema schema,
+                                        const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                        UnixNanos start, UnixNanos end,
+                                        const std::vector<std::string>& symbols,
+                                        Schema schema, SType stype_in,
+                                        SType stype_out, std::size_t limit,
+                                        const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                        const std::string& start,
+                                        const std::string& end,
+                                        const std::vector<std::string>& symbols,
+                                        Schema schema, SType stype_in,
+                                        SType stype_out, std::size_t limit,
+                                        const std::string& file_path);
 
  private:
   using HttplibParams = std::multimap<std::string, std::string>;
@@ -243,7 +240,8 @@ class Historical {
   BatchJob BatchSubmitJob(const HttplibParams& params);
   void DownloadFile(const std::string& url, const std::string& output_path);
   std::vector<BatchJob> BatchListJobs(const HttplibParams& params);
-  DatasetConditionInfo MetadataGetDatasetCondition(const HttplibParams& params);
+  std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
+      const HttplibParams& params);
   std::size_t MetadataGetRecordCount(const HttplibParams& params);
   std::size_t MetadataGetBillableSize(const HttplibParams& params);
   double MetadataGetCost(const HttplibParams& params);
@@ -252,8 +250,8 @@ class Historical {
   void TimeseriesGetRange(const HttplibParams& params,
                           const MetadataCallback& metadata_callback,
                           const RecordCallback& record_callback);
-  FileBento TimeseriesGetRangeToFile(const HttplibParams& params,
-                                     const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(const HttplibParams& params,
+                                        const std::string& file_path);
 
   const std::string key_;
   const std::string gateway_;

@@ -12,9 +12,9 @@
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/dbn.hpp"
+#include "databento/dbn_file_store.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception
-#include "databento/file_bento.hpp"
 #include "databento/historical.hpp"
 #include "databento/metadata.hpp"
 #include "databento/record.hpp"
@@ -322,15 +322,13 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Simple) {
 TEST_F(HistoricalTests, TestMetadataListSchemas_Full) {
   const nlohmann::json kResp{"mbo", "mbp-1", "ohlcv-1m", "ohlcv-1h",
                              "ohlcv-1d"};
-  mock_server_.MockGetJson(
-      "/v0/metadata.list_schemas",
-      {{"dataset", dataset::kGlbxMdp3}, {"end_date", "2020-01-01"}}, kResp);
+  mock_server_.MockGetJson("/v0/metadata.list_schemas",
+                           {{"dataset", dataset::kGlbxMdp3}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res =
-      target.MetadataListSchemas(dataset::kGlbxMdp3, {}, "2020-01-01");
+  const auto res = target.MetadataListSchemas(dataset::kGlbxMdp3);
   const std::vector<Schema> kExp{Schema::Mbo, Schema::Mbp1, Schema::Ohlcv1M,
                                  Schema::Ohlcv1H, Schema::Ohlcv1D};
   ASSERT_EQ(res.size(), kResp.size());
@@ -372,43 +370,12 @@ TEST_F(HistoricalTests, TestMetadataListFields) {
   EXPECT_EQ(tradesRes.at("dataset_id"), "uint16_t");
 }
 
-TEST_F(HistoricalTests, TestMetadataListEncodings) {
-  const nlohmann::json kResp{"dbn", "csv", "json"};
-  mock_server_.MockGetJson("/v0/metadata.list_encodings", kResp);
-  const auto port = mock_server_.ListenOnThread();
-
-  databento::Historical target{kApiKey, "localhost",
-                               static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListEncodings();
-  const std::vector<Encoding> kExp{Encoding::Dbn, Encoding::Csv,
-                                   Encoding::Json};
-  EXPECT_EQ(res, kExp);
-}
-
-TEST_F(HistoricalTests, TestMetadataListCompressions) {
-  const nlohmann::json kResp{"none", "zstd"};
-  mock_server_.MockGetJson("/v0/metadata.list_compressions", kResp);
-  const auto port = mock_server_.ListenOnThread();
-
-  databento::Historical target{kApiKey, "localhost",
-                               static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListCompressions();
-  const std::vector<Compression> kExp{Compression::None, Compression::Zstd};
-  EXPECT_EQ(res, kExp);
-}
-
 TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
   const nlohmann::json kResp{
-      {"condition", "bad"},
-      {"details",
-       {{{"date", "2022-11-07"}, {"condition", "available"}},
-        {{"date", "2022-11-08"}, {"condition", "bad"}},
-        {{"date", "2022-11-09"}, {"condition", "bad"}},
-        {{"date", "2022-11-10"}, {"condition", "available"}}}},
-      {"adjusted_start_date", "2022-11-07"},
-      {"adjusted_end_date", "2022-11-10"},
-      {"available_start_date", "2017-05-21"},
-      {"available_end_date", "2023-03-01"}};
+      {{"date", "2022-11-07"}, {"condition", "available"}},
+      {{"date", "2022-11-08"}, {"condition", "bad"}},
+      {{"date", "2022-11-09"}, {"condition", "bad"}},
+      {{"date", "2022-11-10"}, {"condition", "available"}}};
   mock_server_.MockGetJson("/v0/metadata.get_dataset_condition",
                            {{"dataset", dataset::kXnasItch},
                             {"start_date", "2022-11-06"},
@@ -418,22 +385,17 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataGetDatasetCondition(
+  const auto conditions = target.MetadataGetDatasetCondition(
       dataset::kXnasItch, "2022-11-06", "2022-11-10");
-  EXPECT_EQ(res.condition, DatasetCondition::Bad);
-  ASSERT_EQ(res.details.size(), 4);
-  EXPECT_EQ(res.details[0].date, res.adjusted_start_date);
-  EXPECT_EQ(res.details[1].date, "2022-11-08");
-  EXPECT_EQ(res.details[2].date, "2022-11-09");
-  EXPECT_EQ(res.details[3].date, res.adjusted_end_date);
-  EXPECT_EQ(res.details[0].condition, DatasetCondition::Available);
-  EXPECT_EQ(res.details[1].condition, DatasetCondition::Bad);
-  EXPECT_EQ(res.details[2].condition, DatasetCondition::Bad);
-  EXPECT_EQ(res.details[3].condition, DatasetCondition::Available);
-  EXPECT_EQ(res.adjusted_start_date, "2022-11-07");
-  EXPECT_EQ(res.adjusted_end_date, "2022-11-10");
-  EXPECT_EQ(res.available_start_date, "2017-05-21");
-  EXPECT_EQ(res.available_end_date, "2023-03-01");
+  ASSERT_EQ(conditions.size(), 4);
+  EXPECT_EQ(conditions[0].date, "2022-11-07");
+  EXPECT_EQ(conditions[1].date, "2022-11-08");
+  EXPECT_EQ(conditions[2].date, "2022-11-09");
+  EXPECT_EQ(conditions[3].date, "2022-11-10");
+  EXPECT_EQ(conditions[0].condition, DatasetCondition::Available);
+  EXPECT_EQ(conditions[1].condition, DatasetCondition::Bad);
+  EXPECT_EQ(conditions[2].condition, DatasetCondition::Bad);
+  EXPECT_EQ(conditions[3].condition, DatasetCondition::Available);
 }
 
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {
@@ -481,6 +443,21 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_FeedMode) {
   }
 }
 
+TEST_F(HistoricalTests, TestMetadataListUnitPrices_FullySpecified) {
+  const nlohmann::json kResp = 43.21;
+  mock_server_.MockGetJson(
+      "/v0/metadata.list_unit_prices",
+      {{"dataset", dataset::kGlbxMdp3}, {"schema", "mbo"}, {"mode", "live"}},
+      kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3,
+                                                 FeedMode::Live, Schema::Mbo);
+  EXPECT_DOUBLE_EQ(res, kResp);
+}
+
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Schema) {
   const nlohmann::json kResp{{"historical-streaming", {{"mbo", 21.05}}},
                              {"historical", {{"mbo", 19.95}}},
@@ -504,19 +481,37 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_Schema) {
   }
 }
 
-TEST_F(HistoricalTests, TestMetadataListUnitPrices_FullySpecified) {
-  const nlohmann::json kResp = 43.21;
-  mock_server_.MockGetJson(
-      "/v0/metadata.list_unit_prices",
-      {{"dataset", dataset::kGlbxMdp3}, {"schema", "mbo"}, {"mode", "live"}},
-      kResp);
+TEST_F(HistoricalTests, TestMetadataGetDatasetRange) {
+  const nlohmann::json kResp = {{"start_date", "2017-05-21"},
+                                {"end_date", "2022-12-01"}};
+  mock_server_.MockGetJson("/v0/metadata.get_dataset_range",
+                           {{"dataset", dataset::kXnasItch}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3,
-                                                 FeedMode::Live, Schema::Mbo);
-  EXPECT_DOUBLE_EQ(res, 43.21);
+  const auto res = target.MetadataGetDatasetRange(dataset::kXnasItch);
+  EXPECT_EQ(res.start_date, "2017-05-21");
+  EXPECT_EQ(res.end_date, "2022-12-01");
+}
+
+TEST_F(HistoricalTests, TestMetadataGetRecordCount) {
+  const nlohmann::json kResp = 42;
+  mock_server_.MockGetJson("/v0/metadata.get_record_count",
+                           {{"dataset", dataset::kGlbxMdp3},
+                            {"symbols", "ESZ3,ESH4"},
+                            {"start", "2020-06-06T00:00"},
+                            {"end", "2021-03-02T00:00"},
+                            {"schema", "trades"}},
+                           kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target{kApiKey, "localhost",
+                               static_cast<std::uint16_t>(port)};
+  const auto res = target.MetadataGetRecordCount(
+      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00",
+      {"ESZ3", "ESH4"}, Schema::Trades);
+  ASSERT_EQ(res, kResp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
@@ -524,6 +519,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
   mock_server_.MockGetJson("/v0/metadata.get_billable_size",
                            {{"dataset", dataset::kGlbxMdp3},
                             {"start", "2020-06-06T00:00"},
+                            {"symbols", "ALL_SYMBOLS"},
                             {"end", "2021-03-02T00:00"},
                             {"schema", "trades"}},
                            kResp);
@@ -534,7 +530,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
   const auto res = target.MetadataGetBillableSize(
       dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00", kAllSymbols,
       Schema::Trades);
-  ASSERT_EQ(res, 44688);
+  ASSERT_EQ(res, kResp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
@@ -554,7 +550,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
   const auto res = target.MetadataGetBillableSize(
       dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00", {"NG", "LNQ"},
       Schema::Tbbo, SType::Smart, {});
-  ASSERT_EQ(res, 55238);
+  ASSERT_EQ(res, kResp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
@@ -573,7 +569,7 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
   const auto res = target.MetadataGetCost(
       dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00",
       {"MESN1", "MESQ1"}, Schema::Trades);
-  ASSERT_DOUBLE_EQ(res, 0.65783);
+  ASSERT_DOUBLE_EQ(res, kResp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
@@ -595,7 +591,7 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
       target.MetadataGetCost(dataset::kGlbxMdp3, "2020-06-06T00:00",
                              "2021-03-02T00:00", {"MES", "SPY"}, Schema::Tbbo,
                              FeedMode::HistoricalStreaming, SType::Smart, {});
-  ASSERT_DOUBLE_EQ(res, 0.714);
+  ASSERT_DOUBLE_EQ(res, kResp);
 }
 
 TEST_F(HistoricalTests, TestSymbologyResolve) {
@@ -796,7 +792,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
                                   "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
                                   temp_file.Path());
   // running it a second time should overwrite previous data
-  FileBento bento = target.TimeseriesGetRangeToFile(
+  DbnFileStore bento = target.TimeseriesGetRangeToFile(
       dataset::kGlbxMdp3, "2022-10-21T13:30", "2022-10-21T20:00", {"CYZ2"},
       Schema::Tbbo, temp_file.Path());
   std::size_t counter{};

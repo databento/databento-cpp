@@ -19,7 +19,7 @@ struct RecordHeader {
   RType rtype;
   // The publisher ID assigned by Databento.
   std::uint16_t publisher_id;
-  // The product ID assigned by the venue.
+  // The numeric product ID assigned to the instrument.
   std::uint32_t product_id;
   // The exchange timestamp in UNIX epoch nanoseconds.
   UnixNanos ts_event;

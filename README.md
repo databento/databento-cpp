@@ -1,7 +1,7 @@
 # databento-cpp
 
 [![test](https://github.com/databento/databento-cpp/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/databento/databento-cpp/actions/workflows/build.yaml)
-![license](https://img.shields.io/github/license/databento/databento-cpp?color=blue)
+[![license](https://img.shields.io/github/license/databento/databento-cpp?color=blue)](./LICENSE)
 
 The official C++ client library for [Databento](https://databento.com).
 The client supports both streaming live and historical data through similar interfaces.
@@ -80,7 +80,7 @@ cmake --install build
 
 Then in your project's `CMakeLists.txt`, add the following:
 ```cmake
-find_package(databento 0.4.0 REQUIRED)
+find_package(databento 0.5.0 REQUIRED)
 add_library(my_library)
 target_link_libraries(my_library PRIVATE databento::databento)
 ```
@@ -92,10 +92,10 @@ The library has the following dependencies:
 - [OpenSSL](https://www.openssl.org/)
 - [Libcrypto](https://www.openssl.org/docs/man3.0/man7/crypto.html)
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
-- [nlohmann_json (header-only)](https://github.com/nlohmann/json)
+- [nlohmann\_json (header-only)](https://github.com/nlohmann/json)
 - [cpp-httplib (header-only)](https://github.com/yhirose/cpp-httplib)
 
-By default, cpp-httplib and nlohmann_json are downloaded by CMake as part of the build process.
+By default, cpp-httplib and nlohmann\_json are downloaded by CMake as part of the build process.
 If you would like to use a local version of these libraries, enable the CMake flag
 `DATABENTO_ENABLE_EXTERNAL_HTTPLIB` or `DATABENTO_ENABLE_EXTERNAL_JSON`.
 

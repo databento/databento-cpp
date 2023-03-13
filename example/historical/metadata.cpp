@@ -43,21 +43,11 @@ int main() {
   }
   std::cout << '\n';
 
-  const auto encodings = client.MetadataListEncodings();
-  std::cout << "Encodings:\n";
-  for (const auto encoding : encodings) {
-    std::cout << "- " << encoding << '\n';
-  }
-  std::cout << '\n';
-
-  const auto dataset_condition = client.MetadataGetDatasetCondition(
+  const auto dataset_conditions = client.MetadataGetDatasetCondition(
       "GLBX.MDP3", "2019-06-01", "2019-08-01");
-  std::cout << dataset_condition << "\n\n";
-
-  const auto compressions = client.MetadataListCompressions();
-  std::cout << "Compressions:\n";
-  for (const auto compression : compressions) {
-    std::cout << "- " << compression << '\n';
+  std::cout << "Conditions:\n";
+  for (const auto& dataset_condition : dataset_conditions) {
+    std::cout << "- " << dataset_condition << "\n";
   }
   std::cout << '\n';
 
