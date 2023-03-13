@@ -76,16 +76,11 @@ class Historical {
   std::vector<std::string> MetadataListDatasets(const std::string& start_date,
                                                 const std::string& end_date);
   std::vector<Schema> MetadataListSchemas(const std::string& dataset);
-  std::vector<Schema> MetadataListSchemas(const std::string& dataset,
-                                          const std::string& start_date,
-                                          const std::string& end_date);
   FieldsByDatasetEncodingAndSchema MetadataListFields();
   FieldsByDatasetEncodingAndSchema MetadataListFields(
       const std::string& dataset);
   FieldsByDatasetEncodingAndSchema MetadataListFields(
       const std::string& dataset, Encoding encoding, Schema schema);
-  std::vector<Encoding> MetadataListEncodings();
-  std::vector<Compression> MetadataListCompressions();
   PriceByFeedModeAndSchema MetadataListUnitPrices(const std::string& dataset);
   PriceBySchema MetadataListUnitPrices(const std::string& dataset,
                                        FeedMode mode);

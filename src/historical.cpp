@@ -489,16 +489,9 @@ std::vector<std::string> Historical::MetadataListDatasets(
 
 std::vector<databento::Schema> Historical::MetadataListSchemas(
     const std::string& dataset) {
-  return this->MetadataListSchemas(dataset, {}, {});
-}
-std::vector<databento::Schema> Historical::MetadataListSchemas(
-    const std::string& dataset, const std::string& start_date,
-    const std::string& end_date) {
   static const std::string kEndpoint = "Historical::MetadataListSchemas";
   static const std::string kPath = ::BuildMetadataPath(".list_schemas");
   httplib::Params params{{"dataset", dataset}};
-  ::SetIfNotEmpty(&params, "start_date", start_date);
-  ::SetIfNotEmpty(&params, "end_date", end_date);
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_array()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
@@ -581,44 +574,6 @@ databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
                    std::move(fields_by_encoding_and_schema));
   }
   return fields;
-}
-
-std::vector<databento::Encoding> Historical::MetadataListEncodings() {
-  static const std::string kEndpoint = "Historical::MetadataListEncodings";
-  static const std::string kPath = ::BuildMetadataPath(".list_encodings");
-  const nlohmann::json json = client_.GetJson(kPath, {});
-  if (!json.is_array()) {
-    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
-  }
-  std::vector<Encoding> encodings;
-  for (const auto& encoding_json : json.items()) {
-    if (!encoding_json.value().is_string()) {
-      throw JsonResponseError::TypeMismatch(
-          kEndpoint, "string", encoding_json.key(), encoding_json.value());
-    }
-    encodings.emplace_back(FromString<Encoding>(encoding_json.value()));
-  }
-  return encodings;
-}
-
-std::vector<databento::Compression> Historical::MetadataListCompressions() {
-  static const std::string kEndpoint = "Historical::MetadataListCompressions";
-  static const std::string kPath = ::BuildMetadataPath(".list_compressions");
-  const nlohmann::json json = client_.GetJson(kPath, {});
-  if (!json.is_array()) {
-    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
-  }
-  std::vector<Compression> compressions;
-  for (const auto& compression_json : json.items()) {
-    if (!compression_json.value().is_string()) {
-      throw JsonResponseError::TypeMismatch(kEndpoint, "string",
-                                            compression_json.key(),
-                                            compression_json.value());
-    }
-    compressions.emplace_back(
-        FromString<Compression>(compression_json.value()));
-  }
-  return compressions;
 }
 
 static const std::string kListUnitPricesEndpoint =

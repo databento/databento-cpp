@@ -3,6 +3,9 @@
 ## 0.5.0 - TBD
 - Added `Historical::MetadataGetDatasetRange`
 - Changed `MetadataGetDatasetCondition` to return `vector<DatasetConditionDetail>`
+- Removed `MetadataListCompressions` (redundant with docs)
+- Removed `MetadataListEncodings` (redundant with docs)
+- Removed optional `start` and `end` params from `MetadataListSchemas` (redundant)
 - Renamed `FileBento` to `DbnFileStore`
 
 ## 0.4.0 - 2023-03-02

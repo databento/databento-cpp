@@ -322,15 +322,13 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Simple) {
 TEST_F(HistoricalTests, TestMetadataListSchemas_Full) {
   const nlohmann::json kResp{"mbo", "mbp-1", "ohlcv-1m", "ohlcv-1h",
                              "ohlcv-1d"};
-  mock_server_.MockGetJson(
-      "/v0/metadata.list_schemas",
-      {{"dataset", dataset::kGlbxMdp3}, {"end_date", "2020-01-01"}}, kResp);
+  mock_server_.MockGetJson("/v0/metadata.list_schemas",
+                           {{"dataset", dataset::kGlbxMdp3}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res =
-      target.MetadataListSchemas(dataset::kGlbxMdp3, {}, "2020-01-01");
+  const auto res = target.MetadataListSchemas(dataset::kGlbxMdp3);
   const std::vector<Schema> kExp{Schema::Mbo, Schema::Mbp1, Schema::Ohlcv1M,
                                  Schema::Ohlcv1H, Schema::Ohlcv1D};
   ASSERT_EQ(res.size(), kResp.size());
@@ -370,31 +368,6 @@ TEST_F(HistoricalTests, TestMetadataListFields) {
   EXPECT_EQ(tradesRes.at("length"), "uint8_t");
   EXPECT_EQ(tradesRes.at("rtype"), "uint8_t");
   EXPECT_EQ(tradesRes.at("dataset_id"), "uint16_t");
-}
-
-TEST_F(HistoricalTests, TestMetadataListEncodings) {
-  const nlohmann::json kResp{"dbn", "csv", "json"};
-  mock_server_.MockGetJson("/v0/metadata.list_encodings", kResp);
-  const auto port = mock_server_.ListenOnThread();
-
-  databento::Historical target{kApiKey, "localhost",
-                               static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListEncodings();
-  const std::vector<Encoding> kExp{Encoding::Dbn, Encoding::Csv,
-                                   Encoding::Json};
-  EXPECT_EQ(res, kExp);
-}
-
-TEST_F(HistoricalTests, TestMetadataListCompressions) {
-  const nlohmann::json kResp{"none", "zstd"};
-  mock_server_.MockGetJson("/v0/metadata.list_compressions", kResp);
-  const auto port = mock_server_.ListenOnThread();
-
-  databento::Historical target{kApiKey, "localhost",
-                               static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListCompressions();
-  const std::vector<Compression> kExp{Compression::None, Compression::Zstd};
-  EXPECT_EQ(res, kExp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
