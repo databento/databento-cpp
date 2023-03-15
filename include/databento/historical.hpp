@@ -62,9 +62,13 @@ class Historical {
   std::vector<BatchJob> BatchListJobs(const std::vector<JobState>& states,
                                       const std::string& since);
   std::vector<BatchFileDesc> BatchListFiles(const std::string& job_id);
-  void BatchDownload(const std::string& output_dir, const std::string& job_id);
-  void BatchDownload(const std::string& output_dir, const std::string& job_id,
-                     const std::string& filename_to_download);
+  // Returns the paths of the downloaded files.
+  std::vector<std::string> BatchDownload(const std::string& output_dir,
+                                         const std::string& job_id);
+  // Returns the path of the downloaded file.
+  std::string BatchDownload(const std::string& output_dir,
+                            const std::string& job_id,
+                            const std::string& filename_to_download);
 
   /*
    * Metadata API

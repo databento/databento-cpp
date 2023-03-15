@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.6.0 - TBD
+- Changed `Historical::BatchDownload` to return the paths of the downloaded files
+
 ## 0.5.0 - 2023-03-13
 - Added `Historical::MetadataGetDatasetRange`
 - Changed `MetadataGetDatasetCondition` to return `vector<DatasetConditionDetail>`
