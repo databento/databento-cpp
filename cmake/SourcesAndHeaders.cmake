@@ -17,6 +17,7 @@ set(headers
   include/databento/record.hpp
   include/databento/symbology.hpp
   include/databento/timeseries.hpp
+  include/databento/with_ts_out.hpp
   include/databento/detail/file_stream.hpp
   include/databento/detail/http_client.hpp
   include/databento/detail/scoped_fd.hpp

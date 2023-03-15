@@ -12,6 +12,7 @@
 #include "databento/enums.hpp"  // Schema, SType
 #include "databento/live_blocking.hpp"
 #include "databento/record.hpp"
+#include "databento/with_ts_out.hpp"
 #include "mock/mock_lsg_server.hpp"  // MockLsgServer
 
 namespace databento {
@@ -196,6 +197,41 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
   rec = target.NextRecord();
   ASSERT_TRUE(rec.Holds<MboMsg>());
   EXPECT_EQ(rec.Get<MboMsg>(), kRec);
+}
+
+TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
+  constexpr auto kRecCount = 5;
+  const WithTsOut<TradeMsg> kRec{
+      {DummyHeader<WithTsOut<TradeMsg>>(RType::Mbp0),
+       1,
+       2,
+       Action::Add,
+       Side::Ask,
+       {},
+       1,
+       {},
+       {},
+       2},
+      UnixNanos{std::chrono::seconds{1678910279000000000}}};
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, [kRec](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        for (size_t i = 0; i < kRecCount; ++i) {
+          self.SendRecord(kRec);
+        }
+      }};
+
+  LiveBlocking target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
+                      false};
+  for (size_t i = 0; i < kRecCount; ++i) {
+    const auto rec = target.NextRecord();
+    ASSERT_TRUE(rec.Holds<WithTsOut<TradeMsg>>()) << "Failed on call " << i;
+    EXPECT_EQ(rec.Get<WithTsOut<TradeMsg>>(), kRec);
+    // Extracting the plain record (without ts_out) should also work
+    ASSERT_TRUE(rec.Holds<TradeMsg>()) << "Failed on call " << i;
+    EXPECT_EQ(rec.Get<TradeMsg>(), kRec.rec);
+  }
 }
 }  // namespace test
 }  // namespace databento
