@@ -9,17 +9,19 @@
 namespace databento {
 namespace test {
 TEST(RecordTests, TestMbp10MsgToString) {
-  Mbp10Msg target{RecordHeader{50, RType::Mbp10, 1, 1, UnixNanos{}},
-                  100000000,
-                  10,
-                  Action::Add,
-                  Side::Bid,
-                  {},
-                  0,
-                  UnixNanos{},
-                  TimeDeltaNanos{100},
-                  50,
-                  {}};
+  Mbp10Msg target{
+      RecordHeader{sizeof(Mbp10Msg) / RecordHeader::kLengthMultiplier,
+                   RType::Mbp10, 1, 1, UnixNanos{}},
+      100000000,
+      10,
+      Action::Add,
+      Side::Bid,
+      {},
+      0,
+      UnixNanos{},
+      TimeDeltaNanos{100},
+      50,
+      {}};
   for (std::uint32_t i = 0; i < 10; ++i) {
     target.booklevel[i].ask_ct = i;
     target.booklevel[i].bid_ct = i * 2;
@@ -30,7 +32,7 @@ TEST(RecordTests, TestMbp10MsgToString) {
   }
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(Mbp10Msg {
-    hd = RecordHeader { length = 50, rtype = Mbp10, publisher_id = 1, product_id = 1, ts_event = 0 },
+    hd = RecordHeader { length = 92, rtype = Mbp10, publisher_id = 1, product_id = 1, ts_event = 0 },
     price = 100000000,
     size = 10,
     action = Add,
@@ -57,8 +59,8 @@ TEST(RecordTests, TestMbp10MsgToString) {
 
 TEST(RecordTests, TestInstrumentDefMsgToString) {
   const InstrumentDefMsg target{
-      RecordHeader{sizeof(InstrumentDefMsg) / 4, RType::InstrumentDef, 1, 1,
-                   UnixNanos{}},
+      RecordHeader{sizeof(InstrumentDefMsg) / RecordHeader::kLengthMultiplier,
+                   RType::InstrumentDef, 1, 1, UnixNanos{}},
       UnixNanos{},
       1,
       2,
@@ -183,6 +185,57 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
     contract_multiplier_unit = 42,
     flow_schedule_type = 43,
     tick_rule = 44
+})");
+}
+
+TEST(RecordTests, TestImbalanceMsgToString) {
+  const ImbalanceMsg target{
+      RecordHeader{sizeof(ImbalanceMsg) / RecordHeader::kLengthMultiplier,
+                   RType::Imbalance, 1, 1, UnixNanos{}},
+      UnixNanos{},
+      1,
+      UnixNanos{},
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      'A',
+      Side::Ask,
+      15,
+      16,
+      17,
+      Side::None,
+      'N',
+      {}};
+  const auto res = ToString(target);
+  ASSERT_EQ(res, R"(ImbalanceMsg {
+    hd = RecordHeader { length = 28, rtype = Imbalance, publisher_id = 1, product_id = 1, ts_event = 0 },
+    ts_recv = 0,
+    ref_price = 1,
+    auction_time = 0,
+    cont_book_clr_price = 3,
+    auct_interest_clr_price = 4,
+    ssr_filling_price = 5,
+    ind_match_price = 6,
+    upper_collar = 7,
+    lower_collar = 8,
+    paired_qty = 9,
+    total_imbalance_qty = 10,
+    market_imbalance_qty = 11,
+    unpaired_qty = 12,
+    auction_type = 'A',
+    side = Ask,
+    auction_status = 15,
+    freeze_status = 16,
+    num_extensions = 17,
+    unpaired_side = None,
+    significant_imbalance = 'N'
 })");
 }
 }  // namespace test

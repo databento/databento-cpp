@@ -13,6 +13,8 @@
 namespace databento {
 // Common data for all Databento Records.
 struct RecordHeader {
+  static constexpr std::size_t kLengthMultiplier = 4;
+
   // The length of the message in 32-bit words.
   std::uint8_t length;
   // The record type.
@@ -232,6 +234,37 @@ struct InstrumentDefMsg {
 static_assert(sizeof(InstrumentDefMsg) == 360,
               "InstrumentDefMsg size must match C");
 
+// An order imbalance message.
+struct ImbalanceMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::Imbalance; }
+
+  RecordHeader hd;
+  UnixNanos ts_recv;
+  std::int64_t ref_price;
+  UnixNanos auction_time;
+  std::int64_t cont_book_clr_price;
+  std::int64_t auct_interest_clr_price;
+  std::int64_t ssr_filling_price;
+  std::int64_t ind_match_price;
+  std::int64_t upper_collar;
+  std::int64_t lower_collar;
+  std::uint32_t paired_qty;
+  std::uint32_t total_imbalance_qty;
+  std::uint32_t market_imbalance_qty;
+  std::uint32_t unpaired_qty;
+  char auction_type;
+  Side side;
+  std::uint8_t auction_status;
+  std::uint8_t freeze_status;
+  std::uint8_t num_extensions;
+  Side unpaired_side;
+  char significant_imbalance;
+  // padding for alignment
+  std::array<char, 1> dummy[1];
+};
+
+static_assert(sizeof(ImbalanceMsg) == 112, "ImbalanceMsg size must match C");
+
 // An error message from the Live Subscription Gateway (LSG). This will never
 // be present in historical data.
 struct ErrorMsg {
@@ -335,6 +368,11 @@ inline bool operator!=(const InstrumentDefMsg& lhs,
   return !(lhs == rhs);
 }
 
+bool operator==(const ImbalanceMsg& lhs, const ImbalanceMsg& rhs);
+inline bool operator!=(const ImbalanceMsg& lhs, const ImbalanceMsg& rhs) {
+  return !(lhs == rhs);
+}
+
 inline bool operator==(const ErrorMsg& lhs, const ErrorMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.err == rhs.err;
 }
@@ -366,6 +404,9 @@ std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg);
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instr_def_msg);
+std::string ToString(const ImbalanceMsg& imbalance_msg);
+std::ostream& operator<<(std::ostream& stream,
+                         const ImbalanceMsg& imbalance_msg);
 std::string ToString(const ErrorMsg& err_msg);
 std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg);
 std::string ToString(const SymbolMappingMsg& symbol_mapping_msg);

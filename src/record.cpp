@@ -11,7 +11,7 @@ using databento::RecordHeader;
 using databento::RType;
 
 std::size_t RecordHeader::Size() const {
-  return static_cast<size_t>(length) * 4;
+  return static_cast<size_t>(length) * kLengthMultiplier;
 }
 
 std::size_t Record::Size() const { return record_->Size(); }
@@ -149,6 +149,30 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
          lhs.contract_multiplier_unit == rhs.contract_multiplier_unit &&
          lhs.flow_schedule_type == rhs.flow_schedule_type &&
          lhs.tick_rule == rhs.tick_rule;
+}
+
+using databento::ImbalanceMsg;
+
+bool operator==(const ImbalanceMsg& lhs, const ImbalanceMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.ts_recv == rhs.ts_recv &&
+         lhs.ref_price == rhs.ref_price &&
+         lhs.auction_time == rhs.auction_time &&
+         lhs.cont_book_clr_price == rhs.cont_book_clr_price &&
+         lhs.auct_interest_clr_price == rhs.auct_interest_clr_price &&
+         lhs.ssr_filling_price == rhs.ssr_filling_price &&
+         lhs.ind_match_price == rhs.ind_match_price &&
+         lhs.upper_collar == rhs.upper_collar &&
+         lhs.lower_collar == rhs.lower_collar &&
+         lhs.paired_qty == rhs.paired_qty &&
+         lhs.total_imbalance_qty == rhs.total_imbalance_qty &&
+         lhs.market_imbalance_qty == rhs.market_imbalance_qty &&
+         lhs.unpaired_qty == rhs.unpaired_qty &&
+         lhs.auction_type == rhs.auction_type && lhs.side == rhs.side &&
+         lhs.auction_status == rhs.auction_status &&
+         lhs.freeze_status == rhs.freeze_status &&
+         lhs.num_extensions == rhs.num_extensions &&
+         lhs.unpaired_side == rhs.unpaired_side &&
+         lhs.significant_imbalance == rhs.significant_imbalance;
 }
 
 namespace databento {
@@ -365,6 +389,40 @@ std::ostream& operator<<(std::ostream& stream,
                 instr_def_msg.contract_multiplier_unit)
       .AddField("flow_schedule_type", instr_def_msg.flow_schedule_type)
       .AddField("tick_rule", instr_def_msg.tick_rule)
+      .Finish();
+}
+
+std::string ToString(const ImbalanceMsg& imbalance_msg) {
+  return MakeString(imbalance_msg);
+}
+std::ostream& operator<<(std::ostream& stream,
+                         const ImbalanceMsg& imbalance_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("ImbalanceMsg")
+      .Build()
+      .AddField("hd", imbalance_msg.hd)
+      .AddField("ts_recv", imbalance_msg.ts_recv)
+      .AddField("ref_price", imbalance_msg.ref_price)
+      .AddField("auction_time", imbalance_msg.auction_time)
+      .AddField("cont_book_clr_price", imbalance_msg.cont_book_clr_price)
+      .AddField("auct_interest_clr_price",
+                imbalance_msg.auct_interest_clr_price)
+      .AddField("ssr_filling_price", imbalance_msg.ssr_filling_price)
+      .AddField("ind_match_price", imbalance_msg.ind_match_price)
+      .AddField("upper_collar", imbalance_msg.upper_collar)
+      .AddField("lower_collar", imbalance_msg.lower_collar)
+      .AddField("paired_qty", imbalance_msg.paired_qty)
+      .AddField("total_imbalance_qty", imbalance_msg.total_imbalance_qty)
+      .AddField("market_imbalance_qty", imbalance_msg.market_imbalance_qty)
+      .AddField("unpaired_qty", imbalance_msg.unpaired_qty)
+      .AddField("auction_type", imbalance_msg.auction_type)
+      .AddField("side", imbalance_msg.side)
+      .AddField("auction_status", imbalance_msg.auction_status)
+      .AddField("freeze_status", imbalance_msg.freeze_status)
+      .AddField("num_extensions", imbalance_msg.num_extensions)
+      .AddField("unpaired_side", imbalance_msg.unpaired_side)
+      .AddField("significant_imbalance", imbalance_msg.significant_imbalance)
       .Finish();
 }
 
