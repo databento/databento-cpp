@@ -2,7 +2,9 @@
 
 ## 0.6.0 - TBD
 - Added support for imbalance schema
+- Added support for decoding `ts_out` field
 - Changed `Historical::BatchDownload` to return the paths of the downloaded files
+- Added flags `kSnapshot` and `kMaybeBadBook`
 
 ## 0.5.0 - 2023-03-13
 - Added `Historical::MetadataGetDatasetRange`
