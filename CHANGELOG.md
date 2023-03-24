@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.0 - TBD
+## 0.6.0 - 2023-03-24
 - Added support for imbalance schema
 - Added support for decoding `ts_out` field
 - Removed `record_count` from `Metadata`
