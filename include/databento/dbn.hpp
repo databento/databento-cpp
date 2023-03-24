@@ -40,8 +40,6 @@ struct Metadata {
   UnixNanos end;
   // The maximum number of records for the query.
   std::uint64_t limit;
-  // The total number of records.
-  std::uint64_t record_count;
   // The input symbology type.
   SType stype_in;
   // The output symbology type.
@@ -71,10 +69,9 @@ inline bool operator==(const Metadata& lhs, const Metadata& rhs) {
   return lhs.version == rhs.version && lhs.dataset == rhs.dataset &&
          lhs.schema == rhs.schema && lhs.start == rhs.start &&
          lhs.end == rhs.end && lhs.limit == rhs.limit &&
-         lhs.record_count == rhs.record_count && lhs.stype_in == rhs.stype_in &&
-         lhs.stype_out == rhs.stype_out && lhs.symbols == rhs.symbols &&
-         lhs.partial == rhs.partial && lhs.not_found == rhs.not_found &&
-         lhs.mappings == rhs.mappings;
+         lhs.stype_in == rhs.stype_in && lhs.stype_out == rhs.stype_out &&
+         lhs.symbols == rhs.symbols && lhs.partial == rhs.partial &&
+         lhs.not_found == rhs.not_found && lhs.mappings == rhs.mappings;
 }
 
 std::string ToString(const Metadata& metadata);

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0 - 2023-03-24
+- Added support for imbalance schema
+- Added support for decoding `ts_out` field
+- Removed `record_count` from `Metadata`
+- Changed `Historical::BatchDownload` to return the paths of the downloaded files
+- Added flags `kSnapshot` and `kMaybeBadBook`
+
 ## 0.5.0 - 2023-03-13
 - Added `Historical::MetadataGetDatasetRange`
 - Changed `MetadataGetDatasetCondition` to return `vector<DatasetConditionDetail>`

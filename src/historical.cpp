@@ -380,20 +380,23 @@ std::vector<databento::BatchFileDesc> Historical::BatchListFiles(
   return files;
 }
 
-void Historical::BatchDownload(const std::string& output_dir,
-                               const std::string& job_id) {
+std::vector<std::string> Historical::BatchDownload(
+    const std::string& output_dir, const std::string& job_id) {
   TryCreateDir(output_dir);
   const std::string job_dir = PathJoin(output_dir, job_id);
   TryCreateDir(job_dir);
   const auto file_descs = BatchListFiles(job_id);
+  std::vector<std::string> paths;
   for (const auto& file_desc : file_descs) {
-    const std::string output_path = PathJoin(job_dir, file_desc.filename);
+    std::string output_path = PathJoin(job_dir, file_desc.filename);
     DownloadFile(file_desc.https_url, output_path);
+    paths.emplace_back(std::move(output_path));
   }
+  return paths;
 }
-void Historical::BatchDownload(const std::string& output_dir,
-                               const std::string& job_id,
-                               const std::string& filename_to_download) {
+std::string Historical::BatchDownload(const std::string& output_dir,
+                                      const std::string& job_id,
+                                      const std::string& filename_to_download) {
   TryCreateDir(output_dir);
   const std::string job_dir = PathJoin(output_dir, job_id);
   TryCreateDir(job_dir);
@@ -408,8 +411,9 @@ void Historical::BatchDownload(const std::string& output_dir,
                                "filename_to_download",
                                "Filename not found for batch job " + job_id};
   }
-  const std::string output_path = PathJoin(job_dir, file_desc_it->filename);
+  std::string output_path = PathJoin(job_dir, file_desc_it->filename);
   DownloadFile(file_desc_it->https_url, output_path);
+  return output_path;
 }
 
 void Historical::DownloadFile(const std::string& url,
@@ -1067,14 +1071,12 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
   try {
     DbnDecoder dbn_decoder{channel};
     Metadata metadata = dbn_decoder.DecodeMetadata();
-    const auto record_count = metadata.record_count;
     if (metadata_callback) {
       metadata_callback(std::move(metadata));
     }
-    for (auto i = 0UL; i < record_count; ++i) {
-      const bool should_stop =
-          record_callback(dbn_decoder.DecodeRecord()) == KeepGoing::Stop;
-      if (should_stop) {
+    const Record* record;
+    while ((record = dbn_decoder.DecodeRecord()) != nullptr) {
+      if (record_callback(*record) == KeepGoing::Stop) {
         should_continue = false;
         break;
       }

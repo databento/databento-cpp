@@ -100,7 +100,6 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.record_count, 2);
   EXPECT_EQ(ch_metadata.stype_in, SType::Native);
   EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
@@ -109,10 +108,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record1.Holds<MboMsg>());
-  ASSERT_TRUE(f_record1.Holds<MboMsg>());
-  const auto& ch_mbo1 = ch_record1.Get<MboMsg>();
-  const auto& f_mbo1 = f_record1.Get<MboMsg>();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<MboMsg>());
+  ASSERT_TRUE(f_record1->Holds<MboMsg>());
+  const auto& ch_mbo1 = ch_record1->Get<MboMsg>();
+  const auto& f_mbo1 = f_record1->Get<MboMsg>();
   EXPECT_EQ(ch_mbo1, f_mbo1);
   EXPECT_EQ(ch_mbo1.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbo1.hd.product_id, 5482);
@@ -130,11 +131,13 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   EXPECT_EQ(ch_mbo1.sequence, 1170352);
 
   const auto ch_record2 = channel_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record2.Holds<MboMsg>());
   const auto f_record2 = file_target_->DecodeRecord();
-  ASSERT_TRUE(f_record2.Holds<MboMsg>());
-  const auto& ch_mbo2 = ch_record2.Get<MboMsg>();
-  const auto& f_mbo2 = f_record2.Get<MboMsg>();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<MboMsg>());
+  ASSERT_TRUE(f_record2->Holds<MboMsg>());
+  const auto& ch_mbo2 = ch_record2->Get<MboMsg>();
+  const auto& f_mbo2 = f_record2->Get<MboMsg>();
   EXPECT_EQ(ch_mbo2, f_mbo2);
   EXPECT_EQ(ch_mbo2.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbo2.hd.product_id, 5482);
@@ -164,7 +167,6 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.record_count, 2);
   EXPECT_EQ(ch_metadata.stype_in, SType::Native);
   EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
@@ -174,10 +176,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record1.Holds<Mbp1Msg>());
-  ASSERT_TRUE(f_record1.Holds<Mbp1Msg>());
-  const auto& ch_mbp1 = ch_record1.Get<Mbp1Msg>();
-  const auto& f_mbp1 = f_record1.Get<Mbp1Msg>();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<Mbp1Msg>());
+  ASSERT_TRUE(f_record1->Holds<Mbp1Msg>());
+  const auto& ch_mbp1 = ch_record1->Get<Mbp1Msg>();
+  const auto& f_mbp1 = f_record1->Get<Mbp1Msg>();
   EXPECT_EQ(ch_mbp1, f_mbp1);
   EXPECT_EQ(ch_mbp1.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbp1.hd.product_id, 5482);
@@ -201,10 +205,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record2.Holds<Mbp1Msg>());
-  ASSERT_TRUE(f_record2.Holds<Mbp1Msg>());
-  const auto& ch_mbp2 = ch_record2.Get<Mbp1Msg>();
-  const auto& f_mbp2 = f_record2.Get<Mbp1Msg>();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<Mbp1Msg>());
+  ASSERT_TRUE(f_record2->Holds<Mbp1Msg>());
+  const auto& ch_mbp2 = ch_record2->Get<Mbp1Msg>();
+  const auto& f_mbp2 = f_record2->Get<Mbp1Msg>();
   EXPECT_EQ(ch_mbp2, f_mbp2);
   EXPECT_EQ(ch_mbp2.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbp2.hd.product_id, 5482);
@@ -239,7 +245,6 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.record_count, 2);
   EXPECT_EQ(ch_metadata.stype_in, SType::Native);
   EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
@@ -249,10 +254,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record1.Holds<Mbp10Msg>());
-  ASSERT_TRUE(f_record1.Holds<Mbp10Msg>());
-  const auto& ch_mbp1 = ch_record1.Get<Mbp10Msg>();
-  const auto& f_mbp1 = f_record1.Get<Mbp10Msg>();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<Mbp10Msg>());
+  ASSERT_TRUE(f_record1->Holds<Mbp10Msg>());
+  const auto& ch_mbp1 = ch_record1->Get<Mbp10Msg>();
+  const auto& f_mbp1 = f_record1->Get<Mbp10Msg>();
   EXPECT_EQ(ch_mbp1, f_mbp1);
   EXPECT_EQ(ch_mbp1.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbp1.hd.product_id, 5482);
@@ -288,10 +295,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record2.Holds<Mbp10Msg>());
-  ASSERT_TRUE(f_record2.Holds<Mbp10Msg>());
-  const auto& ch_mbp2 = ch_record2.Get<Mbp10Msg>();
-  const auto& f_mbp2 = f_record2.Get<Mbp10Msg>();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<Mbp10Msg>());
+  ASSERT_TRUE(f_record2->Holds<Mbp10Msg>());
+  const auto& ch_mbp2 = ch_record2->Get<Mbp10Msg>();
+  const auto& f_mbp2 = f_record2->Get<Mbp10Msg>();
   EXPECT_EQ(ch_mbp2, f_mbp2);
   EXPECT_EQ(ch_mbp2.hd.publisher_id, 1);
   EXPECT_EQ(ch_mbp2.hd.product_id, 5482);
@@ -338,7 +347,6 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.record_count, 2);
   EXPECT_EQ(ch_metadata.stype_in, SType::Native);
   EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
@@ -348,10 +356,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record1.Holds<TbboMsg>());
-  ASSERT_TRUE(f_record1.Holds<TbboMsg>());
-  const auto& ch_tbbo1 = ch_record1.Get<TbboMsg>();
-  const auto& f_tbbo1 = f_record1.Get<TbboMsg>();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<TbboMsg>());
+  ASSERT_TRUE(f_record1->Holds<TbboMsg>());
+  const auto& ch_tbbo1 = ch_record1->Get<TbboMsg>();
+  const auto& f_tbbo1 = f_record1->Get<TbboMsg>();
   EXPECT_EQ(ch_tbbo1, f_tbbo1);
   EXPECT_EQ(ch_tbbo1.hd.publisher_id, 1);
   EXPECT_EQ(ch_tbbo1.hd.product_id, 5482);
@@ -375,10 +385,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record2.Holds<TbboMsg>());
-  ASSERT_TRUE(f_record2.Holds<TbboMsg>());
-  const auto& ch_tbbo2 = ch_record2.Get<TbboMsg>();
-  const auto& f_tbbo2 = f_record2.Get<TbboMsg>();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<TbboMsg>());
+  ASSERT_TRUE(f_record2->Holds<TbboMsg>());
+  const auto& ch_tbbo2 = ch_record2->Get<TbboMsg>();
+  const auto& f_tbbo2 = f_record2->Get<TbboMsg>();
   EXPECT_EQ(ch_tbbo2, f_tbbo2);
   EXPECT_EQ(ch_tbbo2.hd.publisher_id, 1);
   EXPECT_EQ(ch_tbbo2.hd.product_id, 5482);
@@ -413,7 +425,6 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.record_count, 2);
   EXPECT_EQ(ch_metadata.stype_in, SType::Native);
   EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
@@ -423,10 +434,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record1.Holds<TradeMsg>());
-  ASSERT_TRUE(f_record1.Holds<TradeMsg>());
-  const auto& ch_trade1 = ch_record1.Get<TradeMsg>();
-  const auto& f_trade1 = f_record1.Get<TradeMsg>();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<TradeMsg>());
+  ASSERT_TRUE(f_record1->Holds<TradeMsg>());
+  const auto& ch_trade1 = ch_record1->Get<TradeMsg>();
+  const auto& f_trade1 = f_record1->Get<TradeMsg>();
   EXPECT_EQ(ch_trade1, f_trade1);
   EXPECT_EQ(ch_trade1.hd.publisher_id, 1);
   EXPECT_EQ(ch_trade1.hd.product_id, 5482);
@@ -444,10 +457,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record2.Holds<TradeMsg>());
-  ASSERT_TRUE(f_record2.Holds<TradeMsg>());
-  const auto& ch_trade2 = ch_record2.Get<TradeMsg>();
-  const auto& f_trade2 = f_record2.Get<TradeMsg>();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<TradeMsg>());
+  ASSERT_TRUE(f_record2->Holds<TradeMsg>());
+  const auto& ch_trade2 = ch_record2->Get<TradeMsg>();
+  const auto& f_trade2 = f_record2->Get<TradeMsg>();
   EXPECT_EQ(ch_trade2, f_trade2);
   EXPECT_EQ(ch_trade2.hd.publisher_id, 1);
   EXPECT_EQ(ch_trade2.hd.product_id, 5482);
@@ -476,7 +491,6 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1D) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.record_count, 0);
   EXPECT_EQ(ch_metadata.stype_in, SType::Native);
   EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
@@ -497,7 +511,6 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.record_count, 2);
   EXPECT_EQ(ch_metadata.stype_in, SType::Native);
   EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
@@ -507,10 +520,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record1.Holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record1.Holds<OhlcvMsg>());
-  const auto& ch_ohlcv1 = ch_record1.Get<OhlcvMsg>();
-  const auto& f_ohlcv1 = f_record1.Get<OhlcvMsg>();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record1->Holds<OhlcvMsg>());
+  const auto& ch_ohlcv1 = ch_record1->Get<OhlcvMsg>();
+  const auto& f_ohlcv1 = f_record1->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv1, f_ohlcv1);
   EXPECT_EQ(ch_ohlcv1.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv1.hd.product_id, 5482);
@@ -524,10 +539,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record2.Holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record2.Holds<OhlcvMsg>());
-  const auto& ch_ohlcv2 = ch_record2.Get<OhlcvMsg>();
-  const auto& f_ohlcv2 = f_record2.Get<OhlcvMsg>();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record2->Holds<OhlcvMsg>());
+  const auto& ch_ohlcv2 = ch_record2->Get<OhlcvMsg>();
+  const auto& f_ohlcv2 = f_record2->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv2, f_ohlcv2);
   EXPECT_EQ(ch_ohlcv2.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv2.hd.product_id, 5482);
@@ -552,7 +569,6 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.record_count, 2);
   EXPECT_EQ(ch_metadata.stype_in, SType::Native);
   EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
@@ -562,10 +578,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record1.Holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record1.Holds<OhlcvMsg>());
-  const auto& ch_ohlcv1 = ch_record1.Get<OhlcvMsg>();
-  const auto& f_ohlcv1 = f_record1.Get<OhlcvMsg>();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record1->Holds<OhlcvMsg>());
+  const auto& ch_ohlcv1 = ch_record1->Get<OhlcvMsg>();
+  const auto& f_ohlcv1 = f_record1->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv1, f_ohlcv1);
   EXPECT_EQ(ch_ohlcv1.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv1.hd.product_id, 5482);
@@ -579,10 +597,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record2.Holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record2.Holds<OhlcvMsg>());
-  const auto& ch_ohlcv2 = ch_record2.Get<OhlcvMsg>();
-  const auto& f_ohlcv2 = f_record2.Get<OhlcvMsg>();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record2->Holds<OhlcvMsg>());
+  const auto& ch_ohlcv2 = ch_record2->Get<OhlcvMsg>();
+  const auto& f_ohlcv2 = f_record2->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv2, f_ohlcv2);
   EXPECT_EQ(ch_ohlcv2.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv2.hd.product_id, 5482);
@@ -607,7 +627,6 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.record_count, 2);
   EXPECT_EQ(ch_metadata.stype_in, SType::Native);
   EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
@@ -617,10 +636,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record1.Holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record1.Holds<OhlcvMsg>());
-  const auto& ch_ohlcv1 = ch_record1.Get<OhlcvMsg>();
-  const auto& f_ohlcv1 = f_record1.Get<OhlcvMsg>();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record1->Holds<OhlcvMsg>());
+  const auto& ch_ohlcv1 = ch_record1->Get<OhlcvMsg>();
+  const auto& f_ohlcv1 = f_record1->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv1, f_ohlcv1);
   EXPECT_EQ(ch_ohlcv1.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv1.hd.product_id, 5482);
@@ -634,10 +655,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record2.Holds<OhlcvMsg>());
-  ASSERT_TRUE(f_record2.Holds<OhlcvMsg>());
-  const auto& ch_ohlcv2 = ch_record2.Get<OhlcvMsg>();
-  const auto& f_ohlcv2 = f_record2.Get<OhlcvMsg>();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<OhlcvMsg>());
+  ASSERT_TRUE(f_record2->Holds<OhlcvMsg>());
+  const auto& ch_ohlcv2 = ch_record2->Get<OhlcvMsg>();
+  const auto& f_ohlcv2 = f_record2->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv2, f_ohlcv2);
   EXPECT_EQ(ch_ohlcv2.hd.publisher_id, 1);
   EXPECT_EQ(ch_ohlcv2.hd.product_id, 5482);
@@ -662,7 +685,6 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1664841600000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1672790400000000000);
   EXPECT_EQ(ch_metadata.limit, 0);
-  EXPECT_EQ(ch_metadata.record_count, 2);
   EXPECT_EQ(ch_metadata.stype_in, SType::Native);
   EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"MSFT"});
@@ -679,10 +701,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record1.Holds<InstrumentDefMsg>());
-  ASSERT_TRUE(f_record1.Holds<InstrumentDefMsg>());
-  const auto& ch_def1 = ch_record1.Get<InstrumentDefMsg>();
-  const auto& f_def1 = f_record1.Get<InstrumentDefMsg>();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<InstrumentDefMsg>());
+  ASSERT_TRUE(f_record1->Holds<InstrumentDefMsg>());
+  const auto& ch_def1 = ch_record1->Get<InstrumentDefMsg>();
+  const auto& f_def1 = f_record1->Get<InstrumentDefMsg>();
   EXPECT_EQ(ch_def1, f_def1);
   EXPECT_STREQ(ch_def1.exchange.data(), "XNAS");
   EXPECT_STREQ(ch_def1.symbol.data(), "MSFT");
@@ -691,10 +715,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
-  ASSERT_TRUE(ch_record2.Holds<InstrumentDefMsg>());
-  ASSERT_TRUE(f_record2.Holds<InstrumentDefMsg>());
-  const auto& ch_def2 = ch_record2.Get<InstrumentDefMsg>();
-  const auto& f_def2 = f_record2.Get<InstrumentDefMsg>();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<InstrumentDefMsg>());
+  ASSERT_TRUE(f_record2->Holds<InstrumentDefMsg>());
+  const auto& ch_def2 = ch_record2->Get<InstrumentDefMsg>();
+  const auto& f_def2 = f_record2->Get<InstrumentDefMsg>();
   EXPECT_EQ(ch_def2, f_def2);
   EXPECT_STREQ(ch_def2.exchange.data(), "XNAS");
   EXPECT_STREQ(ch_def2.symbol.data(), "MSFT");

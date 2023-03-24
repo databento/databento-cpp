@@ -53,6 +53,9 @@ const char* ToString(Schema schema) {
     case Schema::Definition: {
       return "definition";
     }
+    case Schema::Imbalance: {
+      return "imbalance";
+    }
     case Schema::Statistics: {
       return "statistics";
     }
@@ -250,6 +253,9 @@ const char* ToString(RType rtype) {
     case RType::InstrumentDef: {
       return "InstrumentDef";
     }
+    case RType::Imbalance: {
+      return "Imbalance";
+    }
     case RType::Mbo: {
       return "Mbo";
     }
@@ -395,6 +401,9 @@ Schema FromString(const std::string& str) {
   }
   if (str == "definition") {
     return Schema::Definition;
+  }
+  if (str == "imbalance") {
+    return Schema::Imbalance;
   }
   if (str == "statistics") {
     return Schema::Statistics;

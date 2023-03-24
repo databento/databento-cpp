@@ -29,8 +29,9 @@ class DbnDecoder {
 
   // Should only be called once
   Metadata DecodeMetadata();
-  // Lifetime of returned Record is until next call to ParseRecord.
-  Record DecodeRecord();
+  // Lifetime of returned Record is until next call to DecodeRecord. Returns
+  // nullptr once the end of the input has been reached.
+  const Record* DecodeRecord();
 
  private:
   static std::string DecodeSymbol(
@@ -51,5 +52,6 @@ class DbnDecoder {
   std::unique_ptr<IReadable> input_;
   std::vector<std::uint8_t> buffer_;
   std::size_t buffer_idx_{};
+  Record current_record_{nullptr};
 };
 }  // namespace databento

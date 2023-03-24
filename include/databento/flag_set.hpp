@@ -6,16 +6,23 @@
 #include <string>
 
 namespace databento {
-/// Transparent wrapper around the bit flags used in several DBN record types.
+// Transparent wrapper around the bit flags used in several DBN record types.
 class FlagSet {
  public:
   using Repr = std::uint8_t;
-  // Last message in the packet from the venue for a given `product_id`.
+  // Indicates it's the last message in the packet from the venue for a given
+  // `product_id`.
   static constexpr Repr kLast = 1 << 7;
-  // Aggregated price level message, not an individual order.
+  // Indicates the message was sourced from a replay, such as a snapshot
+  // server.
+  static constexpr Repr kSnapshot = 1 << 5;
+  // Indicates an aggregated price level message, not an individual order.
   static constexpr Repr kMbp = 1 << 4;
-  // The `ts_recv` value is inaccurate due to clock issues or packet reordering.
+  // Indicates the `ts_recv` value is inaccurate due to clock issues or packet
+  // reordering.
   static constexpr Repr kBadTsRecv = 1 << 3;
+  // Indicates an unrecoverable gap was detected in the channel.
+  static constexpr Repr kMaybeBadBook = 1 << 2;
 
   friend std::ostream& operator<<(std::ostream&, FlagSet);
 

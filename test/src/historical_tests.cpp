@@ -220,9 +220,15 @@ TEST_F(HistoricalTests, TestBatchDownloadAll) {
                                static_cast<std::uint16_t>(port)};
   ASSERT_FALSE(temp_metadata_file.Exists());
   ASSERT_FALSE(temp_dbn_file.Exists());
-  target.BatchDownload(TEST_BUILD_DIR, kJobId);
+  const std::vector<std::string> paths =
+      target.BatchDownload(TEST_BUILD_DIR, kJobId);
   EXPECT_TRUE(temp_metadata_file.Exists());
   EXPECT_TRUE(temp_dbn_file.Exists());
+  ASSERT_EQ(paths.size(), 2);
+  EXPECT_NE(std::find(paths.begin(), paths.end(), temp_metadata_file.Path()),
+            paths.end());
+  EXPECT_NE(std::find(paths.begin(), paths.end(), temp_dbn_file.Path()),
+            paths.end());
 }
 
 TEST_F(HistoricalTests, TestBatchDownloadSingle) {
@@ -236,8 +242,10 @@ TEST_F(HistoricalTests, TestBatchDownloadSingle) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   ASSERT_FALSE(temp_metadata_file.Exists());
-  target.BatchDownload(TEST_BUILD_DIR, kJobId, "test_metadata.json");
+  const std::string path =
+      target.BatchDownload(TEST_BUILD_DIR, kJobId, "test_metadata.json");
   EXPECT_TRUE(temp_metadata_file.Exists());
+  EXPECT_EQ(path, temp_metadata_file.Path());
 }
 
 TEST_F(HistoricalTests, TestBatchDownloadSingleInvalidFile) {
@@ -674,7 +682,6 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
         mbo_records.emplace_back(record.Get<MboMsg>());
         return KeepGoing::Continue;
       });
-  EXPECT_EQ(metadata_ptr->record_count, 2);
   EXPECT_EQ(metadata_ptr->limit, 2);
   EXPECT_EQ(metadata_ptr->schema, Schema::Mbo);
   EXPECT_EQ(mbo_records.size(), 2);

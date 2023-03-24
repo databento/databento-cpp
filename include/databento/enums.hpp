@@ -31,6 +31,7 @@ enum class Schema : std::uint16_t {
   Definition = 9,
   Statistics = 10,
   Status = 11,
+  Imbalance = 12,
 };
 
 // Represents a data output encoding.
@@ -105,6 +106,7 @@ enum RType : std::uint8_t {
   Ohlcv1H = 0x22,
   Ohlcv1D = 0x23,
   InstrumentDef = 0x13,
+  Imbalance = 0x14,
   Error = 0x15,
   SymbolMapping = 0x16,
   Mbo = 0xA0,
