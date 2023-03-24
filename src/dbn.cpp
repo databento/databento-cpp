@@ -19,7 +19,6 @@ std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
                     .AddField("start", metadata.start)
                     .AddField("end", metadata.end)
                     .AddField("limit", metadata.limit)
-                    .AddField("record_count", metadata.record_count)
                     .AddField("stype_in", metadata.stype_in)
                     .AddField("stype_out", metadata.stype_out);
 

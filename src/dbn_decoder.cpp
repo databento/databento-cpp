@@ -105,7 +105,8 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   res.end =
       UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(buffer_it)}};
   res.limit = Consume<std::uint64_t>(buffer_it);
-  res.record_count = Consume<std::uint64_t>(buffer_it);
+  // skip deprecated record_count
+  buffer_it += 8;
   res.stype_in = static_cast<SType>(Consume<std::uint8_t>(buffer_it));
   res.stype_out = static_cast<SType>(Consume<std::uint8_t>(buffer_it));
   // skip reserved
@@ -136,23 +137,23 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
 }
 
 // assumes ParseMetadata has been called
-databento::Record DbnDecoder::DecodeRecord() {
+const databento::Record* DbnDecoder::DecodeRecord() {
   // need some unread unread_bytes
   const auto unread_bytes = buffer_.size() - buffer_idx_;
   if (unread_bytes == 0) {
     if (FillBuffer() == 0) {
-      throw DbnResponseError{"Reached end of DBN stream"};
+      return nullptr;
     }
   }
   // check length
   while (buffer_.size() - buffer_idx_ < BufferRecordHeader()->Size()) {
     if (FillBuffer() == 0) {
-      throw DbnResponseError{"Reached end of DBN stream"};
+      return nullptr;
     }
   }
-  Record res{BufferRecordHeader()};
-  buffer_idx_ += res.Size();
-  return res;
+  current_record_ = Record{BufferRecordHeader()};
+  buffer_idx_ += current_record_.Size();
+  return &current_record_;
 }
 
 size_t DbnDecoder::FillBuffer() {

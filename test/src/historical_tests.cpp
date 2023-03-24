@@ -682,7 +682,6 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
         mbo_records.emplace_back(record.Get<MboMsg>());
         return KeepGoing::Continue;
       });
-  EXPECT_EQ(metadata_ptr->record_count, 2);
   EXPECT_EQ(metadata_ptr->limit, 2);
   EXPECT_EQ(metadata_ptr->schema, Schema::Mbo);
   EXPECT_EQ(mbo_records.size(), 2);
