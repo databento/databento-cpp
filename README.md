@@ -80,7 +80,7 @@ cmake --install build
 
 Then in your project's `CMakeLists.txt`, add the following:
 ```cmake
-find_package(databento 0.6.0 REQUIRED)
+find_package(databento 0.6.1 REQUIRED)
 add_library(my_library)
 target_link_libraries(my_library PRIVATE databento::databento)
 ```
