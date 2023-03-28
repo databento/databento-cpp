@@ -118,6 +118,7 @@ using rtype::RType;
 //
 // Additional actions may be added in the future.
 namespace action {
+// enum because future variants may be added in the future.
 enum Action : char {
   // An existing order was modified.
   Modify = 'M',
@@ -144,6 +145,48 @@ enum class Side : char {
   None = 'N',
 };
 
+namespace instrument_class {
+// enum because future variants may be added in the future.
+enum InstrumentClass : char {
+  Bond = 'B',
+  Call = 'C',
+  Future = 'F',
+  Stock = 'K',
+  MixedSpread = 'M',
+  Put = 'P',
+  FutureSpread = 'S',
+  OptionSpread = 'T',
+  FxSpot = 'X',
+};
+}  // namespace instrument_class
+using instrument_class::InstrumentClass;
+
+namespace match_algorithm {
+enum MatchAlgorithm : char {
+  Fifo = 'F',
+  Configurable = 'K',
+  ProRata = 'C',
+  FifoLmm = 'T',
+  ThresholdProRata = 'O',
+  FifoTopLmm = 'S',
+  ThresholdProRataLmm = 'Q',
+  EurodollarOptions = 'Y',
+};
+}
+using match_algorithm::MatchAlgorithm;
+
+enum class SecurityUpdateAction : char {
+  Add = 'A',
+  Modify = 'M',
+  Delete = 'D',
+  Invalid = '~',
+};
+
+enum class UserDefinedInstrument : char {
+  No = 'N',
+  Yes = 'Y',
+};
+
 // Convert a HistoricalGateway to a URL.
 const char* UrlFromGateway(HistoricalGateway gateway);
 
@@ -160,6 +203,10 @@ const char* ToString(DatasetCondition condition);
 const char* ToString(RType rtype);
 const char* ToString(Action action);
 const char* ToString(Side side);
+const char* ToString(InstrumentClass instrument_class);
+const char* ToString(MatchAlgorithm match_algorithm);
+const char* ToString(SecurityUpdateAction update_action);
+const char* ToString(UserDefinedInstrument user_def_instr);
 
 std::ostream& operator<<(std::ostream& out, Schema schema);
 std::ostream& operator<<(std::ostream& out, Encoding encoding);
@@ -174,6 +221,11 @@ std::ostream& operator<<(std::ostream& out, DatasetCondition condition);
 std::ostream& operator<<(std::ostream& out, RType rtype);
 std::ostream& operator<<(std::ostream& out, Action action);
 std::ostream& operator<<(std::ostream& out, Side side);
+std::ostream& operator<<(std::ostream& out, InstrumentClass instrument_class);
+std::ostream& operator<<(std::ostream& out, MatchAlgorithm match_algorithm);
+std::ostream& operator<<(std::ostream& out, SecurityUpdateAction update_action);
+std::ostream& operator<<(std::ostream& out,
+                         UserDefinedInstrument user_def_instr);
 
 template <typename T>
 T FromString(const std::string& str);

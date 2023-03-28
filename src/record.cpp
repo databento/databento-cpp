@@ -122,7 +122,6 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
          lhs.contract_multiplier == rhs.contract_multiplier &&
          lhs.decay_quantity == rhs.decay_quantity &&
          lhs.original_contract_size == rhs.original_contract_size &&
-         lhs.related_security_id == rhs.related_security_id &&
          lhs.trading_reference_date == rhs.trading_reference_date &&
          lhs.appl_id == rhs.appl_id && lhs.maturity_year == rhs.maturity_year &&
          lhs.decay_start_date == rhs.decay_start_date &&
@@ -133,7 +132,10 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
          lhs.asset == rhs.asset && lhs.cfi == rhs.cfi &&
          lhs.security_type == rhs.security_type &&
          lhs.unit_of_measure == rhs.unit_of_measure &&
-         lhs.underlying == rhs.underlying && lhs.related == rhs.related &&
+         lhs.underlying == rhs.underlying &&
+         lhs.strike_price_currency == rhs.strike_price_currency &&
+         lhs.instrument_class == rhs.instrument_class &&
+         lhs.strike_price == rhs.strike_price &&
          lhs.match_algorithm == rhs.match_algorithm &&
          lhs.md_security_trading_status == rhs.md_security_trading_status &&
          lhs.main_fraction == rhs.main_fraction &&
@@ -353,7 +355,6 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("contract_multiplier", instr_def_msg.contract_multiplier)
       .AddField("decay_quantity", instr_def_msg.decay_quantity)
       .AddField("original_contract_size", instr_def_msg.original_contract_size)
-      .AddField("related_security_id", instr_def_msg.related_security_id)
       .AddField("trading_reference_date", instr_def_msg.trading_reference_date)
       .AddField("appl_id", instr_def_msg.appl_id)
       .AddField("maturity_year", instr_def_msg.maturity_year)
@@ -370,7 +371,9 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("security_type", instr_def_msg.security_type)
       .AddField("unit_of_measure", instr_def_msg.unit_of_measure)
       .AddField("underlying", instr_def_msg.underlying)
-      .AddField("related", instr_def_msg.related)
+      .AddField("strike_price_currency", instr_def_msg.strike_price_currency)
+      .AddField("instrument_class", instr_def_msg.instrument_class)
+      .AddField("strike_price", instr_def_msg.strike_price)
       .AddField("match_algorithm", instr_def_msg.match_algorithm)
       .AddField("md_security_trading_status",
                 instr_def_msg.md_security_trading_status)

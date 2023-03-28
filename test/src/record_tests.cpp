@@ -3,7 +3,9 @@
 #include <chrono>
 #include <cstddef>
 
+#include "databento/constants.hpp"
 #include "databento/datetime.hpp"  // TimeDeltaNanos, UnixNanos
+#include "databento/enums.hpp"
 #include "databento/record.hpp"
 
 namespace databento {
@@ -88,7 +90,7 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
       24,
       25,
       26,
-      27,
+      {},
       28,
       29,
       30,
@@ -106,18 +108,22 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
       {'D'},
       {},
       {},
-      'E',
+      InstrumentClass::Future,
+      {},
+      kUndefPrice,
+      {},
+      MatchAlgorithm::Fifo,
       33,
       34,
       35,
       36,
       37,
       38,
-      'F',
+      SecurityUpdateAction::Add,
       39,
       40,
       41,
-      'G',
+      UserDefinedInstrument::No,
       42,
       43,
       44,
@@ -152,7 +158,6 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
     contract_multiplier = 24,
     decay_quantity = 25,
     original_contract_size = 26,
-    related_security_id = 27,
     trading_reference_date = 28,
     appl_id = 29,
     maturity_year = 30,
@@ -169,19 +174,21 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
     security_type = "C",
     unit_of_measure = "D",
     underlying = "",
-    related = "",
-    match_algorithm = 'E',
+    strike_price_currency = "",
+    instrument_class = Future,
+    strike_price = 9223372036854775807,
+    match_algorithm = Fifo,
     md_security_trading_status = 33,
     main_fraction = 34,
     price_display_format = 35,
     settl_price_type = 36,
     sub_fraction = 37,
     underlying_product = 38,
-    security_update_action = 'F',
+    security_update_action = Add,
     maturity_month = 39,
     maturity_day = 40,
     maturity_week = 41,
-    user_defined_instrument = 'G',
+    user_defined_instrument = No,
     contract_multiplier_unit = 42,
     flow_schedule_type = 43,
     tick_rule = 44

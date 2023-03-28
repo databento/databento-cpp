@@ -710,7 +710,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_EQ(ch_def1, f_def1);
   EXPECT_STREQ(ch_def1.exchange.data(), "XNAS");
   EXPECT_STREQ(ch_def1.symbol.data(), "MSFT");
-  EXPECT_EQ(ch_def1.security_update_action, 'A');
+  EXPECT_EQ(ch_def1.security_update_action, SecurityUpdateAction::Add);
   EXPECT_EQ(ch_def1.min_lot_size_round_lot, 100);
 
   const auto ch_record2 = channel_target_->DecodeRecord();
@@ -724,7 +724,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_EQ(ch_def2, f_def2);
   EXPECT_STREQ(ch_def2.exchange.data(), "XNAS");
   EXPECT_STREQ(ch_def2.symbol.data(), "MSFT");
-  EXPECT_EQ(ch_def2.security_update_action, 'A');
+  EXPECT_EQ(ch_def2.security_update_action, SecurityUpdateAction::Add);
   EXPECT_EQ(ch_def2.min_lot_size_round_lot, 100);
 }
 }  // namespace test

@@ -305,6 +305,107 @@ const char* ToString(Side side) {
   }
 }
 
+const char* ToString(InstrumentClass instrument_class) {
+  switch (instrument_class) {
+    case instrument_class::Bond: {
+      return "Bond";
+    }
+    case instrument_class::Call: {
+      return "Call";
+    }
+    case instrument_class::Future: {
+      return "Future";
+    }
+    case instrument_class::Stock: {
+      return "Stock";
+    }
+    case instrument_class::MixedSpread: {
+      return "MixedSpread";
+    }
+    case instrument_class::Put: {
+      return "Put";
+    }
+    case instrument_class::FutureSpread: {
+      return "FutureSpread";
+    }
+    case instrument_class::OptionSpread: {
+      return "OptionSpread";
+    }
+    case instrument_class::FxSpot: {
+      return "FxSpot";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(MatchAlgorithm match_algorithm) {
+  switch (match_algorithm) {
+    case match_algorithm::Fifo: {
+      return "Fifo";
+    }
+    case match_algorithm::Configurable: {
+      return "Configurable";
+    }
+    case match_algorithm::ProRata: {
+      return "ProRata";
+    }
+    case match_algorithm::FifoLmm: {
+      return "FifoLmm";
+    }
+    case match_algorithm::ThresholdProRata: {
+      return "ThresholdProRata";
+    }
+    case match_algorithm::FifoTopLmm: {
+      return "FifoTopLmm";
+    }
+    case match_algorithm::ThresholdProRataLmm: {
+      return "ThresholdProRataLmm";
+    }
+    case match_algorithm::EurodollarOptions: {
+      return "EurodollarOptions";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(SecurityUpdateAction update_action) {
+  switch (update_action) {
+    case SecurityUpdateAction::Add: {
+      return "Add";
+    }
+    case SecurityUpdateAction::Modify: {
+      return "Modify";
+    }
+    case SecurityUpdateAction::Delete: {
+      return "Delete";
+    }
+    case SecurityUpdateAction::Invalid: {
+      return "Invalid";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(UserDefinedInstrument user_def_instr) {
+  switch (user_def_instr) {
+    case UserDefinedInstrument::No: {
+      return "No";
+    }
+    case UserDefinedInstrument::Yes: {
+      return "Yes";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
 std::ostream& operator<<(std::ostream& out, Schema schema) {
   out << ToString(schema);
   return out;
@@ -367,6 +468,28 @@ std::ostream& operator<<(std::ostream& out, Action action) {
 
 std::ostream& operator<<(std::ostream& out, Side side) {
   out << ToString(side);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, InstrumentClass instrument_class) {
+  out << ToString(instrument_class);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, MatchAlgorithm match_algorithm) {
+  out << ToString(match_algorithm);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         SecurityUpdateAction update_action) {
+  out << ToString(update_action);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         UserDefinedInstrument user_def_instr) {
+  out << ToString(user_def_instr);
   return out;
 }
 
