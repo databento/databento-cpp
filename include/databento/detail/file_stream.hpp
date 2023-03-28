@@ -2,7 +2,8 @@
 
 #include <cstddef>  // size_t
 #include <cstdint>  // uint8_t
-#include <fstream>
+#include <fstream>  // ifstream
+#include <string>
 
 #include "databento/ireadable.hpp"
 
