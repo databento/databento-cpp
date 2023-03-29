@@ -13,8 +13,9 @@ namespace databento {
 namespace detail {
 class ZstdStream : public IReadable {
  public:
-  explicit ZstdStream(std::unique_ptr<IReadable> input,
-                      std::vector<std::uint8_t>&& in_buffer);
+  explicit ZstdStream(std::unique_ptr<IReadable> input);
+  ZstdStream(std::unique_ptr<IReadable> input,
+             std::vector<std::uint8_t>&& in_buffer);
 
   // Read exactly `length` bytes into `buffer`.
   void ReadExact(std::uint8_t* buffer, std::size_t length) override;
@@ -28,8 +29,6 @@ class ZstdStream : public IReadable {
   std::size_t read_suggestion_;
   std::vector<std::uint8_t> in_buffer_;
   ZSTD_inBuffer z_in_buffer_;
-  // std::vector<std::uint8_t> out_buffer_;
-  // ZSTD_outBuffer z_out_buffer_;
 };
 }  // namespace detail
 }  // namespace databento

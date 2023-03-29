@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1 - 2023-03-28
+- Fixed Zstd decoding of files with multiple frames
+- Removed usage of unreliable `std::ifstream::readsome`
+
 ## 0.6.0 - 2023-03-24
 - Added support for imbalance schema
 - Added support for decoding `ts_out` field

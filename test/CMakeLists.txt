@@ -29,6 +29,7 @@ set(
   src/datetime_tests.cpp
   src/dbn_tests.cpp
   src/dbn_decoder_tests.cpp
+  src/file_stream_tests.cpp
   src/flag_set_tests.cpp
   src/historical_tests.cpp
   src/live_tests.cpp
@@ -44,6 +45,7 @@ set(
   src/stream_op_helper_tests.cpp
   src/symbology_tests.cpp
   src/tcp_client_tests.cpp
+  src/zstd_stream_tests.cpp
 )
 add_executable(${PROJECT_NAME} ${test_headers} ${test_sources})
 find_package(Threads REQUIRED)
