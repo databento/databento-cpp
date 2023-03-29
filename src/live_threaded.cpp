@@ -45,6 +45,11 @@ const std::string& LiveThreaded::Gateway() const {
   return impl_->blocking.Gateway();
 }
 
+void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
+                             Schema schema, SType stype_in) {
+  impl_->blocking.Subscribe(symbols, schema, stype_in);
+}
+
 databento::Metadata LiveThreaded::Start(Callback callback) {
   // Safe to pass raw pointer because `thread_` cannot outlive `impl_`
   auto metadata = impl_->blocking.Start();

@@ -42,8 +42,7 @@ class LiveThreaded {
   // Add a new subscription. A single client instance supports multiple
   // subscriptions. Note there is no unsubscribe method. Subscriptions end
   // when the client disconnects when it's destroyed.
-  void Subscribe(const std::string& dataset,
-                 const std::vector<std::string>& symbols, Schema schema,
+  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype_in);
   // Notifies the gateway to start sending messages for all subscriptions.
   // `callback` will be called for updates to all subscriptions.
