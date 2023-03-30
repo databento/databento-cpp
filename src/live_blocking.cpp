@@ -133,7 +133,7 @@ std::string LiveBlocking::DecodeChallenge() {
 std::string LiveBlocking::DetermineGateway() const {
   std::ostringstream gateway;
   for (const char c : dataset_) {
-    gateway << (c == '.' ? '_' : std::tolower(c));
+    gateway << (c == '.' ? '-' : std::tolower(c));
   }
   gateway << ".lsg.databento.com";
   return gateway.str();
