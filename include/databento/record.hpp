@@ -272,12 +272,16 @@ static_assert(sizeof(ImbalanceMsg) == 112, "ImbalanceMsg size must match C");
 // An error message from the Live Subscription Gateway (LSG). This will never
 // be present in historical data.
 struct ErrorMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::Error; }
+
   RecordHeader hd;
   std::array<char, 64> err;
 };
 
 /// A symbol mapping message.
 struct SymbolMappingMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::SymbolMapping; }
+
   RecordHeader hd;
   std::array<char, 22> stype_in_symbol;
   std::array<char, 22> stype_out_symbol;
