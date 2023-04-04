@@ -109,6 +109,7 @@ enum RType : std::uint8_t {
   Imbalance = 0x14,
   Error = 0x15,
   SymbolMapping = 0x16,
+  System = 0x17,
   Mbo = 0xA0,
 };
 }  // namespace rtype

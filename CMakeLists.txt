@@ -103,6 +103,7 @@ message(STATUS "Added all header and implementation files.\n")
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 include(cmake/CompilerWarnings.cmake)
 set_project_warnings(${PROJECT_NAME})
+include(cmake/Sanitizers.cmake)
 
 # Ensure std::string debug info is included
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")

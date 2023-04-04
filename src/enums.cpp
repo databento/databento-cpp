@@ -256,6 +256,15 @@ const char* ToString(RType rtype) {
     case RType::Imbalance: {
       return "Imbalance";
     }
+    case RType::Error: {
+      return "Error";
+    }
+    case RType::SymbolMapping: {
+      return "SymbolMapping";
+    }
+    case RType::System: {
+      return "System";
+    }
     case RType::Mbo: {
       return "Mbo";
     }

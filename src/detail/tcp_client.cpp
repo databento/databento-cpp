@@ -1,12 +1,13 @@
 #include "databento/detail/tcp_client.hpp"
 
-#include <arpa/inet.h>   // inet_addr
+#include <netdb.h>       // addrinfo, gai_strerror, getaddrinfo, freeaddrinfo
 #include <netinet/in.h>  // htons, IPPROTO_TCP
 #include <sys/poll.h>    // pollfd, POLLHUP
 #include <sys/socket.h>  // AF_INET, connect, sockaddr, sockaddr_in, socket, SOCK_STREAM
 #include <unistd.h>  // close, read, ssize_t
 
 #include <cerrno>  // errno
+#include <memory>  // unique_ptr
 
 #include "databento/exceptions.hpp"  // TcpError
 
@@ -68,25 +69,30 @@ TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size,
   }
 }
 
-int TcpClient::InitSocket(const std::string& gateway, std::uint16_t port) {
+databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
+                                                  std::uint16_t port) {
   const int fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (fd == -1) {
     throw TcpError{errno, "Failed to create socket"};
   }
+  ScopedFd scoped_fd{fd};
 
-  in_addr network_addr{};
-  if (::inet_aton(gateway.c_str(), &network_addr) == 0) {
+  addrinfo hints{};
+  hints.ai_flags = AI_PASSIVE;
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
+  ::addrinfo* out;
+  const auto ret = ::getaddrinfo(gateway.c_str(), std::to_string(port).c_str(),
+                                 &hints, &out);
+  if (ret != 0) {
     throw InvalidArgumentError{"TcpClient::TcpClient", "addr",
-                               "Unable to convert to a binary IPv4 address"};
+                               ::gai_strerror(ret)};
   }
-  sockaddr_in addr_in{};
-  addr_in.sin_family = AF_INET;
-  addr_in.sin_port = htons(port);
-  addr_in.sin_addr = network_addr;
-  if (::connect(fd, reinterpret_cast<const sockaddr*>(&addr_in),
-                sizeof(sockaddr_in)) != 0) {
-    ::close(fd);
+  std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> res{out,
+                                                           &::freeaddrinfo};
+  if (::connect(scoped_fd.Get(), res->ai_addr, res->ai_addrlen) != 0) {
     throw TcpError{errno, "Socket failed to connect"};
   }
-  return fd;
+  return scoped_fd;
 }

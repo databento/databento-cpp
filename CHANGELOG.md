@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 - TBD
+- Added initial support for live data with `LiveBlocking` and `LiveThreaded` clients
+- Added `SystemMsg` and `ErrorMsg` records for use in live data
+- Added `strike_price`, `strike_price_currency`, and `instrument_class` to `InstrumentDefMsg`
+- Removed `related` and `related_security_id` from `InstrumentDefMsg`
+- Changed some fields to enums in `InstrumentDefMsg`
+- Fixed invalid read in `DbnDecoder`
+- Fixed memory leak in `TryCreateDir`
+
 ## 0.6.1 - 2023-03-28
 - Fixed Zstd decoding of files with multiple frames
 - Removed usage of unreliable `std::ifstream::readsome`

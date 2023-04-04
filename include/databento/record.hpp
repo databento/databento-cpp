@@ -4,11 +4,12 @@
 #include <chrono>  // nanoseconds
 #include <cstddef>
 #include <cstdint>
+#include <cstring>  // strncmp
 #include <string>
 
 #include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
-#include "databento/flag_set.hpp"
+#include "databento/flag_set.hpp"  // FlagSet
 
 namespace databento {
 // Common data for all Databento Records.
@@ -33,7 +34,7 @@ class Record {
  public:
   explicit Record(RecordHeader* record) : record_{record} {}
 
-  const RecordHeader& header() const;
+  const RecordHeader& Header() const { return *record_; }
 
   template <typename T>
   bool Holds() const {
@@ -274,6 +275,8 @@ static_assert(sizeof(ImbalanceMsg) == 112, "ImbalanceMsg size must match C");
 struct ErrorMsg {
   static bool HasRType(RType rtype) { return rtype == RType::Error; }
 
+  const char* Err() const { return err.data(); }
+
   RecordHeader hd;
   std::array<char, 64> err;
 };
@@ -289,6 +292,18 @@ struct SymbolMappingMsg {
   std::array<char, 4> dummy;
   UnixNanos start_ts;
   UnixNanos end_ts;
+};
+
+struct SystemMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::System; }
+
+  const char* Msg() const { return msg.data(); }
+  bool IsHeartbeat() const {
+    return std::strncmp(msg.data(), "Heartbeat", 9) == 0;
+  }
+
+  RecordHeader hd;
+  std::array<char, 64> msg;
 };
 
 inline bool operator==(const RecordHeader& lhs, const RecordHeader& rhs) {

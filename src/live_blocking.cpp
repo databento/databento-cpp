@@ -21,8 +21,13 @@ constexpr std::size_t kBucketIdLength = 5;
 
 LiveBlocking::LiveBlocking(std::string key, std::string dataset,
                            bool send_ts_out)
-    : LiveBlocking{std::move(key), std::move(dataset), DetermineGateway(), 80,
-                   send_ts_out} {}
+
+    : key_{std::move(key)},
+      dataset_{std::move(dataset)},
+      gateway_{DetermineGateway()},
+      send_ts_out_{send_ts_out},
+      client_{gateway_, 80},
+      session_id_{this->Authenticate()} {}
 
 LiveBlocking::LiveBlocking(std::string key, std::string dataset,
                            std::string gateway, std::uint16_t port,
@@ -156,7 +161,7 @@ std::string LiveBlocking::DecodeChallenge() {
 std::string LiveBlocking::DetermineGateway() const {
   std::ostringstream gateway;
   for (const char c : dataset_) {
-    gateway << (c == '.' ? '-' : std::tolower(c));
+    gateway << (c == '.' ? '-' : static_cast<char>(std::tolower(c)));
   }
   gateway << ".lsg.databento.com";
   return gateway.str();
@@ -167,7 +172,7 @@ std::string LiveBlocking::Authenticate() {
 
   std::string auth = GenerateCramReply(challenge_key);
   const std::string req = EncodeAuthReq(auth);
-  client_.WriteAll(req.c_str(), req.size());
+  client_.WriteAll(req);
   DecodeAuthResp();
 
   return auth;

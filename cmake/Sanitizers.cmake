@@ -1,0 +1,16 @@
+function(enable_sanitizer sanitizer)
+  # Add for all targets
+  add_compile_options(-fsanitize=${sanitizer})
+  add_link_options(-fsanitize=${sanitizer})
+  message(STATUS "Enabled ${sanitizer} sanitizer.")
+endfunction()
+
+if(${PROJECT_NAME_UPPERCASE}_ENABLE_ASAN)
+  enable_sanitizer("address")
+endif()
+if(${PROJECT_NAME_UPPERCASE}_ENABLE_TSAN)
+  enable_sanitizer("thread")
+endif()
+if(${PROJECT_NAME_UPPERCASE}_ENABLE_UBSAN)
+  enable_sanitizer("undefined")
+endif()

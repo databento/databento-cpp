@@ -32,7 +32,9 @@ jobs:
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
             -DDATABENTO_ENABLE_UNIT_TESTING=1 \
             -DDATABENTO_ENABLE_EXAMPLES=1 \
-            -DDATABENTO_ENABLE_CLANG_TIDY=1
+            -DDATABENTO_ENABLE_CLANG_TIDY=1 \
+            -DDATABENTO_ENABLE_ASAN=1 \
+            -DDATABENTO_ENABLE_UBSAN=1
       - name: CMake build
         run: cmake --build build
       - name: Unit tests

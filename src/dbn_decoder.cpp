@@ -60,13 +60,14 @@ DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input)
     input_ = std::unique_ptr<detail::ZstdStream>(
         new detail::ZstdStream(std::move(input_), std::move(buffer_)));
     // Reinitialize buffer and get it into the same state as uncompressed input
-    buffer_ = std::vector<std::uint8_t>(kMagicSize);
+    buffer_ = std::vector<std::uint8_t>();
+    buffer_.reserve(kBufferCapacity);
+    buffer_.resize(kMagicSize);
     input_->ReadExact(buffer_.data(), kMagicSize);
     auto buffer_it = buffer_.cbegin();
     if (std::strncmp(Consume(buffer_it, 3), kDbnPrefix, 3) != 0) {
       throw DbnResponseError{"Found Zstd input, but not DBN prefix"};
     }
-    buffer_.resize(0);
   }
 }
 
@@ -127,6 +128,7 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
 
 databento::Metadata DbnDecoder::DecodeMetadata() {
   // already read first 4 bytes detecting compression
+  buffer_.resize(8);
   input_->ReadExact(&buffer_[4], 4);
   const auto version_and_size =
       DbnDecoder::DecodeMetadataVersionAndSize(buffer_.data(), 8);

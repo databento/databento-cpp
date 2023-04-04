@@ -1,6 +1,6 @@
 #include "databento/historical.hpp"
 
-#include <dirent.h>  // opendir
+#include <dirent.h>  // closedir, opendir
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
@@ -10,6 +10,7 @@
 #include <exception>  // exception, exception_ptr
 #include <fstream>    // ofstream
 #include <ios>        // ios::binary
+#include <memory>     // unique_ptr
 #include <numeric>    // accumulate
 #include <string>
 #include <utility>  // move
@@ -221,12 +222,14 @@ databento::BatchJob Parse(const std::string& endpoint,
   return res;
 }
 
-void TryCreateDir(const std::string& dir) {
-  if (::opendir(dir.c_str()) == nullptr) {
-    const int ret = ::mkdir(dir.c_str(), 0777);
+void TryCreateDir(const std::string& dir_name) {
+  const std::unique_ptr<DIR, decltype(&::closedir)> dir{
+      ::opendir(dir_name.c_str()), &::closedir};
+  if (dir == nullptr) {
+    const int ret = ::mkdir(dir_name.c_str(), 0777);
     if (ret != 0) {
       throw databento::Exception{std::string{"Unable to create directory "} +
-                                 dir + ": " + ::strerror(errno)};
+                                 dir_name + ": " + ::strerror(errno)};
     }
   }
 }

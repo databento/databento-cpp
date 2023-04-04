@@ -33,7 +33,7 @@ class TcpClient {
                   std::chrono::milliseconds timeout);
 
  private:
-  static int InitSocket(const std::string& gateway, std::uint16_t port);
+  static ScopedFd InitSocket(const std::string& gateway, std::uint16_t port);
 
   ScopedFd socket_;
 };
