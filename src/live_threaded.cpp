@@ -50,6 +50,17 @@ void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
   impl_->blocking.Subscribe(symbols, schema, stype_in);
 }
 
+void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
+                             Schema schema, SType stype_in, UnixNanos start) {
+  impl_->blocking.Subscribe(symbols, schema, stype_in, start);
+}
+
+void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
+                             Schema schema, SType stype_in,
+                             const std::string& start) {
+  impl_->blocking.Subscribe(symbols, schema, stype_in, start);
+}
+
 databento::Metadata LiveThreaded::Start(Callback callback) {
   // Safe to pass raw pointer because `thread_` cannot outlive `impl_`
   auto metadata = impl_->blocking.Start();

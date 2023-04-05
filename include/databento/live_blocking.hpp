@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "databento/datetime.hpp"           // UnixNanos
 #include "databento/dbn.hpp"                // Metadata
 #include "databento/detail/tcp_client.hpp"  // TcpClient
 #include "databento/enums.hpp"              // Schema, SType
@@ -37,6 +38,10 @@ class LiveBlocking {
   // when the client disconnects in its destructor.
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype_in);
+  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                 SType stype_in, UnixNanos start);
+  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                 SType stype_in, const std::string& start);
   // Notifies the gateway to start sending messages for all subscriptions.
   //
   // This method should only be called once per instance.

@@ -36,10 +36,33 @@ LiveBlocking::LiveBlocking(std::string key, std::string dataset,
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in) {
+  Subscribe(symbols, schema, stype_in, UnixNanos{});
+}
+
+void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
+                             Schema schema, SType stype_in, UnixNanos start) {
   std::ostringstream sub_msg;
   sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
           << "|symbols="
           << JoinSymbolStrings("LiveBlocking::Subscribe", symbols);
+  if (start.time_since_epoch().count()) {
+    sub_msg << "|start=" << start.time_since_epoch().count();
+  }
+  sub_msg << '\n';
+
+  client_.WriteAll(sub_msg.str());
+}
+
+void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
+                             Schema schema, SType stype_in,
+                             const std::string& start) {
+  std::ostringstream sub_msg;
+  sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
+          << "|symbols="
+          << JoinSymbolStrings("LiveBlocking::Subscribe", symbols);
+  if (!start.empty()) {
+    sub_msg << "|start=" << start;
+  }
   sub_msg << '\n';
 
   client_.WriteAll(sub_msg.str());

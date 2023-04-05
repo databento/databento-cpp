@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "databento/datetime.hpp"              // UnixNanos
 #include "databento/dbn.hpp"                   // Metadata
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
 #include "databento/enums.hpp"                 // Schema, SType
@@ -44,6 +45,10 @@ class LiveThreaded {
   // when the client disconnects when it's destroyed.
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype_in);
+  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                 SType stype_in, UnixNanos start);
+  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                 SType stype_in, const std::string& start);
   // Notifies the gateway to start sending messages for all subscriptions.
   // `callback` will be called for updates to all subscriptions.
   //
