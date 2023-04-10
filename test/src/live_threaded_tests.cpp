@@ -83,13 +83,13 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
 
   LiveThreaded target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
                       false};
-  const Metadata metadata =
-      target.Start([&call_count, &kRec](const Record& rec) {
+  target.Start(
+      [kSchema](Metadata&& metadata) { EXPECT_EQ(metadata.schema, kSchema); },
+      [&call_count, &kRec](const Record& rec) {
         ++call_count;
         ASSERT_TRUE(rec.Holds<MboMsg>());
         EXPECT_EQ(rec.Get<MboMsg>(), kRec);
       });
-  EXPECT_EQ(metadata.schema, kSchema);
   while (call_count < 2) {
     std::this_thread::yield();
   }

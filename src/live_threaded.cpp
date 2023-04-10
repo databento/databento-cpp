@@ -1,8 +1,10 @@
 #include "databento/live_threaded.hpp"
 
 #include <atomic>
-#include <chrono>   // milliseconds
-#include <utility>  // forward, move, swap
+#include <chrono>  // milliseconds
+#include <exception>
+#include <iostream>  // cerr
+#include <utility>   // forward, move, swap
 
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
 #include "databento/live_blocking.hpp"         // LiveBlocking
@@ -61,22 +63,45 @@ void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
   impl_->blocking.Subscribe(symbols, schema, stype_in, start);
 }
 
-databento::Metadata LiveThreaded::Start(Callback callback) {
+void LiveThreaded::Start(databento::MetadataCallback metadata_callback,
+                         RecordCallback record_callback) {
   // Safe to pass raw pointer because `thread_` cannot outlive `impl_`
-  auto metadata = impl_->blocking.Start();
   thread_ = detail::ScopedThread{&LiveThreaded::ProcessingThread, impl_.get(),
-                                 std::move(callback)};
-  return metadata;
+                                 std::move(metadata_callback),
+                                 std::move(record_callback)};
 }
 
-void LiveThreaded::ProcessingThread(Impl* impl, Callback&& callback) {
+void LiveThreaded::Start(RecordCallback callback) {
+  // Safe to pass raw pointer because `thread_` cannot outlive `impl_`
+  thread_ =
+      detail::ScopedThread{&LiveThreaded::ProcessingThread, impl_.get(),
+                           databento::MetadataCallback{}, std::move(callback)};
+}
+
+void LiveThreaded::ProcessingThread(Impl* impl,
+                                    MetadataCallback&& metadata_callback,
+                                    RecordCallback&& record_callback) {
   constexpr std::chrono::milliseconds kTimeout{50};
-  // Thread safety: non-const calls to `blocking` are only performed from this
-  // thread
-  while (impl->keep_going.load()) {
-    const Record* rec = impl->blocking.NextRecord(kTimeout);
-    if (rec) {
-      callback(*rec);
+
+  try {
+    {
+      auto metadata = impl->blocking.Start();
+      if (metadata_callback) {
+        std::move(metadata_callback)(std::move(metadata));
+      }
     }
+    auto record_cb{std::move(record_callback)};
+    // Thread safety: non-const calls to `blocking` are only performed from this
+    // thread
+    while (impl->keep_going.load()) {
+      const Record* rec = impl->blocking.NextRecord(kTimeout);
+      if (rec) {
+        record_cb(*rec);
+      }
+    }
+  } catch (const std::exception& exc) {
+    std::cerr
+        << "Caught exception in databento::LiveThreaded::ProcessingThread: "
+        << exc.what() << ". Stopping thread.";
   }
 }

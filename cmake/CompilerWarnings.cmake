@@ -59,12 +59,8 @@ function(set_project_warnings project_name)
       -Wdouble-promotion # warn if float is implicit promoted to double
       -Wformat=2 # warn on security issues around functions that format output
                  # (ie printf)
+      -Wimplicit-fallthrough # warn on switch labels without break
   )
-
-  if (${PROJECT_NAME}_WARNINGS_AS_ERRORS)
-    set(CLANG_WARNINGS ${CLANG_WARNINGS} -Werror)
-    set(MSVC_WARNINGS ${MSVC_WARNINGS} /WX)
-  endif()
 
   set(GCC_WARNINGS
       ${CLANG_WARNINGS}
@@ -75,7 +71,14 @@ function(set_project_warnings project_name)
       -Wlogical-op   # warn about logical operations being used where bitwise were
                      # probably wanted
       -Wuseless-cast # warn if you perform a cast to the same type
+      -Wno-ignored-attributes
   )
+
+  if (${PROJECT_NAME}_WARNINGS_AS_ERRORS)
+    set(CLANG_WARNINGS ${CLANG_WARNINGS} -Werror)
+    set(GCC_WARNINGS ${GCC_WARNINGS} -Werror)
+    set(MSVC_WARNINGS ${MSVC_WARNINGS} /WX)
+  endif()
 
   if(MSVC)
     set(PROJECT_WARNINGS ${MSVC_WARNINGS})

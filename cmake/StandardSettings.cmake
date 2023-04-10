@@ -10,7 +10,7 @@ option(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_GTEST "Use an external google test
 # Compiler options
 #
 
-option(${PROJECT_NAME_UPPERCASE}_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." ON)
+option(${PROJECT_NAME_UPPERCASE}_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." ${IS_MAIN_PROJECT})
 option(${PROJECT_NAME_UPPERCASE}_FORCE_COLOR_OUTPUT "Always produce ANSI-colored output" OFF)
 
 if(${PROJECT_NAME_UPPERCASE}_FORCE_COLOR_OUTPUT)
