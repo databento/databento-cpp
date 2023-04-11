@@ -1,5 +1,7 @@
 #include <csignal>  // sig_atomic_t
+#include <cstdint>
 #include <iostream>
+#include <unordered_map>
 
 #include "databento/constants.hpp"
 #include "databento/dbn.hpp"
@@ -7,6 +9,7 @@
 #include "databento/live.hpp"
 #include "databento/live_threaded.hpp"
 #include "databento/record.hpp"
+#include "databento/with_ts_out.hpp"
 
 static std::sig_atomic_t volatile gSignal;
 
@@ -20,23 +23,36 @@ int main() {
   // Set up signal handler for Ctrl+C
   std::signal(SIGINT, [](int signal) { gSignal = signal; });
 
-  client.Subscribe({"ESZ4"}, databento::Schema::Definition,
+  std::vector<std::string> symbols{"ESM3", "ESM3 C4200", "ESM3 P4100"};
+  std::unordered_map<std::uint32_t, std::string> symbol_mappings;
+  client.Subscribe(symbols, databento::Schema::Definition,
                    databento::SType::Native);
+  client.Subscribe(symbols, databento::Schema::Mbo, databento::SType::Native);
 
   auto metadata_callback = [](databento::Metadata&& metadata) {
     std::cout << metadata << '\n';
   };
-  auto record_callback = [](const databento::Record& rec) {
+  auto record_callback = [&symbol_mappings](const databento::Record& rec) {
     using databento::RType;
     switch (rec.Header().rtype) {
+      case RType::Mbo: {
+        auto ohlcv = rec.Get<databento::WithTsOut<databento::MboMsg>>();
+        std::cout << "Received tick for "
+                  << symbol_mappings.at(ohlcv.rec.hd.product_id)
+                  << " with ts_out " << ohlcv.ts_out.time_since_epoch().count()
+                  << ": " << ohlcv.rec << '\n';
+        break;
+      }
       case RType::InstrumentDef: {
         std::cout << "Received definition: "
                   << rec.Get<databento::InstrumentDefMsg>() << '\n';
         break;
       }
       case RType::SymbolMapping: {
-        std::cout << "Received symbol mapping: "
-                  << rec.Get<databento::SymbolMappingMsg>() << '\n';
+        auto mapping = rec.Get<databento::SymbolMappingMsg>();
+        std::cout << "Received symbol mapping: " << mapping << '\n';
+        symbol_mappings.emplace(mapping.hd.product_id,
+                                mapping.stype_in_symbol.data());
         break;
       }
       case RType::System: {
@@ -53,7 +69,7 @@ int main() {
       }
       default: {
         std::cerr << "Received unknown record with rtype " << std::hex
-                  << rec.Header().rtype << '\n';
+                  << static_cast<std::uint16_t>(rec.Header().rtype) << '\n';
       }
     }
   };

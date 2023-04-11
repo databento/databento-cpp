@@ -128,24 +128,23 @@ std::string LiveBlocking::DecodeChallenge() {
                                       response);
   }
   const auto version_line = response.substr(0, first_nl_pos);
-  std::size_t find_start{};
-  if (first_nl_pos + 1 == response.length()) {
+  const auto find_start = first_nl_pos + 1;
+  auto next_nl_pos = find_start == response.length()
+                         ? std::string::npos
+                         : response.find('\n', find_start);
+  while (next_nl_pos == std::string::npos) {
     // read more
-    buffer_size_ = client_.ReadSome(buffer_.data(), buffer_.size()).read_size;
+    buffer_size_ +=
+        client_.ReadSome(&buffer_[buffer_size_], buffer_.size() - buffer_size_)
+            .read_size;
     if (buffer_size_ == 0) {
       throw LiveApiError{"Server closed socket during authentication"};
     }
     response = {buffer_.data(), buffer_size_};
-    find_start = 0;
-  } else {
-    find_start = first_nl_pos + 1;
+    next_nl_pos = response.find('\n', find_start);
   }
-  const auto next_nl_pos = response.find('\n', find_start);
-  if (next_nl_pos == std::string::npos) {
-    throw LiveApiError::UnexpectedMsg("Received malformed initial message",
-                                      response);
-  }
-  const auto challenge_line = response.substr(find_start, next_nl_pos);
+  const auto challenge_line =
+      response.substr(find_start, next_nl_pos - find_start);
   if (challenge_line.compare(0, 4, "cram") != 0) {
     throw LiveApiError::UnexpectedMsg(
         "Did not receive CRAM challenge when expected", challenge_line);
