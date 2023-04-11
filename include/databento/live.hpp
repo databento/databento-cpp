@@ -19,8 +19,7 @@ class LiveBuilder {
   LiveBuilder& SetKeyFromEnv();
   LiveBuilder& SetKey(std::string key);
   LiveBuilder& SetDataset(std::string dataset);
-  // Whether to prepend an 8-byte nanosecond timestamp as a header before each
-  // DBN message.
+  // Whether to append the gateway send timestamp after each DBN message.
   LiveBuilder& SetSendTsOut(bool send_ts_out);
   // Attempts to construct an instance of a blocking live client or throws an
   // exception.
@@ -34,6 +33,6 @@ class LiveBuilder {
 
   std::string key_;
   std::string dataset_;
-  bool send_ts_out_{false};
+  bool send_ts_out_{true};
 };
 }  // namespace databento
