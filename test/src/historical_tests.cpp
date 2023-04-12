@@ -38,7 +38,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       {"bill_id", "73186317471eb623d161a1"},
       {"billed_size", 5156064},
       {"compression", "zstd"},
-      {"cost", 11.9089},
+      {"cost_usd", 0.119089},
       {"dataset", "XNAS.ITCH"},
       {"delivery", "download"},
       {"encoding", "dbn"},
@@ -81,7 +81,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
   const auto res = target.BatchSubmitJob(
       dataset::kXnasItch, "2022-05-17", "2022-07-03", {"CLH3"}, Schema::Trades);
   EXPECT_EQ(res.symbols, std::vector<std::string>{"CLH3"});
-  EXPECT_NEAR(res.cost, 11.908, 1e-2);
+  EXPECT_NEAR(res.cost_usd, 0.11908, 1e-2);
   EXPECT_EQ(res.encoding, Encoding::Dbn);
   // null handling
   EXPECT_EQ(res.split_size, 0);
@@ -93,7 +93,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"bill_id", "a670"},
        {"billed_size", 5156064},
        {"compression", "zstd"},
-       {"cost", 11.9089},
+       {"cost_usd", 0.119089},
        {"dataset", "GLBX.MDP3"},
        {"delivery", "download"},
        {"encoding", "dbn"},
@@ -125,7 +125,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"bill_id", "a1b7"},
        {"billed_size", 5156064},
        {"compression", "zstd"},
-       {"cost", 11.9089},
+       {"cost_usd", 0.119089},
        {"dataset", "GLBX.MDP3"},
        {"delivery", "download"},
        {"encoding", "dbn"},

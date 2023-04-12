@@ -41,7 +41,7 @@ TEST(BatchTests, TestBatchJobToString) {
     id = "aNiD",
     user_id = "USER",
     bill_id = "57db",
-    cost = 12.39,
+    cost_usd = 12.39,
     dataset = "XNAS.ITCH",
     symbols = { "CL.FUT" },
     stype_in = smart,
