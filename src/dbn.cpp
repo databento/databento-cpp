@@ -15,12 +15,15 @@ std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
                     .Build()
                     .AddField("version", metadata.version)
                     .AddField("dataset", metadata.dataset)
+                    .AddField("has_mixed_schema", metadata.has_mixed_schema)
                     .AddField("schema", metadata.schema)
                     .AddField("start", metadata.start)
                     .AddField("end", metadata.end)
                     .AddField("limit", metadata.limit)
+                    .AddField("has_mixed_stype_in", metadata.has_mixed_stype_in)
                     .AddField("stype_in", metadata.stype_in)
-                    .AddField("stype_out", metadata.stype_out);
+                    .AddField("stype_out", metadata.stype_out)
+                    .AddField("ts_out", metadata.ts_out);
 
   // format symbols, partial, and not_found
   constexpr auto kVecCount = 3;

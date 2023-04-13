@@ -24,13 +24,17 @@ struct SymbolMapping {
   std::vector<MappingInterval> intervals;
 };
 
-// Information about a DBN file or response.
+// Information about a DBN stream.
 struct Metadata {
   // The DBN schema version number.
   std::uint8_t version;
   // The dataset code.
   std::string dataset;
-  // The data record schema. Specifies
+  // Indicates the DBN stream may contain multiple record types and data
+  // schemas. If true, the schema field should be ignored.
+  bool has_mixed_schema;
+  // The data record schema which affects the type record of present. If
+  // has_mixed_schema is true, this field should be ignored.
   Schema schema;
   // The UNIX timestamp of the query start, or the first record if the file was
   // split.
@@ -40,10 +44,16 @@ struct Metadata {
   UnixNanos end;
   // The maximum number of records for the query.
   std::uint64_t limit;
-  // The input symbology type.
+  // Indicates the DBN stream may been create with a mix of stype_in. This
+  // will always be the case for live data where stype_in is specified per
+  // subscription.
+  bool has_mixed_stype_in;
+  // The input symbology type. Should be ignored if has_mixed_schemas is true.
   SType stype_in;
   // The output symbology type.
   SType stype_out;
+  // Whether the records contain an appended send timestamp.
+  bool ts_out;
   // The original query input symbols from the request.
   std::vector<std::string> symbols;
   // Symbols that did not resolve for _at least one day_ in the query time
@@ -67,9 +77,13 @@ inline bool operator==(const SymbolMapping& lhs, const SymbolMapping& rhs) {
 
 inline bool operator==(const Metadata& lhs, const Metadata& rhs) {
   return lhs.version == rhs.version && lhs.dataset == rhs.dataset &&
-         lhs.schema == rhs.schema && lhs.start == rhs.start &&
-         lhs.end == rhs.end && lhs.limit == rhs.limit &&
-         lhs.stype_in == rhs.stype_in && lhs.stype_out == rhs.stype_out &&
+         (lhs.has_mixed_schema ? rhs.has_mixed_schema
+                               : lhs.schema == rhs.schema) &&
+         lhs.start == rhs.start && lhs.end == rhs.end &&
+         lhs.limit == rhs.limit &&
+         (lhs.has_mixed_stype_in ? rhs.has_mixed_stype_in
+                                 : lhs.stype_in == rhs.stype_in) &&
+         lhs.stype_out == rhs.stype_out && lhs.ts_out == rhs.ts_out &&
          lhs.symbols == rhs.symbols && lhs.partial == rhs.partial &&
          lhs.not_found == rhs.not_found && lhs.mappings == rhs.mappings;
 }

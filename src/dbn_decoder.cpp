@@ -2,6 +2,7 @@
 
 #include <algorithm>  // copy
 #include <cstring>    // strncmp
+#include <limits>
 #include <vector>
 
 #include "databento/datetime.hpp"
@@ -19,7 +20,7 @@ constexpr auto kDbnPrefix = "DBN";
 constexpr std::size_t kFixedMetadataLen = 100;
 constexpr std::uint8_t kSchemaVersion = 1;
 constexpr std::size_t kDatasetCstrLen = 16;
-constexpr std::size_t kReservedLen = 48;
+constexpr std::size_t kReservedLen = 47;
 constexpr std::size_t kSymbolCstrLen = 22;
 constexpr std::size_t kBufferCapacity = 8UL * 1024;
 
@@ -100,7 +101,15 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   }
   auto buffer_it = buffer.cbegin();
   res.dataset = std::string{Consume(buffer_it, kDatasetCstrLen)};
-  res.schema = static_cast<Schema>(Consume<std::uint16_t>(buffer_it));
+  const auto raw_schema = Consume<std::uint16_t>(buffer_it);
+  if (raw_schema == std::numeric_limits<std::uint16_t>::max()) {
+    res.has_mixed_schema = true;
+    // must initialize
+    res.schema = Schema::Mbo;
+  } else {
+    res.has_mixed_schema = false;
+    res.schema = static_cast<Schema>(raw_schema);
+  }
   res.start =
       UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(buffer_it)}};
   res.end =
@@ -108,8 +117,17 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   res.limit = Consume<std::uint64_t>(buffer_it);
   // skip deprecated record_count
   buffer_it += 8;
-  res.stype_in = static_cast<SType>(Consume<std::uint8_t>(buffer_it));
+  const auto raw_stype_in = Consume<std::uint8_t>(buffer_it);
+  if (raw_stype_in == std::numeric_limits<std::uint8_t>::max()) {
+    res.has_mixed_stype_in = true;
+    // must initialize
+    res.stype_in = SType::ProductId;
+  } else {
+    res.has_mixed_stype_in = false;
+    res.stype_in = static_cast<SType>(raw_stype_in);
+  }
   res.stype_out = static_cast<SType>(Consume<std::uint8_t>(buffer_it));
+  res.ts_out = static_cast<bool>(Consume<std::uint8_t>(buffer_it));
   // skip reserved
   buffer_it += ::kReservedLen;
 

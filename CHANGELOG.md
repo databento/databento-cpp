@@ -4,6 +4,7 @@
 - Added initial support for live data with `LiveBlocking` and `LiveThreaded` clients
 - Added `SystemMsg` and `ErrorMsg` records for use in live data
 - Added `strike_price`, `strike_price_currency`, and `instrument_class` to `InstrumentDefMsg`
+- Added `has_mixed_schema`, `has_mixed_stype_in`, and `ts_out` to `Metadata` to support live data
 - Removed `related` and `related_security_id` from `InstrumentDefMsg`
 - Changed some fields to enums in `InstrumentDefMsg`
 - Fixed invalid read in `DbnDecoder`
