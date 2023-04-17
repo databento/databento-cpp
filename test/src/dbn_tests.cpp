@@ -14,8 +14,8 @@ TEST(DbnTests, TestMetadataToString) {
                         {},
                         {},
                         false,
-                        SType::Native,
-                        SType::ProductId,
+                        SType::RawSymbol,
+                        SType::InstrumentId,
                         false,
                         {"NGG3", "NGQ4"},
                         {"ng"},
@@ -32,15 +32,15 @@ TEST(DbnTests, TestMetadataToString) {
     end = 0,
     limit = 0,
     has_mixed_stype_in = false,
-    stype_in = native,
-    stype_out = product_id,
+    stype_in = raw_symbol,
+    stype_out = instrument_id,
     ts_out = false,
     symbols = { "NGG3", "NGQ4" },
     partial = { "ng" },
     not_found = { "nf" },
     mappings = {
-        SymbolMapping { native_symbol = "NGG3", intervals = { MappingInterval { start_date = 20220601, end_date = 20220701, symbol = "3" } } },
-        SymbolMapping { native_symbol = "NGQ4", intervals = { MappingInterval { start_date = 20220601, end_date = 20220701, symbol = "4" } } }
+        SymbolMapping { raw_symbol = "NGG3", intervals = { MappingInterval { start_date = 20220601, end_date = 20220701, symbol = "3" } } },
+        SymbolMapping { raw_symbol = "NGQ4", intervals = { MappingInterval { start_date = 20220601, end_date = 20220701, symbol = "4" } } }
     }
 })");
 }

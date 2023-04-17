@@ -106,9 +106,9 @@ void MockLsgServer::Start(Schema schema) {
   // record_count
   bytes_written += SendBytes(std::numeric_limits<std::uint64_t>::max());
   // stype_in
-  bytes_written += SendBytes(SType::Native);
+  bytes_written += SendBytes(SType::RawSymbol);
   // stype_out
-  bytes_written += SendBytes(SType::ProductId);
+  bytes_written += SendBytes(SType::InstrumentId);
   // padding
   bytes_written += Send(std::string(48 + sizeof(std::uint32_t) * 5, '\0'));
 

@@ -49,9 +49,12 @@ enum class Compression : std::uint8_t {
 
 // Represents a symbology type.
 enum class SType : std::uint8_t {
-  ProductId = 0,
-  Native = 1,
-  Smart = 2,
+  InstrumentId = 0,
+  RawSymbol = 1,
+  // Deprecated in 0.7.0. Separated into Parent and Continuous.
+  SmartDeprecated = 2,
+  Continuous = 3,
+  Parent = 4,
 };
 
 // Represents the duration of time at which batch files will be split.

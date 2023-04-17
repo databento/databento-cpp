@@ -127,7 +127,7 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
          lhs.decay_start_date == rhs.decay_start_date &&
          lhs.channel_id == rhs.channel_id && lhs.currency == rhs.currency &&
          lhs.settl_currency == rhs.settl_currency &&
-         lhs.secsubtype == rhs.secsubtype && lhs.symbol == rhs.symbol &&
+         lhs.secsubtype == rhs.secsubtype && lhs.raw_symbol == rhs.raw_symbol &&
          lhs.group == rhs.group && lhs.exchange == rhs.exchange &&
          lhs.asset == rhs.asset && lhs.cfi == rhs.cfi &&
          lhs.security_type == rhs.security_type &&
@@ -243,7 +243,7 @@ std::ostream& operator<<(std::ostream& stream, const RecordHeader& header) {
       .AddField("length", header.length)
       .AddField("rtype", header.rtype)
       .AddField("publisher_id", header.publisher_id)
-      .AddField("product_id", header.product_id)
+      .AddField("instrument_id", header.instrument_id)
       .AddField("ts_event", header.ts_event)
       .Finish();
 }
@@ -363,7 +363,7 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("currency", instr_def_msg.currency)
       .AddField("settl_currency", instr_def_msg.settl_currency)
       .AddField("secsubtype", instr_def_msg.secsubtype)
-      .AddField("symbol", instr_def_msg.symbol)
+      .AddField("raw_symbol", instr_def_msg.raw_symbol)
       .AddField("group", instr_def_msg.group)
       .AddField("exchange", instr_def_msg.exchange)
       .AddField("asset", instr_def_msg.asset)

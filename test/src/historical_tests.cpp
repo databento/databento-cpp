@@ -57,8 +57,8 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       {"split_symbols", false},
       {"start", "2022-05-17 00:00:00+00:00"},
       {"state", "done"},
-      {"stype_in", "native"},
-      {"stype_out", "product_id"},
+      {"stype_in", "raw_symbol"},
+      {"stype_out", "instrument_id"},
       /* test the fact the API returns a string when there's only one symbol */
       {"symbols", "CLH3"},
       {"ts_expiration", "2022-11-30 15:29:43.148303+00:00"},
@@ -112,8 +112,8 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"split_symbols", false},
        {"start", "2022-08-26 00:00:00+00:00"},
        {"state", "done"},
-       {"stype_in", "native"},
-       {"stype_out", "product_id"},
+       {"stype_in", "raw_symbol"},
+       {"stype_out", "instrument_id"},
        {"symbols", "GEZ2"},
        {"ts_expiration", "2022-11-30 15:27:10.148788+00:00"},
        {"ts_process_done", "2022-10-31 15:27:10.148788+00:00"},
@@ -144,8 +144,8 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"split_symbols", false},
        {"start", "2022-08-26 00:00:00+00:00"},
        {"state", "done"},
-       {"stype_in", "native"},
-       {"stype_out", "product_id"},
+       {"stype_in", "raw_symbol"},
+       {"stype_out", "instrument_id"},
        {"symbols", {"GEZ2", "GEH3"}},
        {"ts_expiration", "2022-11-30 15:29:03.010429+00:00"},
        {"ts_process_done", "2022-10-31 15:29:03.010429+00:00"},
@@ -568,7 +568,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetBillableSize(
       dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00", {"NG", "LNQ"},
-      Schema::Tbbo, SType::Smart, {});
+      Schema::Tbbo, SType::SmartDeprecated, {});
   ASSERT_EQ(res, kResp);
 }
 
@@ -606,10 +606,10 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res =
-      target.MetadataGetCost(dataset::kGlbxMdp3, "2020-06-06T00:00",
-                             "2021-03-02T00:00", {"MES", "SPY"}, Schema::Tbbo,
-                             FeedMode::HistoricalStreaming, SType::Smart, {});
+  const auto res = target.MetadataGetCost(
+      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00",
+      {"MES", "SPY"}, Schema::Tbbo, FeedMode::HistoricalStreaming,
+      SType::SmartDeprecated, {});
   ASSERT_DOUBLE_EQ(res, kResp);
 }
 
@@ -623,8 +623,8 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
              {"s", "3403"},
          }}}}},
       {"symbols", {"ESM2"}},
-      {"stype_in", "native"},
-      {"stype_out", "product_id"},
+      {"stype_in", "raw_symbol"},
+      {"stype_out", "instrument_id"},
       {"start_date", "2022-06-06"},
       {"end_date", "2022-06-10"},
       {"partial", nlohmann::json::array()},
@@ -639,8 +639,8 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
                                {"start_date", "2022-06-06"},
                                {"end_date", "2022-06-10"},
                                {"symbols", "ESM2"},
-                               {"stype_in", "native"},
-                               {"stype_out", "product_id"},
+                               {"stype_in", "raw_symbol"},
+                               {"stype_out", "instrument_id"},
                            },
                            kResp);
   const auto port = mock_server_.ListenOnThread();
@@ -649,7 +649,7 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
                                static_cast<std::uint16_t>(port)};
   const auto res =
       target.SymbologyResolve(dataset::kGlbxMdp3, "2022-06-06", "2022-06-10",
-                              {"ESM2"}, SType::Native, SType::ProductId);
+                              {"ESM2"}, SType::RawSymbol, SType::InstrumentId);
   EXPECT_TRUE(res.not_found.empty());
   EXPECT_TRUE(res.partial.empty());
   ASSERT_EQ(res.mappings.size(), 1);
@@ -669,8 +669,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
                               {"start", "1609160400000711344"},
                               {"end", "1609160800000711344"},
                               {"encoding", "dbn"},
-                              {"stype_in", "native"},
-                              {"stype_out", "product_id"},
+                              {"stype_in", "raw_symbol"},
+                              {"stype_out", "instrument_id"},
                               {"limit", "2"}},
                              TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
@@ -683,7 +683,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
       dataset::kGlbxMdp3,
       UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
-      Schema::Mbo, SType::Native, SType::ProductId, 2,
+      Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2,
       [&metadata_ptr](Metadata&& metadata) {
         // no std::make_unique until C++14
         metadata_ptr =
@@ -706,8 +706,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_NoMetadataCallback) {
                               {"symbols", "CYZ2"},
                               {"schema", "tbbo"},
                               {"encoding", "dbn"},
-                              {"stype_in", "native"},
-                              {"stype_out", "product_id"}},
+                              {"stype_in", "raw_symbol"},
+                              {"stype_out", "instrument_id"}},
                              TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
@@ -737,8 +737,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_BadRequest) {
         dataset::kGlbxMdp3,
         UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
         UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"E5"},
-        Schema::Mbo, SType::Smart, SType::ProductId, 2, [](Metadata&&) {},
-        [](const Record&) { return KeepGoing::Continue; });
+        Schema::Mbo, SType::SmartDeprecated, SType::InstrumentId, 2,
+        [](Metadata&&) {}, [](const Record&) { return KeepGoing::Continue; });
     FAIL() << "Call to TimeseriesGetRange was supposed to throw";
   } catch (const std::exception& exc) {
     ASSERT_STREQ(
@@ -758,14 +758,15 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_CallbackException) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  ASSERT_THROW(target.TimeseriesGetRange(
-                   dataset::kGlbxMdp3,
-                   UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
-                   UnixNanos{std::chrono::nanoseconds{1609160800000711344}},
-                   {"ESH1"}, Schema::Mbo, SType::Native, SType::ProductId, 2,
-                   [](Metadata&&) { throw std::logic_error{"Test failure"}; },
-                   [](const Record&) { return KeepGoing::Continue; }),
-               std::logic_error);
+  ASSERT_THROW(
+      target.TimeseriesGetRange(
+          dataset::kGlbxMdp3,
+          UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+          UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
+          Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2,
+          [](Metadata&&) { throw std::logic_error{"Test failure"}; },
+          [](const Record&) { return KeepGoing::Continue; }),
+      std::logic_error);
 }
 
 TEST_F(HistoricalTests, TestTimeseriesGetRangeCancellation) {
@@ -780,7 +781,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeCancellation) {
       dataset::kGlbxMdp3,
       UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
-      Schema::Mbo, SType::Native, SType::ProductId, 2, [](Metadata&&) {},
+      Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2, [](Metadata&&) {},
       [&call_count](const Record&) {
         ++call_count;
         return KeepGoing::Stop;
@@ -798,8 +799,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
                               {"symbols", "CYZ2"},
                               {"schema", "tbbo"},
                               {"encoding", "dbn"},
-                              {"stype_in", "native"},
-                              {"stype_out", "product_id"}},
+                              {"stype_in", "raw_symbol"},
+                              {"stype_out", "instrument_id"}},
                              TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 

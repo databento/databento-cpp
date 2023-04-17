@@ -11,7 +11,7 @@ class FlagSet {
  public:
   using Repr = std::uint8_t;
   // Indicates it's the last message in the packet from the venue for a given
-  // `product_id`.
+  // `instrument_id`.
   static constexpr Repr kLast = 1 << 7;
   // Indicates the message was sourced from a replay, such as a snapshot
   // server.

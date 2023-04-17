@@ -118,14 +118,20 @@ const char* ToString(Compression compression) {
 
 const char* ToString(SType stype) {
   switch (stype) {
-    case SType::ProductId: {
-      return "product_id";
+    case SType::InstrumentId: {
+      return "instrument_id";
     }
-    case SType::Native: {
-      return "native";
+    case SType::RawSymbol: {
+      return "raw_symbol";
     }
-    case SType::Smart: {
+    case SType::SmartDeprecated: {
       return "smart";
+    }
+    case SType::Continuous: {
+      return "continuous";
+    }
+    case SType::Parent: {
+      return "parent";
     }
     default: {
       return "unknown";
@@ -600,14 +606,20 @@ Compression FromString(const std::string& str) {
 
 template <>
 SType FromString(const std::string& str) {
-  if (str == "product_id") {
-    return SType::ProductId;
+  if (str == "product_id" || str == "instrument_id") {
+    return SType::InstrumentId;
   }
-  if (str == "native") {
-    return SType::Native;
+  if (str == "native" || str == "raw_symbol") {
+    return SType::RawSymbol;
   }
   if (str == "smart") {
-    return SType::Smart;
+    return SType::SmartDeprecated;
+  }
+  if (str == "continuous") {
+    return SType::Continuous;
+  }
+  if (str == "parent") {
+    return SType::Parent;
   }
   throw InvalidArgumentError{"FromString<SType>", "str",
                              "unknown value '" + str + '\''};

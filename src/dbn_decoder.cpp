@@ -121,7 +121,7 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   if (raw_stype_in == std::numeric_limits<std::uint8_t>::max()) {
     res.has_mixed_stype_in = true;
     // must initialize
-    res.stype_in = SType::ProductId;
+    res.stype_in = SType::InstrumentId;
   } else {
     res.has_mixed_stype_in = false;
     res.stype_in = static_cast<SType>(raw_stype_in);
@@ -275,7 +275,7 @@ databento::SymbolMapping DbnDecoder::DecodeSymbolMapping(
         "mapping"};
   }
   SymbolMapping res;
-  res.native_symbol = DecodeSymbol(buffer_it);
+  res.raw_symbol = DecodeSymbol(buffer_it);
   const auto interval_count = std::size_t{Consume<std::uint32_t>(buffer_it)};
   const auto read_size =
       static_cast<std::ptrdiff_t>(interval_count * kMappingIntervalEncodedLen);

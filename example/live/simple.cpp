@@ -27,8 +27,9 @@ int main() {
 
   std::vector<std::string> symbols{"ESM3", "ESM3 C4200", "ESM3 P4100"};
   client.Subscribe(symbols, databento::Schema::Definition,
-                   databento::SType::Native);
-  client.Subscribe(symbols, databento::Schema::Mbo, databento::SType::Native);
+                   databento::SType::RawSymbol);
+  client.Subscribe(symbols, databento::Schema::Mbo,
+                   databento::SType::RawSymbol);
 
   auto metadata_callback = [](databento::Metadata&& metadata) {
     std::cout << metadata << '\n';
@@ -39,7 +40,7 @@ int main() {
       case RType::Mbo: {
         auto ohlcv = rec.Get<databento::WithTsOut<databento::MboMsg>>();
         std::cout << "Received tick for "
-                  << symbol_mappings.at(ohlcv.rec.hd.product_id)
+                  << symbol_mappings.at(ohlcv.rec.hd.instrument_id)
                   << " with ts_out " << ohlcv.ts_out.time_since_epoch().count()
                   << ": " << ohlcv.rec << '\n';
         break;
@@ -52,7 +53,7 @@ int main() {
       case RType::SymbolMapping: {
         auto mapping = rec.Get<databento::SymbolMappingMsg>();
         std::cout << "Received symbol mapping: " << mapping << '\n';
-        symbol_mappings.emplace(mapping.hd.product_id,
+        symbol_mappings.emplace(mapping.hd.instrument_id,
                                 mapping.stype_in_symbol.data());
         break;
       }

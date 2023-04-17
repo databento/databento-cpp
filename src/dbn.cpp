@@ -67,7 +67,7 @@ std::ostream& operator<<(std::ostream& stream, const SymbolMapping& mapping) {
       .SetSpacer(" ")
       .SetTypeName("SymbolMapping")
       .Build()
-      .AddField("native_symbol", mapping.native_symbol)
+      .AddField("raw_symbol", mapping.raw_symbol)
       .AddField("intervals",
                 static_cast<std::ostringstream&>(intervals_helper.Finish()))
       .Finish();

@@ -51,7 +51,7 @@ class DbnDecoderTests : public testing::Test {
   static void AssertMappings(const std::vector<SymbolMapping>& mappings) {
     ASSERT_EQ(mappings.size(), 1);
     const auto& mapping = mappings.at(0);
-    EXPECT_EQ(mapping.native_symbol, "ESH1");
+    EXPECT_EQ(mapping.raw_symbol, "ESH1");
     ASSERT_EQ(mapping.intervals.size(), 1);
     const auto& interval = mapping.intervals.at(0);
     EXPECT_EQ(interval.symbol, "5482");
@@ -100,8 +100,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
-  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
@@ -116,7 +116,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   const auto& f_mbo1 = f_record1->Get<MboMsg>();
   EXPECT_EQ(ch_mbo1, f_mbo1);
   EXPECT_EQ(ch_mbo1.hd.publisher_id, 1);
-  EXPECT_EQ(ch_mbo1.hd.product_id, 5482);
+  EXPECT_EQ(ch_mbo1.hd.instrument_id, 5482);
   EXPECT_EQ(ch_mbo1.hd.ts_event.time_since_epoch().count(),
             1609160400000429831);
   EXPECT_EQ(ch_mbo1.order_id, 647784973705);
@@ -140,7 +140,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   const auto& f_mbo2 = f_record2->Get<MboMsg>();
   EXPECT_EQ(ch_mbo2, f_mbo2);
   EXPECT_EQ(ch_mbo2.hd.publisher_id, 1);
-  EXPECT_EQ(ch_mbo2.hd.product_id, 5482);
+  EXPECT_EQ(ch_mbo2.hd.instrument_id, 5482);
   EXPECT_EQ(ch_mbo2.hd.ts_event.time_since_epoch().count(),
             1609160400000431665);
   EXPECT_EQ(ch_mbo2.order_id, 647784973631);
@@ -167,8 +167,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
-  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
@@ -184,7 +184,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   const auto& f_mbp1 = f_record1->Get<Mbp1Msg>();
   EXPECT_EQ(ch_mbp1, f_mbp1);
   EXPECT_EQ(ch_mbp1.hd.publisher_id, 1);
-  EXPECT_EQ(ch_mbp1.hd.product_id, 5482);
+  EXPECT_EQ(ch_mbp1.hd.instrument_id, 5482);
   EXPECT_EQ(ch_mbp1.hd.ts_event.time_since_epoch().count(),
             1609160400006001487);
   EXPECT_EQ(ch_mbp1.price, 3720500000000);
@@ -213,7 +213,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   const auto& f_mbp2 = f_record2->Get<Mbp1Msg>();
   EXPECT_EQ(ch_mbp2, f_mbp2);
   EXPECT_EQ(ch_mbp2.hd.publisher_id, 1);
-  EXPECT_EQ(ch_mbp2.hd.product_id, 5482);
+  EXPECT_EQ(ch_mbp2.hd.instrument_id, 5482);
   EXPECT_EQ(ch_mbp2.hd.ts_event.time_since_epoch().count(),
             1609160400006146661);
   EXPECT_EQ(ch_mbp2.price, 3720500000000);
@@ -245,8 +245,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
-  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
@@ -262,7 +262,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   const auto& f_mbp1 = f_record1->Get<Mbp10Msg>();
   EXPECT_EQ(ch_mbp1, f_mbp1);
   EXPECT_EQ(ch_mbp1.hd.publisher_id, 1);
-  EXPECT_EQ(ch_mbp1.hd.product_id, 5482);
+  EXPECT_EQ(ch_mbp1.hd.instrument_id, 5482);
   EXPECT_EQ(ch_mbp1.hd.ts_event.time_since_epoch().count(),
             1609160400000429831);
   EXPECT_EQ(ch_mbp1.price, 3722750000000);
@@ -303,7 +303,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   const auto& f_mbp2 = f_record2->Get<Mbp10Msg>();
   EXPECT_EQ(ch_mbp2, f_mbp2);
   EXPECT_EQ(ch_mbp2.hd.publisher_id, 1);
-  EXPECT_EQ(ch_mbp2.hd.product_id, 5482);
+  EXPECT_EQ(ch_mbp2.hd.instrument_id, 5482);
   EXPECT_EQ(ch_mbp2.hd.ts_event.time_since_epoch().count(),
             1609160400000435673);
   EXPECT_EQ(ch_mbp2.price, 3720000000000);
@@ -347,8 +347,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
-  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
@@ -364,7 +364,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   const auto& f_tbbo1 = f_record1->Get<TbboMsg>();
   EXPECT_EQ(ch_tbbo1, f_tbbo1);
   EXPECT_EQ(ch_tbbo1.hd.publisher_id, 1);
-  EXPECT_EQ(ch_tbbo1.hd.product_id, 5482);
+  EXPECT_EQ(ch_tbbo1.hd.instrument_id, 5482);
   EXPECT_EQ(ch_tbbo1.hd.ts_event.time_since_epoch().count(),
             1609160400098821953);
   EXPECT_EQ(ch_tbbo1.price, 3720250000000);
@@ -393,7 +393,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   const auto& f_tbbo2 = f_record2->Get<TbboMsg>();
   EXPECT_EQ(ch_tbbo2, f_tbbo2);
   EXPECT_EQ(ch_tbbo2.hd.publisher_id, 1);
-  EXPECT_EQ(ch_tbbo2.hd.product_id, 5482);
+  EXPECT_EQ(ch_tbbo2.hd.instrument_id, 5482);
   EXPECT_EQ(ch_tbbo2.hd.ts_event.time_since_epoch().count(),
             1609160400107665963);
   EXPECT_EQ(ch_tbbo2.price, 3720250000000);
@@ -425,8 +425,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
-  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
@@ -442,7 +442,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   const auto& f_trade1 = f_record1->Get<TradeMsg>();
   EXPECT_EQ(ch_trade1, f_trade1);
   EXPECT_EQ(ch_trade1.hd.publisher_id, 1);
-  EXPECT_EQ(ch_trade1.hd.product_id, 5482);
+  EXPECT_EQ(ch_trade1.hd.instrument_id, 5482);
   EXPECT_EQ(ch_trade1.hd.ts_event.time_since_epoch().count(),
             1609160400098821953);
   EXPECT_EQ(ch_trade1.price, 3720250000000);
@@ -465,7 +465,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   const auto& f_trade2 = f_record2->Get<TradeMsg>();
   EXPECT_EQ(ch_trade2, f_trade2);
   EXPECT_EQ(ch_trade2.hd.publisher_id, 1);
-  EXPECT_EQ(ch_trade2.hd.product_id, 5482);
+  EXPECT_EQ(ch_trade2.hd.instrument_id, 5482);
   EXPECT_EQ(ch_trade2.hd.ts_event.time_since_epoch().count(),
             1609160400107665963);
   EXPECT_EQ(ch_trade2.price, 3720250000000);
@@ -491,8 +491,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1D) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
-  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
@@ -511,8 +511,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
-  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
@@ -528,7 +528,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
   const auto& f_ohlcv1 = f_record1->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv1, f_ohlcv1);
   EXPECT_EQ(ch_ohlcv1.hd.publisher_id, 1);
-  EXPECT_EQ(ch_ohlcv1.hd.product_id, 5482);
+  EXPECT_EQ(ch_ohlcv1.hd.instrument_id, 5482);
   EXPECT_EQ(ch_ohlcv1.hd.ts_event.time_since_epoch().count(),
             1609160400000000000);
   EXPECT_EQ(ch_ohlcv1.open, 372025000000000);
@@ -547,7 +547,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
   const auto& f_ohlcv2 = f_record2->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv2, f_ohlcv2);
   EXPECT_EQ(ch_ohlcv2.hd.publisher_id, 1);
-  EXPECT_EQ(ch_ohlcv2.hd.product_id, 5482);
+  EXPECT_EQ(ch_ohlcv2.hd.instrument_id, 5482);
   EXPECT_EQ(ch_ohlcv2.hd.ts_event.time_since_epoch().count(),
             1609164000000000000);
   EXPECT_EQ(ch_ohlcv2.open, 372225000000000);
@@ -569,8 +569,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
-  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
@@ -586,7 +586,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
   const auto& f_ohlcv1 = f_record1->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv1, f_ohlcv1);
   EXPECT_EQ(ch_ohlcv1.hd.publisher_id, 1);
-  EXPECT_EQ(ch_ohlcv1.hd.product_id, 5482);
+  EXPECT_EQ(ch_ohlcv1.hd.instrument_id, 5482);
   EXPECT_EQ(ch_ohlcv1.hd.ts_event.time_since_epoch().count(),
             1609160400000000000);
   EXPECT_EQ(ch_ohlcv1.open, 372025000000000);
@@ -605,7 +605,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
   const auto& f_ohlcv2 = f_record2->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv2, f_ohlcv2);
   EXPECT_EQ(ch_ohlcv2.hd.publisher_id, 1);
-  EXPECT_EQ(ch_ohlcv2.hd.product_id, 5482);
+  EXPECT_EQ(ch_ohlcv2.hd.instrument_id, 5482);
   EXPECT_EQ(ch_ohlcv2.hd.ts_event.time_since_epoch().count(),
             1609160460000000000);
   EXPECT_EQ(ch_ohlcv2.open, 372100000000000);
@@ -627,8 +627,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
   EXPECT_EQ(ch_metadata.limit, 2);
-  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
-  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
@@ -644,7 +644,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
   const auto& f_ohlcv1 = f_record1->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv1, f_ohlcv1);
   EXPECT_EQ(ch_ohlcv1.hd.publisher_id, 1);
-  EXPECT_EQ(ch_ohlcv1.hd.product_id, 5482);
+  EXPECT_EQ(ch_ohlcv1.hd.instrument_id, 5482);
   EXPECT_EQ(ch_ohlcv1.hd.ts_event.time_since_epoch().count(),
             1609160400000000000);
   EXPECT_EQ(ch_ohlcv1.open, 372025000000000);
@@ -663,7 +663,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
   const auto& f_ohlcv2 = f_record2->Get<OhlcvMsg>();
   EXPECT_EQ(ch_ohlcv2, f_ohlcv2);
   EXPECT_EQ(ch_ohlcv2.hd.publisher_id, 1);
-  EXPECT_EQ(ch_ohlcv2.hd.product_id, 5482);
+  EXPECT_EQ(ch_ohlcv2.hd.instrument_id, 5482);
   EXPECT_EQ(ch_ohlcv2.hd.ts_event.time_since_epoch().count(),
             1609160401000000000);
   EXPECT_EQ(ch_ohlcv2.open, 372050000000000);
@@ -685,14 +685,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1664841600000000000);
   EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1672790400000000000);
   EXPECT_EQ(ch_metadata.limit, 0);
-  EXPECT_EQ(ch_metadata.stype_in, SType::Native);
-  EXPECT_EQ(ch_metadata.stype_out, SType::ProductId);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"MSFT"});
   EXPECT_TRUE(ch_metadata.partial.empty());
   EXPECT_TRUE(ch_metadata.not_found.empty());
   EXPECT_EQ(ch_metadata.mappings.size(), 1);
   const auto& mapping = ch_metadata.mappings.at(0);
-  EXPECT_EQ(mapping.native_symbol, "MSFT");
+  EXPECT_EQ(mapping.raw_symbol, "MSFT");
   ASSERT_EQ(mapping.intervals.size(), 20);
   const auto& interval = mapping.intervals.at(0);
   EXPECT_EQ(interval.symbol, "7358");
@@ -709,7 +709,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   const auto& f_def1 = f_record1->Get<InstrumentDefMsg>();
   EXPECT_EQ(ch_def1, f_def1);
   EXPECT_STREQ(ch_def1.exchange.data(), "XNAS");
-  EXPECT_STREQ(ch_def1.symbol.data(), "MSFT");
+  EXPECT_STREQ(ch_def1.raw_symbol.data(), "MSFT");
   EXPECT_EQ(ch_def1.security_update_action, SecurityUpdateAction::Add);
   EXPECT_EQ(ch_def1.min_lot_size_round_lot, 100);
 
@@ -723,7 +723,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   const auto& f_def2 = f_record2->Get<InstrumentDefMsg>();
   EXPECT_EQ(ch_def2, f_def2);
   EXPECT_STREQ(ch_def2.exchange.data(), "XNAS");
-  EXPECT_STREQ(ch_def2.symbol.data(), "MSFT");
+  EXPECT_STREQ(ch_def2.raw_symbol.data(), "MSFT");
   EXPECT_EQ(ch_def2.security_update_action, SecurityUpdateAction::Add);
   EXPECT_EQ(ch_def2.min_lot_size_round_lot, 100);
 }

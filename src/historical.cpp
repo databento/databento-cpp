@@ -184,8 +184,8 @@ std::vector<std::string> ParseAt(const std::string& endpoint,
   return res;
 }
 
-constexpr auto kDefaultSTypeIn = databento::SType::Native;
-constexpr auto kDefaultSTypeOut = databento::SType::ProductId;
+constexpr auto kDefaultSTypeIn = databento::SType::RawSymbol;
+constexpr auto kDefaultSTypeOut = databento::SType::InstrumentId;
 
 databento::BatchJob Parse(const std::string& endpoint,
                           const nlohmann::json& json) {

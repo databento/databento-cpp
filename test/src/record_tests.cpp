@@ -34,7 +34,7 @@ TEST(RecordTests, TestMbp10MsgToString) {
   }
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(Mbp10Msg {
-    hd = RecordHeader { length = 92, rtype = Mbp10, publisher_id = 1, product_id = 1, ts_event = 0 },
+    hd = RecordHeader { length = 92, rtype = Mbp10, publisher_id = 1, instrument_id = 1, ts_event = 0 },
     price = 100000000,
     size = 10,
     action = Add,
@@ -130,7 +130,7 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
       {}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(InstrumentDefMsg {
-    hd = RecordHeader { length = 90, rtype = InstrumentDef, publisher_id = 1, product_id = 1, ts_event = 0 },
+    hd = RecordHeader { length = 90, rtype = InstrumentDef, publisher_id = 1, instrument_id = 1, ts_event = 0 },
     ts_recv = 0,
     min_price_increment = 1,
     display_factor = 2,
@@ -166,7 +166,7 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
     currency = "USD",
     settl_currency = "USD",
     secsubtype = "A",
-    symbol = "TEST",
+    raw_symbol = "TEST",
     group = "GROUP",
     exchange = "CME",
     asset = "A",
@@ -222,7 +222,7 @@ TEST(RecordTests, TestImbalanceMsgToString) {
       {}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(ImbalanceMsg {
-    hd = RecordHeader { length = 28, rtype = Imbalance, publisher_id = 1, product_id = 1, ts_event = 0 },
+    hd = RecordHeader { length = 28, rtype = Imbalance, publisher_id = 1, instrument_id = 1, ts_event = 0 },
     ts_recv = 0,
     ref_price = 1,
     auction_time = 0,

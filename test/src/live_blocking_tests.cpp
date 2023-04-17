@@ -59,7 +59,7 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
   constexpr auto kDataset = dataset::kXnasItch;
   const std::vector<std::string> kSymbols{"MSFT", "TSLA", "QQQ"};
   constexpr auto kSchema = Schema::Ohlcv1M;
-  constexpr auto kSType = SType::Native;
+  constexpr auto kSType = SType::RawSymbol;
 
   const mock::MockLsgServer mock_server{
       kDataset, [&kSymbols](mock::MockLsgServer& self) {

@@ -91,7 +91,7 @@ int main() {
 
   const std::size_t billable_size = client.MetadataGetBillableSize(
       kGlbxMdp3, "2020-12-28", "2020-12-29", {"ESH1"}, databento::Schema::Mbo,
-      databento::SType::Native, {});
+      databento::SType::RawSymbol, {});
   std::cout << "Billable size (uncompressed binary bytes): " << billable_size
             << "\n\n";
 

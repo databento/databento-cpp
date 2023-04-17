@@ -9,6 +9,11 @@
 - Added additional `condition` variants for `DatasetConditionDetail` (degraded, pending, missing)
 - Added additional member `last_modified_date` to `DatasetConditionDetail` Added `has_mixed_schema`, `has_mixed_stype_in`, and `ts_out` to `Metadata` to support live data
 - Removed `related` and `related_security_id` from `InstrumentDefMsg`
+- Renamed `SType::ProductId` to `SType::InstrumentId` and `SType::Native` to `SType::RawSymbol`
+- Renamed `RecordHeader::product_id` to `instrument_id`
+- Renamed `InstrumentDefMsg::symbol` to `raw_symbol`
+- Renamed `SymbolMapping::native_symbol` to `raw_symbol`
+- Deprecated `SType::Smart` to split into `SType::Parent` and `SType::Continuous`
 - Changed some fields to enums in `InstrumentDefMsg`
 - Added optional `compression` parameter to `BatchSubmitJob`
 - Fixed parsing of `BatchSubmitJob` response

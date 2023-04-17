@@ -18,8 +18,8 @@ struct MappingInterval {
 };
 
 struct SymbolMapping {
-  // The native symbol.
-  std::string native_symbol;
+  // The raw symbol from the publisher.
+  std::string raw_symbol;
   // The mappings of `native` for different date ranges.
   std::vector<MappingInterval> intervals;
 };
@@ -71,8 +71,7 @@ inline bool operator==(const MappingInterval& lhs, const MappingInterval& rhs) {
 }
 
 inline bool operator==(const SymbolMapping& lhs, const SymbolMapping& rhs) {
-  return lhs.native_symbol == rhs.native_symbol &&
-         lhs.intervals == rhs.intervals;
+  return lhs.raw_symbol == rhs.raw_symbol && lhs.intervals == rhs.intervals;
 }
 
 inline bool operator==(const Metadata& lhs, const Metadata& rhs) {

@@ -22,8 +22,8 @@ struct RecordHeader {
   RType rtype;
   // The publisher ID assigned by Databento.
   std::uint16_t publisher_id;
-  // The numeric product ID assigned to the instrument.
-  std::uint32_t product_id;
+  // The numeric ID assigned to the instrument.
+  std::uint32_t instrument_id;
   // The exchange timestamp in UNIX epoch nanoseconds.
   UnixNanos ts_event;
 
@@ -204,7 +204,7 @@ struct InstrumentDefMsg {
   std::array<char, 4> currency;
   std::array<char, 4> settl_currency;
   std::array<char, 6> secsubtype;
-  std::array<char, 22> symbol;
+  std::array<char, 22> raw_symbol;
   std::array<char, 21> group;
   std::array<char, 5> exchange;
   std::array<char, 7> asset;
@@ -309,7 +309,7 @@ struct SystemMsg {
 inline bool operator==(const RecordHeader& lhs, const RecordHeader& rhs) {
   return lhs.length == rhs.length && lhs.rtype == rhs.rtype &&
          lhs.publisher_id == rhs.publisher_id &&
-         lhs.product_id == rhs.product_id && lhs.ts_event == rhs.ts_event;
+         lhs.instrument_id == rhs.instrument_id && lhs.ts_event == rhs.ts_event;
 }
 inline bool operator!=(const RecordHeader& lhs, const RecordHeader& rhs) {
   return !(lhs == rhs);
