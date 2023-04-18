@@ -26,7 +26,7 @@ LiveBlocking::LiveBlocking(std::string key, std::string dataset,
       dataset_{std::move(dataset)},
       gateway_{DetermineGateway()},
       send_ts_out_{send_ts_out},
-      client_{gateway_, 80},
+      client_{gateway_, 13000},
       session_id_{this->Authenticate()} {}
 
 LiveBlocking::LiveBlocking(std::string key, std::string dataset,

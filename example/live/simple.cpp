@@ -14,6 +14,8 @@
 static std::sig_atomic_t volatile gSignal;
 
 int main() {
+  std::unordered_map<std::uint32_t, std::string> symbol_mappings;
+
   auto client = databento::LiveBuilder{}
                     .SetKeyFromEnv()
                     .SetDataset(databento::dataset::kGlbxMdp3)
@@ -24,7 +26,6 @@ int main() {
   std::signal(SIGINT, [](int signal) { gSignal = signal; });
 
   std::vector<std::string> symbols{"ESM3", "ESM3 C4200", "ESM3 P4100"};
-  std::unordered_map<std::uint32_t, std::string> symbol_mappings;
   client.Subscribe(symbols, databento::Schema::Definition,
                    databento::SType::Native);
   client.Subscribe(symbols, databento::Schema::Mbo, databento::SType::Native);
