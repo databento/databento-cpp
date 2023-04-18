@@ -7,6 +7,8 @@
 - Added `has_mixed_schema`, `has_mixed_stype_in`, and `ts_out` to `Metadata` to support live data
 - Removed `related` and `related_security_id` from `InstrumentDefMsg`
 - Changed some fields to enums in `InstrumentDefMsg`
+- Added optional `compression` parameter to `BatchSubmitJob`
+- Fixed parsing of `BatchSubmitJob` response
 - Fixed invalid read in `DbnDecoder`
 - Fixed memory leak in `TryCreateDir`
 

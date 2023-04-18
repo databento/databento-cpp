@@ -50,8 +50,9 @@ TEST_F(LiveBlockingTests, TestStart) {
   LiveBlocking target{kKey, dataset::kGlbxMdp3, "127.0.0.1", mock_server.Port(),
                       false};
   const auto metadata = target.Start();
-  ASSERT_EQ(metadata.schema, kSchema);
-  ASSERT_EQ(metadata.dataset, dataset::kGlbxMdp3);
+  EXPECT_EQ(metadata.version, 1);
+  EXPECT_EQ(metadata.schema, kSchema);
+  EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
 }
 
 TEST_F(LiveBlockingTests, TestSubscribe) {

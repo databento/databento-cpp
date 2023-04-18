@@ -173,7 +173,7 @@ enum MatchAlgorithm : char {
   ThresholdProRataLmm = 'Q',
   EurodollarOptions = 'Y',
 };
-}
+}  // namespace match_algorithm
 using match_algorithm::MatchAlgorithm;
 
 enum class SecurityUpdateAction : char {

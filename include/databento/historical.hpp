@@ -45,17 +45,17 @@ class Historical {
   BatchJob BatchSubmitJob(const std::string& dataset, UnixNanos start,
                           UnixNanos end,
                           const std::vector<std::string>& symbols,
-                          Schema schema, SplitDuration split_duration,
-                          std::size_t split_size, Packaging packaging,
-                          Delivery delivery, SType stype_in, SType stype_out,
-                          std::size_t limit);
+                          Schema schema, Compression compression,
+                          SplitDuration split_duration, std::size_t split_size,
+                          Packaging packaging, Delivery delivery,
+                          SType stype_in, SType stype_out, std::size_t limit);
   BatchJob BatchSubmitJob(const std::string& dataset, const std::string& start,
                           const std::string& end,
                           const std::vector<std::string>& symbols,
-                          Schema schema, SplitDuration split_duration,
-                          std::size_t split_size, Packaging packaging,
-                          Delivery delivery, SType stype_in, SType stype_out,
-                          std::size_t limit);
+                          Schema schema, Compression compression,
+                          SplitDuration split_duration, std::size_t split_size,
+                          Packaging packaging, Delivery delivery,
+                          SType stype_in, SType stype_out, std::size_t limit);
   std::vector<BatchJob> BatchListJobs();
   std::vector<BatchJob> BatchListJobs(const std::vector<JobState>& states,
                                       UnixNanos since);
