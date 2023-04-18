@@ -239,6 +239,9 @@ databento::BatchJob Parse(const std::string& endpoint,
 }
 
 void TryCreateDir(const std::string& dir_name) {
+  if (dir_name.empty()) {
+    return;
+  }
   const std::unique_ptr<DIR, decltype(&::closedir)> dir{
       ::opendir(dir_name.c_str()), &::closedir};
   if (dir == nullptr) {
@@ -251,6 +254,9 @@ void TryCreateDir(const std::string& dir_name) {
 }
 
 std::string PathJoin(const std::string& dir, const std::string& path) {
+  if (dir.empty()) {
+    return path;
+  }
   if (dir[dir.length() - 1] == '/') {
     return dir + path;
   }
