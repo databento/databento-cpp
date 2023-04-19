@@ -21,6 +21,7 @@ using PriceByFeedMode = std::map<FeedMode, double>;
 struct DatasetConditionDetail {
   std::string date;
   DatasetCondition condition;
+  std::string last_modified_date;
 };
 
 struct DatasetRange {

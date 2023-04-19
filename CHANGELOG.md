@@ -4,7 +4,10 @@
 - Added initial support for live data with `LiveBlocking` and `LiveThreaded` clients
 - Added `SystemMsg` and `ErrorMsg` records for use in live data
 - Added `strike_price`, `strike_price_currency`, and `instrument_class` to `InstrumentDefMsg`
-- Added `has_mixed_schema`, `has_mixed_stype_in`, and `ts_out` to `Metadata` to support live data
+- Renamed `BatchJob.cost` to `cost_usd` and value now expressed as US dollars
+- Added `instrument_class`, `strike_price`, and `strike_price_currency` to definition schema
+- Added additional `condition` variants for `DatasetConditionDetail` (degraded, pending, missing)
+- Added additional member `last_modified_date` to `DatasetConditionDetail` Added `has_mixed_schema`, `has_mixed_stype_in`, and `ts_out` to `Metadata` to support live data
 - Removed `related` and `related_security_id` from `InstrumentDefMsg`
 - Changed some fields to enums in `InstrumentDefMsg`
 - Added optional `compression` parameter to `BatchSubmitJob`

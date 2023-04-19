@@ -379,11 +379,18 @@ TEST_F(HistoricalTests, TestMetadataListFields) {
 }
 
 TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
-  const nlohmann::json kResp{
-      {{"date", "2022-11-07"}, {"condition", "available"}},
-      {{"date", "2022-11-08"}, {"condition", "bad"}},
-      {{"date", "2022-11-09"}, {"condition", "bad"}},
-      {{"date", "2022-11-10"}, {"condition", "available"}}};
+  const nlohmann::json kResp{{{"date", "2022-11-07"},
+                              {"condition", "available"},
+                              {"last_modified_date", "2023-03-01"}},
+                             {{"date", "2022-11-08"},
+                              {"condition", "degraded"},
+                              {"last_modified_date", "2023-03-01"}},
+                             {{"date", "2022-11-09"},
+                              {"condition", "pending"},
+                              {"last_modified_date", "2023-03-01"}},
+                             {{"date", "2022-11-10"},
+                              {"condition", "missing"},
+                              {"last_modified_date", "2023-03-01"}}};
   mock_server_.MockGetJson("/v0/metadata.get_dataset_condition",
                            {{"dataset", dataset::kXnasItch},
                             {"start_date", "2022-11-06"},
@@ -401,9 +408,13 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
   EXPECT_EQ(conditions[2].date, "2022-11-09");
   EXPECT_EQ(conditions[3].date, "2022-11-10");
   EXPECT_EQ(conditions[0].condition, DatasetCondition::Available);
-  EXPECT_EQ(conditions[1].condition, DatasetCondition::Bad);
-  EXPECT_EQ(conditions[2].condition, DatasetCondition::Bad);
-  EXPECT_EQ(conditions[3].condition, DatasetCondition::Available);
+  EXPECT_EQ(conditions[1].condition, DatasetCondition::Degraded);
+  EXPECT_EQ(conditions[2].condition, DatasetCondition::Pending);
+  EXPECT_EQ(conditions[3].condition, DatasetCondition::Missing);
+  EXPECT_EQ(conditions[0].last_modified_date, "2023-03-01");
+  EXPECT_EQ(conditions[1].last_modified_date, "2023-03-01");
+  EXPECT_EQ(conditions[2].last_modified_date, "2023-03-01");
+  EXPECT_EQ(conditions[3].last_modified_date, "2023-03-01");
 }
 
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {

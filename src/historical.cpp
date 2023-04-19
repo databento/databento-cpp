@@ -741,7 +741,10 @@ Historical::MetadataGetDatasetCondition(const httplib::Params& params) {
         ParseAt<std::string>(kEndpoint, detail_json, "date");
     const DatasetCondition condition = FromCheckedAtString<DatasetCondition>(
         kEndpoint, detail_json, "condition");
-    details.emplace_back(DatasetConditionDetail{date, condition});
+    const std::string last_modified_date =
+        ParseAt<std::string>(kEndpoint, detail_json, "last_modified_date");
+    details.emplace_back(
+        DatasetConditionDetail{date, condition, last_modified_date});
   }
   return details;
 }

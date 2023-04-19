@@ -88,7 +88,10 @@ enum class JobState : std::uint8_t {
 // The condition of a dataset at a point in time.
 enum class DatasetCondition : std::uint8_t {
   Available,
-  Bad,
+  Degraded,
+  Pending,
+  Missing,
+  Bad,  // Deprecated
 };
 
 // Sentinel values for different DBN record types.

@@ -215,7 +215,16 @@ const char* ToString(DatasetCondition condition) {
     case DatasetCondition::Available: {
       return "available";
     }
-    case DatasetCondition::Bad: {
+    case DatasetCondition::Degraded: {
+      return "degraded";
+    }
+    case DatasetCondition::Pending: {
+      return "pending";
+    }
+    case DatasetCondition::Missing: {
+      return "missing";
+    }
+    case DatasetCondition::Bad: {  // Deprecated
       return "bad";
     }
     default: {
@@ -678,8 +687,17 @@ DatasetCondition FromString(const std::string& str) {
   if (str == "available") {
     return DatasetCondition::Available;
   }
+  if (str == "degraded") {
+    return DatasetCondition::Degraded;
+  }
+  if (str == "pending") {
+    return DatasetCondition::Pending;
+  }
+  if (str == "missing") {
+    return DatasetCondition::Missing;
+  }
   if (str == "bad") {
-    return DatasetCondition::Bad;
+    return DatasetCondition::Bad;  // Deprecated
   }
   throw InvalidArgumentError{"FromString<DatasetCondition>", "str",
                              "unknown value '" + str + '\''};
