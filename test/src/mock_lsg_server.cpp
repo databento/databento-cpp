@@ -47,6 +47,10 @@ std::size_t MockLsgServer::Send(const std::string& msg) {
   return static_cast<std::size_t>(write_size);
 }
 
+::ssize_t MockLsgServer::UncheckedSend(const std::string& msg) {
+  return ::write(conn_fd_.Get(), msg.data(), msg.length());
+}
+
 void MockLsgServer::Authenticate() {
   Send("lsg-test\n");
   // send challenge separate to test multiple reads to get CRAM challenge

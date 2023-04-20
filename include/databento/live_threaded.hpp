@@ -10,18 +10,15 @@
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
 #include "databento/enums.hpp"                 // Schema, SType
 #include "databento/record.hpp"                // Record
-#include "databento/timeseries.hpp"            // MetadataCallback
+#include "databento/timeseries.hpp"  // MetadataCallback, RecordCallback
 
 namespace databento {
-// A client for interfacing with Databento's live market data API. This client
-// has a threaded event-driven API for receiving the next record. Unlike
-// Historical, each instance of LiveThreaded is associated with a particular
-// dataset.
+// A client for interfacing with Databento's real-time and intraday replay
+// market data API. This client provides a threaded event-driven API for
+// receiving the next record. Unlike Historical, each instance of LiveThreaded
+// is associated with a particular dataset.
 class LiveThreaded {
  public:
-  // Unlike the historical implementation, it does not have a return value.
-  using RecordCallback = std::function<void(const Record&)>;
-
   LiveThreaded(std::string key, std::string dataset, bool send_ts_out);
   LiveThreaded(std::string key, std::string dataset, std::string gateway,
                std::uint16_t port, bool send_ts_out);
@@ -57,9 +54,9 @@ class LiveThreaded {
   // subscriptions.
   //
   // This method should only be called once per instance.
+  void Start(RecordCallback record_callback);
   void Start(MetadataCallback metadata_callback,
              RecordCallback record_callback);
-  void Start(RecordCallback record_callback);
 
  private:
   struct Impl;

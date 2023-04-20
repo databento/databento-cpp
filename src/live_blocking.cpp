@@ -115,6 +115,8 @@ const databento::Record* LiveBlocking::NextRecord(
   return &current_record_;
 }
 
+void LiveBlocking::Stop() { client_.Close(); }
+
 std::string LiveBlocking::DecodeChallenge() {
   buffer_size_ = client_.ReadSome(buffer_.data(), buffer_.size()).read_size;
   if (buffer_size_ == 0) {

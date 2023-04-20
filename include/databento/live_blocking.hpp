@@ -3,6 +3,7 @@
 #include <array>
 #include <chrono>  // milliseconds
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -13,9 +14,10 @@
 #include "databento/record.hpp"             // Record
 
 namespace databento {
-// A client for interfacing with Databento's live market data API. This client
-// has a blocking API for getting the next record. Unlike Historical, each
-// instance of LiveBlocking is associated with a particular dataset.
+// A client for interfacing with Databento's real-time and intraday replay
+// market data API. This client provides a blocking API for getting the next
+// record. Unlike Historical, each instance of LiveBlocking is associated with a
+// particular dataset.
 class LiveBlocking {
  public:
   LiveBlocking(std::string key, std::string dataset, bool send_ts_out);
@@ -57,6 +59,9 @@ class LiveBlocking {
   //
   // This method should only be called after `Start`.
   const Record* NextRecord(std::chrono::milliseconds timeout);
+  // Stops the session with the gateway. Once stopped, the session cannot be
+  // restarted.
+  void Stop();
 
  private:
   std::string DetermineGateway() const;

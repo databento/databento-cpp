@@ -23,13 +23,19 @@ LiveThreaded::LiveThreaded(LiveThreaded&& other) noexcept
     : impl_{std::move(other.impl_)}, thread_{std::move(other.thread_)} {}
 
 LiveThreaded& LiveThreaded::operator=(LiveThreaded&& rhs) noexcept {
-  impl_->keep_going = false;
+  if (impl_) {
+    impl_->keep_going = false;
+  }
   std::swap(impl_, rhs.impl_);
   std::swap(thread_, rhs.thread_);
   return *this;
 }
 
-LiveThreaded::~LiveThreaded() { impl_->keep_going = false; }
+LiveThreaded::~LiveThreaded() {
+  if (impl_) {
+    impl_->keep_going = false;
+  }
+}
 
 LiveThreaded::LiveThreaded(std::string key, std::string dataset,
                            bool send_ts_out)
@@ -96,8 +102,11 @@ void LiveThreaded::ProcessingThread(Impl* impl,
     while (impl->keep_going.load()) {
       const Record* rec = impl->blocking.NextRecord(kTimeout);
       if (rec) {
-        record_cb(*rec);
-      }
+        if (record_cb(*rec) == KeepGoing::Stop) {
+          impl->blocking.Stop();
+          return;
+        }
+      }  // else timeout
     }
   } catch (const std::exception& exc) {
     std::cerr

@@ -40,14 +40,12 @@ LiveBuilder& LiveBuilder::SetSendTsOut(bool send_ts_out) {
 
 databento::LiveBlocking LiveBuilder::BuildBlocking() {
   Validate();
-  return databento::LiveBlocking{std::move(key_), std::move(dataset_),
-                                 send_ts_out_};
+  return databento::LiveBlocking{key_, dataset_, send_ts_out_};
 }
 
 databento::LiveThreaded LiveBuilder::BuildThreaded() {
   Validate();
-  return databento::LiveThreaded{std::move(key_), std::move(dataset_),
-                                 send_ts_out_};
+  return databento::LiveThreaded{key_, dataset_, send_ts_out_};
 }
 
 void LiveBuilder::Validate() const {

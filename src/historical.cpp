@@ -242,8 +242,8 @@ void TryCreateDir(const std::string& dir_name) {
   if (dir_name.empty()) {
     return;
   }
-  const std::unique_ptr<DIR, decltype(&::closedir)> dir{
-      ::opendir(dir_name.c_str()), &::closedir};
+  const std::unique_ptr<DIR, int (*)(DIR*)> dir{::opendir(dir_name.c_str()),
+                                                &::closedir};
   if (dir == nullptr) {
     const int ret = ::mkdir(dir_name.c_str(), 0777);
     if (ret != 0) {
@@ -1223,5 +1223,5 @@ Historical HistoricalBuilder::Build() {
   if (key_.empty()) {
     throw Exception{"'key' is unset"};
   }
-  return Historical{std::move(key_), gateway_};
+  return Historical{key_, gateway_};
 }

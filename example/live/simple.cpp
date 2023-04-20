@@ -74,6 +74,7 @@ int main() {
                   << static_cast<std::uint16_t>(rec.Header().rtype) << '\n';
       }
     }
+    return databento::KeepGoing::Continue;
   };
   client.Start(metadata_callback, record_callback);
   while (::gSignal == 0) {

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <openssl/sha.h>  //  SHA256_DIGEST_LENGTH
 
+#include <atomic>
 #include <chrono>  // milliseconds
 #include <condition_variable>
 #include <mutex>   // lock_guard, mutex, unique_lock
@@ -233,6 +234,47 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
     ASSERT_TRUE(rec.Holds<TradeMsg>()) << "Failed on call " << i;
     EXPECT_EQ(rec.Get<TradeMsg>(), kRec.rec);
   }
+}
+
+TEST_F(LiveBlockingTests, TestStop) {
+  const WithTsOut<TradeMsg> kRec{
+      {DummyHeader<WithTsOut<TradeMsg>>(RType::Mbp0),
+       1,
+       2,
+       Action::Add,
+       Side::Ask,
+       {},
+       1,
+       {},
+       {},
+       2},
+      UnixNanos{std::chrono::seconds{1678910279000000000}}};
+  std::atomic<bool> has_stopped{false};
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, [kRec, &has_stopped](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.SendRecord(kRec);
+        while (!has_stopped) {
+          std::this_thread::yield();
+        }
+        const std::string rec_str{reinterpret_cast<const char*>(&kRec),
+                                  sizeof(kRec)};
+        for (size_t i = 0; i < 5; ++i) {
+          if (self.UncheckedSend(rec_str) <
+              static_cast<::ssize_t>(rec_str.size())) {
+            return;
+          }
+        }
+        FAIL() << "Connection remained open";
+      }};
+
+  LiveBlocking target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
+                      false};
+  ASSERT_EQ(target.NextRecord().Get<WithTsOut<TradeMsg>>(), kRec);
+  target.Stop();
+  has_stopped = true;
+  std::this_thread::sleep_for(std::chrono::milliseconds{50});
 }
 }  // namespace test
 }  // namespace databento

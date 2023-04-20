@@ -69,6 +69,8 @@ TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size,
   }
 }
 
+void TcpClient::Close() { socket_.Close(); }
+
 databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
                                                   std::uint16_t port) {
   const int fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
