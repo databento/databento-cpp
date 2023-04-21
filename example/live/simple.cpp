@@ -1,6 +1,7 @@
 #include <csignal>  // sig_atomic_t
 #include <cstdint>
 #include <iostream>
+#include <memory>
 #include <unordered_map>
 
 #include "databento/constants.hpp"
@@ -8,6 +9,7 @@
 #include "databento/enums.hpp"
 #include "databento/live.hpp"
 #include "databento/live_threaded.hpp"
+#include "databento/log.hpp"
 #include "databento/record.hpp"
 #include "databento/with_ts_out.hpp"
 
@@ -15,12 +17,14 @@ static std::sig_atomic_t volatile gSignal;
 
 int main() {
   std::unordered_map<std::uint32_t, std::string> symbol_mappings;
+  std::unique_ptr<databento::ILogReceiver> log_receiver{
+      new databento::ConsoleLogReceiver{databento::LogLevel::Debug}};
 
   auto client = databento::LiveBuilder{}
+                    .SetLogReceiver(log_receiver.get())
                     .SetKeyFromEnv()
                     .SetDataset(databento::dataset::kGlbxMdp3)
                     .BuildThreaded();
-  std::cout << "Authenticated successfully\n";
 
   // Set up signal handler for Ctrl+C
   std::signal(SIGINT, [](int signal) { gSignal = signal; });

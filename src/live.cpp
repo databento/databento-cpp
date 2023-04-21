@@ -6,6 +6,7 @@
 #include "databento/exceptions.hpp"     // InvalidArgumentError, LiveApiError
 #include "databento/live_blocking.hpp"  // LiveBlocking
 #include "databento/live_threaded.hpp"  // LiveThreaded
+#include "databento/log.hpp"
 
 using databento::LiveBuilder;
 
@@ -38,21 +39,30 @@ LiveBuilder& LiveBuilder::SetSendTsOut(bool send_ts_out) {
   return *this;
 }
 
+LiveBuilder& LiveBuilder::SetLogReceiver(
+    databento::ILogReceiver* log_receiver) {
+  log_receiver_ = log_receiver;
+  return *this;
+}
+
 databento::LiveBlocking LiveBuilder::BuildBlocking() {
   Validate();
-  return databento::LiveBlocking{key_, dataset_, send_ts_out_};
+  return databento::LiveBlocking{log_receiver_, key_, dataset_, send_ts_out_};
 }
 
 databento::LiveThreaded LiveBuilder::BuildThreaded() {
   Validate();
-  return databento::LiveThreaded{key_, dataset_, send_ts_out_};
+  return databento::LiveThreaded{log_receiver_, key_, dataset_, send_ts_out_};
 }
 
-void LiveBuilder::Validate() const {
+void LiveBuilder::Validate() {
   if (key_.empty()) {
     throw Exception{"'key' is unset"};
   }
   if (dataset_.empty()) {
     throw Exception{"'dataset' is unset"};
+  }
+  if (log_receiver_ == nullptr) {
+    log_receiver_ = databento::ILogReceiver::Default();
   }
 }

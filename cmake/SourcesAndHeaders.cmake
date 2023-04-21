@@ -14,6 +14,7 @@ set(headers
   include/databento/live.hpp
   include/databento/live_blocking.hpp
   include/databento/live_threaded.hpp
+  include/databento/log.hpp
   include/databento/metadata.hpp
   include/databento/record.hpp
   include/databento/symbology.hpp
@@ -42,6 +43,7 @@ set(sources
   src/live.cpp
   src/live_blocking.cpp
   src/live_threaded.cpp
+  src/log.cpp
   src/metadata.cpp
   src/record.cpp
   src/symbology.cpp

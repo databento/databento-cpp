@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <thread>  // this_thread
 
 #include "databento/constants.hpp"
@@ -9,6 +10,7 @@
 #include "databento/dbn.hpp"
 #include "databento/enums.hpp"
 #include "databento/live_threaded.hpp"
+#include "databento/log.hpp"
 #include "databento/record.hpp"
 #include "databento/timeseries.hpp"
 #include "mock/mock_lsg_server.hpp"
@@ -18,6 +20,8 @@ namespace test {
 class LiveThreadedTests : public testing::Test {
  protected:
   static constexpr auto kKey = "32-character-with-lots-of-filler";
+
+  std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
 };
 
 TEST_F(LiveThreadedTests, TestBasic) {
@@ -41,8 +45,8 @@ TEST_F(LiveThreadedTests, TestBasic) {
                                           self.SendRecord(kRec);
                                         }};
 
-  LiveThreaded target{kKey, dataset::kGlbxMdp3, "127.0.0.1", mock_server.Port(),
-                      false};
+  LiveThreaded target{logger_.get(),      kKey, dataset::kGlbxMdp3, "127.0.0.1",
+                      mock_server.Port(), false};
   std::atomic<std::uint32_t> call_count{};
   target.Start([&call_count, &kRec](const Record& rec) {
     ++call_count;
@@ -83,8 +87,8 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
         self.SendRecord(kRec);
       }};
 
-  LiveThreaded target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
-                      false};
+  LiveThreaded target{logger_.get(),      kKey, dataset::kXnasItch, "127.0.0.1",
+                      mock_server.Port(), false};
   target.Start(
       [kSchema](Metadata&& metadata) { EXPECT_EQ(metadata.schema, kSchema); },
       [&call_count, &kRec](const Record& rec) {
@@ -134,8 +138,8 @@ TEST_F(LiveThreadedTests, TestStop) {
         FAIL() << "Connection remained open";
       }};
 
-  LiveThreaded target{kKey, dataset::kXnasItch, "127.0.0.1", mock_server.Port(),
-                      false};
+  LiveThreaded target{logger_.get(),      kKey, dataset::kXnasItch, "127.0.0.1",
+                      mock_server.Port(), false};
   target.Start(
       [kSchema](Metadata&& metadata) { EXPECT_EQ(metadata.schema, kSchema); },
       [&call_count, &kRec](const Record& rec) {

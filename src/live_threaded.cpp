@@ -3,18 +3,22 @@
 #include <atomic>
 #include <chrono>  // milliseconds
 #include <exception>
-#include <iostream>  // cerr
-#include <utility>   // forward, move, swap
+#include <sstream>
+#include <utility>  // forward, move, swap
 
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
 #include "databento/live_blocking.hpp"         // LiveBlocking
+#include "databento/log.hpp"
 
 using databento::LiveThreaded;
 
 struct LiveThreaded::Impl {
   template <typename... A>
-  explicit Impl(A&&... args) : blocking{std::forward<A>(args)...} {}
+  explicit Impl(ILogReceiver* log_receiver, A&&... args)
+      : log_receiver{log_receiver},
+        blocking{log_receiver, std::forward<A>(args)...} {}
 
+  ILogReceiver* log_receiver;
   std::atomic<bool> keep_going{true};
   LiveBlocking blocking;
 };
@@ -37,15 +41,16 @@ LiveThreaded::~LiveThreaded() {
   }
 }
 
-LiveThreaded::LiveThreaded(std::string key, std::string dataset,
-                           bool send_ts_out)
-    : impl_{new Impl{std::move(key), std::move(dataset), send_ts_out}} {}
+LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
+                           std::string dataset, bool send_ts_out)
+    : impl_{new Impl{log_receiver, std::move(key), std::move(dataset),
+                     send_ts_out}} {}
 
-LiveThreaded::LiveThreaded(std::string key, std::string dataset,
-                           std::string gateway, std::uint16_t port,
-                           bool send_ts_out)
-    : impl_{new Impl{std::move(key), std::move(dataset), std::move(gateway),
-                     port, send_ts_out}} {}
+LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
+                           std::string dataset, std::string gateway,
+                           std::uint16_t port, bool send_ts_out)
+    : impl_{new Impl{log_receiver, std::move(key), std::move(dataset),
+                     std::move(gateway), port, send_ts_out}} {}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 
@@ -109,8 +114,10 @@ void LiveThreaded::ProcessingThread(Impl* impl,
       }  // else timeout
     }
   } catch (const std::exception& exc) {
-    std::cerr
-        << "Caught exception in databento::LiveThreaded::ProcessingThread: "
-        << exc.what() << ". Stopping thread.";
+    impl->blocking.Stop();
+    std::ostringstream log_ss;
+    log_ss << __PRETTY_FUNCTION__ << " Caught exception: " << exc.what()
+           << ". Stopping thread.";
+    impl->log_receiver->Receive(LogLevel::Error, log_ss.str());
   }
 }

@@ -13,15 +13,18 @@
 #include "databento/timeseries.hpp"  // MetadataCallback, RecordCallback
 
 namespace databento {
+class ILogReceiver;
+
 // A client for interfacing with Databento's real-time and intraday replay
 // market data API. This client provides a threaded event-driven API for
 // receiving the next record. Unlike Historical, each instance of LiveThreaded
 // is associated with a particular dataset.
 class LiveThreaded {
  public:
-  LiveThreaded(std::string key, std::string dataset, bool send_ts_out);
-  LiveThreaded(std::string key, std::string dataset, std::string gateway,
-               std::uint16_t port, bool send_ts_out);
+  LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
+               bool send_ts_out);
+  LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
+               std::string gateway, std::uint16_t port, bool send_ts_out);
   LiveThreaded(const LiveThreaded&) = delete;
   LiveThreaded& operator=(const LiveThreaded&) = delete;
   LiveThreaded(LiveThreaded&& other) noexcept;

@@ -6,6 +6,8 @@
 #include "databento/live_threaded.hpp"
 
 namespace databento {
+class ILogReceiver;
+
 // A helper class for constructing a Live client, either an instance of
 // LiveBlocking or LiveThreaded.
 class LiveBuilder {
@@ -21,6 +23,8 @@ class LiveBuilder {
   LiveBuilder& SetDataset(std::string dataset);
   // Whether to append the gateway send timestamp after each DBN message.
   LiveBuilder& SetSendTsOut(bool send_ts_out);
+  // Sets the receiver of the logs to be used by the client.
+  LiveBuilder& SetLogReceiver(ILogReceiver* log_receiver);
   // Attempts to construct an instance of a blocking live client or throws an
   // exception.
   LiveBlocking BuildBlocking();
@@ -29,8 +33,9 @@ class LiveBuilder {
   LiveThreaded BuildThreaded();
 
  private:
-  void Validate() const;
+  void Validate();
 
+  ILogReceiver* log_receiver_{};
   std::string key_;
   std::string dataset_;
   bool send_ts_out_{true};
