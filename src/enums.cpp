@@ -280,6 +280,9 @@ const char* ToString(RType rtype) {
     case RType::System: {
       return "System";
     }
+    case RType::Statistics: {
+      return "Statistics";
+    }
     case RType::Mbo: {
       return "Mbo";
     }
@@ -430,6 +433,58 @@ const char* ToString(UserDefinedInstrument user_def_instr) {
   }
 }
 
+const char* ToString(StatType stat_type) {
+  switch (stat_type) {
+    case StatType::OpeningPrice: {
+      return "OpeningPrice";
+    }
+    case StatType::IndicativeOpeningPrice: {
+      return "IndicativeOpeningPrice";
+    }
+    case StatType::SettlementPrice: {
+      return "SettlementPrice";
+    }
+    case StatType::TradingSessionLowPrice: {
+      return "TradingSessionLowPrice";
+    }
+    case StatType::TradingSessionHighPrice: {
+      return "TradingSessionHighPrice";
+    }
+    case StatType::ClearedVolume: {
+      return "ClearedVolume";
+    }
+    case StatType::LowestOffer: {
+      return "LowestOffer";
+    }
+    case StatType::HighestBid: {
+      return "HighestBid";
+    }
+    case StatType::OpenInterest: {
+      return "OpenInterest";
+    }
+    case StatType::FixingPrice: {
+      return "FixingPrice";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(StatUpdateAction stat_update_action) {
+  switch (stat_update_action) {
+    case StatUpdateAction::New: {
+      return "New";
+    }
+    case StatUpdateAction::Delete: {
+      return "Delete";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
 std::ostream& operator<<(std::ostream& out, Schema schema) {
   out << ToString(schema);
   return out;
@@ -514,6 +569,17 @@ std::ostream& operator<<(std::ostream& out,
 std::ostream& operator<<(std::ostream& out,
                          UserDefinedInstrument user_def_instr) {
   out << ToString(user_def_instr);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, StatType stat_type) {
+  out << ToString(stat_type);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         StatUpdateAction stat_update_action) {
+  out << ToString(stat_update_action);
   return out;
 }
 

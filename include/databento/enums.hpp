@@ -116,6 +116,7 @@ enum RType : std::uint8_t {
   Error = 0x15,
   SymbolMapping = 0x16,
   System = 0x17,
+  Statistics = 0x18,
   Mbo = 0xA0,
 };
 }  // namespace rtype
@@ -194,6 +195,49 @@ enum class UserDefinedInstrument : char {
   Yes = 'Y',
 };
 
+namespace stat_type {
+// The type of statistic contained in a StatMsg.
+enum StatType : std::uint16_t {
+  // The price of the first trade of an instrument. `price` will be set.
+  OpeningPrice = 1,
+  // The probable price of the first trade of an instrument published during
+  // pre-open. Both `price` and `quantity` will be set.
+  IndicativeOpeningPrice = 2,
+  // The settlement price of an instrument. `price` will be set and `flags`
+  // indicate whether the price is final or preliminary and actual or
+  // theoretical.
+  SettlementPrice = 3,
+  // The lowest trade price of an instrument during the trading session.
+  // `price` will be set.
+  TradingSessionLowPrice = 4,
+  // The highest trade price of an instrument during the trading session.
+  // `price` will be set.
+  TradingSessionHighPrice = 5,
+  // The number of contracts cleared for an instrument on the previous trading
+  // date. `quantity` will be set.
+  ClearedVolume = 6,
+  // The lowest offer price for an instrument during the trading session.
+  // `price` will be set.
+  LowestOffer = 7,
+  // The highest bid price for an instrument during the trading session.
+  // `price` will be set.
+  HighestBid = 8,
+  // The current number of outstanding contracts of an instrument. `quantity`
+  // will be set.
+  OpenInterest = 9,
+  // The volume-weighted average price (VWAP) for a fixing period. `price` will
+  // be set.
+  FixingPrice = 10,
+};
+}  // namespace stat_type
+using stat_type::StatType;
+
+// The type of StatMsg update.
+enum class StatUpdateAction : std::uint8_t {
+  New = 1,
+  Delete = 2,
+};
+
 // Convert a HistoricalGateway to a URL.
 const char* UrlFromGateway(HistoricalGateway gateway);
 
@@ -214,6 +258,8 @@ const char* ToString(InstrumentClass instrument_class);
 const char* ToString(MatchAlgorithm match_algorithm);
 const char* ToString(SecurityUpdateAction update_action);
 const char* ToString(UserDefinedInstrument user_def_instr);
+const char* ToString(StatType stat_type);
+const char* ToString(StatUpdateAction stat_update_action);
 
 std::ostream& operator<<(std::ostream& out, Schema schema);
 std::ostream& operator<<(std::ostream& out, Encoding encoding);
@@ -233,6 +279,9 @@ std::ostream& operator<<(std::ostream& out, MatchAlgorithm match_algorithm);
 std::ostream& operator<<(std::ostream& out, SecurityUpdateAction update_action);
 std::ostream& operator<<(std::ostream& out,
                          UserDefinedInstrument user_def_instr);
+std::ostream& operator<<(std::ostream& out, StatType stat_type);
+std::ostream& operator<<(std::ostream& out,
+                         StatUpdateAction stat_update_action);
 
 template <typename T>
 T FromString(const std::string& str);

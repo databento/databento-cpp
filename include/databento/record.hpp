@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstring>  // strncmp
 #include <string>
+#include <tuple>  // tie
 
 #include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
@@ -171,8 +172,8 @@ struct InstrumentDefMsg {
   UnixNanos ts_recv;
   std::int64_t min_price_increment;
   std::int64_t display_factor;
-  std::uint64_t expiration;
-  std::uint64_t activation;
+  UnixNanos expiration;
+  UnixNanos activation;
   std::int64_t high_limit_price;
   std::int64_t low_limit_price;
   std::int64_t max_price_variation;
@@ -265,10 +266,32 @@ struct ImbalanceMsg {
   Side unpaired_side;
   char significant_imbalance;
   // padding for alignment
-  std::array<char, 1> dummy[1];
+  std::array<char, 1> dummy;
 };
 
 static_assert(sizeof(ImbalanceMsg) == 112, "ImbalanceMsg size must match C");
+
+/// A statistics message. A catchall for various data disseminated by
+/// publishers. The `stat_type` indicates the statistic contained in the
+/// message.
+struct StatMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::Statistics; }
+
+  RecordHeader hd;
+  UnixNanos ts_recv;
+  UnixNanos ts_ref;
+  std::int64_t price;
+  std::int32_t quantity;
+  std::uint32_t sequence;
+  TimeDeltaNanos ts_in_delta;
+  StatType stat_type;
+  std::uint16_t channel_id;
+  StatUpdateAction update_action;
+  std::uint8_t stat_flags;
+  std::array<char, 6> dummy;
+};
+
+static_assert(sizeof(StatMsg) == 64, "StatMsg size must match C");
 
 // An error message from the Live Subscription Gateway (LSG). This will never
 // be present in historical data.
@@ -396,10 +419,29 @@ inline bool operator!=(const ImbalanceMsg& lhs, const ImbalanceMsg& rhs) {
   return !(lhs == rhs);
 }
 
+inline bool operator==(const StatMsg& lhs, const StatMsg& rhs) {
+  return std::tie(lhs.hd, lhs.ts_recv, lhs.ts_ref, lhs.price, lhs.quantity,
+                  lhs.sequence, lhs.ts_in_delta, lhs.stat_type, lhs.channel_id,
+                  lhs.update_action, lhs.stat_flags) ==
+         std::tie(rhs.hd, rhs.ts_recv, rhs.ts_ref, rhs.price, rhs.quantity,
+                  rhs.sequence, rhs.ts_in_delta, rhs.stat_type, rhs.channel_id,
+                  rhs.update_action, rhs.stat_flags);
+}
+inline bool operator!=(const StatMsg& lhs, const StatMsg& rhs) {
+  return !(lhs == rhs);
+}
+
 inline bool operator==(const ErrorMsg& lhs, const ErrorMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.err == rhs.err;
 }
 inline bool operator!=(const ErrorMsg& lhs, const ErrorMsg& rhs) {
+  return !(lhs == rhs);
+}
+
+inline bool operator==(const SystemMsg& lhs, const SystemMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.msg == rhs.msg;
+}
+inline bool operator!=(const SystemMsg& lhs, const SystemMsg& rhs) {
   return !(lhs == rhs);
 }
 
@@ -430,8 +472,12 @@ std::ostream& operator<<(std::ostream& stream,
 std::string ToString(const ImbalanceMsg& imbalance_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const ImbalanceMsg& imbalance_msg);
+std::string ToString(const StatMsg& stat_msg);
+std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg);
 std::string ToString(const ErrorMsg& err_msg);
 std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg);
+std::string ToString(const SystemMsg& system_msg);
+std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg);
 std::string ToString(const SymbolMappingMsg& symbol_mapping_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const SymbolMappingMsg& symbol_mapping_msg);

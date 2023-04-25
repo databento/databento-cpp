@@ -43,6 +43,12 @@ std::size_t Record::SizeOfSchema(const Schema schema) {
     case Schema::Definition: {
       return sizeof(InstrumentDefMsg);
     }
+    case Schema::Statistics: {
+      return sizeof(StatMsg);
+    }
+    case Schema::Imbalance: {
+      return sizeof(ImbalanceMsg);
+    }
     default: {
       throw InvalidArgumentError{
           "Record::SizeOfSchema", "schema",
@@ -83,6 +89,12 @@ RType Record::RTypeFromSchema(const Schema schema) {
     }
     case Schema::Definition: {
       return RType::InstrumentDef;
+    }
+    case Schema::Statistics: {
+      return RType::Statistics;
+    }
+    case Schema::Imbalance: {
+      return RType::Imbalance;
     }
     default: {
       throw InvalidArgumentError{
@@ -430,6 +442,26 @@ std::ostream& operator<<(std::ostream& stream,
       .Finish();
 }
 
+std::string ToString(const StatMsg& stat_msg) { return MakeString(stat_msg); }
+std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("StatMsg")
+      .Build()
+      .AddField("hd", stat_msg.hd)
+      .AddField("ts_recv", stat_msg.ts_recv)
+      .AddField("ts_ref", stat_msg.ts_ref)
+      .AddField("price", FixPx{stat_msg.price})
+      .AddField("quantity", stat_msg.quantity)
+      .AddField("sequence", stat_msg.sequence)
+      .AddField("ts_in_delta", stat_msg.ts_in_delta)
+      .AddField("stat_type", stat_msg.stat_type)
+      .AddField("channel_id", stat_msg.channel_id)
+      .AddField("update_action", stat_msg.update_action)
+      .AddField("stat_flags", stat_msg.stat_flags)
+      .Finish();
+}
+
 std::string ToString(const ErrorMsg& err_msg) { return MakeString(err_msg); }
 std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg) {
   return StreamOpBuilder{stream}
@@ -438,6 +470,19 @@ std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg) {
       .Build()
       .AddField("hd", err_msg.hd)
       .AddField("err", err_msg.err)
+      .Finish();
+}
+
+std::string ToString(const SystemMsg& system_msg) {
+  return MakeString(system_msg);
+}
+std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("SystemMsg")
+      .Build()
+      .AddField("hd", system_msg.hd)
+      .AddField("msg", system_msg.msg)
       .Finish();
 }
 

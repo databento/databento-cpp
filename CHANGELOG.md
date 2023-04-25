@@ -2,6 +2,7 @@
 
 ## 0.7.0 - TBD
 - Added initial support for live data with `LiveBlocking` and `LiveThreaded` clients
+- Added support for statistics schema
 - Added `SystemMsg` and `ErrorMsg` records for use in live data
 - Added `strike_price`, `strike_price_currency`, and `instrument_class` to `InstrumentDefMsg`
 - Renamed `BatchJob.cost` to `cost_usd` and value now expressed as US dollars
@@ -16,6 +17,7 @@
 - Renamed `InstrumentDefMsg::symbol` to `raw_symbol`
 - Renamed `SymbolMapping::native_symbol` to `raw_symbol`
 - Deprecated `SType::Smart` to split into `SType::Parent` and `SType::Continuous`
+- Changed `expiration` and `action` type to `UnixNanos`
 - Changed some fields to enums in `InstrumentDefMsg`
 - Added optional `compression` parameter to `BatchSubmitJob`
 - Fixed parsing of `BatchSubmitJob` response
