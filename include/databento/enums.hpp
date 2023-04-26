@@ -132,6 +132,8 @@ enum Action : char {
   Modify = 'M',
   // A trade executed.
   Trade = 'T',
+  // An existing order was filled.
+  Fill = 'F',
   // An order was cancelled.
   Cancel = 'C',
   // A new order was added.

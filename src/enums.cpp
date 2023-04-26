@@ -300,6 +300,9 @@ const char* ToString(Action action) {
     case Action::Trade: {
       return "Trade";
     }
+    case Action::Fill: {
+      return "Fill";
+    }
     case Action::Cancel: {
       return "Cancel";
     }
