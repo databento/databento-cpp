@@ -137,19 +137,20 @@ else()
   FetchContent_MakeAvailable(json)
 endif()
 # cpp-httplib
+set(httplib_version 0.12.2)
 if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
-  find_package(httplib 0.11.2 REQUIRED)
+  find_package(httplib ${httplib_version} REQUIRED)
 else()
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       httplib
-      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.11.2.tar.gz
+      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz
     )
   else()
     # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
     FetchContent_Declare(
       httplib
-      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.11.2.tar.gz
+      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz
       DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
   endif()
