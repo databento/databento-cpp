@@ -126,10 +126,9 @@ TEST_F(LiveThreadedTests, TestStop) {
         while (call_count < 1) {
           std::this_thread::yield();
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds{50});
         const std::string rec_str{reinterpret_cast<const char*>(&kRec),
                                   sizeof(kRec)};
-        while (self.UncheckedSend(rec_str) <
+        while (self.UncheckedSend(rec_str) ==
                static_cast<::ssize_t>(rec_str.size())) {
         }
       }}};

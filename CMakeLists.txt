@@ -137,7 +137,7 @@ else()
   FetchContent_MakeAvailable(json)
 endif()
 # cpp-httplib
-set(httplib_version 0.12.2)
+set(httplib_version 0.11.4)
 if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
   find_package(httplib ${httplib_version} REQUIRED)
 else()

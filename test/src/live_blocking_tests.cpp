@@ -266,9 +266,8 @@ TEST_F(LiveBlockingTests, TestStop) {
         }
         const std::string rec_str{reinterpret_cast<const char*>(&kRec),
                                   sizeof(kRec)};
-        while (self.UncheckedSend(rec_str) <
+        while (self.UncheckedSend(rec_str) ==
                static_cast<::ssize_t>(rec_str.size())) {
-          return;
         }
       }}};
 
