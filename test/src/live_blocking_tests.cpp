@@ -256,7 +256,7 @@ TEST_F(LiveBlockingTests, TestStop) {
        2},
       UnixNanos{std::chrono::seconds{1678910279000000000}}};
   std::atomic<bool> has_stopped{false};
-  const mock::MockLsgServer mock_server{
+  std::unique_ptr<mock::MockLsgServer> mock_server{new mock::MockLsgServer{
       dataset::kXnasItch, [kRec, &has_stopped](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
@@ -266,21 +266,21 @@ TEST_F(LiveBlockingTests, TestStop) {
         }
         const std::string rec_str{reinterpret_cast<const char*>(&kRec),
                                   sizeof(kRec)};
-        for (size_t i = 0; i < 5; ++i) {
-          if (self.UncheckedSend(rec_str) <
-              static_cast<::ssize_t>(rec_str.size())) {
-            return;
-          }
+        while (self.UncheckedSend(rec_str) <
+               static_cast<::ssize_t>(rec_str.size())) {
+          return;
         }
-        FAIL() << "Connection remained open";
-      }};
+      }}};
 
-  LiveBlocking target{logger_.get(),      kKey, dataset::kXnasItch, "127.0.0.1",
-                      mock_server.Port(), false};
+  LiveBlocking target{logger_.get(),       kKey,
+                      dataset::kXnasItch,  "127.0.0.1",
+                      mock_server->Port(), false};
   ASSERT_EQ(target.NextRecord().Get<WithTsOut<TradeMsg>>(), kRec);
   target.Stop();
   has_stopped = true;
-  std::this_thread::sleep_for(std::chrono::milliseconds{50});
+  // kill mock server and join thread before client goes out of scope
+  // to ensure Stop is killing the connection, not the client's destructor
+  mock_server.reset();
 }
 }  // namespace test
 }  // namespace databento

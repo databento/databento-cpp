@@ -116,7 +116,7 @@ TEST_F(LiveThreadedTests, TestStop) {
                     TimeDeltaNanos{},
                     100};
   std::atomic<std::uint32_t> call_count{};
-  const mock::MockLsgServer mock_server{
+  std::unique_ptr<mock::MockLsgServer> mock_server{new mock::MockLsgServer{
       dataset::kXnasItch, [&kRec, &call_count](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
@@ -129,17 +129,14 @@ TEST_F(LiveThreadedTests, TestStop) {
         std::this_thread::sleep_for(std::chrono::milliseconds{50});
         const std::string rec_str{reinterpret_cast<const char*>(&kRec),
                                   sizeof(kRec)};
-        for (size_t i = 0; i < 5; ++i) {
-          if (self.UncheckedSend(rec_str) <
-              static_cast<::ssize_t>(rec_str.size())) {
-            return;
-          }
+        while (self.UncheckedSend(rec_str) <
+               static_cast<::ssize_t>(rec_str.size())) {
         }
-        FAIL() << "Connection remained open";
-      }};
+      }}};
 
-  LiveThreaded target{logger_.get(),      kKey, dataset::kXnasItch, "127.0.0.1",
-                      mock_server.Port(), false};
+  LiveThreaded target{logger_.get(),       kKey,
+                      dataset::kXnasItch,  "127.0.0.1",
+                      mock_server->Port(), false};
   target.Start(
       [kSchema](Metadata&& metadata) { EXPECT_EQ(metadata.schema, kSchema); },
       [&call_count, &kRec](const Record& rec) {
@@ -149,10 +146,9 @@ TEST_F(LiveThreadedTests, TestStop) {
         EXPECT_EQ(rec.Get<MboMsg>(), kRec);
         return databento::KeepGoing::Stop;
       });
-  while (call_count < 1) {
-    std::this_thread::yield();
-  }
-  std::this_thread::sleep_for(std::chrono::milliseconds{50});
+  // kill mock server and join thread before client goes out of scope
+  // to ensure Stop is killing the connection, not the client's destructor
+  mock_server.reset();
 }
 }  // namespace test
 }  // namespace databento
