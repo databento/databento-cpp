@@ -14,7 +14,7 @@ int main() {
   auto client = databento::HistoricalBuilder{}.SetKeyFromEnv().Build();
   const auto limit = 1000;
   databento::DbnFileStore dbn_file_store = client.TimeseriesGetRangeToFile(
-      databento::dataset::kGlbxMdp3, "2022-10-03T00:00", "2022-10-04T00:00",
+      databento::dataset::kGlbxMdp3, {"2022-10-03T00:00", "2022-10-04T00:00"},
       {"ESZ2"}, databento::Schema::Ohlcv1M, databento::SType::RawSymbol,
       databento::SType::InstrumentId, limit,
       "ESZ2-ohlcv1m-20201003-20201004.dbn.zst");

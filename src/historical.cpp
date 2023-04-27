@@ -74,6 +74,15 @@ void SetIfPositive(httplib::Params* params, const std::string& key,
   }
 }
 
+template <>
+void SetIfPositive<databento::UnixNanos>(httplib::Params* params,
+                                         const std::string& key,
+                                         const databento::UnixNanos value) {
+  if (value.time_since_epoch().count()) {
+    params->emplace(key, databento::ToString(value));
+  }
+}
+
 using databento::JsonResponseError;
 
 const nlohmann::json& CheckedAt(const std::string& endpoint,
@@ -277,32 +286,31 @@ Historical::Historical(std::string key, std::string gateway, std::uint16_t port)
 static const std::string kBatchSubmitJobEndpoint = "Historical::BatchSubmitJob";
 
 databento::BatchJob Historical::BatchSubmitJob(
-    const std::string& dataset, UnixNanos start, UnixNanos end,
-    const std::vector<std::string>& symbols, Schema schema) {
-  return this->BatchSubmitJob(dataset, start, end, symbols, schema,
+
+    const std::string& dataset, const std::vector<std::string>& symbols,
+    Schema schema, const DateTimeRange<UnixNanos>& datetime_range) {
+  return this->BatchSubmitJob(dataset, symbols, schema, datetime_range,
                               Compression::Zstd, SplitDuration::Day, {},
                               Packaging::None, Delivery::Download,
                               kDefaultSTypeIn, kDefaultSTypeOut, {});
 }
 databento::BatchJob Historical::BatchSubmitJob(
-    const std::string& dataset, const std::string& start,
-    const std::string& end, const std::vector<std::string>& symbols,
-    Schema schema) {
-  return this->BatchSubmitJob(dataset, start, end, symbols, schema,
+    const std::string& dataset, const std::vector<std::string>& symbols,
+    Schema schema, const DateTimeRange<std::string>& datetime_range) {
+  return this->BatchSubmitJob(dataset, symbols, schema, datetime_range,
                               Compression::Zstd, SplitDuration::Day, {},
                               Packaging::None, Delivery::Download,
                               kDefaultSTypeIn, kDefaultSTypeOut, {});
 }
 databento::BatchJob Historical::BatchSubmitJob(
-    const std::string& dataset, UnixNanos start, UnixNanos end,
-    const std::vector<std::string>& symbols, Schema schema,
+    const std::string& dataset, const std::vector<std::string>& symbols,
+    Schema schema, const DateTimeRange<UnixNanos>& datetime_range,
     Compression compression, SplitDuration split_duration,
     std::size_t split_size, Packaging packaging, Delivery delivery,
     SType stype_in, SType stype_out, std::size_t limit) {
   httplib::Params params{
       {"dataset", dataset},
-      {"start", ToString(start)},
-      {"end", ToString(end)},
+      {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"compression", ToString(compression)},
@@ -312,20 +320,20 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"delivery", ToString(delivery)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
+  ::SetIfPositive(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "split_size", split_size);
   ::SetIfPositive(&params, "limit", limit);
   return this->BatchSubmitJob(params);
 }
 databento::BatchJob Historical::BatchSubmitJob(
-    const std::string& dataset, const std::string& start,
-    const std::string& end, const std::vector<std::string>& symbols,
-    Schema schema, Compression compression, SplitDuration split_duration,
+    const std::string& dataset, const std::vector<std::string>& symbols,
+    Schema schema, const DateTimeRange<std::string>& datetime_range,
+    Compression compression, SplitDuration split_duration,
     std::size_t split_size, Packaging packaging, Delivery delivery,
     SType stype_in, SType stype_out, std::size_t limit) {
   httplib::Params params{
       {"dataset", dataset},
-      {"start", start},
-      {"end", end},
+      {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"compression", ToString(compression)},
@@ -335,6 +343,7 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"delivery", ToString(delivery)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
+  ::SetIfNotEmpty(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "split_size", split_size);
   ::SetIfPositive(&params, "limit", limit);
   return this->BatchSubmitJob(params);
@@ -493,15 +502,15 @@ std::map<std::string, std::int32_t> Historical::MetadataListPublishers() {
 }
 
 std::vector<std::string> Historical::MetadataListDatasets() {
-  return this->MetadataListDatasets({}, {});
+  return this->MetadataListDatasets(DateRange{{}});
 }
 std::vector<std::string> Historical::MetadataListDatasets(
-    const std::string& start_date, const std::string& end_date) {
+    const DateRange& date_range) {
   static const std::string kEndpoint = "Historical::MetadataListDatasets";
   static const std::string kPath = ::BuildMetadataPath(".list_datasets");
   httplib::Params params{};
-  ::SetIfNotEmpty(&params, "start_date", start_date);
-  ::SetIfNotEmpty(&params, "end_date", end_date);
+  ::SetIfNotEmpty(&params, "start_date", date_range.start);
+  ::SetIfNotEmpty(&params, "end_date", date_range.end);
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_array()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
@@ -714,11 +723,11 @@ Historical::MetadataGetDatasetCondition(const std::string& dataset) {
 
 std::vector<databento::DatasetConditionDetail>
 Historical::MetadataGetDatasetCondition(const std::string& dataset,
-                                        const std::string& start_date,
-                                        const std::string& end_date) {
-  return MetadataGetDatasetCondition(httplib::Params{{"dataset", dataset},
-                                                     {"start_date", start_date},
-                                                     {"end_date", end_date}});
+                                        const DateRange& date_range) {
+  httplib::Params params{{"dataset", dataset},
+                         {"start_date", date_range.start}};
+  ::SetIfNotEmpty(&params, "end_date", date_range.end);
+  return MetadataGetDatasetCondition(params);
 }
 
 std::vector<databento::DatasetConditionDetail>
@@ -765,43 +774,44 @@ static const std::string kMetadataGetRecordCountEndpoint =
     "Historical::MetadataGetRecordCount";
 
 std::size_t Historical::MetadataGetRecordCount(
-    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema) {
-  return this->MetadataGetRecordCount(dataset, start, end, symbols, schema,
+  return this->MetadataGetRecordCount(dataset, datetime_range, symbols, schema,
                                       kDefaultSTypeIn, {});
 }
 std::size_t Historical::MetadataGetRecordCount(
-    const std::string& dataset, const std::string& start,
-    const std::string& end, const std::vector<std::string>& symbols,
-    Schema schema) {
-  return this->MetadataGetRecordCount(dataset, start, end, symbols, schema,
+    const std::string& dataset,
+    const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema) {
+  return this->MetadataGetRecordCount(dataset, datetime_range, symbols, schema,
                                       kDefaultSTypeIn, {});
 }
 std::size_t Historical::MetadataGetRecordCount(
-    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     std::size_t limit) {
   httplib::Params params{
       {"dataset", dataset},
-      {"start", ToString(start)},
-      {"end", ToString(end)},
+      {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kMetadataGetRecordCountEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
+  ::SetIfPositive(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetRecordCount(params);
 }
 std::size_t Historical::MetadataGetRecordCount(
-    const std::string& dataset, const std::string& start,
-    const std::string& end, const std::vector<std::string>& symbols,
-    Schema schema, SType stype_in, std::size_t limit) {
+    const std::string& dataset,
+    const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+    std::size_t limit) {
   httplib::Params params{
       {"dataset", dataset},
-      {"start", start},
-      {"end", end},
+      {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kMetadataGetRecordCountEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
+  ::SetIfNotEmpty(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetRecordCount(params);
 }
@@ -819,43 +829,45 @@ static const std::string kMetadataGetBillableSizeEndpoint =
     "Historical::MetadataGetBillableSize";
 
 std::size_t Historical::MetadataGetBillableSize(
-    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema) {
-  return this->MetadataGetBillableSize(dataset, start, end, symbols, schema,
+  return this->MetadataGetBillableSize(dataset, datetime_range, symbols, schema,
                                        kDefaultSTypeIn, {});
 }
 std::size_t Historical::MetadataGetBillableSize(
-    const std::string& dataset, const std::string& start,
-    const std::string& end, const std::vector<std::string>& symbols,
-    Schema schema) {
-  return this->MetadataGetBillableSize(dataset, start, end, symbols, schema,
+    const std::string& dataset,
+    const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema) {
+  return this->MetadataGetBillableSize(dataset, datetime_range, symbols, schema,
                                        kDefaultSTypeIn, {});
 }
 std::size_t Historical::MetadataGetBillableSize(
-    const std::string& dataset, UnixNanos start, UnixNanos end,
+
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     std::size_t limit) {
   httplib::Params params{
       {"dataset", dataset},
-      {"start", ToString(start)},
-      {"end", ToString(end)},
+      {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kMetadataGetBillableSizeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
+  ::SetIfPositive(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetBillableSize(params);
 }
 std::size_t Historical::MetadataGetBillableSize(
-    const std::string& dataset, const std::string& start,
-    const std::string& end, const std::vector<std::string>& symbols,
-    Schema schema, SType stype_in, std::size_t limit) {
+    const std::string& dataset,
+    const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+    std::size_t limit) {
   httplib::Params params{
       {"dataset", dataset},
-      {"start", start},
-      {"end", end},
+      {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kMetadataGetBillableSizeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
+  ::SetIfNotEmpty(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetBillableSize(params);
 }
@@ -872,55 +884,51 @@ std::size_t Historical::MetadataGetBillableSize(const httplib::Params& params) {
 static const std::string kMetadataGetCostEndpoint =
     "Historical::MetadataGetCost";
 
-double Historical::MetadataGetCost(const std::string& dataset, UnixNanos start,
-                                   UnixNanos end,
-                                   const std::vector<std::string>& symbols,
-                                   Schema schema) {
-  return this->MetadataGetCost(dataset, start, end, symbols, schema,
+double Historical::MetadataGetCost(
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema) {
+  return this->MetadataGetCost(dataset, datetime_range, symbols, schema,
                                FeedMode::HistoricalStreaming, kDefaultSTypeIn,
                                {});
 }
-double Historical::MetadataGetCost(const std::string& dataset,
-                                   const std::string& start,
-                                   const std::string& end,
-                                   const std::vector<std::string>& symbols,
-                                   Schema schema) {
-  return this->MetadataGetCost(dataset, start, end, symbols, schema,
+double Historical::MetadataGetCost(
+    const std::string& dataset,
+    const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema) {
+  return this->MetadataGetCost(dataset, datetime_range, symbols, schema,
                                FeedMode::HistoricalStreaming, kDefaultSTypeIn,
                                {});
 }
-double Historical::MetadataGetCost(const std::string& dataset, UnixNanos start,
-                                   UnixNanos end,
-                                   const std::vector<std::string>& symbols,
-                                   Schema schema, FeedMode mode, SType stype_in,
-                                   std::size_t limit) {
+double Historical::MetadataGetCost(
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema, FeedMode mode,
+    SType stype_in, std::size_t limit) {
   static const std::string kPath = ::BuildMetadataPath(".get_cost");
   httplib::Params params{
       {"dataset", dataset},
-      {"start", ToString(start)},
-      {"end", ToString(end)},
+      {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kMetadataGetCostEndpoint, symbols)},
       {"mode", ToString(mode)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
+  ::SetIfPositive(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetCost(params);
 }
-double Historical::MetadataGetCost(const std::string& dataset,
-                                   const std::string& start,
-                                   const std::string& end,
-                                   const std::vector<std::string>& symbols,
-                                   Schema schema, FeedMode mode, SType stype_in,
-                                   std::size_t limit) {
+double Historical::MetadataGetCost(
+    const std::string& dataset,
+    const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema, FeedMode mode,
+    SType stype_in, std::size_t limit) {
   static const std::string kPath = ::BuildMetadataPath(".get_cost");
   httplib::Params params{
       {"dataset", dataset},
-      {"start", start},
-      {"end", end},
+      {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kMetadataGetCostEndpoint, symbols)},
       {"mode", ToString(mode)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
+  ::SetIfNotEmpty(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetCost(params);
 }
@@ -935,24 +943,23 @@ double Historical::MetadataGetCost(const HttplibParams& params) {
 }
 
 databento::SymbologyResolution Historical::SymbologyResolve(
-    const std::string& dataset, const std::string& start_date,
-    const std::string& end_date, const std::vector<std::string>& symbols,
-    SType stype_in, SType stype_out) {
-  return this->SymbologyResolve(dataset, start_date, end_date, symbols,
-                                stype_in, stype_out, {});
+    const std::string& dataset, const std::vector<std::string>& symbols,
+    SType stype_in, SType stype_out, const DateRange& date_range) {
+  return this->SymbologyResolve(dataset, symbols, stype_in, stype_out,
+                                date_range, {});
 }
 databento::SymbologyResolution Historical::SymbologyResolve(
-    const std::string& dataset, const std::string& start_date,
-    const std::string& end_date, const std::vector<std::string>& symbols,
-    SType stype_in, SType stype_out, const std::string& default_value) {
+    const std::string& dataset, const std::vector<std::string>& symbols,
+    SType stype_in, SType stype_out, const DateRange& date_range,
+    const std::string& default_value) {
   static const std::string kEndpoint = "Historical::SymbologyResolve";
   static const std::string kPath = ::BuildSymbologyPath(".resolve");
   httplib::Params params{{"dataset", dataset},
-                         {"start_date", start_date},
-                         {"end_date", end_date},
+                         {"start_date", date_range.start},
                          {"symbols", JoinSymbolStrings(kEndpoint, symbols)},
                          {"stype_in", ToString(stype_in)},
                          {"stype_out", ToString(stype_out)}};
+  ::SetIfNotEmpty(&params, "end_date", date_range.end);
   ::SetIfNotEmpty(&params, "default_value", default_value);
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_object()) {
@@ -1016,62 +1023,58 @@ static const std::string kTimeseriesGetRangeEndpoint =
 static const std::string kTimeseriesGetRangePath =
     ::BuildTimeseriesPath(".get_range");
 
-void Historical::TimeseriesGetRange(const std::string& dataset, UnixNanos start,
-                                    UnixNanos end,
-                                    const std::vector<std::string>& symbols,
-                                    Schema schema,
-                                    const RecordCallback& record_callback) {
-  this->TimeseriesGetRange(dataset, start, end, symbols, schema,
+void Historical::TimeseriesGetRange(
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema,
+    const RecordCallback& record_callback) {
+  this->TimeseriesGetRange(dataset, datetime_range, symbols, schema,
                            kDefaultSTypeIn, kDefaultSTypeOut, {}, {},
                            record_callback);
 }
-void Historical::TimeseriesGetRange(const std::string& dataset,
-                                    const std::string& start,
-                                    const std::string& end,
-                                    const std::vector<std::string>& symbols,
-                                    Schema schema,
-                                    const RecordCallback& record_callback) {
-  this->TimeseriesGetRange(dataset, start, end, symbols, schema,
+void Historical::TimeseriesGetRange(
+    const std::string& dataset,
+    const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema,
+    const RecordCallback& record_callback) {
+  this->TimeseriesGetRange(dataset, datetime_range, symbols, schema,
                            kDefaultSTypeIn, kDefaultSTypeOut, {}, {},
                            record_callback);
 }
-void Historical::TimeseriesGetRange(const std::string& dataset, UnixNanos start,
-                                    UnixNanos end,
-                                    const std::vector<std::string>& symbols,
-                                    Schema schema, SType stype_in,
-                                    SType stype_out, std::size_t limit,
-                                    const MetadataCallback& metadata_callback,
-                                    const RecordCallback& record_callback) {
+void Historical::TimeseriesGetRange(
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+    SType stype_out, std::size_t limit,
+    const MetadataCallback& metadata_callback,
+    const RecordCallback& record_callback) {
   httplib::Params params{
       {"dataset", dataset},
       {"encoding", "dbn"},
-      {"start", ToString(start)},
-      {"end", ToString(end)},
+      {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kTimeseriesGetRangeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
+  ::SetIfPositive(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "limit", limit);
 
   this->TimeseriesGetRange(params, metadata_callback, record_callback);
 }
-void Historical::TimeseriesGetRange(const std::string& dataset,
-                                    const std::string& start,
-                                    const std::string& end,
-                                    const std::vector<std::string>& symbols,
-                                    Schema schema, SType stype_in,
-                                    SType stype_out, std::size_t limit,
-                                    const MetadataCallback& metadata_callback,
-                                    const RecordCallback& record_callback) {
+void Historical::TimeseriesGetRange(
+    const std::string& dataset,
+    const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+    SType stype_out, std::size_t limit,
+    const MetadataCallback& metadata_callback,
+    const RecordCallback& record_callback) {
   httplib::Params params{
       {"dataset", dataset},
       {"encoding", "dbn"},
-      {"start", start},
-      {"end", end},
+      {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kTimeseriesGetRangeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
+  ::SetIfNotEmpty(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "limit", limit);
 
   this->TimeseriesGetRange(params, metadata_callback, record_callback);
@@ -1130,53 +1133,54 @@ static const std::string kTimeseriesGetRangeToFileEndpoint =
     "Historical::TimeseriesGetRangeToFile";
 
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
-    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema,
     const std::string& file_path) {
-  return this->TimeseriesGetRangeToFile(dataset, start, end, symbols, schema,
-                                        kDefaultSTypeIn, kDefaultSTypeOut, {},
-                                        file_path);
+  return this->TimeseriesGetRangeToFile(dataset, datetime_range, symbols,
+                                        schema, kDefaultSTypeIn,
+                                        kDefaultSTypeOut, {}, file_path);
 }
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
-    const std::string& dataset, const std::string& start,
-    const std::string& end, const std::vector<std::string>& symbols,
-    Schema schema, const std::string& file_path) {
-  return this->TimeseriesGetRangeToFile(dataset, start, end, symbols, schema,
-                                        kDefaultSTypeIn, kDefaultSTypeOut, {},
-                                        file_path);
+    const std::string& dataset,
+    const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema,
+    const std::string& file_path) {
+  return this->TimeseriesGetRangeToFile(dataset, datetime_range, symbols,
+                                        schema, kDefaultSTypeIn,
+                                        kDefaultSTypeOut, {}, file_path);
 }
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
-    const std::string& dataset, UnixNanos start, UnixNanos end,
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     SType stype_out, std::size_t limit, const std::string& file_path) {
   httplib::Params params{
       {"dataset", dataset},
       {"encoding", "dbn"},
-      {"start", ToString(start)},
-      {"end", ToString(end)},
+      {"start", ToString(datetime_range.start)},
       {"symbols",
        JoinSymbolStrings(kTimeseriesGetRangeToFileEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
+  ::SetIfPositive(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "limit", limit);
   return this->TimeseriesGetRangeToFile(params, file_path);
 }
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
-    const std::string& dataset, const std::string& start,
-    const std::string& end, const std::vector<std::string>& symbols,
-    Schema schema, SType stype_in, SType stype_out, std::size_t limit,
-    const std::string& file_path) {
+    const std::string& dataset,
+    const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+    SType stype_out, std::size_t limit, const std::string& file_path) {
   httplib::Params params{
       {"dataset", dataset},
       {"encoding", "dbn"},
-      {"start", start},
-      {"end", end},
+      {"start", datetime_range.start},
       {"symbols",
        JoinSymbolStrings(kTimeseriesGetRangeToFileEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
+  ::SetIfNotEmpty(&params, "end", datetime_range.end);
   ::SetIfPositive(&params, "limit", limit);
   return this->TimeseriesGetRangeToFile(params, file_path);
 }

@@ -9,9 +9,9 @@
 int main() {
   auto client = databento::HistoricalBuilder{}.SetKeyFromEnv().Build();
 
-  const auto job =
-      client.BatchSubmitJob(databento::dataset::kGlbxMdp3, "2022-08-26",
-                            "2022-09-27", {"GEZ2"}, databento::Schema::Trades);
+  const auto job = client.BatchSubmitJob(databento::dataset::kGlbxMdp3,
+                                         {"GEZ2"}, databento::Schema::Trades,
+                                         {"2022-08-26", "2022-09-27"});
   const auto all_jobs = client.BatchListJobs();
 
   const auto all_job_it = std::find_if(

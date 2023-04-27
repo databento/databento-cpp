@@ -44,7 +44,7 @@ int main() {
   std::cout << '\n';
 
   const auto dataset_conditions = client.MetadataGetDatasetCondition(
-      "GLBX.MDP3", "2019-06-01", "2019-08-01");
+      "GLBX.MDP3", {"2019-06-01", "2019-08-01"});
   std::cout << "Conditions:\n";
   for (const auto& dataset_condition : dataset_conditions) {
     std::cout << "- " << dataset_condition << "\n";
@@ -62,8 +62,9 @@ int main() {
   }
   std::cout << '\n';
 
-  const auto record_count = client.MetadataGetRecordCount(
-      kGlbxMdp3, "2020-12-28", "2020-12-29", {"ESH1"}, databento::Schema::Mbo);
+  const auto record_count =
+      client.MetadataGetRecordCount(kGlbxMdp3, {"2020-12-28", "2020-12-29"},
+                                    {"ESH1"}, databento::Schema::Mbo);
   std::cout << "Record count: " << record_count << "\n\n";
 
   const auto live_unit_prices =
@@ -90,13 +91,14 @@ int main() {
             << "\n\n";
 
   const std::size_t billable_size = client.MetadataGetBillableSize(
-      kGlbxMdp3, "2020-12-28", "2020-12-29", {"ESH1"}, databento::Schema::Mbo,
+      kGlbxMdp3, {"2020-12-28", "2020-12-29"}, {"ESH1"}, databento::Schema::Mbo,
       databento::SType::RawSymbol, {});
   std::cout << "Billable size (uncompressed binary bytes): " << billable_size
             << "\n\n";
 
-  const auto cost = client.MetadataGetCost(
-      kGlbxMdp3, "2020-12-28", "2020-12-29", {"ESH1"}, databento::Schema::Mbo);
+  const auto cost =
+      client.MetadataGetCost(kGlbxMdp3, {"2020-12-28", "2020-12-29"}, {"ESH1"},
+                             databento::Schema::Mbo);
   std::cout << "Cost (in cents): " << cost << '\n';
 
   return 0;

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.0 - TBD
+- Changed `end` and `end_date` to optional to support new forward-fill behaviour
+
 ## 0.7.0 - 2023-04-28
 - Added initial support for live data with `LiveBlocking` and `LiveThreaded` clients
 - Added support for statistics schema

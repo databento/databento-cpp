@@ -78,8 +78,9 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.BatchSubmitJob(
-      dataset::kXnasItch, "2022-05-17", "2022-07-03", {"CLH3"}, Schema::Trades);
+  const auto res =
+      target.BatchSubmitJob(dataset::kXnasItch, {"CLH3"}, Schema::Trades,
+                            {"2022-05-17", "2022-07-03"});
   EXPECT_EQ(res.symbols, std::vector<std::string>{"CLH3"});
   EXPECT_NEAR(res.cost_usd, 0.11908, 1e-2);
   EXPECT_EQ(res.encoding, Encoding::Dbn);
@@ -300,7 +301,7 @@ TEST_F(HistoricalTests, TestMetadataListDatasets_Full) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListDatasets("2021-01-05", "");
+  const auto res = target.MetadataListDatasets(DateRange{"2021-01-05"});
   EXPECT_EQ(res.size(), kResp.size());
   EXPECT_EQ(res[0], kResp[0]);
 }
@@ -401,7 +402,7 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto conditions = target.MetadataGetDatasetCondition(
-      dataset::kXnasItch, "2022-11-06", "2022-11-10");
+      dataset::kXnasItch, {"2022-11-06", "2022-11-10"});
   ASSERT_EQ(conditions.size(), 4);
   EXPECT_EQ(conditions[0].date, "2022-11-07");
   EXPECT_EQ(conditions[1].date, "2022-11-08");
@@ -528,7 +529,7 @@ TEST_F(HistoricalTests, TestMetadataGetRecordCount) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetRecordCount(
-      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00",
+      dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
       {"ESZ3", "ESH4"}, Schema::Trades);
   ASSERT_EQ(res, kResp);
 }
@@ -547,7 +548,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetBillableSize(
-      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00", kAllSymbols,
+      dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"}, kAllSymbols,
       Schema::Trades);
   ASSERT_EQ(res, kResp);
 }
@@ -567,8 +568,8 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetBillableSize(
-      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00", {"NG", "LNQ"},
-      Schema::Tbbo, SType::SmartDeprecated, {});
+      dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
+      {"NG", "LNQ"}, Schema::Tbbo, SType::SmartDeprecated, {});
   ASSERT_EQ(res, kResp);
 }
 
@@ -586,7 +587,7 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetCost(
-      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00",
+      dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
       {"MESN1", "MESQ1"}, Schema::Trades);
   ASSERT_DOUBLE_EQ(res, kResp);
 }
@@ -607,7 +608,7 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetCost(
-      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00",
+      dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
       {"MES", "SPY"}, Schema::Tbbo, FeedMode::HistoricalStreaming,
       SType::SmartDeprecated, {});
   ASSERT_DOUBLE_EQ(res, kResp);
@@ -647,9 +648,9 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res =
-      target.SymbologyResolve(dataset::kGlbxMdp3, "2022-06-06", "2022-06-10",
-                              {"ESM2"}, SType::RawSymbol, SType::InstrumentId);
+  const auto res = target.SymbologyResolve(
+      dataset::kGlbxMdp3, {"ESM2"}, SType::RawSymbol, SType::InstrumentId,
+      {"2022-06-06", "2022-06-10"});
   EXPECT_TRUE(res.not_found.empty());
   EXPECT_TRUE(res.partial.empty());
   ASSERT_EQ(res.mappings.size(), 1);
@@ -681,9 +682,9 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
   std::vector<MboMsg> mbo_records;
   target.TimeseriesGetRange(
       dataset::kGlbxMdp3,
-      UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
-      UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
-      Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2,
+      {UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}},
+      {"ESH1"}, Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2,
       [&metadata_ptr](Metadata&& metadata) {
         // no std::make_unique until C++14
         metadata_ptr =
@@ -714,9 +715,9 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_NoMetadataCallback) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::vector<TbboMsg> mbo_records;
-  target.TimeseriesGetRange(dataset::kGlbxMdp3, "2022-10-21T13:30",
-                            "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
-                            [&mbo_records](const Record& record) {
+  target.TimeseriesGetRange(dataset::kGlbxMdp3,
+                            {"2022-10-21T13:30", "2022-10-21T20:00"}, {"CYZ2"},
+                            Schema::Tbbo, [&mbo_records](const Record& record) {
                               mbo_records.emplace_back(record.Get<TbboMsg>());
                               return KeepGoing::Continue;
                             });
@@ -735,9 +736,9 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_BadRequest) {
   try {
     target.TimeseriesGetRange(
         dataset::kGlbxMdp3,
-        UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
-        UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"E5"},
-        Schema::Mbo, SType::SmartDeprecated, SType::InstrumentId, 2,
+        {UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+         UnixNanos{std::chrono::nanoseconds{1609160800000711344}}},
+        {"E5"}, Schema::Mbo, SType::SmartDeprecated, SType::InstrumentId, 2,
         [](Metadata&&) {}, [](const Record&) { return KeepGoing::Continue; });
     FAIL() << "Call to TimeseriesGetRange was supposed to throw";
   } catch (const std::exception& exc) {
@@ -761,9 +762,9 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_CallbackException) {
   ASSERT_THROW(
       target.TimeseriesGetRange(
           dataset::kGlbxMdp3,
-          UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
-          UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
-          Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2,
+          {UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+           UnixNanos{std::chrono::nanoseconds{1609160800000711344}}},
+          {"ESH1"}, Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2,
           [](Metadata&&) { throw std::logic_error{"Test failure"}; },
           [](const Record&) { return KeepGoing::Continue; }),
       std::logic_error);
@@ -779,9 +780,10 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeCancellation) {
   std::uint32_t call_count = 0;
   target.TimeseriesGetRange(
       dataset::kGlbxMdp3,
-      UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
-      UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
-      Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2, [](Metadata&&) {},
+      {UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}},
+      {"ESH1"}, Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2,
+      [](Metadata&&) {},
       [&call_count](const Record&) {
         ++call_count;
         return KeepGoing::Stop;
@@ -807,12 +809,12 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const TempFile temp_file{testing::TempDir() + "/" + __FUNCTION__};
-  target.TimeseriesGetRangeToFile(dataset::kGlbxMdp3, "2022-10-21T13:30",
-                                  "2022-10-21T20:00", {"CYZ2"}, Schema::Tbbo,
-                                  temp_file.Path());
+  target.TimeseriesGetRangeToFile(dataset::kGlbxMdp3,
+                                  {"2022-10-21T13:30", "2022-10-21T20:00"},
+                                  {"CYZ2"}, Schema::Tbbo, temp_file.Path());
   // running it a second time should overwrite previous data
   DbnFileStore bento = target.TimeseriesGetRangeToFile(
-      dataset::kGlbxMdp3, "2022-10-21T13:30", "2022-10-21T20:00", {"CYZ2"},
+      dataset::kGlbxMdp3, {"2022-10-21T13:30", "2022-10-21T20:00"}, {"CYZ2"},
       Schema::Tbbo, temp_file.Path());
   std::size_t counter{};
   bento.Replay([&counter](const Record&) {
