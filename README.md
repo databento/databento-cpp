@@ -4,52 +4,19 @@
 [![license](https://img.shields.io/github/license/databento/databento-cpp?color=blue)](./LICENSE)
 
 The official C++ client library for [Databento](https://databento.com).
-The client supports both streaming live and historical data through similar interfaces.
-
-**Please note:** this client currently only supports historical data and is under active development as Databento prepares to launch live data.
+The client supports both streaming real-time and historical market data through similar interfaces.
 
 ## Usage
 
-A simple program that fetches a day's worth of historical trades for all ES symbols and prints it looks like this:
+The minimum C++ standard is C++11 and the minimum CMake version is 3.14.
 
-```cpp
-#include <databento/historical.hpp>
-#include <iostream>
+### Integration
 
-using namespace databento;
+The easiest way to use our library is by embedding it with [CMake FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html).
+Your `CMakeLists.txt` should look something like the following:
 
-static constexpr auto kApiKey = "YOUR_API_KEY";
-
-int main() {
-  auto client = HistoricalBuilder{}.SetKey(kApiKey).Build();
-  client.TimeseriesGetRange("GLBX.MDP3", "2022-06-10", "2022-06-11", {"ES"},
-                          Schema::Trades, SType::Smart, SType::ProductId, {},
-                          {}, [](const Record& record) {
-                            const auto& trade_msg = record.Get<TradeMsg>();
-                            std::cout << trade_msg << '\n';
-                            return KeepGoing::Continue;
-                          });
-}
-```
-
-To run this program, replace `YOUR_API_KEY` with an actual API key.
-
-Additional example standalone executables are provided in the [examples](./examples) directory.
-These examples can be compiled by enabling the cmake option `DATABENTO_ENABLE_EXAMPLES` with `-DDATABENTO_ENABLE_EXAMPLES=1` during the configure step.
-
-### Documentation
-
-More detailed examples and the full API documentation can be found on the [Databento doc site](https://docs.databento.com/getting-started).
-
-## Integration
-
-databento-cpp can be integrated into C++ projects in a couple of different ways.
-
-### Embedded
-
-The easiest way to integrate databento-cpp into your project is using CMake's [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html).
-The minimum supported CMake version is 3.14.
 ```cmake
+# CMakeLists.txt
 include(FetchContent)
 
 FetchContent_Declare(
@@ -63,9 +30,10 @@ add_library(my_library)
 target_link_libraries(my_library PRIVATE databento::databento)
 ```
 
-### System
+Alternatively, you can clone the source code from GitHub [here](https://github.com/databento/databento-cpp).
 
-To install databento-cpp at the system level, clone the repo, build, and install with CMake.
+To install the library at the system level, build and install it with the following:
+
 ```sh
 git clone https://github.com/databento/databento-cpp
 cd databento-cpp
@@ -78,17 +46,17 @@ cmake --build build --target databento
 cmake --install build
 ```
 
-Then in your project's `CMakeLists.txt`, add the following:
+In your project's `CMakeLists.txt`, add the following:
+
 ```cmake
-find_package(databento 0.6.1 REQUIRED)
-add_library(my_library)
-target_link_libraries(my_library PRIVATE databento::databento)
+# CMakeLists.txt
+find_package(databento REQUIRED)
+target_link_libraries(your_target PRIVATE databento::databento)
 ```
 
-## Requirements
+### Dependencies
 
-The minimum C++ standard is C++11 and CMake 3.14.
-The library has the following dependencies:
+You'll need to ensure the following dependencies are installed:
 - [OpenSSL](https://www.openssl.org/)
 - [Libcrypto](https://www.openssl.org/docs/man3.0/man7/crypto.html)
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
@@ -99,75 +67,85 @@ By default, cpp-httplib and nlohmann\_json are downloaded by CMake as part of th
 If you would like to use a local version of these libraries, enable the CMake flag
 `DATABENTO_ENABLE_EXTERNAL_HTTPLIB` or `DATABENTO_ENABLE_EXTERNAL_JSON`.
 
-The other two dependencies (zstd and OpenSSL) are available in most package managers.
-For example, on Ubuntu and Debian:
-```sh
-sudo apt install libssl-dev libzstd-dev
+### Live
+
+Real-time and intraday replay is provided through the Live clients.
+Here is a simple program that fetches 10 seconds of trades for all ES mini futures:
+
+```cpp
+#include <chrono>
+#include <databento/live.hpp>
+#include <iostream>
+#include <string>
+#include <thread>
+#include <unordered_map>
+
+using namespace databento;
+
+int main() {
+  std::unordered_map<std::uint32_t, std::string> symbol_mappings;
+
+  auto client = LiveBuilder{}
+                    .SetKey("$YOUR_API_KEY")
+                    .SetDataset("GLBX.MDP3")
+                    .BuildThreaded();
+
+  auto handler = [&symbol_mappings](const Record& rec) {
+    if (rec.Holds<TradeMsg>()) {
+      auto trade = rec.Get<TradeMsg>();
+      std::cout << "Received trade for "
+                << symbol_mappings[trade.hd.instrument_id] << ':'
+                << trade << '\n';
+    } else if (rec.Holds<SymbolMappingMsg>()) {
+      auto mapping = rec.Get<SymbolMappingMsg>();
+      symbol_mappings[mapping.hd.instrument_id] =
+          mapping.stype_out_symbol.data();
+    }
+    return KeepGoing::Continue;
+  };
+
+  client.Subscribe({"ES.FUT"}, Schema::Trades, SType::Parent);
+  client.Start(handler);
+  std::this_thread::sleep_for(std::chrono::seconds{10});
+  return 0;
+}
+```
+To run this program, replace `$YOUR_API_KEY` with an actual API key.
+
+### Historical
+
+Here is a simple program that fetches 10 minutes worth of historical trades for the entire CME Globex market:
+
+```cpp
+#include <databento/constants.hpp>
+#include <databento/historical.hpp>
+#include <iostream>
+
+using namespace databento;
+
+int main() {
+  auto client =
+      HistoricalBuilder{}.SetKey("$YOUR_API_KEY").Build();
+  auto print_trades = [](const Record& record) {
+    const auto& trade_msg = record.Get<TradeMsg>();
+    std::cout << trade_msg << '\n';
+    return KeepGoing::Continue;
+  };
+  client.TimeseriesGetRange(
+      "GLBX.MDP3", "2022-06-10T14:30", "2022-06-10T14:40",
+      kAllSymbols, Schema::Trades, SType::RawSymbol,
+      SType::InstrumentId, {}, {}, print_trades);
+}
 ```
 
-## Building locally
+To run this program, replace `$YOUR_API_KEY` with an actual API key.
 
-databento-cpp uses [CMake](https://cmake.org/) as its build system, with a minimum version of 3.14.
-Building with `cmake` is a two step process: first configuring, then building.
-```sh
-cmake -S . -B build  # configure
-cmake --build build -- -j $(nproc)  # build all targets with all cores
-```
+Additional example standalone executables are provided in the [examples](./examples) directory.
+These examples can be compiled by enabling the cmake option `DATABENTO_ENABLE_EXAMPLES` with `-DDATABENTO_ENABLE_EXAMPLES=1` during the configure step.
 
-### Testing
+## Documentation
 
-Tests are located in the `test` directory.
-They're written using [GoogleTest (gtest)](https://github.com/google/googletest).
-The test target is `databentoTests` and can be build and run with the following commands:
-```sh
-cmake -S . -B build -DDATABENTO_ENABLE_UNIT_TESTING=1  # configure
-cmake --build build --target databentoTests  # build
-build/test/databentoTests  # run
-```
-
-By default, it's assumed google test is installed already, if instead you'd like CMake to
-download it for you, disable the `DATABENTO_USE_EXTERNAL_GTEST` flag:
-```sh
-cmake -S . -B build \
-  -DDATABENTO_ENABLE_UNIT_TESTING=1 \
-  -DDATABENTO_USE_EXTERNAL_GTEST=0
-```
-
-### Formatting
-
-databento-cpp uses [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) with Google's style.
-`clang-format` usually comes installed with [clang](https://clang.llvm.org/).
-You can run `clang-format` against all the files in `databento-cpp` with the following command:
-```sh
-cmake --build build --target clang-format
-```
-
-### Linting
-
-databento-cpp uses Clang-Tidy and Cppcheck for linting and detecting potential mistakes.
-Both can be enabled to run as part of compilation through CMake flags.
-```sh
-cmake -S . -B build -DDATABENTO_ENABLE_CLANG_TIDY=1 -DDATABENTO_ENABLE_CPPCHECK=1
-cmake --build build   # compiles code, and runs Clang-Tidy and Cppcheck
-```
-
-### macOS
-
-To setup OpenSSL and zstd, run the following:
-```sh
-brew install openssl zstd
-# Add it to the PATH so cmake can find it
-export "$PATH:$HOMEBREW_PREFIX/opt/openssl/bin"
-```
-
-For linting on macOS, the best way to install clang-tidy and clang-format is to install all of LLVM
-and symlink the binaries to some place in your `PATH`.
-```sh
-brew install llvm
-ln -s $(brew --prefix llvm)/bin/clang-tidy $HOME/.local/bin/
-ln -s $(brew --prefix llvm)/bin/clang-format $HOME/.local/bin/
-ln -s $(brew --prefix llvm)/bin/run-clang-format $HOME/.local/bin/
-```
+You can find more detailed examples and the full API documentation on the [Databento doc site](https://docs.databento.com/getting-started?historical=cpp&live=cpp).
 
 ## License
 
