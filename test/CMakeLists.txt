@@ -35,6 +35,7 @@ set(
   src/live_tests.cpp
   src/live_blocking_tests.cpp
   src/live_threaded_tests.cpp
+  src/log_tests.cpp
   src/metadata_tests.cpp
   src/mock_lsg_server.cpp
   src/mock_http_server.cpp

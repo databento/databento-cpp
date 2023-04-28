@@ -38,7 +38,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       {"bill_id", "73186317471eb623d161a1"},
       {"billed_size", 5156064},
       {"compression", "zstd"},
-      {"cost", 11.9089},
+      {"cost_usd", 0.119089},
       {"dataset", "XNAS.ITCH"},
       {"delivery", "download"},
       {"encoding", "dbn"},
@@ -46,7 +46,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       {"id", "GLBX-20221031-L3RVE95CV5"},
       {"limit", nullptr},
       {"package_size", 2026761},
-      {"packaging", "none"},
+      {"packaging", nullptr},
       {"pretty_px", false},
       {"pretty_ts", false},
       {"progress", 100},
@@ -57,8 +57,8 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       {"split_symbols", false},
       {"start", "2022-05-17 00:00:00+00:00"},
       {"state", "done"},
-      {"stype_in", "native"},
-      {"stype_out", "product_id"},
+      {"stype_in", "raw_symbol"},
+      {"stype_out", "instrument_id"},
       /* test the fact the API returns a string when there's only one symbol */
       {"symbols", "CLH3"},
       {"ts_expiration", "2022-11-30 15:29:43.148303+00:00"},
@@ -81,7 +81,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
   const auto res = target.BatchSubmitJob(
       dataset::kXnasItch, "2022-05-17", "2022-07-03", {"CLH3"}, Schema::Trades);
   EXPECT_EQ(res.symbols, std::vector<std::string>{"CLH3"});
-  EXPECT_NEAR(res.cost, 11.908, 1e-2);
+  EXPECT_NEAR(res.cost_usd, 0.11908, 1e-2);
   EXPECT_EQ(res.encoding, Encoding::Dbn);
   // null handling
   EXPECT_EQ(res.split_size, 0);
@@ -93,7 +93,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"bill_id", "a670"},
        {"billed_size", 5156064},
        {"compression", "zstd"},
-       {"cost", 11.9089},
+       {"cost_usd", 0.119089},
        {"dataset", "GLBX.MDP3"},
        {"delivery", "download"},
        {"encoding", "dbn"},
@@ -101,7 +101,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"id", "CKXF"},
        {"limit", nullptr},
        {"package_size", 2026761},
-       {"packaging", "none"},
+       {"packaging", nullptr},
        {"pretty_px", false},
        {"pretty_ts", false},
        {"progress", 100},
@@ -112,8 +112,8 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"split_symbols", false},
        {"start", "2022-08-26 00:00:00+00:00"},
        {"state", "done"},
-       {"stype_in", "native"},
-       {"stype_out", "product_id"},
+       {"stype_in", "raw_symbol"},
+       {"stype_out", "instrument_id"},
        {"symbols", "GEZ2"},
        {"ts_expiration", "2022-11-30 15:27:10.148788+00:00"},
        {"ts_process_done", "2022-10-31 15:27:10.148788+00:00"},
@@ -125,7 +125,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"bill_id", "a1b7"},
        {"billed_size", 5156064},
        {"compression", "zstd"},
-       {"cost", 11.9089},
+       {"cost_usd", 0.119089},
        {"dataset", "GLBX.MDP3"},
        {"delivery", "download"},
        {"encoding", "dbn"},
@@ -133,7 +133,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"id", "8UPL"},
        {"limit", nullptr},
        {"package_size", 2026761},
-       {"packaging", "none"},
+       {"packaging", nullptr},
        {"pretty_px", false},
        {"pretty_ts", false},
        {"progress", 100},
@@ -144,8 +144,8 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"split_symbols", false},
        {"start", "2022-08-26 00:00:00+00:00"},
        {"state", "done"},
-       {"stype_in", "native"},
-       {"stype_out", "product_id"},
+       {"stype_in", "raw_symbol"},
+       {"stype_out", "instrument_id"},
        {"symbols", {"GEZ2", "GEH3"}},
        {"ts_expiration", "2022-11-30 15:29:03.010429+00:00"},
        {"ts_process_done", "2022-10-31 15:29:03.010429+00:00"},
@@ -379,11 +379,18 @@ TEST_F(HistoricalTests, TestMetadataListFields) {
 }
 
 TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
-  const nlohmann::json kResp{
-      {{"date", "2022-11-07"}, {"condition", "available"}},
-      {{"date", "2022-11-08"}, {"condition", "bad"}},
-      {{"date", "2022-11-09"}, {"condition", "bad"}},
-      {{"date", "2022-11-10"}, {"condition", "available"}}};
+  const nlohmann::json kResp{{{"date", "2022-11-07"},
+                              {"condition", "available"},
+                              {"last_modified_date", "2023-03-01"}},
+                             {{"date", "2022-11-08"},
+                              {"condition", "degraded"},
+                              {"last_modified_date", "2023-03-01"}},
+                             {{"date", "2022-11-09"},
+                              {"condition", "pending"},
+                              {"last_modified_date", "2023-03-01"}},
+                             {{"date", "2022-11-10"},
+                              {"condition", "missing"},
+                              {"last_modified_date", "2023-03-01"}}};
   mock_server_.MockGetJson("/v0/metadata.get_dataset_condition",
                            {{"dataset", dataset::kXnasItch},
                             {"start_date", "2022-11-06"},
@@ -401,9 +408,13 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
   EXPECT_EQ(conditions[2].date, "2022-11-09");
   EXPECT_EQ(conditions[3].date, "2022-11-10");
   EXPECT_EQ(conditions[0].condition, DatasetCondition::Available);
-  EXPECT_EQ(conditions[1].condition, DatasetCondition::Bad);
-  EXPECT_EQ(conditions[2].condition, DatasetCondition::Bad);
-  EXPECT_EQ(conditions[3].condition, DatasetCondition::Available);
+  EXPECT_EQ(conditions[1].condition, DatasetCondition::Degraded);
+  EXPECT_EQ(conditions[2].condition, DatasetCondition::Pending);
+  EXPECT_EQ(conditions[3].condition, DatasetCondition::Missing);
+  EXPECT_EQ(conditions[0].last_modified_date, "2023-03-01");
+  EXPECT_EQ(conditions[1].last_modified_date, "2023-03-01");
+  EXPECT_EQ(conditions[2].last_modified_date, "2023-03-01");
+  EXPECT_EQ(conditions[3].last_modified_date, "2023-03-01");
 }
 
 TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {
@@ -557,7 +568,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetBillableSize(
       dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00", {"NG", "LNQ"},
-      Schema::Tbbo, SType::Smart, {});
+      Schema::Tbbo, SType::SmartDeprecated, {});
   ASSERT_EQ(res, kResp);
 }
 
@@ -595,10 +606,10 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res =
-      target.MetadataGetCost(dataset::kGlbxMdp3, "2020-06-06T00:00",
-                             "2021-03-02T00:00", {"MES", "SPY"}, Schema::Tbbo,
-                             FeedMode::HistoricalStreaming, SType::Smart, {});
+  const auto res = target.MetadataGetCost(
+      dataset::kGlbxMdp3, "2020-06-06T00:00", "2021-03-02T00:00",
+      {"MES", "SPY"}, Schema::Tbbo, FeedMode::HistoricalStreaming,
+      SType::SmartDeprecated, {});
   ASSERT_DOUBLE_EQ(res, kResp);
 }
 
@@ -612,8 +623,8 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
              {"s", "3403"},
          }}}}},
       {"symbols", {"ESM2"}},
-      {"stype_in", "native"},
-      {"stype_out", "product_id"},
+      {"stype_in", "raw_symbol"},
+      {"stype_out", "instrument_id"},
       {"start_date", "2022-06-06"},
       {"end_date", "2022-06-10"},
       {"partial", nlohmann::json::array()},
@@ -628,8 +639,8 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
                                {"start_date", "2022-06-06"},
                                {"end_date", "2022-06-10"},
                                {"symbols", "ESM2"},
-                               {"stype_in", "native"},
-                               {"stype_out", "product_id"},
+                               {"stype_in", "raw_symbol"},
+                               {"stype_out", "instrument_id"},
                            },
                            kResp);
   const auto port = mock_server_.ListenOnThread();
@@ -638,7 +649,7 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
                                static_cast<std::uint16_t>(port)};
   const auto res =
       target.SymbologyResolve(dataset::kGlbxMdp3, "2022-06-06", "2022-06-10",
-                              {"ESM2"}, SType::Native, SType::ProductId);
+                              {"ESM2"}, SType::RawSymbol, SType::InstrumentId);
   EXPECT_TRUE(res.not_found.empty());
   EXPECT_TRUE(res.partial.empty());
   ASSERT_EQ(res.mappings.size(), 1);
@@ -658,8 +669,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
                               {"start", "1609160400000711344"},
                               {"end", "1609160800000711344"},
                               {"encoding", "dbn"},
-                              {"stype_in", "native"},
-                              {"stype_out", "product_id"},
+                              {"stype_in", "raw_symbol"},
+                              {"stype_out", "instrument_id"},
                               {"limit", "2"}},
                              TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
@@ -672,7 +683,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
       dataset::kGlbxMdp3,
       UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
-      Schema::Mbo, SType::Native, SType::ProductId, 2,
+      Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2,
       [&metadata_ptr](Metadata&& metadata) {
         // no std::make_unique until C++14
         metadata_ptr =
@@ -695,8 +706,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_NoMetadataCallback) {
                               {"symbols", "CYZ2"},
                               {"schema", "tbbo"},
                               {"encoding", "dbn"},
-                              {"stype_in", "native"},
-                              {"stype_out", "product_id"}},
+                              {"stype_in", "raw_symbol"},
+                              {"stype_out", "instrument_id"}},
                              TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
@@ -726,8 +737,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_BadRequest) {
         dataset::kGlbxMdp3,
         UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
         UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"E5"},
-        Schema::Mbo, SType::Smart, SType::ProductId, 2, [](Metadata&&) {},
-        [](const Record&) { return KeepGoing::Continue; });
+        Schema::Mbo, SType::SmartDeprecated, SType::InstrumentId, 2,
+        [](Metadata&&) {}, [](const Record&) { return KeepGoing::Continue; });
     FAIL() << "Call to TimeseriesGetRange was supposed to throw";
   } catch (const std::exception& exc) {
     ASSERT_STREQ(
@@ -747,14 +758,15 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_CallbackException) {
 
   databento::Historical target{kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  ASSERT_THROW(target.TimeseriesGetRange(
-                   dataset::kGlbxMdp3,
-                   UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
-                   UnixNanos{std::chrono::nanoseconds{1609160800000711344}},
-                   {"ESH1"}, Schema::Mbo, SType::Native, SType::ProductId, 2,
-                   [](Metadata&&) { throw std::logic_error{"Test failure"}; },
-                   [](const Record&) { return KeepGoing::Continue; }),
-               std::logic_error);
+  ASSERT_THROW(
+      target.TimeseriesGetRange(
+          dataset::kGlbxMdp3,
+          UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+          UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
+          Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2,
+          [](Metadata&&) { throw std::logic_error{"Test failure"}; },
+          [](const Record&) { return KeepGoing::Continue; }),
+      std::logic_error);
 }
 
 TEST_F(HistoricalTests, TestTimeseriesGetRangeCancellation) {
@@ -769,7 +781,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeCancellation) {
       dataset::kGlbxMdp3,
       UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}, {"ESH1"},
-      Schema::Mbo, SType::Native, SType::ProductId, 2, [](Metadata&&) {},
+      Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2, [](Metadata&&) {},
       [&call_count](const Record&) {
         ++call_count;
         return KeepGoing::Stop;
@@ -787,8 +799,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
                               {"symbols", "CYZ2"},
                               {"schema", "tbbo"},
                               {"encoding", "dbn"},
-                              {"stype_in", "native"},
-                              {"stype_out", "product_id"}},
+                              {"stype_in", "raw_symbol"},
+                              {"stype_out", "instrument_id"}},
                              TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 

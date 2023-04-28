@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.6.1 LANGUAGES CXX)
+project("databento" VERSION 0.7.0 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
@@ -103,6 +103,7 @@ message(STATUS "Added all header and implementation files.\n")
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 include(cmake/CompilerWarnings.cmake)
 set_project_warnings(${PROJECT_NAME})
+include(cmake/Sanitizers.cmake)
 
 # Ensure std::string debug info is included
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -136,19 +137,20 @@ else()
   FetchContent_MakeAvailable(json)
 endif()
 # cpp-httplib
+set(httplib_version 0.11.4)
 if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
-  find_package(httplib 0.11.2 REQUIRED)
+  find_package(httplib ${httplib_version} REQUIRED)
 else()
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       httplib
-      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.11.2.tar.gz
+      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz
     )
   else()
     # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
     FetchContent_Declare(
       httplib
-      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.11.2.tar.gz
+      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz
       DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
   endif()

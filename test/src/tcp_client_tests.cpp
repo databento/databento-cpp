@@ -137,5 +137,20 @@ TEST_F(TcpClientTests, TestReadCloseNoTimeout) {
   EXPECT_EQ(res.read_size, 0);
   EXPECT_LT(end - start, kTimeout);
 }
+
+TEST_F(TcpClientTests, ReadAfterClose) {
+  const std::string kSendData = "Read after close";
+  mock_server_.SetSend(kSendData);
+  // server does one write than reads
+  target_.WriteAll("start");
+
+  std::array<char, 10> buffer{0};
+  const auto res = target_.ReadSome(buffer.data(), buffer.size());
+  EXPECT_EQ(res.status, detail::TcpClient::Status::Ok);
+  EXPECT_GT(res.read_size, 0);
+  target_.Close();
+  ASSERT_THROW(target_.ReadSome(buffer.data(), buffer.size()),
+               databento::TcpError);
+}
 }  // namespace test
 }  // namespace databento

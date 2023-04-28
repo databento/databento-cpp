@@ -118,14 +118,20 @@ const char* ToString(Compression compression) {
 
 const char* ToString(SType stype) {
   switch (stype) {
-    case SType::ProductId: {
-      return "product_id";
+    case SType::InstrumentId: {
+      return "instrument_id";
     }
-    case SType::Native: {
-      return "native";
+    case SType::RawSymbol: {
+      return "raw_symbol";
     }
-    case SType::Smart: {
+    case SType::SmartDeprecated: {
       return "smart";
+    }
+    case SType::Continuous: {
+      return "continuous";
+    }
+    case SType::Parent: {
+      return "parent";
     }
     default: {
       return "unknown";
@@ -215,7 +221,16 @@ const char* ToString(DatasetCondition condition) {
     case DatasetCondition::Available: {
       return "available";
     }
-    case DatasetCondition::Bad: {
+    case DatasetCondition::Degraded: {
+      return "degraded";
+    }
+    case DatasetCondition::Pending: {
+      return "pending";
+    }
+    case DatasetCondition::Missing: {
+      return "missing";
+    }
+    case DatasetCondition::Bad: {  // Deprecated
       return "bad";
     }
     default: {
@@ -256,6 +271,18 @@ const char* ToString(RType rtype) {
     case RType::Imbalance: {
       return "Imbalance";
     }
+    case RType::Error: {
+      return "Error";
+    }
+    case RType::SymbolMapping: {
+      return "SymbolMapping";
+    }
+    case RType::System: {
+      return "System";
+    }
+    case RType::Statistics: {
+      return "Statistics";
+    }
     case RType::Mbo: {
       return "Mbo";
     }
@@ -272,6 +299,9 @@ const char* ToString(Action action) {
     }
     case Action::Trade: {
       return "Trade";
+    }
+    case Action::Fill: {
+      return "Fill";
     }
     case Action::Cancel: {
       return "Cancel";
@@ -298,6 +328,159 @@ const char* ToString(Side side) {
     }
     case Side::None: {
       return "None";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(InstrumentClass instrument_class) {
+  switch (instrument_class) {
+    case instrument_class::Bond: {
+      return "Bond";
+    }
+    case instrument_class::Call: {
+      return "Call";
+    }
+    case instrument_class::Future: {
+      return "Future";
+    }
+    case instrument_class::Stock: {
+      return "Stock";
+    }
+    case instrument_class::MixedSpread: {
+      return "MixedSpread";
+    }
+    case instrument_class::Put: {
+      return "Put";
+    }
+    case instrument_class::FutureSpread: {
+      return "FutureSpread";
+    }
+    case instrument_class::OptionSpread: {
+      return "OptionSpread";
+    }
+    case instrument_class::FxSpot: {
+      return "FxSpot";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(MatchAlgorithm match_algorithm) {
+  switch (match_algorithm) {
+    case match_algorithm::Fifo: {
+      return "Fifo";
+    }
+    case match_algorithm::Configurable: {
+      return "Configurable";
+    }
+    case match_algorithm::ProRata: {
+      return "ProRata";
+    }
+    case match_algorithm::FifoLmm: {
+      return "FifoLmm";
+    }
+    case match_algorithm::ThresholdProRata: {
+      return "ThresholdProRata";
+    }
+    case match_algorithm::FifoTopLmm: {
+      return "FifoTopLmm";
+    }
+    case match_algorithm::ThresholdProRataLmm: {
+      return "ThresholdProRataLmm";
+    }
+    case match_algorithm::EurodollarOptions: {
+      return "EurodollarOptions";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(SecurityUpdateAction update_action) {
+  switch (update_action) {
+    case SecurityUpdateAction::Add: {
+      return "Add";
+    }
+    case SecurityUpdateAction::Modify: {
+      return "Modify";
+    }
+    case SecurityUpdateAction::Delete: {
+      return "Delete";
+    }
+    case SecurityUpdateAction::Invalid: {
+      return "Invalid";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(UserDefinedInstrument user_def_instr) {
+  switch (user_def_instr) {
+    case UserDefinedInstrument::No: {
+      return "No";
+    }
+    case UserDefinedInstrument::Yes: {
+      return "Yes";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(StatType stat_type) {
+  switch (stat_type) {
+    case StatType::OpeningPrice: {
+      return "OpeningPrice";
+    }
+    case StatType::IndicativeOpeningPrice: {
+      return "IndicativeOpeningPrice";
+    }
+    case StatType::SettlementPrice: {
+      return "SettlementPrice";
+    }
+    case StatType::TradingSessionLowPrice: {
+      return "TradingSessionLowPrice";
+    }
+    case StatType::TradingSessionHighPrice: {
+      return "TradingSessionHighPrice";
+    }
+    case StatType::ClearedVolume: {
+      return "ClearedVolume";
+    }
+    case StatType::LowestOffer: {
+      return "LowestOffer";
+    }
+    case StatType::HighestBid: {
+      return "HighestBid";
+    }
+    case StatType::OpenInterest: {
+      return "OpenInterest";
+    }
+    case StatType::FixingPrice: {
+      return "FixingPrice";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(StatUpdateAction stat_update_action) {
+  switch (stat_update_action) {
+    case StatUpdateAction::New: {
+      return "New";
+    }
+    case StatUpdateAction::Delete: {
+      return "Delete";
     }
     default: {
       return "Unknown";
@@ -367,6 +550,39 @@ std::ostream& operator<<(std::ostream& out, Action action) {
 
 std::ostream& operator<<(std::ostream& out, Side side) {
   out << ToString(side);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, InstrumentClass instrument_class) {
+  out << ToString(instrument_class);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, MatchAlgorithm match_algorithm) {
+  out << ToString(match_algorithm);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         SecurityUpdateAction update_action) {
+  out << ToString(update_action);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         UserDefinedInstrument user_def_instr) {
+  out << ToString(user_def_instr);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, StatType stat_type) {
+  out << ToString(stat_type);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         StatUpdateAction stat_update_action) {
+  out << ToString(stat_update_action);
   return out;
 }
 
@@ -459,14 +675,20 @@ Compression FromString(const std::string& str) {
 
 template <>
 SType FromString(const std::string& str) {
-  if (str == "product_id") {
-    return SType::ProductId;
+  if (str == "product_id" || str == "instrument_id") {
+    return SType::InstrumentId;
   }
-  if (str == "native") {
-    return SType::Native;
+  if (str == "native" || str == "raw_symbol") {
+    return SType::RawSymbol;
   }
   if (str == "smart") {
-    return SType::Smart;
+    return SType::SmartDeprecated;
+  }
+  if (str == "continuous") {
+    return SType::Continuous;
+  }
+  if (str == "parent") {
+    return SType::Parent;
   }
   throw InvalidArgumentError{"FromString<SType>", "str",
                              "unknown value '" + str + '\''};
@@ -546,8 +768,17 @@ DatasetCondition FromString(const std::string& str) {
   if (str == "available") {
     return DatasetCondition::Available;
   }
+  if (str == "degraded") {
+    return DatasetCondition::Degraded;
+  }
+  if (str == "pending") {
+    return DatasetCondition::Pending;
+  }
+  if (str == "missing") {
+    return DatasetCondition::Missing;
+  }
   if (str == "bad") {
-    return DatasetCondition::Bad;
+    return DatasetCondition::Bad;  // Deprecated
   }
   throw InvalidArgumentError{"FromString<DatasetCondition>", "str",
                              "unknown value '" + str + '\''};

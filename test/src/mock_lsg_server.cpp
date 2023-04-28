@@ -47,6 +47,10 @@ std::size_t MockLsgServer::Send(const std::string& msg) {
   return static_cast<std::size_t>(write_size);
 }
 
+::ssize_t MockLsgServer::UncheckedSend(const std::string& msg) {
+  return ::write(conn_fd_.Get(), msg.data(), msg.length());
+}
+
 void MockLsgServer::Authenticate() {
   Send("lsg-test\n");
   // send challenge separate to test multiple reads to get CRAM challenge
@@ -106,9 +110,9 @@ void MockLsgServer::Start(Schema schema) {
   // record_count
   bytes_written += SendBytes(std::numeric_limits<std::uint64_t>::max());
   // stype_in
-  bytes_written += SendBytes(SType::Native);
+  bytes_written += SendBytes(SType::RawSymbol);
   // stype_out
-  bytes_written += SendBytes(SType::ProductId);
+  bytes_written += SendBytes(SType::InstrumentId);
   // padding
   bytes_written += Send(std::string(48 + sizeof(std::uint32_t) * 5, '\0'));
 

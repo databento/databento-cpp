@@ -3,23 +3,29 @@
 #include <array>
 #include <chrono>  // milliseconds
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "databento/datetime.hpp"           // UnixNanos
 #include "databento/dbn.hpp"                // Metadata
 #include "databento/detail/tcp_client.hpp"  // TcpClient
 #include "databento/enums.hpp"              // Schema, SType
 #include "databento/record.hpp"             // Record
 
 namespace databento {
-// A client for interfacing with Databento's live market data API. This client
-// has a blocking API for getting the next record. Unlike Historical, each
-// instance of LiveBlocking is associated with a particular dataset.
+class ILogReceiver;
+
+// A client for interfacing with Databento's real-time and intraday replay
+// market data API. This client provides a blocking API for getting the next
+// record. Unlike Historical, each instance of LiveBlocking is associated with a
+// particular dataset.
 class LiveBlocking {
  public:
-  LiveBlocking(std::string key, std::string dataset, bool send_ts_out);
-  LiveBlocking(std::string key, std::string dataset, std::string gateway,
-               std::uint16_t port, bool send_ts_out);
+  LiveBlocking(ILogReceiver* log_receiver, std::string key, std::string dataset,
+               bool send_ts_out);
+  LiveBlocking(ILogReceiver* log_receiver, std::string key, std::string dataset,
+               std::string gateway, std::uint16_t port, bool send_ts_out);
   /*
    * Getters
    */
@@ -37,6 +43,10 @@ class LiveBlocking {
   // when the client disconnects in its destructor.
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype_in);
+  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                 SType stype_in, UnixNanos start);
+  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                 SType stype_in, const std::string& start);
   // Notifies the gateway to start sending messages for all subscriptions.
   //
   // This method should only be called once per instance.
@@ -52,19 +62,23 @@ class LiveBlocking {
   //
   // This method should only be called after `Start`.
   const Record* NextRecord(std::chrono::milliseconds timeout);
+  // Stops the session with the gateway. Once stopped, the session cannot be
+  // restarted.
+  void Stop();
 
  private:
   std::string DetermineGateway() const;
-  std::string Authenticate();
+  std::uint64_t Authenticate();
   std::string DecodeChallenge();
   std::string GenerateCramReply(const std::string& challenge_key);
   std::string EncodeAuthReq(const std::string& auth);
-  void DecodeAuthResp();
+  std::uint64_t DecodeAuthResp();
   detail::TcpClient::Result FillBuffer(std::chrono::milliseconds timeout);
   RecordHeader* BufferRecordHeader();
 
   static constexpr std::size_t kMaxStrLen = 24L * 1024;
 
+  ILogReceiver* log_receiver_;
   std::string key_;
   std::string dataset_;
   std::string gateway_;
@@ -73,7 +87,7 @@ class LiveBlocking {
   std::array<char, kMaxStrLen> buffer_{};
   std::size_t buffer_size_{};
   std::size_t buffer_idx_{};
-  std::string session_id_;
+  std::uint64_t session_id_;
   Record current_record_{nullptr};
 };
 }  // namespace databento

@@ -16,6 +16,7 @@ std::ostream& operator<<(std::ostream& stream,
       .Build()
       .AddField("date", condition_detail.date)
       .AddField("condition", condition_detail.condition)
+      .AddField("last_modified_date", condition_detail.last_modified_date)
       .Finish();
 }
 

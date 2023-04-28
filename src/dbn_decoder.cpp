@@ -2,6 +2,7 @@
 
 #include <algorithm>  // copy
 #include <cstring>    // strncmp
+#include <limits>
 #include <vector>
 
 #include "databento/datetime.hpp"
@@ -19,7 +20,7 @@ constexpr auto kDbnPrefix = "DBN";
 constexpr std::size_t kFixedMetadataLen = 100;
 constexpr std::uint8_t kSchemaVersion = 1;
 constexpr std::size_t kDatasetCstrLen = 16;
-constexpr std::size_t kReservedLen = 48;
+constexpr std::size_t kReservedLen = 47;
 constexpr std::size_t kSymbolCstrLen = 22;
 constexpr std::size_t kBufferCapacity = 8UL * 1024;
 
@@ -60,13 +61,14 @@ DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input)
     input_ = std::unique_ptr<detail::ZstdStream>(
         new detail::ZstdStream(std::move(input_), std::move(buffer_)));
     // Reinitialize buffer and get it into the same state as uncompressed input
-    buffer_ = std::vector<std::uint8_t>(kMagicSize);
+    buffer_ = std::vector<std::uint8_t>();
+    buffer_.reserve(kBufferCapacity);
+    buffer_.resize(kMagicSize);
     input_->ReadExact(buffer_.data(), kMagicSize);
     auto buffer_it = buffer_.cbegin();
     if (std::strncmp(Consume(buffer_it, 3), kDbnPrefix, 3) != 0) {
       throw DbnResponseError{"Found Zstd input, but not DBN prefix"};
     }
-    buffer_.resize(0);
   }
 }
 
@@ -99,7 +101,15 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   }
   auto buffer_it = buffer.cbegin();
   res.dataset = std::string{Consume(buffer_it, kDatasetCstrLen)};
-  res.schema = static_cast<Schema>(Consume<std::uint16_t>(buffer_it));
+  const auto raw_schema = Consume<std::uint16_t>(buffer_it);
+  if (raw_schema == std::numeric_limits<std::uint16_t>::max()) {
+    res.has_mixed_schema = true;
+    // must initialize
+    res.schema = Schema::Mbo;
+  } else {
+    res.has_mixed_schema = false;
+    res.schema = static_cast<Schema>(raw_schema);
+  }
   res.start =
       UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(buffer_it)}};
   res.end =
@@ -107,8 +117,17 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   res.limit = Consume<std::uint64_t>(buffer_it);
   // skip deprecated record_count
   buffer_it += 8;
-  res.stype_in = static_cast<SType>(Consume<std::uint8_t>(buffer_it));
+  const auto raw_stype_in = Consume<std::uint8_t>(buffer_it);
+  if (raw_stype_in == std::numeric_limits<std::uint8_t>::max()) {
+    res.has_mixed_stype_in = true;
+    // must initialize
+    res.stype_in = SType::InstrumentId;
+  } else {
+    res.has_mixed_stype_in = false;
+    res.stype_in = static_cast<SType>(raw_stype_in);
+  }
   res.stype_out = static_cast<SType>(Consume<std::uint8_t>(buffer_it));
+  res.ts_out = static_cast<bool>(Consume<std::uint8_t>(buffer_it));
   // skip reserved
   buffer_it += ::kReservedLen;
 
@@ -127,6 +146,7 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
 
 databento::Metadata DbnDecoder::DecodeMetadata() {
   // already read first 4 bytes detecting compression
+  buffer_.resize(8);
   input_->ReadExact(&buffer_[4], 4);
   const auto version_and_size =
       DbnDecoder::DecodeMetadataVersionAndSize(buffer_.data(), 8);
@@ -255,7 +275,7 @@ databento::SymbolMapping DbnDecoder::DecodeSymbolMapping(
         "mapping"};
   }
   SymbolMapping res;
-  res.native_symbol = DecodeSymbol(buffer_it);
+  res.raw_symbol = DecodeSymbol(buffer_it);
   const auto interval_count = std::size_t{Consume<std::uint32_t>(buffer_it)};
   const auto read_size =
       static_cast<std::ptrdiff_t>(interval_count * kMappingIntervalEncodedLen);

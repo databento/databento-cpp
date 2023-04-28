@@ -4,14 +4,16 @@
 
 #include <algorithm>  // copy
 #include <cctype>
+#include <cstdlib>
 #include <ios>  //hex, setfill, setw
 #include <sstream>
 
 #include "databento/constants.hpp"  //  kApiKeyLength
 #include "databento/dbn_decoder.hpp"
 #include "databento/exceptions.hpp"  // LiveApiError
-#include "databento/record.hpp"      // Record
-#include "databento/symbology.hpp"   // JoinSymbolStrings
+#include "databento/log.hpp"
+#include "databento/record.hpp"     // Record
+#include "databento/symbology.hpp"  // JoinSymbolStrings
 
 using databento::LiveBlocking;
 
@@ -19,15 +21,22 @@ namespace {
 constexpr std::size_t kBucketIdLength = 5;
 }  // namespace
 
-LiveBlocking::LiveBlocking(std::string key, std::string dataset,
-                           bool send_ts_out)
-    : LiveBlocking{std::move(key), std::move(dataset), DetermineGateway(), 80,
-                   send_ts_out} {}
+LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
+                           std::string dataset, bool send_ts_out)
 
-LiveBlocking::LiveBlocking(std::string key, std::string dataset,
-                           std::string gateway, std::uint16_t port,
-                           bool send_ts_out)
-    : key_{std::move(key)},
+    : log_receiver_{log_receiver},
+      key_{std::move(key)},
+      dataset_{std::move(dataset)},
+      gateway_{DetermineGateway()},
+      send_ts_out_{send_ts_out},
+      client_{gateway_, 13000},
+      session_id_{this->Authenticate()} {}
+
+LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
+                           std::string dataset, std::string gateway,
+                           std::uint16_t port, bool send_ts_out)
+    : log_receiver_{log_receiver},
+      key_{std::move(key)},
       dataset_{std::move(dataset)},
       gateway_{std::move(gateway)},
       send_ts_out_{send_ts_out},
@@ -36,10 +45,33 @@ LiveBlocking::LiveBlocking(std::string key, std::string dataset,
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in) {
+  Subscribe(symbols, schema, stype_in, UnixNanos{});
+}
+
+void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
+                             Schema schema, SType stype_in, UnixNanos start) {
   std::ostringstream sub_msg;
   sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
           << "|symbols="
           << JoinSymbolStrings("LiveBlocking::Subscribe", symbols);
+  if (start.time_since_epoch().count()) {
+    sub_msg << "|start=" << start.time_since_epoch().count();
+  }
+  sub_msg << '\n';
+
+  client_.WriteAll(sub_msg.str());
+}
+
+void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
+                             Schema schema, SType stype_in,
+                             const std::string& start) {
+  std::ostringstream sub_msg;
+  sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
+          << "|symbols="
+          << JoinSymbolStrings("LiveBlocking::Subscribe", symbols);
+  if (!start.empty()) {
+    sub_msg << "|start=" << start;
+  }
   sub_msg << '\n';
 
   client_.WriteAll(sub_msg.str());
@@ -87,6 +119,8 @@ const databento::Record* LiveBlocking::NextRecord(
   return &current_record_;
 }
 
+void LiveBlocking::Stop() { client_.Close(); }
+
 std::string LiveBlocking::DecodeChallenge() {
   buffer_size_ = client_.ReadSome(buffer_.data(), buffer_.size()).read_size;
   if (buffer_size_ == 0) {
@@ -94,30 +128,34 @@ std::string LiveBlocking::DecodeChallenge() {
   }
   // first line is version
   std::string response{buffer_.data(), buffer_size_};
+  {
+    std::ostringstream log_ss;
+    log_ss << __PRETTY_FUNCTION__ << " Challenge: " << response;
+    log_receiver_->Receive(LogLevel::Debug, log_ss.str());
+  }
   auto first_nl_pos = response.find('\n');
   if (first_nl_pos == std::string::npos) {
     throw LiveApiError::UnexpectedMsg("Received malformed initial message",
                                       response);
   }
   const auto version_line = response.substr(0, first_nl_pos);
-  std::size_t find_start{};
-  if (first_nl_pos + 1 == response.length()) {
+  const auto find_start = first_nl_pos + 1;
+  auto next_nl_pos = find_start == response.length()
+                         ? std::string::npos
+                         : response.find('\n', find_start);
+  while (next_nl_pos == std::string::npos) {
     // read more
-    buffer_size_ = client_.ReadSome(buffer_.data(), buffer_.size()).read_size;
+    buffer_size_ +=
+        client_.ReadSome(&buffer_[buffer_size_], buffer_.size() - buffer_size_)
+            .read_size;
     if (buffer_size_ == 0) {
       throw LiveApiError{"Server closed socket during authentication"};
     }
     response = {buffer_.data(), buffer_size_};
-    find_start = 0;
-  } else {
-    find_start = first_nl_pos + 1;
+    next_nl_pos = response.find('\n', find_start);
   }
-  const auto next_nl_pos = response.find('\n', find_start);
-  if (next_nl_pos == std::string::npos) {
-    throw LiveApiError::UnexpectedMsg("Received malformed initial message",
-                                      response);
-  }
-  const auto challenge_line = response.substr(find_start, next_nl_pos);
+  const auto challenge_line =
+      response.substr(find_start, next_nl_pos - find_start);
   if (challenge_line.compare(0, 4, "cram") != 0) {
     throw LiveApiError::UnexpectedMsg(
         "Did not receive CRAM challenge when expected", challenge_line);
@@ -133,21 +171,26 @@ std::string LiveBlocking::DecodeChallenge() {
 std::string LiveBlocking::DetermineGateway() const {
   std::ostringstream gateway;
   for (const char c : dataset_) {
-    gateway << (c == '.' ? '_' : std::tolower(c));
+    gateway << (c == '.' ? '-' : static_cast<char>(std::tolower(c)));
   }
   gateway << ".lsg.databento.com";
   return gateway.str();
 }
 
-std::string LiveBlocking::Authenticate() {
+std::uint64_t LiveBlocking::Authenticate() {
   const std::string challenge_key = DecodeChallenge() + '|' + key_;
 
-  std::string auth = GenerateCramReply(challenge_key);
+  const std::string auth = GenerateCramReply(challenge_key);
   const std::string req = EncodeAuthReq(auth);
-  client_.WriteAll(req.c_str(), req.size());
-  DecodeAuthResp();
+  client_.WriteAll(req);
+  const std::uint64_t session_id = DecodeAuthResp();
 
-  return auth;
+  std::ostringstream log_ss;
+  log_ss << __PRETTY_FUNCTION__
+         << " Successfully authenticated with session_id " << session_id;
+  log_receiver_->Receive(LogLevel::Info, log_ss.str());
+
+  return session_id;
 }
 
 std::string LiveBlocking::GenerateCramReply(const std::string& challenge_key) {
@@ -175,7 +218,7 @@ std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
   return reply_stream.str();
 }
 
-void LiveBlocking::DecodeAuthResp() {
+std::uint64_t LiveBlocking::DecodeAuthResp() {
   // handle split packet read
   std::array<char, kMaxStrLen>::const_iterator nl_it;
   buffer_size_ = 0;
@@ -193,18 +236,27 @@ void LiveBlocking::DecodeAuthResp() {
     nl_it = std::find(buffer_.begin() + buffer_idx_,
                       buffer_.begin() + buffer_size_, '\n');
   } while (nl_it == buffer_.end());
-  // one beyond newline
-  const std::string response{buffer_.cbegin(), nl_it + 1};
-  // set in case Read call also read records
-  buffer_idx_ = response.length();
+  const std::string response{buffer_.cbegin(), nl_it};
+  {
+    std::ostringstream log_ss;
+    log_ss << __PRETTY_FUNCTION__ << " Authentication response: " << response;
+    log_receiver_->Receive(LogLevel::Debug, log_ss.str());
+  }
+  // set in case Read call also read records. One beyond newline
+  buffer_idx_ = response.length() + 1;
 
   std::size_t pos{};
-  std::size_t count{};
   bool found_success{};
   bool is_error{};
+  std::uint64_t session_id = 0;
   std::string err_details;
-  while ((count = response.find('|', pos)) != std::string::npos) {
-    const std::string kv_pair = response.substr(pos, count);
+  while (true) {
+    const size_t count = response.find('|', pos);
+    if (count == response.length() - 1) {
+      break;
+    }
+    // passing count = npos to substr will take remainder of string
+    const std::string kv_pair = response.substr(pos, count - pos);
     const std::size_t eq_pos = kv_pair.find('=');
     if (eq_pos == std::string::npos) {
       throw LiveApiError::UnexpectedMsg("Malformed authentication response",
@@ -217,18 +269,25 @@ void LiveBlocking::DecodeAuthResp() {
         is_error = true;
       }
     } else if (key == "error") {
-      err_details = kv_pair.substr(eq_pos);
+      err_details = kv_pair.substr(eq_pos + 1);
+    } else if (key == "session_id") {
+      session_id = std::stoull(kv_pair.substr(eq_pos + 1));
     }
-    pos += count + 1;
+    // no more keys to parse
+    if (count == std::string::npos) {
+      break;
+    }
+    pos = count + 1;
   }
   if (!found_success) {
     throw LiveApiError{
         "Did not receive success indicator from authentication attempt"};
   }
   if (is_error) {
-    throw InvalidArgumentError{"LiveBlocking::Live", "key",
+    throw InvalidArgumentError{"LiveBlocking::LiveBlocking", "key",
                                "Failed to authenticate: " + err_details};
   }
+  return session_id;
 }
 
 databento::detail::TcpClient::Result LiveBlocking::FillBuffer(

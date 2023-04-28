@@ -4,11 +4,13 @@
 #include <chrono>  // nanoseconds
 #include <cstddef>
 #include <cstdint>
+#include <cstring>  // strncmp
 #include <string>
+#include <tuple>  // tie
 
 #include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
-#include "databento/flag_set.hpp"
+#include "databento/flag_set.hpp"  // FlagSet
 
 namespace databento {
 // Common data for all Databento Records.
@@ -21,8 +23,8 @@ struct RecordHeader {
   RType rtype;
   // The publisher ID assigned by Databento.
   std::uint16_t publisher_id;
-  // The numeric product ID assigned to the instrument.
-  std::uint32_t product_id;
+  // The numeric ID assigned to the instrument.
+  std::uint32_t instrument_id;
   // The exchange timestamp in UNIX epoch nanoseconds.
   UnixNanos ts_event;
 
@@ -33,7 +35,7 @@ class Record {
  public:
   explicit Record(RecordHeader* record) : record_{record} {}
 
-  const RecordHeader& header() const;
+  const RecordHeader& Header() const { return *record_; }
 
   template <typename T>
   bool Holds() const {
@@ -170,8 +172,8 @@ struct InstrumentDefMsg {
   UnixNanos ts_recv;
   std::int64_t min_price_increment;
   std::int64_t display_factor;
-  std::uint64_t expiration;
-  std::uint64_t activation;
+  UnixNanos expiration;
+  UnixNanos activation;
   std::int64_t high_limit_price;
   std::int64_t low_limit_price;
   std::int64_t max_price_variation;
@@ -194,7 +196,7 @@ struct InstrumentDefMsg {
   std::int32_t contract_multiplier;
   std::int32_t decay_quantity;
   std::int32_t original_contract_size;
-  std::uint32_t related_security_id;
+  std::array<char, 4> reserved1;
   std::uint16_t trading_reference_date;
   std::int16_t appl_id;
   std::uint16_t maturity_year;
@@ -203,7 +205,7 @@ struct InstrumentDefMsg {
   std::array<char, 4> currency;
   std::array<char, 4> settl_currency;
   std::array<char, 6> secsubtype;
-  std::array<char, 22> symbol;
+  std::array<char, 22> raw_symbol;
   std::array<char, 21> group;
   std::array<char, 5> exchange;
   std::array<char, 7> asset;
@@ -211,19 +213,23 @@ struct InstrumentDefMsg {
   std::array<char, 7> security_type;
   std::array<char, 31> unit_of_measure;
   std::array<char, 21> underlying;
-  std::array<char, 21> related;
-  char match_algorithm;
+  std::array<char, 4> strike_price_currency;
+  InstrumentClass instrument_class;
+  std::array<char, 2> reserved2;
+  std::int64_t strike_price;
+  std::array<char, 6> reserved3;
+  MatchAlgorithm match_algorithm;
   std::uint8_t md_security_trading_status;
   std::uint8_t main_fraction;
   std::uint8_t price_display_format;
   std::uint8_t settl_price_type;
   std::uint8_t sub_fraction;
   std::uint8_t underlying_product;
-  char security_update_action;
+  SecurityUpdateAction security_update_action;
   std::uint8_t maturity_month;
   std::uint8_t maturity_day;
   std::uint8_t maturity_week;
-  char user_defined_instrument;
+  UserDefinedInstrument user_defined_instrument;
   std::int8_t contract_multiplier_unit;
   std::int8_t flow_schedule_type;
   std::uint8_t tick_rule;
@@ -260,20 +266,48 @@ struct ImbalanceMsg {
   Side unpaired_side;
   char significant_imbalance;
   // padding for alignment
-  std::array<char, 1> dummy[1];
+  std::array<char, 1> dummy;
 };
 
 static_assert(sizeof(ImbalanceMsg) == 112, "ImbalanceMsg size must match C");
 
+/// A statistics message. A catchall for various data disseminated by
+/// publishers. The `stat_type` indicates the statistic contained in the
+/// message.
+struct StatMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::Statistics; }
+
+  RecordHeader hd;
+  UnixNanos ts_recv;
+  UnixNanos ts_ref;
+  std::int64_t price;
+  std::int32_t quantity;
+  std::uint32_t sequence;
+  TimeDeltaNanos ts_in_delta;
+  StatType stat_type;
+  std::uint16_t channel_id;
+  StatUpdateAction update_action;
+  std::uint8_t stat_flags;
+  std::array<char, 6> dummy;
+};
+
+static_assert(sizeof(StatMsg) == 64, "StatMsg size must match C");
+
 // An error message from the Live Subscription Gateway (LSG). This will never
 // be present in historical data.
 struct ErrorMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::Error; }
+
+  const char* Err() const { return err.data(); }
+
   RecordHeader hd;
   std::array<char, 64> err;
 };
 
 /// A symbol mapping message.
 struct SymbolMappingMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::SymbolMapping; }
+
   RecordHeader hd;
   std::array<char, 22> stype_in_symbol;
   std::array<char, 22> stype_out_symbol;
@@ -283,10 +317,22 @@ struct SymbolMappingMsg {
   UnixNanos end_ts;
 };
 
+struct SystemMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::System; }
+
+  const char* Msg() const { return msg.data(); }
+  bool IsHeartbeat() const {
+    return std::strncmp(msg.data(), "Heartbeat", 9) == 0;
+  }
+
+  RecordHeader hd;
+  std::array<char, 64> msg;
+};
+
 inline bool operator==(const RecordHeader& lhs, const RecordHeader& rhs) {
   return lhs.length == rhs.length && lhs.rtype == rhs.rtype &&
          lhs.publisher_id == rhs.publisher_id &&
-         lhs.product_id == rhs.product_id && lhs.ts_event == rhs.ts_event;
+         lhs.instrument_id == rhs.instrument_id && lhs.ts_event == rhs.ts_event;
 }
 inline bool operator!=(const RecordHeader& lhs, const RecordHeader& rhs) {
   return !(lhs == rhs);
@@ -373,10 +419,29 @@ inline bool operator!=(const ImbalanceMsg& lhs, const ImbalanceMsg& rhs) {
   return !(lhs == rhs);
 }
 
+inline bool operator==(const StatMsg& lhs, const StatMsg& rhs) {
+  return std::tie(lhs.hd, lhs.ts_recv, lhs.ts_ref, lhs.price, lhs.quantity,
+                  lhs.sequence, lhs.ts_in_delta, lhs.stat_type, lhs.channel_id,
+                  lhs.update_action, lhs.stat_flags) ==
+         std::tie(rhs.hd, rhs.ts_recv, rhs.ts_ref, rhs.price, rhs.quantity,
+                  rhs.sequence, rhs.ts_in_delta, rhs.stat_type, rhs.channel_id,
+                  rhs.update_action, rhs.stat_flags);
+}
+inline bool operator!=(const StatMsg& lhs, const StatMsg& rhs) {
+  return !(lhs == rhs);
+}
+
 inline bool operator==(const ErrorMsg& lhs, const ErrorMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.err == rhs.err;
 }
 inline bool operator!=(const ErrorMsg& lhs, const ErrorMsg& rhs) {
+  return !(lhs == rhs);
+}
+
+inline bool operator==(const SystemMsg& lhs, const SystemMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.msg == rhs.msg;
+}
+inline bool operator!=(const SystemMsg& lhs, const SystemMsg& rhs) {
   return !(lhs == rhs);
 }
 
@@ -407,8 +472,12 @@ std::ostream& operator<<(std::ostream& stream,
 std::string ToString(const ImbalanceMsg& imbalance_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const ImbalanceMsg& imbalance_msg);
+std::string ToString(const StatMsg& stat_msg);
+std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg);
 std::string ToString(const ErrorMsg& err_msg);
 std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg);
+std::string ToString(const SystemMsg& system_msg);
+std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg);
 std::string ToString(const SymbolMappingMsg& symbol_mapping_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const SymbolMappingMsg& symbol_mapping_msg);

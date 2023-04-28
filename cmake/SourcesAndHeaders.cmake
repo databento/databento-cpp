@@ -7,12 +7,14 @@ set(headers
   include/databento/dbn_file_store.hpp
   include/databento/enums.hpp
   include/databento/exceptions.hpp
+  include/databento/fixed_price.hpp
   include/databento/flag_set.hpp
   include/databento/historical.hpp
   include/databento/ireadable.hpp
   include/databento/live.hpp
   include/databento/live_blocking.hpp
   include/databento/live_threaded.hpp
+  include/databento/log.hpp
   include/databento/metadata.hpp
   include/databento/record.hpp
   include/databento/symbology.hpp
@@ -36,10 +38,12 @@ set(sources
   src/enums.cpp
   src/exceptions.cpp
   src/dbn_file_store.cpp
+  src/fixed_price.cpp
   src/historical.cpp
   src/live.cpp
   src/live_blocking.cpp
   src/live_threaded.cpp
+  src/log.cpp
   src/metadata.cpp
   src/record.cpp
   src/symbology.cpp

@@ -31,9 +31,11 @@ class TcpClient {
   // closed, the same behavior as the Read overload without a timeout.
   Result ReadSome(char* buffer, std::size_t max_size,
                   std::chrono::milliseconds timeout);
+  // Closes the socket.
+  void Close();
 
  private:
-  static int InitSocket(const std::string& gateway, std::uint16_t port);
+  static ScopedFd InitSocket(const std::string& gateway, std::uint16_t port);
 
   ScopedFd socket_;
 };

@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.7.0 - 2023-04-28
+- Added initial support for live data with `LiveBlocking` and `LiveThreaded` clients
+- Added support for statistics schema
+- Added `SystemMsg` and `ErrorMsg` records for use in live data
+- Added `strike_price`, `strike_price_currency`, and `instrument_class` to `InstrumentDefMsg`
+- Renamed `BatchJob.cost` to `cost_usd` and value now expressed as US dollars
+- Added `FixedPx` helper class for formatting fixed prices
+- Added configurable log receiver `ILogReceiver`
+- Added `instrument_class`, `strike_price`, and `strike_price_currency` to definition schema
+- Added additional `condition` variants for `DatasetConditionDetail` (degraded, pending, missing)
+- Added additional member `last_modified_date` to `DatasetConditionDetail` Added `has_mixed_schema`, `has_mixed_stype_in`, and `ts_out` to `Metadata` to support live data
+- Removed `related` and `related_security_id` from `InstrumentDefMsg`
+- Renamed `SType::ProductId` to `SType::InstrumentId` and `SType::Native` to `SType::RawSymbol`
+- Renamed `RecordHeader::product_id` to `instrument_id`
+- Renamed `InstrumentDefMsg::symbol` to `raw_symbol`
+- Renamed `SymbolMapping::native_symbol` to `raw_symbol`
+- Deprecated `SType::Smart` to split into `SType::Parent` and `SType::Continuous`
+- Changed `expiration` and `action` type to `UnixNanos`
+- Changed some fields to enums in `InstrumentDefMsg`
+- Added optional `compression` parameter to `BatchSubmitJob`
+- Fixed parsing of `BatchSubmitJob` response
+- Fixed invalid read in `DbnDecoder`
+- Fixed memory leak in `TryCreateDir`
+
 ## 0.6.1 - 2023-03-28
 - Fixed Zstd decoding of files with multiple frames
 - Removed usage of unreliable `std::ifstream::readsome`

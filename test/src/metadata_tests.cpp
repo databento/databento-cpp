@@ -6,11 +6,11 @@
 namespace databento {
 namespace test {
 TEST(MetadataTests, TestDatasetConditionDetailToString) {
-  const DatasetConditionDetail target{"2022-11-10",
-                                      DatasetCondition::Available};
+  const DatasetConditionDetail target{"2022-11-10", DatasetCondition::Available,
+                                      "2023-03-01"};
   ASSERT_EQ(
       ToString(target),
-      R"(DatasetConditionDetail { date = "2022-11-10", condition = available })");
+      R"(DatasetConditionDetail { date = "2022-11-10", condition = available, last_modified_date = "2023-03-01" })");
 }
 
 TEST(MetadataTests, TestDatasetRangeToString) {

@@ -4,6 +4,7 @@
 
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // InvalidArgumentError
+#include "databento/fixed_price.hpp"
 #include "stream_op_helper.hpp"
 
 using databento::Record;
@@ -41,6 +42,12 @@ std::size_t Record::SizeOfSchema(const Schema schema) {
     }
     case Schema::Definition: {
       return sizeof(InstrumentDefMsg);
+    }
+    case Schema::Statistics: {
+      return sizeof(StatMsg);
+    }
+    case Schema::Imbalance: {
+      return sizeof(ImbalanceMsg);
     }
     default: {
       throw InvalidArgumentError{
@@ -83,6 +90,12 @@ RType Record::RTypeFromSchema(const Schema schema) {
     case Schema::Definition: {
       return RType::InstrumentDef;
     }
+    case Schema::Statistics: {
+      return RType::Statistics;
+    }
+    case Schema::Imbalance: {
+      return RType::Imbalance;
+    }
     default: {
       throw InvalidArgumentError{
           "Record::RTypeFromSchema", "schema",
@@ -122,18 +135,20 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
          lhs.contract_multiplier == rhs.contract_multiplier &&
          lhs.decay_quantity == rhs.decay_quantity &&
          lhs.original_contract_size == rhs.original_contract_size &&
-         lhs.related_security_id == rhs.related_security_id &&
          lhs.trading_reference_date == rhs.trading_reference_date &&
          lhs.appl_id == rhs.appl_id && lhs.maturity_year == rhs.maturity_year &&
          lhs.decay_start_date == rhs.decay_start_date &&
          lhs.channel_id == rhs.channel_id && lhs.currency == rhs.currency &&
          lhs.settl_currency == rhs.settl_currency &&
-         lhs.secsubtype == rhs.secsubtype && lhs.symbol == rhs.symbol &&
+         lhs.secsubtype == rhs.secsubtype && lhs.raw_symbol == rhs.raw_symbol &&
          lhs.group == rhs.group && lhs.exchange == rhs.exchange &&
          lhs.asset == rhs.asset && lhs.cfi == rhs.cfi &&
          lhs.security_type == rhs.security_type &&
          lhs.unit_of_measure == rhs.unit_of_measure &&
-         lhs.underlying == rhs.underlying && lhs.related == rhs.related &&
+         lhs.underlying == rhs.underlying &&
+         lhs.strike_price_currency == rhs.strike_price_currency &&
+         lhs.instrument_class == rhs.instrument_class &&
+         lhs.strike_price == rhs.strike_price &&
          lhs.match_algorithm == rhs.match_algorithm &&
          lhs.md_security_trading_status == rhs.md_security_trading_status &&
          lhs.main_fraction == rhs.main_fraction &&
@@ -192,7 +207,7 @@ std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp_msg) {
       .SetSpacer("\n    ")
       .Build()
       .AddField("hd", mbp_msg.hd)
-      .AddField("price", mbp_msg.price)
+      .AddField("price", FixPx{mbp_msg.price})
       .AddField("size", mbp_msg.size)
       .AddField("action", mbp_msg.action)
       .AddField("side", mbp_msg.side)
@@ -217,7 +232,7 @@ std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp_msg) {
       .SetSpacer("\n    ")
       .Build()
       .AddField("hd", mbp_msg.hd)
-      .AddField("price", mbp_msg.price)
+      .AddField("price", FixPx{mbp_msg.price})
       .AddField("size", mbp_msg.size)
       .AddField("action", mbp_msg.action)
       .AddField("side", mbp_msg.side)
@@ -241,7 +256,7 @@ std::ostream& operator<<(std::ostream& stream, const RecordHeader& header) {
       .AddField("length", header.length)
       .AddField("rtype", header.rtype)
       .AddField("publisher_id", header.publisher_id)
-      .AddField("product_id", header.product_id)
+      .AddField("instrument_id", header.instrument_id)
       .AddField("ts_event", header.ts_event)
       .Finish();
 }
@@ -253,7 +268,7 @@ std::ostream& operator<<(std::ostream& stream, const MboMsg& mbo_msg) {
       .Build()
       .AddField("hd", mbo_msg.hd)
       .AddField("order_id", mbo_msg.order_id)
-      .AddField("price", mbo_msg.price)
+      .AddField("price", FixPx{mbo_msg.price})
       .AddField("size", mbo_msg.size)
       .AddField("flags", mbo_msg.flags)
       .AddField("channel_id", mbo_msg.channel_id)
@@ -270,8 +285,8 @@ std::ostream& operator<<(std::ostream& stream, const BidAskPair& ba_pair) {
       .SetSpacer(" ")
       .SetTypeName("BidAskPair")
       .Build()
-      .AddField("bid_px", ba_pair.bid_px)
-      .AddField("ask_px", ba_pair.ask_px)
+      .AddField("bid_px", FixPx{ba_pair.bid_px})
+      .AddField("ask_px", FixPx{ba_pair.ask_px})
       .AddField("bid_sz", ba_pair.bid_sz)
       .AddField("ask_sz", ba_pair.ask_sz)
       .AddField("bid_ct", ba_pair.bid_ct)
@@ -287,7 +302,7 @@ std::ostream& operator<<(std::ostream& stream, const TradeMsg& trade_msg) {
       .SetTypeName("TradeMsg")
       .Build()
       .AddField("hd", trade_msg.hd)
-      .AddField("price", trade_msg.price)
+      .AddField("price", FixPx{trade_msg.price})
       .AddField("size", trade_msg.size)
       .AddField("action", trade_msg.action)
       .AddField("side", trade_msg.side)
@@ -307,10 +322,10 @@ std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg) {
       .SetTypeName("OhlcvMsg")
       .Build()
       .AddField("hd", ohlcv_msg.hd)
-      .AddField("open", ohlcv_msg.open)
-      .AddField("high", ohlcv_msg.high)
-      .AddField("low", ohlcv_msg.low)
-      .AddField("close", ohlcv_msg.close)
+      .AddField("open", FixPx{ohlcv_msg.open})
+      .AddField("high", FixPx{ohlcv_msg.high})
+      .AddField("low", FixPx{ohlcv_msg.low})
+      .AddField("close", FixPx{ohlcv_msg.close})
       .AddField("volume", ohlcv_msg.volume)
       .Finish();
 }
@@ -325,18 +340,18 @@ std::ostream& operator<<(std::ostream& stream,
       .Build()
       .AddField("hd", instr_def_msg.hd)
       .AddField("ts_recv", instr_def_msg.ts_recv)
-      .AddField("min_price_increment", instr_def_msg.min_price_increment)
+      .AddField("min_price_increment", FixPx{instr_def_msg.min_price_increment})
       .AddField("display_factor", instr_def_msg.display_factor)
       .AddField("expiration", instr_def_msg.expiration)
       .AddField("activation", instr_def_msg.activation)
-      .AddField("high_limit_price", instr_def_msg.high_limit_price)
-      .AddField("low_limit_price", instr_def_msg.low_limit_price)
-      .AddField("max_price_variation", instr_def_msg.max_price_variation)
+      .AddField("high_limit_price", FixPx{instr_def_msg.high_limit_price})
+      .AddField("low_limit_price", FixPx{instr_def_msg.low_limit_price})
+      .AddField("max_price_variation", FixPx{instr_def_msg.max_price_variation})
       .AddField("trading_reference_price",
-                instr_def_msg.trading_reference_price)
+                FixPx{instr_def_msg.trading_reference_price})
       .AddField("unit_of_measure_qty", instr_def_msg.unit_of_measure_qty)
       .AddField("min_price_increment_amount",
-                instr_def_msg.min_price_increment_amount)
+                FixPx{instr_def_msg.min_price_increment_amount})
       .AddField("price_ratio", instr_def_msg.price_ratio)
       .AddField("inst_attrib_value", instr_def_msg.inst_attrib_value)
       .AddField("underlying_id", instr_def_msg.underlying_id)
@@ -353,7 +368,6 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("contract_multiplier", instr_def_msg.contract_multiplier)
       .AddField("decay_quantity", instr_def_msg.decay_quantity)
       .AddField("original_contract_size", instr_def_msg.original_contract_size)
-      .AddField("related_security_id", instr_def_msg.related_security_id)
       .AddField("trading_reference_date", instr_def_msg.trading_reference_date)
       .AddField("appl_id", instr_def_msg.appl_id)
       .AddField("maturity_year", instr_def_msg.maturity_year)
@@ -362,7 +376,7 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("currency", instr_def_msg.currency)
       .AddField("settl_currency", instr_def_msg.settl_currency)
       .AddField("secsubtype", instr_def_msg.secsubtype)
-      .AddField("symbol", instr_def_msg.symbol)
+      .AddField("raw_symbol", instr_def_msg.raw_symbol)
       .AddField("group", instr_def_msg.group)
       .AddField("exchange", instr_def_msg.exchange)
       .AddField("asset", instr_def_msg.asset)
@@ -370,7 +384,9 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("security_type", instr_def_msg.security_type)
       .AddField("unit_of_measure", instr_def_msg.unit_of_measure)
       .AddField("underlying", instr_def_msg.underlying)
-      .AddField("related", instr_def_msg.related)
+      .AddField("strike_price_currency", instr_def_msg.strike_price_currency)
+      .AddField("instrument_class", instr_def_msg.instrument_class)
+      .AddField("strike_price", FixPx{instr_def_msg.strike_price})
       .AddField("match_algorithm", instr_def_msg.match_algorithm)
       .AddField("md_security_trading_status",
                 instr_def_msg.md_security_trading_status)
@@ -403,15 +419,15 @@ std::ostream& operator<<(std::ostream& stream,
       .Build()
       .AddField("hd", imbalance_msg.hd)
       .AddField("ts_recv", imbalance_msg.ts_recv)
-      .AddField("ref_price", imbalance_msg.ref_price)
+      .AddField("ref_price", FixPx{imbalance_msg.ref_price})
       .AddField("auction_time", imbalance_msg.auction_time)
-      .AddField("cont_book_clr_price", imbalance_msg.cont_book_clr_price)
+      .AddField("cont_book_clr_price", FixPx{imbalance_msg.cont_book_clr_price})
       .AddField("auct_interest_clr_price",
-                imbalance_msg.auct_interest_clr_price)
-      .AddField("ssr_filling_price", imbalance_msg.ssr_filling_price)
-      .AddField("ind_match_price", imbalance_msg.ind_match_price)
-      .AddField("upper_collar", imbalance_msg.upper_collar)
-      .AddField("lower_collar", imbalance_msg.lower_collar)
+                FixPx{imbalance_msg.auct_interest_clr_price})
+      .AddField("ssr_filling_price", FixPx{imbalance_msg.ssr_filling_price})
+      .AddField("ind_match_price", FixPx{imbalance_msg.ind_match_price})
+      .AddField("upper_collar", FixPx{imbalance_msg.upper_collar})
+      .AddField("lower_collar", FixPx{imbalance_msg.lower_collar})
       .AddField("paired_qty", imbalance_msg.paired_qty)
       .AddField("total_imbalance_qty", imbalance_msg.total_imbalance_qty)
       .AddField("market_imbalance_qty", imbalance_msg.market_imbalance_qty)
@@ -426,6 +442,26 @@ std::ostream& operator<<(std::ostream& stream,
       .Finish();
 }
 
+std::string ToString(const StatMsg& stat_msg) { return MakeString(stat_msg); }
+std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("StatMsg")
+      .Build()
+      .AddField("hd", stat_msg.hd)
+      .AddField("ts_recv", stat_msg.ts_recv)
+      .AddField("ts_ref", stat_msg.ts_ref)
+      .AddField("price", FixPx{stat_msg.price})
+      .AddField("quantity", stat_msg.quantity)
+      .AddField("sequence", stat_msg.sequence)
+      .AddField("ts_in_delta", stat_msg.ts_in_delta)
+      .AddField("stat_type", stat_msg.stat_type)
+      .AddField("channel_id", stat_msg.channel_id)
+      .AddField("update_action", stat_msg.update_action)
+      .AddField("stat_flags", stat_msg.stat_flags)
+      .Finish();
+}
+
 std::string ToString(const ErrorMsg& err_msg) { return MakeString(err_msg); }
 std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg) {
   return StreamOpBuilder{stream}
@@ -434,6 +470,19 @@ std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg) {
       .Build()
       .AddField("hd", err_msg.hd)
       .AddField("err", err_msg.err)
+      .Finish();
+}
+
+std::string ToString(const SystemMsg& system_msg) {
+  return MakeString(system_msg);
+}
+std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("SystemMsg")
+      .Build()
+      .AddField("hd", system_msg.hd)
+      .AddField("msg", system_msg.msg)
       .Finish();
 }
 

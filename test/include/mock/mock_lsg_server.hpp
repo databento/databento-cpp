@@ -30,6 +30,7 @@ class MockLsgServer {
                  SType stype);
   void Start(Schema schema);
   std::size_t Send(const std::string& msg);
+  ::ssize_t UncheckedSend(const std::string& msg);
   template <typename Rec>
   void SendRecord(Rec rec) {
     const std::string rec_str{reinterpret_cast<const char*>(&rec), sizeof(rec)};

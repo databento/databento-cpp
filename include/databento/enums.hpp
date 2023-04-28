@@ -49,9 +49,12 @@ enum class Compression : std::uint8_t {
 
 // Represents a symbology type.
 enum class SType : std::uint8_t {
-  ProductId = 0,
-  Native = 1,
-  Smart = 2,
+  InstrumentId = 0,
+  RawSymbol = 1,
+  // Deprecated in 0.7.0. Separated into Parent and Continuous.
+  SmartDeprecated = 2,
+  Continuous = 3,
+  Parent = 4,
 };
 
 // Represents the duration of time at which batch files will be split.
@@ -88,7 +91,10 @@ enum class JobState : std::uint8_t {
 // The condition of a dataset at a point in time.
 enum class DatasetCondition : std::uint8_t {
   Available,
-  Bad,
+  Degraded,
+  Pending,
+  Missing,
+  Bad,  // Deprecated
 };
 
 // Sentinel values for different DBN record types.
@@ -109,6 +115,8 @@ enum RType : std::uint8_t {
   Imbalance = 0x14,
   Error = 0x15,
   SymbolMapping = 0x16,
+  System = 0x17,
+  Statistics = 0x18,
   Mbo = 0xA0,
 };
 }  // namespace rtype
@@ -118,11 +126,14 @@ using rtype::RType;
 //
 // Additional actions may be added in the future.
 namespace action {
+// enum because future variants may be added in the future.
 enum Action : char {
   // An existing order was modified.
   Modify = 'M',
   // A trade executed.
   Trade = 'T',
+  // An existing order was filled.
+  Fill = 'F',
   // An order was cancelled.
   Cancel = 'C',
   // A new order was added.
@@ -144,6 +155,91 @@ enum class Side : char {
   None = 'N',
 };
 
+namespace instrument_class {
+// enum because future variants may be added in the future.
+enum InstrumentClass : char {
+  Bond = 'B',
+  Call = 'C',
+  Future = 'F',
+  Stock = 'K',
+  MixedSpread = 'M',
+  Put = 'P',
+  FutureSpread = 'S',
+  OptionSpread = 'T',
+  FxSpot = 'X',
+};
+}  // namespace instrument_class
+using instrument_class::InstrumentClass;
+
+namespace match_algorithm {
+enum MatchAlgorithm : char {
+  Fifo = 'F',
+  Configurable = 'K',
+  ProRata = 'C',
+  FifoLmm = 'T',
+  ThresholdProRata = 'O',
+  FifoTopLmm = 'S',
+  ThresholdProRataLmm = 'Q',
+  EurodollarOptions = 'Y',
+};
+}  // namespace match_algorithm
+using match_algorithm::MatchAlgorithm;
+
+enum class SecurityUpdateAction : char {
+  Add = 'A',
+  Modify = 'M',
+  Delete = 'D',
+  Invalid = '~',
+};
+
+enum class UserDefinedInstrument : char {
+  No = 'N',
+  Yes = 'Y',
+};
+
+namespace stat_type {
+// The type of statistic contained in a StatMsg.
+enum StatType : std::uint16_t {
+  // The price of the first trade of an instrument. `price` will be set.
+  OpeningPrice = 1,
+  // The probable price of the first trade of an instrument published during
+  // pre-open. Both `price` and `quantity` will be set.
+  IndicativeOpeningPrice = 2,
+  // The settlement price of an instrument. `price` will be set and `flags`
+  // indicate whether the price is final or preliminary and actual or
+  // theoretical.
+  SettlementPrice = 3,
+  // The lowest trade price of an instrument during the trading session.
+  // `price` will be set.
+  TradingSessionLowPrice = 4,
+  // The highest trade price of an instrument during the trading session.
+  // `price` will be set.
+  TradingSessionHighPrice = 5,
+  // The number of contracts cleared for an instrument on the previous trading
+  // date. `quantity` will be set.
+  ClearedVolume = 6,
+  // The lowest offer price for an instrument during the trading session.
+  // `price` will be set.
+  LowestOffer = 7,
+  // The highest bid price for an instrument during the trading session.
+  // `price` will be set.
+  HighestBid = 8,
+  // The current number of outstanding contracts of an instrument. `quantity`
+  // will be set.
+  OpenInterest = 9,
+  // The volume-weighted average price (VWAP) for a fixing period. `price` will
+  // be set.
+  FixingPrice = 10,
+};
+}  // namespace stat_type
+using stat_type::StatType;
+
+// The type of StatMsg update.
+enum class StatUpdateAction : std::uint8_t {
+  New = 1,
+  Delete = 2,
+};
+
 // Convert a HistoricalGateway to a URL.
 const char* UrlFromGateway(HistoricalGateway gateway);
 
@@ -160,6 +256,12 @@ const char* ToString(DatasetCondition condition);
 const char* ToString(RType rtype);
 const char* ToString(Action action);
 const char* ToString(Side side);
+const char* ToString(InstrumentClass instrument_class);
+const char* ToString(MatchAlgorithm match_algorithm);
+const char* ToString(SecurityUpdateAction update_action);
+const char* ToString(UserDefinedInstrument user_def_instr);
+const char* ToString(StatType stat_type);
+const char* ToString(StatUpdateAction stat_update_action);
 
 std::ostream& operator<<(std::ostream& out, Schema schema);
 std::ostream& operator<<(std::ostream& out, Encoding encoding);
@@ -174,6 +276,14 @@ std::ostream& operator<<(std::ostream& out, DatasetCondition condition);
 std::ostream& operator<<(std::ostream& out, RType rtype);
 std::ostream& operator<<(std::ostream& out, Action action);
 std::ostream& operator<<(std::ostream& out, Side side);
+std::ostream& operator<<(std::ostream& out, InstrumentClass instrument_class);
+std::ostream& operator<<(std::ostream& out, MatchAlgorithm match_algorithm);
+std::ostream& operator<<(std::ostream& out, SecurityUpdateAction update_action);
+std::ostream& operator<<(std::ostream& out,
+                         UserDefinedInstrument user_def_instr);
+std::ostream& operator<<(std::ostream& out, StatType stat_type);
+std::ostream& operator<<(std::ostream& out,
+                         StatUpdateAction stat_update_action);
 
 template <typename T>
 T FromString(const std::string& str);

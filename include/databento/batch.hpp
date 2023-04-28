@@ -14,8 +14,8 @@ struct BatchJob {
   std::string id;
   std::string user_id;
   std::string bill_id;
-  // Price in cents
-  double cost;
+  // Cost in US dollars
+  double cost_usd;
   std::string dataset;
   std::vector<std::string> symbols;
   SType stype_in;

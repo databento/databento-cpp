@@ -1,6 +1,6 @@
 #include "databento/historical.hpp"
 
-#include <dirent.h>  // opendir
+#include <dirent.h>  // closedir, opendir
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
@@ -10,6 +10,7 @@
 #include <exception>  // exception, exception_ptr
 #include <fstream>    // ofstream
 #include <ios>        // ios::binary
+#include <memory>     // unique_ptr
 #include <numeric>    // accumulate
 #include <string>
 #include <utility>  // move
@@ -95,6 +96,21 @@ T FromCheckedAtString(const std::string& endpoint, const nlohmann::json& json,
 }
 
 template <typename T>
+T FromCheckedAtStringOrNull(const std::string& endpoint,
+                            const nlohmann::json& json, const std::string& key,
+                            T null_value) {
+  const auto& val_json = ::CheckedAt(endpoint, json, key);
+  if (val_json.is_null()) {
+    return null_value;
+  }
+  if (val_json.is_string()) {
+    return databento::FromString<T>(val_json);
+  }
+  throw JsonResponseError::TypeMismatch(endpoint, key + " null or string",
+                                        val_json);
+}
+
+template <typename T>
 T ParseAt(const std::string& endpoint, const nlohmann::json& json,
           const std::string& key);
 
@@ -168,8 +184,8 @@ std::vector<std::string> ParseAt(const std::string& endpoint,
   return res;
 }
 
-constexpr auto kDefaultSTypeIn = databento::SType::Native;
-constexpr auto kDefaultSTypeOut = databento::SType::ProductId;
+constexpr auto kDefaultSTypeIn = databento::SType::RawSymbol;
+constexpr auto kDefaultSTypeOut = databento::SType::InstrumentId;
 
 databento::BatchJob Parse(const std::string& endpoint,
                           const nlohmann::json& json) {
@@ -189,7 +205,7 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.id = ::CheckedAt(endpoint, json, "id");
   res.user_id = ParseAt<std::string>(endpoint, json, "user_id");
   res.bill_id = ParseAt<std::string>(endpoint, json, "bill_id");
-  res.cost = ParseAt<double>(endpoint, json, "cost");
+  res.cost_usd = ParseAt<double>(endpoint, json, "cost_usd");
   res.dataset = ParseAt<std::string>(endpoint, json, "dataset");
   res.symbols = ParseAt<std::vector<std::string>>(endpoint, json, "symbols");
   res.stype_in = FromCheckedAtString<SType>(endpoint, json, "stype_in");
@@ -199,13 +215,14 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.end = ParseAt<std::string>(endpoint, json, "end");
   res.limit = ParseAt<std::size_t>(endpoint, json, "limit");
   res.encoding = FromCheckedAtString<Encoding>(endpoint, json, "encoding");
-  res.compression =
-      FromCheckedAtString<Compression>(endpoint, json, "compression");
-  res.split_duration =
-      FromCheckedAtString<SplitDuration>(endpoint, json, "split_duration");
+  res.compression = FromCheckedAtStringOrNull<Compression>(
+      endpoint, json, "compression", Compression::None);
+  res.split_duration = FromCheckedAtStringOrNull<SplitDuration>(
+      endpoint, json, "split_duration", SplitDuration::None);
   res.split_size = ParseAt<std::size_t>(endpoint, json, "split_size");
   res.split_symbols = ParseAt<bool>(endpoint, json, "split_symbols");
-  res.packaging = FromCheckedAtString<Packaging>(endpoint, json, "packaging");
+  res.packaging = FromCheckedAtStringOrNull<Packaging>(
+      endpoint, json, "packaging", Packaging::None);
   res.delivery = FromCheckedAtString<Delivery>(endpoint, json, "delivery");
   res.record_count = ParseAt<std::size_t>(endpoint, json, "record_count");
   res.billed_size = ParseAt<std::size_t>(endpoint, json, "billed_size");
@@ -221,17 +238,25 @@ databento::BatchJob Parse(const std::string& endpoint,
   return res;
 }
 
-void TryCreateDir(const std::string& dir) {
-  if (::opendir(dir.c_str()) == nullptr) {
-    const int ret = ::mkdir(dir.c_str(), 0777);
+void TryCreateDir(const std::string& dir_name) {
+  if (dir_name.empty()) {
+    return;
+  }
+  const std::unique_ptr<DIR, int (*)(DIR*)> dir{::opendir(dir_name.c_str()),
+                                                &::closedir};
+  if (dir == nullptr) {
+    const int ret = ::mkdir(dir_name.c_str(), 0777);
     if (ret != 0) {
       throw databento::Exception{std::string{"Unable to create directory "} +
-                                 dir + ": " + ::strerror(errno)};
+                                 dir_name + ": " + ::strerror(errno)};
     }
   }
 }
 
 std::string PathJoin(const std::string& dir, const std::string& path) {
+  if (dir.empty()) {
+    return path;
+  }
   if (dir[dir.length() - 1] == '/') {
     return dir + path;
   }
@@ -255,30 +280,32 @@ databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema) {
   return this->BatchSubmitJob(dataset, start, end, symbols, schema,
-                              SplitDuration::Day, {}, Packaging::None,
-                              Delivery::Download, kDefaultSTypeIn,
-                              kDefaultSTypeOut, {});
+                              Compression::Zstd, SplitDuration::Day, {},
+                              Packaging::None, Delivery::Download,
+                              kDefaultSTypeIn, kDefaultSTypeOut, {});
 }
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
     Schema schema) {
   return this->BatchSubmitJob(dataset, start, end, symbols, schema,
-                              SplitDuration::Day, {}, Packaging::None,
-                              Delivery::Download, kDefaultSTypeIn,
-                              kDefaultSTypeOut, {});
+                              Compression::Zstd, SplitDuration::Day, {},
+                              Packaging::None, Delivery::Download,
+                              kDefaultSTypeIn, kDefaultSTypeOut, {});
 }
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, UnixNanos start, UnixNanos end,
     const std::vector<std::string>& symbols, Schema schema,
-    SplitDuration split_duration, std::size_t split_size, Packaging packaging,
-    Delivery delivery, SType stype_in, SType stype_out, std::size_t limit) {
+    Compression compression, SplitDuration split_duration,
+    std::size_t split_size, Packaging packaging, Delivery delivery,
+    SType stype_in, SType stype_out, std::size_t limit) {
   httplib::Params params{
       {"dataset", dataset},
       {"start", ToString(start)},
       {"end", ToString(end)},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
+      {"compression", ToString(compression)},
       {"encoding", "dbn"},
       {"split_duration", ToString(split_duration)},
       {"packaging", ToString(packaging)},
@@ -292,15 +319,16 @@ databento::BatchJob Historical::BatchSubmitJob(
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, const std::string& start,
     const std::string& end, const std::vector<std::string>& symbols,
-    Schema schema, SplitDuration split_duration, std::size_t split_size,
-    Packaging packaging, Delivery delivery, SType stype_in, SType stype_out,
-    std::size_t limit) {
+    Schema schema, Compression compression, SplitDuration split_duration,
+    std::size_t split_size, Packaging packaging, Delivery delivery,
+    SType stype_in, SType stype_out, std::size_t limit) {
   httplib::Params params{
       {"dataset", dataset},
       {"start", start},
       {"end", end},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
+      {"compression", ToString(compression)},
       {"encoding", "dbn"},
       {"split_duration", ToString(split_duration)},
       {"packaging", ToString(packaging)},
@@ -713,7 +741,10 @@ Historical::MetadataGetDatasetCondition(const httplib::Params& params) {
         ParseAt<std::string>(kEndpoint, detail_json, "date");
     const DatasetCondition condition = FromCheckedAtString<DatasetCondition>(
         kEndpoint, detail_json, "condition");
-    details.emplace_back(DatasetConditionDetail{date, condition});
+    const std::string last_modified_date =
+        ParseAt<std::string>(kEndpoint, detail_json, "last_modified_date");
+    details.emplace_back(
+        DatasetConditionDetail{date, condition, last_modified_date});
   }
   return details;
 }
@@ -1192,5 +1223,5 @@ Historical HistoricalBuilder::Build() {
   if (key_.empty()) {
     throw Exception{"'key' is unset"};
   }
-  return Historical{std::move(key_), gateway_};
+  return Historical{key_, gateway_};
 }

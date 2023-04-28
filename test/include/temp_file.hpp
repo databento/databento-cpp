@@ -19,8 +19,9 @@ class TempFile {
   explicit TempFile(std::string path) : path_{std::move(path)} {
     std::ifstream f{path_};
     if (Exists()) {
-      throw InvalidArgumentError{"TempFile::TempFile", "path",
-                                 "path shouldn't already exist"};
+      throw InvalidArgumentError{
+          "TempFile::TempFile", "path",
+          "File at path " + path_ + " shouldn't already exist"};
     }
   }
   TempFile(const TempFile&) = delete;

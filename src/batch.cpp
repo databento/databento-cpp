@@ -22,7 +22,7 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .AddField("id", batch_job.id)
       .AddField("user_id", batch_job.user_id)
       .AddField("bill_id", batch_job.bill_id)
-      .AddField("cost", batch_job.cost)
+      .AddField("cost_usd", batch_job.cost_usd)
       .AddField("dataset", batch_job.dataset)
       .AddField("symbols",
                 static_cast<std::ostringstream&>(symbol_helper.Finish()))

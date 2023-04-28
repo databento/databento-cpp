@@ -25,8 +25,8 @@ int main() {
   const auto limit = 1000;
   client.TimeseriesGetRange(
       databento::dataset::kGlbxMdp3, start, end, {"ESZ2"},
-      databento::Schema::Trades, databento::SType::Native,
-      databento::SType::ProductId, limit,
+      databento::Schema::Trades, databento::SType::RawSymbol,
+      databento::SType::InstrumentId, limit,
       [](databento::Metadata&& metadata) { std::cout << metadata << '\n'; },
       [](const databento::Record& record) {
         const auto& trade_msg = record.Get<databento::TradeMsg>();

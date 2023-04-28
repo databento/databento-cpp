@@ -10,7 +10,7 @@ option(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_GTEST "Use an external google test
 # Compiler options
 #
 
-option(${PROJECT_NAME_UPPERCASE}_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." ON)
+option(${PROJECT_NAME_UPPERCASE}_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." ${IS_MAIN_PROJECT})
 option(${PROJECT_NAME_UPPERCASE}_FORCE_COLOR_OUTPUT "Always produce ANSI-colored output" OFF)
 
 if(${PROJECT_NAME_UPPERCASE}_FORCE_COLOR_OUTPUT)
@@ -46,6 +46,14 @@ option(${PROJECT_NAME_UPPERCASE}_ENABLE_CPPCHECK "Enable static analysis with Cp
 option(${PROJECT_NAME_UPPERCASE}_ENABLE_CODE_COVERAGE "Enable code coverage through GCC." OFF)
 
 #
+# Sanitizers
+#
+
+option(${PROJECT_NAME_UPPERCASE}_ENABLE_ASAN "Enable address sanitizer." OFF)
+option(${PROJECT_NAME_UPPERCASE}_ENABLE_TSAN "Enable thread sanitizer." OFF)
+option(${PROJECT_NAME_UPPERCASE}_ENABLE_UBSAN "Enable undefined behavior sanitizer." OFF)
+
+#
 # Miscelanious options
 #
 
@@ -72,7 +80,6 @@ if(${PROJECT_NAME_UPPERCASE}_ENABLE_LTO)
     message(SEND_ERROR "IPO is not supported: ${output}.")
   endif()
 endif()
-
 
 option(${PROJECT_NAME_UPPERCASE}_ENABLE_CCACHE "Enable the usage of Ccache, in order to speed up rebuild times." ON)
 find_program(CCACHE_FOUND ccache)
