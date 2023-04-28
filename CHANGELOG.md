@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.7.0 - TBD
+## 0.7.0 - 2023-04-28
 - Added initial support for live data with `LiveBlocking` and `LiveThreaded` clients
 - Added support for statistics schema
 - Added `SystemMsg` and `ErrorMsg` records for use in live data
