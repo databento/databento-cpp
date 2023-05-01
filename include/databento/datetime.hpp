@@ -20,9 +20,10 @@ std::string DateFromIso8601Int(std::uint32_t date_int);
 
 template <typename T>
 struct DateTimeRange {
-  explicit DateTimeRange(T start) : DateTimeRange{std::move(start), {}} {}
-  DateTimeRange(T start, T end)
-      : start{std::move(start)}, end{std::move(end)} {}
+  explicit DateTimeRange(T start_) : DateTimeRange{std::move(start_), {}} {}
+  // underscore to prevent shadowing
+  DateTimeRange(T start_, T end_)
+      : start{std::move(start_)}, end{std::move(end_)} {}
 
   T start;
   T end;
