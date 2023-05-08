@@ -122,7 +122,6 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
          lhs.price_ratio == rhs.price_ratio &&
          lhs.inst_attrib_value == rhs.inst_attrib_value &&
          lhs.underlying_id == rhs.underlying_id &&
-         lhs.cleared_volume == rhs.cleared_volume &&
          lhs.market_depth_implied == rhs.market_depth_implied &&
          lhs.market_depth == rhs.market_depth &&
          lhs.market_segment_id == rhs.market_segment_id &&
@@ -131,7 +130,6 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
          lhs.min_lot_size_block == rhs.min_lot_size_block &&
          lhs.min_lot_size_round_lot == rhs.min_lot_size_round_lot &&
          lhs.min_trade_vol == rhs.min_trade_vol &&
-         lhs.open_interest_qty == rhs.open_interest_qty &&
          lhs.contract_multiplier == rhs.contract_multiplier &&
          lhs.decay_quantity == rhs.decay_quantity &&
          lhs.original_contract_size == rhs.original_contract_size &&
@@ -355,7 +353,6 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("price_ratio", instr_def_msg.price_ratio)
       .AddField("inst_attrib_value", instr_def_msg.inst_attrib_value)
       .AddField("underlying_id", instr_def_msg.underlying_id)
-      .AddField("cleared_volume", instr_def_msg.cleared_volume)
       .AddField("market_depth_implied", instr_def_msg.market_depth_implied)
       .AddField("market_depth", instr_def_msg.market_depth)
       .AddField("market_segment_id", instr_def_msg.market_segment_id)
@@ -364,7 +361,6 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("min_lot_size_block", instr_def_msg.min_lot_size_block)
       .AddField("min_lot_size_round_lot", instr_def_msg.min_lot_size_round_lot)
       .AddField("min_trade_vol", instr_def_msg.min_trade_vol)
-      .AddField("open_interest_qty", instr_def_msg.open_interest_qty)
       .AddField("contract_multiplier", instr_def_msg.contract_multiplier)
       .AddField("decay_quantity", instr_def_msg.decay_quantity)
       .AddField("original_contract_size", instr_def_msg.original_contract_size)

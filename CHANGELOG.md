@@ -1,8 +1,10 @@
 # Changelog
 
 ## 0.8.0 - TBD
-- Renamed `booklevel` MBP field to `levels` for brevity and consistent naming
 - Changed `end` and `end_date` to optional to support new forward-fill behaviour
+- Renamed `booklevel` MBP field to `levels` for brevity and consistent naming
+- Removed `open_interest_qty` and `cleared_volume` fields from definitions schema
+  that were always unset
 
 ## 0.7.0 - 2023-04-28
 - Added initial support for live data with `LiveBlocking` and `LiveThreaded` clients
