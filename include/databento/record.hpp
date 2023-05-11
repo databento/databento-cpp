@@ -109,7 +109,7 @@ struct MbpMsg {
   UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
-  std::array<BidAskPair, N> booklevel;
+  std::array<BidAskPair, N> levels;
 };
 
 }  // namespace detail
@@ -128,7 +128,7 @@ struct TradeMsg {
   UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
-  // 0-sized types don't exist in C++ so booklevel is omitted
+  // 0-sized types don't exist in C++ so levels is omitted
 };
 
 using Mbp1Msg = detail::MbpMsg<1>;
@@ -366,7 +366,7 @@ bool operator==(const MbpMsg<N>& lhs, const MbpMsg<N>& rhs) {
          lhs.action == rhs.action && lhs.side == rhs.side &&
          lhs.flags == rhs.flags && lhs.depth == rhs.depth &&
          lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
-         lhs.sequence == rhs.sequence && lhs.booklevel == rhs.booklevel;
+         lhs.sequence == rhs.sequence && lhs.levels == rhs.levels;
 }
 template <std::size_t N>
 bool operator!=(const MbpMsg<N>& lhs, const MbpMsg<N>& rhs) {

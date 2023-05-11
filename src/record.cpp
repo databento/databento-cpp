@@ -216,16 +216,16 @@ std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp_msg) {
       .AddField("ts_recv", mbp_msg.ts_recv)
       .AddField("ts_in_delta", mbp_msg.ts_in_delta)
       .AddField("sequence", mbp_msg.sequence)
-      .AddField("booklevel", std::get<0>(mbp_msg.booklevel))
+      .AddField("levels", std::get<0>(mbp_msg.levels))
       .Finish();
 }
 template <>
 std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp_msg) {
-  std::ostringstream booklevels;
-  auto booklevel_helper =
-      StreamOpBuilder{booklevels}.SetSpacer("\n    ").SetIndent("    ").Build();
-  for (const auto& booklevel : mbp_msg.booklevel) {
-    booklevel_helper.AddItem(booklevel);
+  std::ostringstream levelss;
+  auto levels_helper =
+      StreamOpBuilder{levelss}.SetSpacer("\n    ").SetIndent("    ").Build();
+  for (const auto& levels : mbp_msg.levels) {
+    levels_helper.AddItem(levels);
   }
   return StreamOpBuilder{stream}
       .SetTypeName("Mbp10Msg")
@@ -241,8 +241,8 @@ std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp_msg) {
       .AddField("ts_recv", mbp_msg.ts_recv)
       .AddField("ts_in_delta", mbp_msg.ts_in_delta)
       .AddField("sequence", mbp_msg.sequence)
-      .AddField("booklevel",
-                static_cast<std::ostringstream&>(booklevel_helper.Finish()))
+      .AddField("levels",
+                static_cast<std::ostringstream&>(levels_helper.Finish()))
       .Finish();
 }
 }  // namespace detail

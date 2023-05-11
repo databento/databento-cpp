@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.8.0 - TBD
+- Renamed `booklevel` MBP field to `levels` for brevity and consistent naming
 - Changed `end` and `end_date` to optional to support new forward-fill behaviour
 
 ## 0.7.0 - 2023-04-28

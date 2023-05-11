@@ -25,12 +25,12 @@ TEST(RecordTests, TestMbp10MsgToString) {
       50,
       {}};
   for (std::uint32_t i = 0; i < 10; ++i) {
-    target.booklevel[i].ask_ct = i;
-    target.booklevel[i].bid_ct = i * 2;
-    target.booklevel[i].ask_sz = i * 3;
-    target.booklevel[i].bid_sz = i * 4;
-    target.booklevel[i].bid_px = static_cast<int64_t>(i) * 5;
-    target.booklevel[i].ask_px = static_cast<int64_t>(i) * 6;
+    target.levels[i].ask_ct = i;
+    target.levels[i].bid_ct = i * 2;
+    target.levels[i].ask_sz = i * 3;
+    target.levels[i].bid_sz = i * 4;
+    target.levels[i].bid_px = static_cast<int64_t>(i) * 5;
+    target.levels[i].ask_px = static_cast<int64_t>(i) * 6;
   }
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(Mbp10Msg {
@@ -44,7 +44,7 @@ TEST(RecordTests, TestMbp10MsgToString) {
     ts_recv = 0,
     ts_in_delta = 100,
     sequence = 50,
-    booklevel = {
+    levels = {
         BidAskPair { bid_px = 0.000000000, ask_px = 0.000000000, bid_sz = 0, ask_sz = 0, bid_ct = 0, ask_ct = 0 },
         BidAskPair { bid_px = 0.000000005, ask_px = 0.000000006, bid_sz = 4, ask_sz = 3, bid_ct = 2, ask_ct = 1 },
         BidAskPair { bid_px = 0.000000010, ask_px = 0.000000012, bid_sz = 8, ask_sz = 6, bid_ct = 4, ask_ct = 2 },
