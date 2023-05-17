@@ -109,7 +109,7 @@ struct MbpMsg {
   UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
-  std::array<BidAskPair, N> booklevel;
+  std::array<BidAskPair, N> levels;
 };
 
 }  // namespace detail
@@ -128,7 +128,7 @@ struct TradeMsg {
   UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
-  // 0-sized types don't exist in C++ so booklevel is omitted
+  // 0-sized types don't exist in C++ so levels is omitted
 };
 
 using Mbp1Msg = detail::MbpMsg<1>;
@@ -183,7 +183,7 @@ struct InstrumentDefMsg {
   std::int64_t price_ratio;
   std::int32_t inst_attrib_value;
   std::uint32_t underlying_id;
-  std::int32_t cleared_volume;
+  std::array<char, 4> _reserved1;
   std::int32_t market_depth_implied;
   std::int32_t market_depth;
   std::uint32_t market_segment_id;
@@ -192,11 +192,11 @@ struct InstrumentDefMsg {
   std::int32_t min_lot_size_block;
   std::int32_t min_lot_size_round_lot;
   std::uint32_t min_trade_vol;
-  std::int32_t open_interest_qty;
+  std::array<char, 4> _reserved2;
   std::int32_t contract_multiplier;
   std::int32_t decay_quantity;
   std::int32_t original_contract_size;
-  std::array<char, 4> reserved1;
+  std::array<char, 4> _reserved3;
   std::uint16_t trading_reference_date;
   std::int16_t appl_id;
   std::uint16_t maturity_year;
@@ -215,9 +215,9 @@ struct InstrumentDefMsg {
   std::array<char, 21> underlying;
   std::array<char, 4> strike_price_currency;
   InstrumentClass instrument_class;
-  std::array<char, 2> reserved2;
+  std::array<char, 2> _reserved4;
   std::int64_t strike_price;
-  std::array<char, 6> reserved3;
+  std::array<char, 6> _reserved5;
   MatchAlgorithm match_algorithm;
   std::uint8_t md_security_trading_status;
   std::uint8_t main_fraction;
@@ -366,7 +366,7 @@ bool operator==(const MbpMsg<N>& lhs, const MbpMsg<N>& rhs) {
          lhs.action == rhs.action && lhs.side == rhs.side &&
          lhs.flags == rhs.flags && lhs.depth == rhs.depth &&
          lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
-         lhs.sequence == rhs.sequence && lhs.booklevel == rhs.booklevel;
+         lhs.sequence == rhs.sequence && lhs.levels == rhs.levels;
 }
 template <std::size_t N>
 bool operator!=(const MbpMsg<N>& lhs, const MbpMsg<N>& rhs) {

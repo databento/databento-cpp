@@ -24,7 +24,7 @@ int main() {
   const databento::UnixNanos end = DateToUnixNanos(2022, 10, 4);
   const auto limit = 1000;
   client.TimeseriesGetRange(
-      databento::dataset::kGlbxMdp3, start, end, {"ESZ2"},
+      databento::dataset::kGlbxMdp3, {start, end}, {"ESZ2"},
       databento::Schema::Trades, databento::SType::RawSymbol,
       databento::SType::InstrumentId, limit,
       [](databento::Metadata&& metadata) { std::cout << metadata << '\n'; },

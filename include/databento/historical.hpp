@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "databento/batch.hpp"     // BatchJob
-#include "databento/datetime.hpp"  // UnixNanos
+#include "databento/datetime.hpp"  // DateRange, DateTimeRange, UnixNanos
 #include "databento/dbn_file_store.hpp"
 #include "databento/detail/http_client.hpp"  // HttpClient
 #include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Packaging, Schema, SType
@@ -34,28 +34,30 @@ class Historical {
    * Batch API
    */
 
-  BatchJob BatchSubmitJob(const std::string& dataset, UnixNanos start,
-                          UnixNanos end,
+  BatchJob BatchSubmitJob(const std::string& dataset,
                           const std::vector<std::string>& symbols,
-                          Schema schema);
-  BatchJob BatchSubmitJob(const std::string& dataset, const std::string& start,
-                          const std::string& end,
+                          Schema schema,
+                          const DateTimeRange<UnixNanos>& datetime_range);
+  BatchJob BatchSubmitJob(const std::string& dataset,
                           const std::vector<std::string>& symbols,
-                          Schema schema);
-  BatchJob BatchSubmitJob(const std::string& dataset, UnixNanos start,
-                          UnixNanos end,
+                          Schema schema,
+                          const DateTimeRange<std::string>& datetime_range);
+  BatchJob BatchSubmitJob(const std::string& dataset,
                           const std::vector<std::string>& symbols,
-                          Schema schema, Compression compression,
-                          SplitDuration split_duration, std::size_t split_size,
-                          Packaging packaging, Delivery delivery,
-                          SType stype_in, SType stype_out, std::size_t limit);
-  BatchJob BatchSubmitJob(const std::string& dataset, const std::string& start,
-                          const std::string& end,
+                          Schema schema,
+                          const DateTimeRange<UnixNanos>& datetime_range,
+                          Compression compression, SplitDuration split_duration,
+                          std::size_t split_size, Packaging packaging,
+                          Delivery delivery, SType stype_in, SType stype_out,
+                          std::size_t limit);
+  BatchJob BatchSubmitJob(const std::string& dataset,
                           const std::vector<std::string>& symbols,
-                          Schema schema, Compression compression,
-                          SplitDuration split_duration, std::size_t split_size,
-                          Packaging packaging, Delivery delivery,
-                          SType stype_in, SType stype_out, std::size_t limit);
+                          Schema schema,
+                          const DateTimeRange<std::string>& datetime_range,
+                          Compression compression, SplitDuration split_duration,
+                          std::size_t split_size, Packaging packaging,
+                          Delivery delivery, SType stype_in, SType stype_out,
+                          std::size_t limit);
   std::vector<BatchJob> BatchListJobs();
   std::vector<BatchJob> BatchListJobs(const std::vector<JobState>& states,
                                       UnixNanos since);
@@ -77,8 +79,7 @@ class Historical {
   // Retrievs a mapping of publisher name to publisher ID.
   std::map<std::string, std::int32_t> MetadataListPublishers();
   std::vector<std::string> MetadataListDatasets();
-  std::vector<std::string> MetadataListDatasets(const std::string& start_date,
-                                                const std::string& end_date);
+  std::vector<std::string> MetadataListDatasets(const DateRange& date_range);
   std::vector<Schema> MetadataListSchemas(const std::string& dataset);
   FieldsByDatasetEncodingAndSchema MetadataListFields();
   FieldsByDatasetEncodingAndSchema MetadataListFields(
@@ -95,62 +96,58 @@ class Historical {
   std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const std::string& dataset);
   std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
-      const std::string& dataset, const std::string& start_date,
-      const std::string& end_date);
+      const std::string& dataset, const DateRange& date_range);
   DatasetRange MetadataGetDatasetRange(const std::string& dataset);
-  std::size_t MetadataGetRecordCount(const std::string& dataset,
-                                     UnixNanos start, UnixNanos end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema);
-  std::size_t MetadataGetRecordCount(const std::string& dataset,
-                                     const std::string& start,
-                                     const std::string& end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema);
-  std::size_t MetadataGetRecordCount(const std::string& dataset,
-                                     UnixNanos start, UnixNanos end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema, SType stype_in,
-                                     std::size_t limit);
-  std::size_t MetadataGetRecordCount(const std::string& dataset,
-                                     const std::string& start,
-                                     const std::string& end,
-                                     const std::vector<std::string>& symbols,
-                                     Schema schema, SType stype_in,
-                                     std::size_t limit);
-  std::size_t MetadataGetBillableSize(const std::string& dataset,
-                                      UnixNanos start, UnixNanos end,
-                                      const std::vector<std::string>& symbols,
-                                      Schema schema);
-  std::size_t MetadataGetBillableSize(const std::string& dataset,
-                                      const std::string& start,
-                                      const std::string& end,
-                                      const std::vector<std::string>& symbols,
-                                      Schema schema);
-  std::size_t MetadataGetBillableSize(const std::string& dataset,
-                                      UnixNanos start, UnixNanos end,
-                                      const std::vector<std::string>& symbols,
-                                      Schema schema, SType stype_in,
-                                      std::size_t limit);
-  std::size_t MetadataGetBillableSize(const std::string& dataset,
-                                      const std::string& start,
-                                      const std::string& end,
-                                      const std::vector<std::string>& symbols,
-                                      Schema schema, SType stype_in,
-                                      std::size_t limit);
-  double MetadataGetCost(const std::string& dataset, UnixNanos start,
-                         UnixNanos end, const std::vector<std::string>& symbols,
-                         Schema schema);
-  double MetadataGetCost(const std::string& dataset, const std::string& start,
-                         const std::string& end,
+  std::size_t MetadataGetRecordCount(
+      const std::string& dataset,
+      const DateTimeRange<UnixNanos>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema);
+  std::size_t MetadataGetRecordCount(
+      const std::string& dataset,
+      const DateTimeRange<std::string>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema);
+  std::size_t MetadataGetRecordCount(
+      const std::string& dataset,
+      const DateTimeRange<UnixNanos>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+      std::size_t limit);
+  std::size_t MetadataGetRecordCount(
+      const std::string& dataset,
+      const DateTimeRange<std::string>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+      std::size_t limit);
+  std::size_t MetadataGetBillableSize(
+      const std::string& dataset,
+      const DateTimeRange<UnixNanos>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema);
+  std::size_t MetadataGetBillableSize(
+      const std::string& dataset,
+      const DateTimeRange<std::string>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema);
+  std::size_t MetadataGetBillableSize(
+      const std::string& dataset,
+      const DateTimeRange<UnixNanos>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+      std::size_t limit);
+  std::size_t MetadataGetBillableSize(
+      const std::string& dataset,
+      const DateTimeRange<std::string>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+      std::size_t limit);
+  double MetadataGetCost(const std::string& dataset,
+                         const DateTimeRange<UnixNanos>& datetime_range,
                          const std::vector<std::string>& symbols,
                          Schema schema);
-  double MetadataGetCost(const std::string& dataset, UnixNanos start,
-                         UnixNanos end, const std::vector<std::string>& symbols,
-                         Schema schema, FeedMode mode, SType stype_in,
-                         std::size_t limit);
-  double MetadataGetCost(const std::string& dataset, const std::string& start,
-                         const std::string& end,
+  double MetadataGetCost(const std::string& dataset,
+                         const DateTimeRange<std::string>& datetime_range,
+                         const std::vector<std::string>& symbols,
+                         Schema schema);
+  double MetadataGetCost(const std::string& dataset,
+                         const DateTimeRange<UnixNanos>& datetime_range,
+                         const std::vector<std::string>& symbols, Schema schema,
+                         FeedMode mode, SType stype_in, std::size_t limit);
+  double MetadataGetCost(const std::string& dataset,
+                         const DateTimeRange<std::string>& datetime_range,
                          const std::vector<std::string>& symbols, Schema schema,
                          FeedMode mode, SType stype_in, std::size_t limit);
 
@@ -159,15 +156,13 @@ class Historical {
    */
 
   SymbologyResolution SymbologyResolve(const std::string& dataset,
-                                       const std::string& start_date,
-                                       const std::string& end_date,
-                                       const std::vector<std::string>& symbols,
-                                       SType stype_in, SType stype_out);
-  SymbologyResolution SymbologyResolve(const std::string& dataset,
-                                       const std::string& start_date,
-                                       const std::string& end_date,
                                        const std::vector<std::string>& symbols,
                                        SType stype_in, SType stype_out,
+                                       const DateRange& date_range);
+  SymbologyResolution SymbologyResolve(const std::string& dataset,
+                                       const std::vector<std::string>& symbols,
+                                       SType stype_in, SType stype_out,
+                                       const DateRange& date_range,
                                        const std::string& default_value);
 
   /*
@@ -180,12 +175,12 @@ class Historical {
   //
   // NOTE: This method spawns a thread, however, the callbacks will be called
   // from the current thread.
-  void TimeseriesGetRange(const std::string& dataset, UnixNanos start,
-                          UnixNanos end,
+  void TimeseriesGetRange(const std::string& dataset,
+                          const DateTimeRange<UnixNanos>& datetime_range,
                           const std::vector<std::string>& symbols,
                           Schema schema, const RecordCallback& record_callback);
-  void TimeseriesGetRange(const std::string& dataset, const std::string& start,
-                          const std::string& end,
+  void TimeseriesGetRange(const std::string& dataset,
+                          const DateTimeRange<std::string>& datetime_range,
                           const std::vector<std::string>& symbols,
                           Schema schema, const RecordCallback& record_callback);
   // Stream historical market data to `record_callback`. `metadata_callback`
@@ -195,15 +190,15 @@ class Historical {
   //
   // NOTE: This method spawns a thread, however, the callbacks will be called
   // from the current thread.
-  void TimeseriesGetRange(const std::string& dataset, UnixNanos start,
-                          UnixNanos end,
+  void TimeseriesGetRange(const std::string& dataset,
+                          const DateTimeRange<UnixNanos>& datetime_range,
                           const std::vector<std::string>& symbols,
                           Schema schema, SType stype_in, SType stype_out,
                           std::size_t limit,
                           const MetadataCallback& metadata_callback,
                           const RecordCallback& record_callback);
-  void TimeseriesGetRange(const std::string& dataset, const std::string& start,
-                          const std::string& end,
+  void TimeseriesGetRange(const std::string& dataset,
+                          const DateTimeRange<std::string>& datetime_range,
                           const std::vector<std::string>& symbols,
                           Schema schema, SType stype_in, SType stype_out,
                           std::size_t limit,
@@ -213,30 +208,26 @@ class Historical {
   // object for replaying the data in `file_path`.
   //
   // If a file at `file_path` already exists, it will be overwritten.
-  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
-                                        UnixNanos start, UnixNanos end,
-                                        const std::vector<std::string>& symbols,
-                                        Schema schema,
-                                        const std::string& file_path);
-  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
-                                        const std::string& start,
-                                        const std::string& end,
-                                        const std::vector<std::string>& symbols,
-                                        Schema schema,
-                                        const std::string& file_path);
-  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
-                                        UnixNanos start, UnixNanos end,
-                                        const std::vector<std::string>& symbols,
-                                        Schema schema, SType stype_in,
-                                        SType stype_out, std::size_t limit,
-                                        const std::string& file_path);
-  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
-                                        const std::string& start,
-                                        const std::string& end,
-                                        const std::vector<std::string>& symbols,
-                                        Schema schema, SType stype_in,
-                                        SType stype_out, std::size_t limit,
-                                        const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(
+      const std::string& dataset,
+      const DateTimeRange<UnixNanos>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema,
+      const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(
+      const std::string& dataset,
+      const DateTimeRange<std::string>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema,
+      const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(
+      const std::string& dataset,
+      const DateTimeRange<UnixNanos>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+      SType stype_out, std::size_t limit, const std::string& file_path);
+  DbnFileStore TimeseriesGetRangeToFile(
+      const std::string& dataset,
+      const DateTimeRange<std::string>& datetime_range,
+      const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+      SType stype_out, std::size_t limit, const std::string& file_path);
 
  private:
   using HttplibParams = std::multimap<std::string, std::string>;

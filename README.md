@@ -94,8 +94,8 @@ int main() {
     if (rec.Holds<TradeMsg>()) {
       auto trade = rec.Get<TradeMsg>();
       std::cout << "Received trade for "
-                << symbol_mappings[trade.hd.instrument_id] << ':'
-                << trade << '\n';
+                << symbol_mappings[trade.hd.instrument_id] << ':' << trade
+                << '\n';
     } else if (rec.Holds<SymbolMappingMsg>()) {
       auto mapping = rec.Get<SymbolMappingMsg>();
       symbol_mappings[mapping.hd.instrument_id] =
@@ -124,17 +124,16 @@ Here is a simple program that fetches 10 minutes worth of historical trades for 
 using namespace databento;
 
 int main() {
-  auto client =
-      HistoricalBuilder{}.SetKey("$YOUR_API_KEY").Build();
+  auto client = HistoricalBuilder{}.SetKey("$YOUR_API_KEY").Build();
   auto print_trades = [](const Record& record) {
     const auto& trade_msg = record.Get<TradeMsg>();
     std::cout << trade_msg << '\n';
     return KeepGoing::Continue;
   };
-  client.TimeseriesGetRange(
-      "GLBX.MDP3", "2022-06-10T14:30", "2022-06-10T14:40",
-      kAllSymbols, Schema::Trades, SType::RawSymbol,
-      SType::InstrumentId, {}, {}, print_trades);
+  client.TimeseriesGetRange("GLBX.MDP3",
+                            {"2022-06-10T14:30", "2022-06-10T14:40"},
+                            kAllSymbols, Schema::Trades, SType::RawSymbol,
+                            SType::InstrumentId, {}, {}, print_trades);
 }
 ```
 

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <ratio>  // nano
 #include <string>
+#include <utility>
 
 namespace databento {
 // Nanoseconds since the UNIX epoch.
@@ -16,4 +17,16 @@ std::string ToString(UnixNanos unix_nanos);
 std::string ToString(TimeDeltaNanos td_nanos);
 // Converts a YYYYMMDD integer to a YYYY-MM-DD string.
 std::string DateFromIso8601Int(std::uint32_t date_int);
+
+template <typename T>
+struct DateTimeRange {
+  explicit DateTimeRange(T start_) : DateTimeRange{std::move(start_), {}} {}
+  // underscore to prevent shadowing
+  DateTimeRange(T start_, T end_)
+      : start{std::move(start_)}, end{std::move(end_)} {}
+
+  T start;
+  T end;
+};
+using DateRange = DateTimeRange<std::string>;
 }  // namespace databento

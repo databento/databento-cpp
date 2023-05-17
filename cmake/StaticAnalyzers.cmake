@@ -5,7 +5,7 @@ if(${PROJECT_NAME_UPPERCASE}_ENABLE_CLANG_TIDY)
       CMAKE_CXX_CLANG_TIDY ${CLANGTIDY}
       -extra-arg=-Wno-unknown-warning-option
     )
-    message("Clang-Tidy finished setting up.")
+    message(STATUS "Clang-Tidy finished setting up.")
   else()
     message(SEND_ERROR "Clang-Tidy requested but executable not found.")
   endif()
@@ -31,7 +31,7 @@ if(${PROJECT_NAME_UPPERCASE}_ENABLE_CPPCHECK)
       # Ignore third-party dependencies
       -i${CMAKE_BINARY_DIR}
     )
-    message("Cppcheck finished setting up.")
+    message(STATUS "Cppcheck finished setting up.")
   else()
     message(SEND_ERROR "Cppcheck requested but executable not found.")
   endif()

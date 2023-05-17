@@ -196,12 +196,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   EXPECT_EQ(ch_mbp1.ts_recv.time_since_epoch().count(), 1609160400006136329);
   EXPECT_EQ(ch_mbp1.ts_in_delta.count(), 17214);
   EXPECT_EQ(ch_mbp1.sequence, 1170362);
-  EXPECT_EQ(ch_mbp1.booklevel[0].bid_px, 3720250000000);
-  EXPECT_EQ(ch_mbp1.booklevel[0].ask_px, 3720500000000);
-  EXPECT_EQ(ch_mbp1.booklevel[0].bid_sz, 24);
-  EXPECT_EQ(ch_mbp1.booklevel[0].ask_sz, 11);
-  EXPECT_EQ(ch_mbp1.booklevel[0].bid_ct, 15);
-  EXPECT_EQ(ch_mbp1.booklevel[0].ask_ct, 9);
+  EXPECT_EQ(ch_mbp1.levels[0].bid_px, 3720250000000);
+  EXPECT_EQ(ch_mbp1.levels[0].ask_px, 3720500000000);
+  EXPECT_EQ(ch_mbp1.levels[0].bid_sz, 24);
+  EXPECT_EQ(ch_mbp1.levels[0].ask_sz, 11);
+  EXPECT_EQ(ch_mbp1.levels[0].bid_ct, 15);
+  EXPECT_EQ(ch_mbp1.levels[0].ask_ct, 9);
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
@@ -225,12 +225,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   EXPECT_EQ(ch_mbp2.ts_recv.time_since_epoch().count(), 1609160400006246513);
   EXPECT_EQ(ch_mbp2.ts_in_delta.count(), 18858);
   EXPECT_EQ(ch_mbp2.sequence, 1170364);
-  EXPECT_EQ(ch_mbp2.booklevel[0].bid_px, 3720250000000);
-  EXPECT_EQ(ch_mbp2.booklevel[0].ask_px, 3720500000000);
-  EXPECT_EQ(ch_mbp2.booklevel[0].bid_sz, 24);
-  EXPECT_EQ(ch_mbp2.booklevel[0].ask_sz, 12);
-  EXPECT_EQ(ch_mbp2.booklevel[0].bid_ct, 15);
-  EXPECT_EQ(ch_mbp2.booklevel[0].ask_ct, 10);
+  EXPECT_EQ(ch_mbp2.levels[0].bid_px, 3720250000000);
+  EXPECT_EQ(ch_mbp2.levels[0].ask_px, 3720500000000);
+  EXPECT_EQ(ch_mbp2.levels[0].bid_sz, 24);
+  EXPECT_EQ(ch_mbp2.levels[0].ask_sz, 12);
+  EXPECT_EQ(ch_mbp2.levels[0].bid_ct, 15);
+  EXPECT_EQ(ch_mbp2.levels[0].ask_ct, 10);
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
@@ -274,24 +274,24 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_EQ(ch_mbp1.ts_recv.time_since_epoch().count(), 1609160400000704060);
   EXPECT_EQ(ch_mbp1.ts_in_delta.count(), 22993);
   EXPECT_EQ(ch_mbp1.sequence, 1170352);
-  EXPECT_EQ(ch_mbp1.booklevel[0].bid_px, 3720250000000);
-  EXPECT_EQ(ch_mbp1.booklevel[0].ask_px, 3720500000000);
-  EXPECT_EQ(ch_mbp1.booklevel[0].bid_sz, 24);
-  EXPECT_EQ(ch_mbp1.booklevel[0].ask_sz, 10);
-  EXPECT_EQ(ch_mbp1.booklevel[0].bid_ct, 15);
-  EXPECT_EQ(ch_mbp1.booklevel[0].ask_ct, 8);
-  EXPECT_EQ(ch_mbp1.booklevel[1].bid_px, 3720000000000);
-  EXPECT_EQ(ch_mbp1.booklevel[1].ask_px, 3720750000000);
-  EXPECT_EQ(ch_mbp1.booklevel[1].bid_sz, 31);
-  EXPECT_EQ(ch_mbp1.booklevel[1].ask_sz, 34);
-  EXPECT_EQ(ch_mbp1.booklevel[1].bid_ct, 18);
-  EXPECT_EQ(ch_mbp1.booklevel[1].ask_ct, 24);
-  EXPECT_EQ(ch_mbp1.booklevel[2].bid_px, 3719750000000);
-  EXPECT_EQ(ch_mbp1.booklevel[2].ask_px, 3721000000000);
-  EXPECT_EQ(ch_mbp1.booklevel[2].bid_sz, 32);
-  EXPECT_EQ(ch_mbp1.booklevel[2].ask_sz, 39);
-  EXPECT_EQ(ch_mbp1.booklevel[2].bid_ct, 23);
-  EXPECT_EQ(ch_mbp1.booklevel[2].ask_ct, 25);
+  EXPECT_EQ(ch_mbp1.levels[0].bid_px, 3720250000000);
+  EXPECT_EQ(ch_mbp1.levels[0].ask_px, 3720500000000);
+  EXPECT_EQ(ch_mbp1.levels[0].bid_sz, 24);
+  EXPECT_EQ(ch_mbp1.levels[0].ask_sz, 10);
+  EXPECT_EQ(ch_mbp1.levels[0].bid_ct, 15);
+  EXPECT_EQ(ch_mbp1.levels[0].ask_ct, 8);
+  EXPECT_EQ(ch_mbp1.levels[1].bid_px, 3720000000000);
+  EXPECT_EQ(ch_mbp1.levels[1].ask_px, 3720750000000);
+  EXPECT_EQ(ch_mbp1.levels[1].bid_sz, 31);
+  EXPECT_EQ(ch_mbp1.levels[1].ask_sz, 34);
+  EXPECT_EQ(ch_mbp1.levels[1].bid_ct, 18);
+  EXPECT_EQ(ch_mbp1.levels[1].ask_ct, 24);
+  EXPECT_EQ(ch_mbp1.levels[2].bid_px, 3719750000000);
+  EXPECT_EQ(ch_mbp1.levels[2].ask_px, 3721000000000);
+  EXPECT_EQ(ch_mbp1.levels[2].bid_sz, 32);
+  EXPECT_EQ(ch_mbp1.levels[2].ask_sz, 39);
+  EXPECT_EQ(ch_mbp1.levels[2].bid_ct, 23);
+  EXPECT_EQ(ch_mbp1.levels[2].ask_ct, 25);
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
@@ -315,24 +315,24 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_EQ(ch_mbp2.ts_recv.time_since_epoch().count(), 1609160400000750544);
   EXPECT_EQ(ch_mbp2.ts_in_delta.count(), 20625);
   EXPECT_EQ(ch_mbp2.sequence, 1170356);
-  EXPECT_EQ(ch_mbp2.booklevel[0].bid_px, 3720250000000);
-  EXPECT_EQ(ch_mbp2.booklevel[0].ask_px, 3720500000000);
-  EXPECT_EQ(ch_mbp2.booklevel[0].bid_sz, 24);
-  EXPECT_EQ(ch_mbp2.booklevel[0].ask_sz, 10);
-  EXPECT_EQ(ch_mbp2.booklevel[0].bid_ct, 15);
-  EXPECT_EQ(ch_mbp2.booklevel[0].ask_ct, 8);
-  EXPECT_EQ(ch_mbp2.booklevel[1].bid_px, 3720000000000);
-  EXPECT_EQ(ch_mbp2.booklevel[1].ask_px, 3720750000000);
-  EXPECT_EQ(ch_mbp2.booklevel[1].bid_sz, 30);
-  EXPECT_EQ(ch_mbp2.booklevel[1].ask_sz, 34);
-  EXPECT_EQ(ch_mbp2.booklevel[1].bid_ct, 17);
-  EXPECT_EQ(ch_mbp2.booklevel[1].ask_ct, 24);
-  EXPECT_EQ(ch_mbp2.booklevel[2].bid_px, 3719750000000);
-  EXPECT_EQ(ch_mbp2.booklevel[2].ask_px, 3721000000000);
-  EXPECT_EQ(ch_mbp2.booklevel[2].bid_sz, 32);
-  EXPECT_EQ(ch_mbp2.booklevel[2].ask_sz, 39);
-  EXPECT_EQ(ch_mbp2.booklevel[2].bid_ct, 23);
-  EXPECT_EQ(ch_mbp2.booklevel[2].ask_ct, 25);
+  EXPECT_EQ(ch_mbp2.levels[0].bid_px, 3720250000000);
+  EXPECT_EQ(ch_mbp2.levels[0].ask_px, 3720500000000);
+  EXPECT_EQ(ch_mbp2.levels[0].bid_sz, 24);
+  EXPECT_EQ(ch_mbp2.levels[0].ask_sz, 10);
+  EXPECT_EQ(ch_mbp2.levels[0].bid_ct, 15);
+  EXPECT_EQ(ch_mbp2.levels[0].ask_ct, 8);
+  EXPECT_EQ(ch_mbp2.levels[1].bid_px, 3720000000000);
+  EXPECT_EQ(ch_mbp2.levels[1].ask_px, 3720750000000);
+  EXPECT_EQ(ch_mbp2.levels[1].bid_sz, 30);
+  EXPECT_EQ(ch_mbp2.levels[1].ask_sz, 34);
+  EXPECT_EQ(ch_mbp2.levels[1].bid_ct, 17);
+  EXPECT_EQ(ch_mbp2.levels[1].ask_ct, 24);
+  EXPECT_EQ(ch_mbp2.levels[2].bid_px, 3719750000000);
+  EXPECT_EQ(ch_mbp2.levels[2].ask_px, 3721000000000);
+  EXPECT_EQ(ch_mbp2.levels[2].bid_sz, 32);
+  EXPECT_EQ(ch_mbp2.levels[2].ask_sz, 39);
+  EXPECT_EQ(ch_mbp2.levels[2].bid_ct, 23);
+  EXPECT_EQ(ch_mbp2.levels[2].ask_ct, 25);
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
@@ -376,12 +376,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   EXPECT_EQ(ch_tbbo1.ts_recv.time_since_epoch().count(), 1609160400099150057);
   EXPECT_EQ(ch_tbbo1.ts_in_delta.count(), 19251);
   EXPECT_EQ(ch_tbbo1.sequence, 1170380);
-  EXPECT_EQ(ch_tbbo1.booklevel[0].bid_px, 3720250000000);
-  EXPECT_EQ(ch_tbbo1.booklevel[0].ask_px, 3720500000000);
-  EXPECT_EQ(ch_tbbo1.booklevel[0].bid_sz, 26);
-  EXPECT_EQ(ch_tbbo1.booklevel[0].ask_sz, 7);
-  EXPECT_EQ(ch_tbbo1.booklevel[0].bid_ct, 16);
-  EXPECT_EQ(ch_tbbo1.booklevel[0].ask_ct, 6);
+  EXPECT_EQ(ch_tbbo1.levels[0].bid_px, 3720250000000);
+  EXPECT_EQ(ch_tbbo1.levels[0].ask_px, 3720500000000);
+  EXPECT_EQ(ch_tbbo1.levels[0].bid_sz, 26);
+  EXPECT_EQ(ch_tbbo1.levels[0].ask_sz, 7);
+  EXPECT_EQ(ch_tbbo1.levels[0].bid_ct, 16);
+  EXPECT_EQ(ch_tbbo1.levels[0].ask_ct, 6);
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
@@ -405,12 +405,12 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   EXPECT_EQ(ch_tbbo2.ts_recv.time_since_epoch().count(), 1609160400108142648);
   EXPECT_EQ(ch_tbbo2.ts_in_delta.count(), 20728);
   EXPECT_EQ(ch_tbbo2.sequence, 1170414);
-  EXPECT_EQ(ch_tbbo2.booklevel[0].bid_px, 3720250000000);
-  EXPECT_EQ(ch_tbbo2.booklevel[0].ask_px, 3720500000000);
-  EXPECT_EQ(ch_tbbo2.booklevel[0].bid_sz, 21);
-  EXPECT_EQ(ch_tbbo2.booklevel[0].ask_sz, 22);
-  EXPECT_EQ(ch_tbbo2.booklevel[0].bid_ct, 13);
-  EXPECT_EQ(ch_tbbo2.booklevel[0].ask_ct, 15);
+  EXPECT_EQ(ch_tbbo2.levels[0].bid_px, 3720250000000);
+  EXPECT_EQ(ch_tbbo2.levels[0].ask_px, 3720500000000);
+  EXPECT_EQ(ch_tbbo2.levels[0].bid_sz, 21);
+  EXPECT_EQ(ch_tbbo2.levels[0].ask_sz, 22);
+  EXPECT_EQ(ch_tbbo2.levels[0].bid_ct, 13);
+  EXPECT_EQ(ch_tbbo2.levels[0].ask_ct, 15);
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
