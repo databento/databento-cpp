@@ -38,6 +38,6 @@ class LiveBuilder {
   ILogReceiver* log_receiver_{};
   std::string key_;
   std::string dataset_;
-  bool send_ts_out_{true};
+  bool send_ts_out_{false};
 };
 }  // namespace databento

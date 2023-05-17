@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.9.0 - TBD
+- Changed `use_ts_out` default to `false`
+
 ## 0.8.0 - 2023-05-16
 - Changed `end` and `end_date` to optional to support new forward-fill behaviour
 - Renamed `booklevel` MBP field to `levels` for brevity and consistent naming
