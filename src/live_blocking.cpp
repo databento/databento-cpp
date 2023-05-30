@@ -10,6 +10,7 @@
 
 #include "databento/constants.hpp"  //  kApiKeyLength
 #include "databento/dbn_decoder.hpp"
+#include "databento/detail/tcp_client.hpp"
 #include "databento/exceptions.hpp"  // LiveApiError
 #include "databento/log.hpp"
 #include "databento/record.hpp"     // Record
@@ -28,8 +29,9 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       key_{std::move(key)},
       dataset_{std::move(dataset)},
       gateway_{DetermineGateway()},
+      port_{13000},
       send_ts_out_{send_ts_out},
-      client_{gateway_, 13000},
+      client_{gateway_, port_},
       session_id_{this->Authenticate()} {}
 
 LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
@@ -39,8 +41,9 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       key_{std::move(key)},
       dataset_{std::move(dataset)},
       gateway_{std::move(gateway)},
+      port_{port},
       send_ts_out_{send_ts_out},
-      client_{gateway_, port},
+      client_{gateway_, port_},
       session_id_{this->Authenticate()} {}
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
@@ -93,7 +96,7 @@ const databento::Record& LiveBlocking::NextRecord() { return *NextRecord({}); }
 
 const databento::Record* LiveBlocking::NextRecord(
     std::chrono::milliseconds timeout) {
-  // need some unread unread_bytes
+  // need some unread_bytes
   const auto unread_bytes = buffer_size_ - buffer_idx_;
   if (unread_bytes == 0) {
     const auto read_res = FillBuffer(timeout);
@@ -101,7 +104,7 @@ const databento::Record* LiveBlocking::NextRecord(
       return nullptr;
     }
     if (read_res.status == detail::TcpClient::Status::Closed) {
-      throw DbnResponseError{"Reached end of DBN stream"};
+      throw DbnResponseError{"Gateway closed the session"};
     }
   }
   // check length
@@ -111,7 +114,7 @@ const databento::Record* LiveBlocking::NextRecord(
       return nullptr;
     }
     if (read_res.status == detail::TcpClient::Status::Closed) {
-      throw DbnResponseError{"Reached end of DBN stream"};
+      throw DbnResponseError{"Gateway closed the session"};
     }
   }
   current_record_ = Record{BufferRecordHeader()};
@@ -121,10 +124,15 @@ const databento::Record* LiveBlocking::NextRecord(
 
 void LiveBlocking::Stop() { client_.Close(); }
 
+void LiveBlocking::Reconnect() {
+  client_ = detail::TcpClient{gateway_, port_};
+  session_id_ = this->Authenticate();
+}
+
 std::string LiveBlocking::DecodeChallenge() {
   buffer_size_ = client_.ReadSome(buffer_.data(), buffer_.size()).read_size;
   if (buffer_size_ == 0) {
-    throw LiveApiError{"Server closed socket during authentication"};
+    throw LiveApiError{"Gateway closed socket during authentication"};
   }
   // first line is version
   std::string response{buffer_.data(), buffer_size_};
@@ -149,7 +157,7 @@ std::string LiveBlocking::DecodeChallenge() {
         client_.ReadSome(&buffer_[buffer_size_], buffer_.size() - buffer_size_)
             .read_size;
     if (buffer_size_ == 0) {
-      throw LiveApiError{"Server closed socket during authentication"};
+      throw LiveApiError{"Gateway closed socket during authentication"};
     }
     response = {buffer_.data(), buffer_size_};
     next_nl_pos = response.find('\n', find_start);

@@ -33,6 +33,7 @@ class LiveBlocking {
   const std::string& Key() const { return key_; }
   const std::string& Dataset() const { return dataset_; }
   const std::string& Gateway() const { return gateway_; }
+  std::uint16_t Port() const { return port_; }
 
   /*
    * Methods
@@ -65,6 +66,8 @@ class LiveBlocking {
   // Stops the session with the gateway. Once stopped, the session cannot be
   // restarted.
   void Stop();
+  // Closes the current connection and attempts to reconnect to the gateway.
+  void Reconnect();
 
  private:
   std::string DetermineGateway() const;
@@ -82,6 +85,7 @@ class LiveBlocking {
   std::string key_;
   std::string dataset_;
   std::string gateway_;
+  std::uint16_t port_;
   bool send_ts_out_;
   detail::TcpClient client_;
   std::array<char, kMaxStrLen> buffer_{};

@@ -21,6 +21,16 @@ class ILogReceiver;
 // is associated with a particular dataset.
 class LiveThreaded {
  public:
+  enum class ExceptionAction {
+    // Start a new session. Return this instead of calling `Start`, which would
+    // cause a deadlock.
+    Restart,
+    // Close the connection and stop the callback thread.
+    Stop,
+  };
+  using ExceptionCallback =
+      std::function<ExceptionAction(const std::exception&)>;
+
   LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
                bool send_ts_out);
   LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
@@ -36,7 +46,9 @@ class LiveThreaded {
    */
 
   const std::string& Key() const;
+  const std::string& Dataset() const;
   const std::string& Gateway() const;
+  std::uint16_t Port() const;
 
   /*
    * Methods
@@ -60,12 +72,22 @@ class LiveThreaded {
   void Start(RecordCallback record_callback);
   void Start(MetadataCallback metadata_callback,
              RecordCallback record_callback);
+  void Start(MetadataCallback metadata_callback, RecordCallback record_callback,
+             ExceptionCallback exception_callback);
+  // Stops the callback thread, closes the current connection, and attempts to
+  // reconnect to the gateway.
+  void Reconnect();
 
  private:
   struct Impl;
 
   static void ProcessingThread(Impl* impl, MetadataCallback&& metadata_callback,
-                               RecordCallback&& record_callback);
+                               RecordCallback&& record_callback,
+                               ExceptionCallback&& exception_callback);
+  static ExceptionAction ExceptionHandler(
+      Impl* impl, const ExceptionCallback& exception_callback,
+      const std::exception& exc, const char* pretty_function_name,
+      const char* message);
 
   // unique_ptr to be movable
   std::unique_ptr<Impl> impl_;

@@ -1,6 +1,9 @@
 # Changelog
 
 ## 0.9.0 - TBD
+- Added `Reconnect` methods to `LiveBlocking` and `LiveThreaded`
+- Added optional `exception_callback` argument to `LiveThreaded::Start` to improve
+  error handling options
 - Added batch download support data files (`condition.json` and `symbology.json`)
 - Changed `use_ts_out` default to `false`
 - Fixed missing definition for `operator==` for `ImbalanceMsg`

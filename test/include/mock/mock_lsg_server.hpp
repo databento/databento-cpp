@@ -19,7 +19,7 @@ namespace test {
 namespace mock {
 class MockLsgServer {
  public:
-  MockLsgServer(std::string dataset,
+  MockLsgServer(std::string dataset, bool ts_out,
                 std::function<void(MockLsgServer&)> serve_fn);
 
   std::uint16_t Port() const { return port_; }
@@ -54,8 +54,11 @@ class MockLsgServer {
     Send(second_part);
   }
 
+  void Close();
+
  private:
   int InitSocketAndSetPort();
+  int InitSocketAndSetPort(int port);
   std::string Receive();
 
   template <typename T>
@@ -66,6 +69,7 @@ class MockLsgServer {
   }
 
   std::string dataset_;
+  bool ts_out_;
   std::uint16_t port_{};
   detail::ScopedFd socket_{};
   detail::ScopedFd conn_fd_{};

@@ -30,6 +30,7 @@ class ScopedThread {
     }
   }
 
+  std::thread::id Id() const { return thread_.get_id(); }
   bool Joinable() const { return thread_.joinable(); }
   void Join() { return thread_.join(); }
 

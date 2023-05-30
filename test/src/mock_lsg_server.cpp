@@ -15,9 +15,10 @@
 
 using databento::test::mock::MockLsgServer;
 
-MockLsgServer::MockLsgServer(std::string dataset,
+MockLsgServer::MockLsgServer(std::string dataset, bool ts_out,
                              std::function<void(MockLsgServer&)> serve_fn)
     : dataset_{std::move(dataset)},
+      ts_out_{ts_out},
       socket_{InitSocketAndSetPort()},
       thread_{std::move(serve_fn), std::ref(*this)} {}
 
@@ -30,12 +31,22 @@ void MockLsgServer::Accept() {
 
 std::string MockLsgServer::Receive() {
   std::string received(1024, 0);
-  const auto read_size =
-      ::recv(conn_fd_.Get(), &*received.begin(), received.size(), {});
-  if (read_size == 0) {
-    throw TcpError{{}, "Client closed socket"};
-  } else if (read_size < 0) {
-    throw TcpError{errno, "Server failed to read"};
+  char c{};
+  std::size_t read_size{};
+  // Read char by char until newline
+  do {
+    const auto ret = ::recv(conn_fd_.Get(), &received[read_size], 1, {});
+    if (ret == 0) {
+      throw TcpError{{}, "Client closed socket"};
+    }
+    if (ret < 0) {
+      throw TcpError{errno, "Server failed to read"};
+    }
+    c = received[read_size];
+    ++read_size;
+  } while (c != '\n' && read_size < 1024);
+  if (read_size == 1024) {
+    throw TcpError{{}, "Overran buffer in MockLsgServer"};
   }
   received.resize(static_cast<std::size_t>(read_size));
   return received;
@@ -66,7 +77,8 @@ void MockLsgServer::Authenticate() {
   }
   EXPECT_NE(received.find("dataset=" + dataset_), std::string::npos);
   EXPECT_NE(received.find("encoding=dbn"), std::string::npos);
-  EXPECT_NE(received.find("ts_out=0"), std::string::npos);
+  EXPECT_NE(received.find("ts_out=" + std::to_string(ts_out_)),
+            std::string::npos);
   Send("success=1|session_id=5|\n");
 }
 
@@ -119,8 +131,10 @@ void MockLsgServer::Start(Schema schema) {
   ASSERT_EQ(bytes_written, kFrameLen);
 }
 
+void MockLsgServer::Close() { conn_fd_.Close(); }
+
 int MockLsgServer::InitSocketAndSetPort() {
-  auto pair = MockTcpServer::InitSocket();
+  const auto pair = MockTcpServer::InitSocket();
   port_ = pair.first;
   return pair.second;
 }

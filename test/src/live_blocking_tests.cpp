@@ -12,9 +12,11 @@
 #include "databento/constants.hpp"  // dataset
 #include "databento/datetime.hpp"
 #include "databento/enums.hpp"  // Schema, SType
+#include "databento/exceptions.hpp"
 #include "databento/live_blocking.hpp"
 #include "databento/log.hpp"
 #include "databento/record.hpp"
+#include "databento/symbology.hpp"
 #include "databento/with_ts_out.hpp"
 #include "mock/mock_lsg_server.hpp"  // MockLsgServer
 
@@ -23,8 +25,9 @@ namespace test {
 class LiveBlockingTests : public testing::Test {
  protected:
   template <typename T>
-  static RecordHeader DummyHeader(RType rtype) {
-    return {sizeof(T) / 4, rtype, 1, 1, UnixNanos{}};
+  static constexpr RecordHeader DummyHeader(RType rtype) {
+    return {sizeof(T) / RecordHeader::kLengthMultiplier, rtype, 1, 1,
+            UnixNanos{}};
   }
 
   static constexpr auto kKey = "32-character-with-lots-of-filler";
@@ -33,7 +36,8 @@ class LiveBlockingTests : public testing::Test {
 };
 
 TEST_F(LiveBlockingTests, TestAuthentication) {
-  const mock::MockLsgServer mock_server{dataset::kXnasItch,
+  constexpr auto kTsOut = false;
+  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut,
                                         [](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
@@ -41,20 +45,22 @@ TEST_F(LiveBlockingTests, TestAuthentication) {
 
   const LiveBlocking target{logger_.get(),      kKey,
                             dataset::kXnasItch, "127.0.0.1",
-                            mock_server.Port(), false};
+                            mock_server.Port(), kTsOut};
 }
 
 TEST_F(LiveBlockingTests, TestStart) {
+  constexpr auto kTsOut = false;
   constexpr auto kSchema = Schema::Mbo;
-  const mock::MockLsgServer mock_server{dataset::kGlbxMdp3,
+  const mock::MockLsgServer mock_server{dataset::kGlbxMdp3, kTsOut,
                                         [](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
                                           self.Start(kSchema);
                                         }};
 
-  LiveBlocking target{logger_.get(),      kKey, dataset::kGlbxMdp3, "127.0.0.1",
-                      mock_server.Port(), false};
+  LiveBlocking target{logger_.get(),      kKey,
+                      dataset::kGlbxMdp3, "127.0.0.1",
+                      mock_server.Port(), kTsOut};
   const auto metadata = target.Start();
   EXPECT_EQ(metadata.version, 1);
   EXPECT_EQ(metadata.schema, kSchema);
@@ -62,28 +68,30 @@ TEST_F(LiveBlockingTests, TestStart) {
 }
 
 TEST_F(LiveBlockingTests, TestSubscribe) {
+  constexpr auto kTsOut = false;
   constexpr auto kDataset = dataset::kXnasItch;
   const std::vector<std::string> kSymbols{"MSFT", "TSLA", "QQQ"};
   constexpr auto kSchema = Schema::Ohlcv1M;
   constexpr auto kSType = SType::RawSymbol;
 
   const mock::MockLsgServer mock_server{
-      kDataset, [&kSymbols](mock::MockLsgServer& self) {
+      kDataset, kTsOut, [&kSymbols](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Subscribe(kSymbols, kSchema, kSType);
       }};
 
-  LiveBlocking target{logger_.get(),      kKey, kDataset, "127.0.0.1",
-                      mock_server.Port(), false};
+  LiveBlocking target{logger_.get(),      kKey,  kDataset, "127.0.0.1",
+                      mock_server.Port(), kTsOut};
   target.Subscribe(kSymbols, kSchema, kSType);
 }
 
 TEST_F(LiveBlockingTests, TestNextRecord) {
+  constexpr auto kTsOut = false;
   constexpr auto kRecCount = 12;
-  const OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
+  constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, [kRec](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut, [kRec](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         for (size_t i = 0; i < kRecCount; ++i) {
@@ -91,8 +99,9 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
         }
       }};
 
-  LiveBlocking target{logger_.get(),      kKey, dataset::kXnasItch, "127.0.0.1",
-                      mock_server.Port(), false};
+  LiveBlocking target{logger_.get(),      kKey,
+                      dataset::kXnasItch, "127.0.0.1",
+                      mock_server.Port(), kTsOut};
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
     ASSERT_TRUE(rec.Holds<OhlcvMsg>()) << "Failed on call " << i;
@@ -102,17 +111,18 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
 
 TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   constexpr std::chrono::milliseconds kTimeout{50};
-  const Mbp1Msg kRec{DummyHeader<Mbp1Msg>(RType::Mbp1),
-                     1,
-                     2,
-                     Action::Add,
-                     Side::Bid,
-                     {},
-                     1,
-                     UnixNanos{},
-                     TimeDeltaNanos{},
-                     10,
-                     {BidAskPair{1, 2, 3, 4, 5, 6}}};
+  constexpr auto kTsOut = false;
+  constexpr Mbp1Msg kRec{DummyHeader<Mbp1Msg>(RType::Mbp1),
+                         1,
+                         2,
+                         Action::Add,
+                         Side::Bid,
+                         {},
+                         1,
+                         UnixNanos{},
+                         TimeDeltaNanos{},
+                         10,
+                         {BidAskPair{1, 2, 3, 4, 5, 6}}};
 
   bool sent_first_msg = false;
   std::mutex send_mutex;
@@ -121,7 +131,7 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   std::mutex receive_mutex;
   std::condition_variable receive_cv;
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, [&](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut, [&](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.SendRecord(kRec);
@@ -140,8 +150,9 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
         self.SendRecord(kRec);
       }};
 
-  LiveBlocking target{logger_.get(),      kKey, dataset::kXnasItch, "127.0.0.1",
-                      mock_server.Port(), false};
+  LiveBlocking target{logger_.get(),      kKey,
+                      dataset::kXnasItch, "127.0.0.1",
+                      mock_server.Port(), kTsOut};
   {
     // wait for server to send first record to avoid flaky timeouts
     std::unique_lock<std::mutex> lock{send_mutex};
@@ -166,22 +177,24 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
 }
 
 TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
-  const MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
-                    1,
-                    2,
-                    3,
-                    {},
-                    4,
-                    Action::Add,
-                    Side::Bid,
-                    UnixNanos{},
-                    TimeDeltaNanos{},
-                    100};
+  constexpr auto kTsOut = false;
+  constexpr MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
+                        1,
+                        2,
+                        3,
+                        {},
+                        4,
+                        Action::Add,
+                        Side::Bid,
+                        UnixNanos{},
+                        TimeDeltaNanos{},
+                        100};
 
   std::mutex mutex;
   std::condition_variable cv;
   const mock::MockLsgServer mock_server{
-      dataset::kGlbxMdp3, [kRec, &mutex, &cv](mock::MockLsgServer& self) {
+      dataset::kGlbxMdp3, kTsOut,
+      [kRec, &mutex, &cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.SendRecord(kRec);
@@ -189,8 +202,9 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
         self.SplitSendRecord(kRec, mutex, cv);
       }};
 
-  LiveBlocking target{logger_.get(),      kKey, dataset::kGlbxMdp3, "127.0.0.1",
-                      mock_server.Port(), false};
+  LiveBlocking target{logger_.get(),      kKey,
+                      dataset::kGlbxMdp3, "127.0.0.1",
+                      mock_server.Port(), kTsOut};
   auto rec = target.NextRecord();
   ASSERT_TRUE(rec.Holds<MboMsg>());
   EXPECT_EQ(rec.Get<MboMsg>(), kRec);
@@ -209,7 +223,8 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
 
 TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
   constexpr auto kRecCount = 5;
-  const WithTsOut<TradeMsg> kRec{
+  constexpr auto kTsOut = true;
+  constexpr WithTsOut<TradeMsg> kRec{
       {DummyHeader<WithTsOut<TradeMsg>>(RType::Mbp0),
        1,
        2,
@@ -222,7 +237,7 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
        2},
       UnixNanos{std::chrono::seconds{1678910279000000000}}};
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, [kRec](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut, [kRec](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         for (size_t i = 0; i < kRecCount; ++i) {
@@ -230,8 +245,9 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
         }
       }};
 
-  LiveBlocking target{logger_.get(),      kKey, dataset::kXnasItch, "127.0.0.1",
-                      mock_server.Port(), false};
+  LiveBlocking target{logger_.get(),      kKey,
+                      dataset::kXnasItch, "127.0.0.1",
+                      mock_server.Port(), kTsOut};
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
     ASSERT_TRUE(rec.Holds<WithTsOut<TradeMsg>>()) << "Failed on call " << i;
@@ -243,7 +259,8 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
 }
 
 TEST_F(LiveBlockingTests, TestStop) {
-  const WithTsOut<TradeMsg> kRec{
+  constexpr auto kTsOut = true;
+  constexpr WithTsOut<TradeMsg> kRec{
       {DummyHeader<WithTsOut<TradeMsg>>(RType::Mbp0),
        1,
        2,
@@ -256,30 +273,101 @@ TEST_F(LiveBlockingTests, TestStop) {
        2},
       UnixNanos{std::chrono::seconds{1678910279000000000}}};
   std::atomic<bool> has_stopped{false};
-  std::unique_ptr<mock::MockLsgServer> mock_server{new mock::MockLsgServer{
-      dataset::kXnasItch, [kRec, &has_stopped](mock::MockLsgServer& self) {
-        self.Accept();
-        self.Authenticate();
-        self.SendRecord(kRec);
-        while (!has_stopped) {
-          std::this_thread::yield();
-        }
-        const std::string rec_str{reinterpret_cast<const char*>(&kRec),
-                                  sizeof(kRec)};
-        while (self.UncheckedSend(rec_str) ==
-               static_cast<::ssize_t>(rec_str.size())) {
-        }
-      }}};
+  std::unique_ptr<mock::MockLsgServer> mock_server{
+      new mock::MockLsgServer{dataset::kXnasItch, kTsOut,
+                              [kRec, &has_stopped](mock::MockLsgServer& self) {
+                                self.Accept();
+                                self.Authenticate();
+                                self.SendRecord(kRec);
+                                while (!has_stopped) {
+                                  std::this_thread::yield();
+                                }
+                                const std::string rec_str{
+                                    reinterpret_cast<const char*>(&kRec),
+                                    sizeof(kRec)};
+                                while (self.UncheckedSend(rec_str) ==
+                                       static_cast<::ssize_t>(rec_str.size())) {
+                                }
+                              }}  // namespace test
+  };                              // namespace databento
 
   LiveBlocking target{logger_.get(),       kKey,
                       dataset::kXnasItch,  "127.0.0.1",
-                      mock_server->Port(), false};
+                      mock_server->Port(), kTsOut};
   ASSERT_EQ(target.NextRecord().Get<WithTsOut<TradeMsg>>(), kRec);
   target.Stop();
   has_stopped = true;
   // kill mock server and join thread before client goes out of scope
   // to ensure Stop is killing the connection, not the client's destructor
   mock_server.reset();
+}
+
+TEST_F(LiveBlockingTests, TestConnectWhenGatewayNotUp) {
+  constexpr auto kTsOut = true;
+  ASSERT_THROW(LiveBlocking(logger_.get(), kKey, dataset::kXnasItch,
+                            "127.0.0.1", 80, kTsOut),
+               databento::TcpError);
+}
+
+TEST_F(LiveBlockingTests, TestReconnect) {
+  constexpr auto kTsOut = false;
+  constexpr TradeMsg kRec{DummyHeader<TradeMsg>(RType::Mbp0),
+                          1,
+                          2,
+                          Action::Add,
+                          Side::Ask,
+                          {},
+                          1,
+                          {},
+                          {},
+                          2};
+
+  std::mutex client_send_mutex;
+  std::condition_variable client_send_cv;
+  std::mutex server_send_mutex;
+  std::condition_variable server_send_cv;
+  std::unique_ptr<mock::MockLsgServer> mock_server{new mock::MockLsgServer{
+      dataset::kXnasItch, kTsOut,
+      [&client_send_mutex, &client_send_cv, kRec, &server_send_mutex,
+       &server_send_cv](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        {
+          std::unique_lock<std::mutex> shutdown_lock{client_send_mutex};
+          client_send_cv.wait(shutdown_lock);
+        }
+        self.Close();
+        {
+          const std::lock_guard<std::mutex> _lock{server_send_mutex};
+          server_send_cv.notify_one();
+        }
+        self.Accept();
+        self.Authenticate();
+        self.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol);
+        self.Start(Schema::Trades);
+        self.SendRecord(kRec);
+      }}};
+  LiveBlocking target{logger_.get(),       kKey,
+                      dataset::kXnasItch,  "127.0.0.1",
+                      mock_server->Port(), kTsOut};
+  // close server
+  {
+    const std::lock_guard<std::mutex> _lock{client_send_mutex};
+    client_send_cv.notify_one();
+  }
+  // Server shuts down
+  {
+    std::unique_lock<std::mutex> shutdown_lock{server_send_mutex};
+    server_send_cv.wait(shutdown_lock);
+  }
+  ASSERT_THROW(target.NextRecord(), databento::DbnResponseError);
+  target.Reconnect();
+  target.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol);
+  const auto metadata = target.Start();
+  ASSERT_EQ(metadata.schema, Schema::Trades);
+  const auto rec = target.NextRecord();
+  ASSERT_TRUE(rec.Holds<TradeMsg>());
+  ASSERT_EQ(rec.Get<TradeMsg>(), kRec);
 }
 }  // namespace test
 }  // namespace databento
