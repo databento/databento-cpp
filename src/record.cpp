@@ -166,7 +166,7 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
 
 using databento::ImbalanceMsg;
 
-bool operator==(const ImbalanceMsg& lhs, const ImbalanceMsg& rhs) {
+bool databento::operator==(const ImbalanceMsg& lhs, const ImbalanceMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.ts_recv == rhs.ts_recv &&
          lhs.ref_price == rhs.ref_price &&
          lhs.auction_time == rhs.auction_time &&

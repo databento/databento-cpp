@@ -1,7 +1,9 @@
 # Changelog
 
 ## 0.9.0 - TBD
+- Added batch download support data files (`condition.json` and `symbology.json`)
 - Changed `use_ts_out` default to `false`
+- Fixed missing definition for `operator==` for `ImbalanceMsg`
 
 ## 0.8.0 - 2023-05-16
 - Changed `end` and `end_date` to optional to support new forward-fill behaviour
