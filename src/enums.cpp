@@ -124,9 +124,6 @@ const char* ToString(SType stype) {
     case SType::RawSymbol: {
       return "raw_symbol";
     }
-    case SType::SmartDeprecated: {
-      return "smart";
-    }
     case SType::Continuous: {
       return "continuous";
     }
@@ -675,14 +672,11 @@ Compression FromString(const std::string& str) {
 
 template <>
 SType FromString(const std::string& str) {
-  if (str == "product_id" || str == "instrument_id") {
+  if (str == "instrument_id") {
     return SType::InstrumentId;
   }
-  if (str == "native" || str == "raw_symbol") {
+  if (str == "raw_symbol") {
     return SType::RawSymbol;
-  }
-  if (str == "smart") {
-    return SType::SmartDeprecated;
   }
   if (str == "continuous") {
     return SType::Continuous;

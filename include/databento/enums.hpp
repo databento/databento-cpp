@@ -51,8 +51,6 @@ enum class Compression : std::uint8_t {
 enum class SType : std::uint8_t {
   InstrumentId = 0,
   RawSymbol = 1,
-  // Deprecated in 0.7.0. Separated into Parent and Continuous.
-  SmartDeprecated = 2,
   Continuous = 3,
   Parent = 4,
 };

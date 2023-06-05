@@ -559,9 +559,9 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
                            {{"dataset", dataset::kGlbxMdp3},
                             {"start", "2020-06-06T00:00"},
                             {"end", "2021-03-02T00:00"},
-                            {"symbols", "NG,LNQ"},
+                            {"symbols", "NG.FUT,LNG.FUT"},
                             {"schema", "tbbo"},
-                            {"stype_in", "smart"}},
+                            {"stype_in", "parent"}},
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
@@ -569,7 +569,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetBillableSize(
       dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
-      {"NG", "LNQ"}, Schema::Tbbo, SType::SmartDeprecated, {});
+      {"NG.FUT", "LNG.FUT"}, Schema::Tbbo, SType::Parent, {});
   ASSERT_EQ(res, kResp);
 }
 
@@ -599,9 +599,9 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
                             {"start", "2020-06-06T00:00"},
                             {"end", "2021-03-02T00:00"},
                             {"mode", "historical-streaming"},
-                            {"symbols", "MES,SPY"},
+                            {"symbols", "MES.OPT,EW.OPT"},
                             {"schema", "tbbo"},
-                            {"stype_in", "smart"}},
+                            {"stype_in", "parent"}},
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
@@ -609,8 +609,8 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetCost(
       dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
-      {"MES", "SPY"}, Schema::Tbbo, FeedMode::HistoricalStreaming,
-      SType::SmartDeprecated, {});
+      {"MES.OPT", "EW.OPT"}, Schema::Tbbo, FeedMode::HistoricalStreaming,
+      SType::Parent, {});
   ASSERT_DOUBLE_EQ(res, kResp);
 }
 
@@ -738,7 +738,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_BadRequest) {
         dataset::kGlbxMdp3,
         {UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
          UnixNanos{std::chrono::nanoseconds{1609160800000711344}}},
-        {"E5"}, Schema::Mbo, SType::SmartDeprecated, SType::InstrumentId, 2,
+        {"E5A.OPT"}, Schema::Mbo, SType::Parent, SType::InstrumentId, 2,
         [](Metadata&&) {}, [](const Record&) { return KeepGoing::Continue; });
     FAIL() << "Call to TimeseriesGetRange was supposed to throw";
   } catch (const std::exception& exc) {
