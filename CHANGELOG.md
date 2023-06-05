@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.0 - TBD
+## 0.9.0 - 2023-06-05
 - Added `Reconnect` methods to `LiveBlocking` and `LiveThreaded`
 - Added optional `exception_callback` argument to `LiveThreaded::Start` to improve
   error handling options
