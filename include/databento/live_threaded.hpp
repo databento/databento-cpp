@@ -74,8 +74,7 @@ class LiveThreaded {
              RecordCallback record_callback);
   void Start(MetadataCallback metadata_callback, RecordCallback record_callback,
              ExceptionCallback exception_callback);
-  // Stops the callback thread, closes the current connection, and attempts to
-  // reconnect to the gateway.
+  // Closes the current connection, and attempts to reconnect to the gateway.
   void Reconnect();
 
  private:
