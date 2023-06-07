@@ -32,8 +32,8 @@ jobs:
       - name: Set output
         id: vars
         run: |
-          echo "::set-output name=tag_name::v$(scripts/get_version.sh)"
-          echo "::set-output name=release_name::$(scripts/get_version.sh)"
+          echo "name=tag_name::v$(scripts/get_version.sh)" >> $GITHUB_OUTPUT
+          echo "name=release_name::$(scripts/get_version.sh)" >> $GITHUB_OUTPUT
 
       # Create GitHub release
       - name: Create release
