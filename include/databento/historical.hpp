@@ -16,12 +16,16 @@
 #include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
 
 namespace databento {
+class ILogReceiver;
+
 // A client for interfacing with Databento's historical market data API.
 class Historical {
  public:
-  Historical(std::string key, HistoricalGateway gateway);
+  Historical(ILogReceiver* log_receiver, std::string key,
+             HistoricalGateway gateway);
   // Primarily for unit tests
-  Historical(std::string key, std::string gateway, std::uint16_t port);
+  Historical(ILogReceiver* log_receiver, std::string key, std::string gateway,
+             std::uint16_t port);
 
   /*
    * Getters
@@ -248,6 +252,7 @@ class Historical {
   DbnFileStore TimeseriesGetRangeToFile(const HttplibParams& params,
                                         const std::string& file_path);
 
+  ILogReceiver* log_receiver_;
   const std::string key_;
   const std::string gateway_;
   detail::HttpClient client_;
@@ -265,11 +270,14 @@ class HistoricalBuilder {
   HistoricalBuilder& SetKeyFromEnv();
   HistoricalBuilder& SetKey(std::string key);
   HistoricalBuilder& SetGateway(HistoricalGateway gateway);
+  // Sets the receiver of the logs to be used by the client.
+  HistoricalBuilder& SetLogReceiver(ILogReceiver* log_receiver);
   // Attempts to construct an instance of Historical or throws an exception if
   // no key has been set.
   Historical Build();
 
  private:
+  ILogReceiver* log_receiver_{};
   std::string key_;
   HistoricalGateway gateway_{HistoricalGateway::Bo1};
 };

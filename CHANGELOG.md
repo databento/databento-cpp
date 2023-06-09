@@ -5,6 +5,7 @@
 - Added optional `exception_callback` argument to `LiveThreaded::Start` to improve
   error handling options
 - Added batch download support data files (`condition.json` and `symbology.json`)
+- Added support for logging warnings from Historical API
 - Changed `use_ts_out` default to `false`
 - Fixed missing definition for `operator==` for `ImbalanceMsg`
 

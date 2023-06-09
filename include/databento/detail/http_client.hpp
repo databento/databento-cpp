@@ -12,12 +12,14 @@
 #include <string>
 
 namespace databento {
+class ILogReceiver;
 namespace detail {
 class HttpClient {
  public:
-  HttpClient(const std::string& key, const std::string& gateway);
-  HttpClient(const std::string& key, const std::string& gateway,
-             std::uint16_t port);
+  HttpClient(ILogReceiver* log_receiver, const std::string& key,
+             const std::string& gateway);
+  HttpClient(ILogReceiver* log_receiver, const std::string& key,
+             const std::string& gateway, std::uint16_t port);
 
   nlohmann::json GetJson(const std::string& path,
                          const httplib::Params& params);
@@ -27,12 +29,14 @@ class HttpClient {
                     const httplib::ContentReceiver& callback);
 
  private:
-  static nlohmann::json CheckAndParseResponse(const std::string& path,
-                                              httplib::Result&& res);
+  nlohmann::json CheckAndParseResponse(const std::string& path,
+                                       httplib::Result&& res) const;
+  void CheckWarnings(const httplib::Response& response) const;
   static bool IsErrorStatus(int status_code);
 
   static const httplib::Headers kHeaders;
 
+  ILogReceiver* log_receiver_;
   httplib::Client client_;
 };
 }  // namespace detail

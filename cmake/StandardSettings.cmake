@@ -11,17 +11,6 @@ option(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_GTEST "Use an external google test
 #
 
 option(${PROJECT_NAME_UPPERCASE}_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." ${IS_MAIN_PROJECT})
-option(${PROJECT_NAME_UPPERCASE}_FORCE_COLOR_OUTPUT "Always produce ANSI-colored output" OFF)
-
-if(${PROJECT_NAME_UPPERCASE}_FORCE_COLOR_OUTPUT)
-  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    add_compile_options(-fdiagnostics-color=always)
-  elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    add_compile_options(-fcolor-diagnostics)
-  else()
-    message(WARNING "Couldn't force color output with unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
-  endif()
-endif()
 
 #
 # Unit testing

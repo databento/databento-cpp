@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cstdint>
 #include <exception>
@@ -295,10 +296,6 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
       GTEST_NONFATAL_FAILURE_("Unexpectedly called exception callback");
       return LiveThreaded::ExceptionAction::Stop;
     });
-    std::clog.flush();
-    const std::string output = testing::internal::GetCapturedStderr();
-    EXPECT_NE(output.find("which would cause a deadlock"), std::string::npos)
-        << "Got unexpected output: " << output;
     ++exception_calls;
     return LiveThreaded::ExceptionAction::Stop;
   };
@@ -306,6 +303,10 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
   while (exception_calls == 0) {
     std::this_thread::yield();
   }
+  std::clog.flush();
+  const std::string output = testing::internal::GetCapturedStderr();
+  EXPECT_NE(output.find("which would cause a deadlock"), std::string::npos)
+      << "Got unexpected output: " << output;
 }
 }  // namespace test
 }  // namespace databento
