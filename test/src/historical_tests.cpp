@@ -16,6 +16,7 @@
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception
 #include "databento/historical.hpp"
+#include "databento/log.hpp"
 #include "databento/metadata.hpp"
 #include "databento/record.hpp"
 #include "databento/symbology.hpp"  // kAllSymbols
@@ -30,6 +31,7 @@ constexpr auto kApiKey = "HIST_SECRET";
 class HistoricalTests : public ::testing::Test {
  protected:
   mock::MockHttpServer mock_server_{kApiKey};
+  std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
 };
 
 TEST_F(HistoricalTests, TestBatchSubmitJob) {
@@ -76,7 +78,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
                             kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res =
       target.BatchSubmitJob(dataset::kXnasItch, {"CLH3"}, Schema::Trades,
@@ -157,7 +159,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
   mock_server_.MockGetJson("/v0/batch.list_jobs", kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.BatchListJobs();
   ASSERT_EQ(res.size(), 2);
@@ -178,7 +180,7 @@ TEST_F(HistoricalTests, TestBatchListFiles) {
   mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.BatchListFiles(kJobId);
   ASSERT_EQ(res.size(), 1);
@@ -217,7 +219,7 @@ TEST_F(HistoricalTests, TestBatchDownloadAll) {
   mock_server_.MockGetJson("/v0/job_id/test_metadata.json", {{"key", "value"}});
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   ASSERT_FALSE(temp_metadata_file.Exists());
   ASSERT_FALSE(temp_dbn_file.Exists());
@@ -240,7 +242,7 @@ TEST_F(HistoricalTests, TestBatchDownloadSingle) {
   mock_server_.MockGetJson("/v0/job_id/test_metadata.json", {{"key", "value"}});
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   ASSERT_FALSE(temp_metadata_file.Exists());
   const std::string path =
@@ -255,7 +257,7 @@ TEST_F(HistoricalTests, TestBatchDownloadSingleInvalidFile) {
                            kListFilesResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   ASSERT_THROW(target.BatchDownload(TEST_BUILD_DIR, kJobId, "test_metadata.js"),
                InvalidArgumentError);
@@ -269,7 +271,7 @@ TEST_F(HistoricalTests, TestMetadataListPublishers) {
   mock_server_.MockGetJson("/v0/metadata.list_publishers", kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListPublishers();
   EXPECT_EQ(res.size(), kResp.size());
@@ -285,7 +287,7 @@ TEST_F(HistoricalTests, TestMetadataListDatasets_Simple) {
   mock_server_.MockGetJson("/v0/metadata.list_datasets", kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListDatasets();
   EXPECT_EQ(res.size(), kResp.size());
@@ -299,7 +301,7 @@ TEST_F(HistoricalTests, TestMetadataListDatasets_Full) {
                            {{"start_date", "2021-01-05"}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListDatasets(DateRange{"2021-01-05"});
   EXPECT_EQ(res.size(), kResp.size());
@@ -314,7 +316,7 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Simple) {
                            {{"dataset", dataset::kGlbxMdp3}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListSchemas(dataset::kGlbxMdp3);
   const std::vector<Schema> kExp{
@@ -335,7 +337,7 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Full) {
                            {{"dataset", dataset::kGlbxMdp3}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListSchemas(dataset::kGlbxMdp3);
   const std::vector<Schema> kExp{Schema::Mbo, Schema::Mbp1, Schema::Ohlcv1M,
@@ -361,7 +363,7 @@ TEST_F(HistoricalTests, TestMetadataListFields) {
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListFields(dataset::kGlbxMdp3, Encoding::Dbn,
                                              Schema::Trades);
@@ -399,7 +401,7 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto conditions = target.MetadataGetDatasetCondition(
       dataset::kXnasItch, {"2022-11-06", "2022-11-10"});
@@ -426,7 +428,7 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {
                            {{"dataset", dataset::kGlbxMdp3}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3);
   const std::map<Schema, double> kExp{
@@ -450,7 +452,7 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_FeedMode) {
       kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3,
                                                  FeedMode::HistoricalStreaming);
@@ -471,7 +473,7 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_FullySpecified) {
       kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3,
                                                  FeedMode::Live, Schema::Mbo);
@@ -487,7 +489,7 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_Schema) {
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res =
       target.MetadataListUnitPrices(dataset::kGlbxMdp3, Schema::Mbo);
@@ -508,7 +510,7 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetRange) {
                            {{"dataset", dataset::kXnasItch}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetDatasetRange(dataset::kXnasItch);
   EXPECT_EQ(res.start_date, "2017-05-21");
@@ -526,7 +528,7 @@ TEST_F(HistoricalTests, TestMetadataGetRecordCount) {
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetRecordCount(
       dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
@@ -545,7 +547,7 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetBillableSize(
       dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"}, kAllSymbols,
@@ -559,17 +561,17 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
                            {{"dataset", dataset::kGlbxMdp3},
                             {"start", "2020-06-06T00:00"},
                             {"end", "2021-03-02T00:00"},
-                            {"symbols", "NG,LNQ"},
+                            {"symbols", "NG.FUT,LNG.FUT"},
                             {"schema", "tbbo"},
-                            {"stype_in", "smart"}},
+                            {"stype_in", "parent"}},
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetBillableSize(
       dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
-      {"NG", "LNQ"}, Schema::Tbbo, SType::SmartDeprecated, {});
+      {"NG.FUT", "LNG.FUT"}, Schema::Tbbo, SType::Parent, {});
   ASSERT_EQ(res, kResp);
 }
 
@@ -584,7 +586,7 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetCost(
       dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
@@ -599,18 +601,18 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
                             {"start", "2020-06-06T00:00"},
                             {"end", "2021-03-02T00:00"},
                             {"mode", "historical-streaming"},
-                            {"symbols", "MES,SPY"},
+                            {"symbols", "MES.OPT,EW.OPT"},
                             {"schema", "tbbo"},
-                            {"stype_in", "smart"}},
+                            {"stype_in", "parent"}},
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetCost(
       dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
-      {"MES", "SPY"}, Schema::Tbbo, FeedMode::HistoricalStreaming,
-      SType::SmartDeprecated, {});
+      {"MES.OPT", "EW.OPT"}, Schema::Tbbo, FeedMode::HistoricalStreaming,
+      SType::Parent, {});
   ASSERT_DOUBLE_EQ(res, kResp);
 }
 
@@ -646,7 +648,7 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.SymbologyResolve(
       dataset::kGlbxMdp3, {"ESM2"}, SType::RawSymbol, SType::InstrumentId,
@@ -676,7 +678,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
                              TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::unique_ptr<Metadata> metadata_ptr;
   std::vector<MboMsg> mbo_records;
@@ -712,7 +714,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_NoMetadataCallback) {
                              TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::vector<TbboMsg> mbo_records;
   target.TimeseriesGetRange(dataset::kGlbxMdp3,
@@ -731,14 +733,14 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_BadRequest) {
   mock_server_.MockBadRequest("/v0/timeseries.get_range", resp);
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   try {
     target.TimeseriesGetRange(
         dataset::kGlbxMdp3,
         {UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
          UnixNanos{std::chrono::nanoseconds{1609160800000711344}}},
-        {"E5"}, Schema::Mbo, SType::SmartDeprecated, SType::InstrumentId, 2,
+        {"E5A.OPT"}, Schema::Mbo, SType::Parent, SType::InstrumentId, 2,
         [](Metadata&&) {}, [](const Record&) { return KeepGoing::Continue; });
     FAIL() << "Call to TimeseriesGetRange was supposed to throw";
   } catch (const std::exception& exc) {
@@ -757,7 +759,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_CallbackException) {
                              TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   ASSERT_THROW(
       target.TimeseriesGetRange(
@@ -775,7 +777,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeCancellation) {
                              TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   std::uint32_t call_count = 0;
   target.TimeseriesGetRange(
@@ -806,7 +808,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
                              TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
-  databento::Historical target{kApiKey, "localhost",
+  databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const TempFile temp_file{testing::TempDir() + "/" + __FUNCTION__};
   target.TimeseriesGetRangeToFile(dataset::kGlbxMdp3,

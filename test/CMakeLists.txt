@@ -32,6 +32,7 @@ set(
   src/file_stream_tests.cpp
   src/flag_set_tests.cpp
   src/historical_tests.cpp
+  src/http_client_tests.cpp
   src/live_tests.cpp
   src/live_blocking_tests.cpp
   src/live_threaded_tests.cpp

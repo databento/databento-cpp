@@ -76,15 +76,14 @@ class DbnDecoderSchemaTests : public DbnDecoderTests,
                               public testing::WithParamInterface<const char*> {
 };
 
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderSchemaTests,
-                         testing::Values(".dbn", ".dbn.zst"),
-                         [](const testing::TestParamInfo<const char*>& info) {
-                           const auto size = ::strlen(info.param);
-                           return ::strncmp(info.param + size - 3, "zst", 3) ==
-                                          0
-                                      ? "Zstd"
-                                      : "Uncompressed";
-                         });
+INSTANTIATE_TEST_SUITE_P(
+    TestFiles, DbnDecoderSchemaTests, testing::Values(".dbn", ".dbn.zst"),
+    [](const testing::TestParamInfo<const char*>& test_info) {
+      const auto size = ::strlen(test_info.param);
+      return ::strncmp(test_info.param + size - 3, "zst", 3) == 0
+                 ? "Zstd"
+                 : "Uncompressed";
+    });
 
 // Expected data for these tests obtained using the `dbn` CLI tool
 
@@ -682,9 +681,9 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_EQ(ch_metadata.version, 1);
   EXPECT_EQ(ch_metadata.dataset, dataset::kXnasItch);
   EXPECT_EQ(ch_metadata.schema, Schema::Definition);
-  EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1664841600000000000);
-  EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1672790400000000000);
-  EXPECT_EQ(ch_metadata.limit, 0);
+  EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1633305600000000000);
+  EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1641254400000000000);
+  EXPECT_EQ(ch_metadata.limit, 2);
   EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
   EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
   EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"MSFT"});
@@ -693,11 +692,11 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_EQ(ch_metadata.mappings.size(), 1);
   const auto& mapping = ch_metadata.mappings.at(0);
   EXPECT_EQ(mapping.raw_symbol, "MSFT");
-  ASSERT_EQ(mapping.intervals.size(), 20);
+  ASSERT_EQ(mapping.intervals.size(), 62);
   const auto& interval = mapping.intervals.at(0);
-  EXPECT_EQ(interval.symbol, "7358");
-  EXPECT_EQ(interval.start_date, 20221004);
-  EXPECT_EQ(interval.end_date, 20221205);
+  EXPECT_EQ(interval.symbol, "6819");
+  EXPECT_EQ(interval.start_date, 20211004);
+  EXPECT_EQ(interval.end_date, 20211005);
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
@@ -712,6 +711,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_STREQ(ch_def1.raw_symbol.data(), "MSFT");
   EXPECT_EQ(ch_def1.security_update_action, SecurityUpdateAction::Add);
   EXPECT_EQ(ch_def1.min_lot_size_round_lot, 100);
+  EXPECT_EQ(ch_def1.instrument_class, InstrumentClass::Stock);
+  EXPECT_EQ(ch_def1.strike_price, kUndefPrice);
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
@@ -726,6 +727,94 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_STREQ(ch_def2.raw_symbol.data(), "MSFT");
   EXPECT_EQ(ch_def2.security_update_action, SecurityUpdateAction::Add);
   EXPECT_EQ(ch_def2.min_lot_size_round_lot, 100);
+  EXPECT_EQ(ch_def2.instrument_class, InstrumentClass::Stock);
+  EXPECT_EQ(ch_def2.strike_price, kUndefPrice);
+}
+
+TEST_P(DbnDecoderSchemaTests, TestDecodeImbalance) {
+  ReadFromFile("imbalance", GetParam());
+
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
+  EXPECT_EQ(ch_metadata, f_metadata);
+  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.dataset, dataset::kXnasItch);
+  EXPECT_EQ(ch_metadata.schema, Schema::Imbalance);
+  EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1633305600000000000);
+  EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1641254400000000000);
+  EXPECT_EQ(ch_metadata.limit, 2);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
+  EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"SPOT"});
+  EXPECT_TRUE(ch_metadata.partial.empty());
+  EXPECT_TRUE(ch_metadata.not_found.empty());
+  EXPECT_EQ(ch_metadata.mappings.size(), 1);
+
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<ImbalanceMsg>());
+  ASSERT_TRUE(f_record1->Holds<ImbalanceMsg>());
+  const auto& ch_imbalance1 = ch_record1->Get<ImbalanceMsg>();
+  const auto& f_imbalance1 = f_record1->Get<ImbalanceMsg>();
+  EXPECT_EQ(ch_imbalance1, f_imbalance1);
+  EXPECT_EQ(ch_imbalance1.ref_price, 229430000000);
+
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<ImbalanceMsg>());
+  ASSERT_TRUE(f_record2->Holds<ImbalanceMsg>());
+  const auto& ch_imbalance2 = ch_record2->Get<ImbalanceMsg>();
+  const auto& f_imbalance2 = f_record2->Get<ImbalanceMsg>();
+  EXPECT_EQ(ch_imbalance2, f_imbalance2);
+  EXPECT_EQ(ch_imbalance2.ref_price, 229990000000);
+}
+
+TEST_P(DbnDecoderSchemaTests, TestDecodeStatistics) {
+  ReadFromFile("statistics", GetParam());
+
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
+  EXPECT_EQ(ch_metadata, f_metadata);
+  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
+  EXPECT_EQ(ch_metadata.schema, Schema::Statistics);
+  EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 2814749767106560);
+  EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 18446744073709551615UL);
+  EXPECT_EQ(ch_metadata.limit, 2);
+  EXPECT_EQ(ch_metadata.stype_in, SType::InstrumentId);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
+  EXPECT_TRUE(ch_metadata.symbols.empty());
+  EXPECT_TRUE(ch_metadata.partial.empty());
+  EXPECT_TRUE(ch_metadata.not_found.empty());
+  EXPECT_TRUE(ch_metadata.mappings.empty());
+
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<StatMsg>());
+  ASSERT_TRUE(f_record1->Holds<StatMsg>());
+  const auto& ch_stat1 = ch_record1->Get<StatMsg>();
+  const auto& f_stat1 = f_record1->Get<StatMsg>();
+  EXPECT_EQ(ch_stat1, f_stat1);
+  EXPECT_EQ(ch_stat1.stat_type, StatType::LowestOffer);
+  EXPECT_EQ(ch_stat1.price, 100 * kFixedPriceScale);
+
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<StatMsg>());
+  ASSERT_TRUE(f_record2->Holds<StatMsg>());
+  const auto& ch_stat2 = ch_record2->Get<StatMsg>();
+  const auto& f_stat2 = f_record2->Get<StatMsg>();
+  EXPECT_EQ(ch_stat2, f_stat2);
+  EXPECT_EQ(ch_stat2.stat_type, StatType::TradingSessionHighPrice);
+  EXPECT_EQ(ch_stat2.price, 100 * kFixedPriceScale);
 }
 }  // namespace test
 }  // namespace databento

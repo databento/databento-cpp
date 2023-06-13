@@ -22,6 +22,7 @@ set(headers
   include/databento/with_ts_out.hpp
   include/databento/detail/file_stream.hpp
   include/databento/detail/http_client.hpp
+  include/databento/detail/json_helpers.hpp
   include/databento/detail/scoped_fd.hpp
   include/databento/detail/scoped_thread.hpp
   include/databento/detail/shared_channel.hpp
@@ -49,6 +50,7 @@ set(sources
   src/symbology.cpp
   src/detail/file_stream.cpp
   src/detail/http_client.cpp
+  src/detail/json_helpers.cpp
   src/detail/scoped_fd.cpp
   src/detail/shared_channel.cpp
   src/detail/tcp_client.cpp

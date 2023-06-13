@@ -6,15 +6,22 @@
 #include <sys/socket.h>  // AF_INET, connect, sockaddr, sockaddr_in, socket, SOCK_STREAM
 #include <unistd.h>  // close, read, ssize_t
 
-#include <cerrno>  // errno
-#include <memory>  // unique_ptr
+#include <algorithm>  // max
+#include <cerrno>     // errno
+#include <memory>     // unique_ptr
+#include <sstream>
+#include <thread>
 
 #include "databento/exceptions.hpp"  // TcpError
 
 using databento::detail::TcpClient;
 
 TcpClient::TcpClient(const std::string& gateway, std::uint16_t port)
-    : socket_{InitSocket(gateway, port)} {}
+    : TcpClient{gateway, port, {}} {}
+
+TcpClient::TcpClient(const std::string& gateway, std::uint16_t port,
+                     RetryConf retry_conf)
+    : socket_{InitSocket(gateway, port, retry_conf)} {}
 
 void TcpClient::WriteAll(const std::string& str) {
   WriteAll(str.c_str(), str.length());
@@ -72,7 +79,8 @@ TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size,
 void TcpClient::Close() { socket_.Close(); }
 
 databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
-                                                  std::uint16_t port) {
+                                                  std::uint16_t port,
+                                                  RetryConf retry_conf) {
   const int fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (fd == -1) {
     throw TcpError{errno, "Failed to create socket"};
@@ -93,8 +101,20 @@ databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
   }
   std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> res{out,
                                                            &::freeaddrinfo};
-  if (::connect(scoped_fd.Get(), res->ai_addr, res->ai_addrlen) != 0) {
-    throw TcpError{errno, "Socket failed to connect"};
+  const auto max_attempts = std::max<std::uint32_t>(retry_conf.max_attempts, 1);
+  std::chrono::seconds backoff{1};
+  for (std::uint32_t attempt = 0; attempt < max_attempts; ++attempt) {
+    if (::connect(scoped_fd.Get(), res->ai_addr, res->ai_addrlen) == 0) {
+      break;
+    } else if (attempt + 1 == max_attempts) {
+      std::ostringstream err_msg;
+      err_msg << "Socket failed to connect after " << max_attempts
+              << " attempts";
+      throw TcpError{errno, err_msg.str()};
+    }
+    // TODO(cg): Log
+    std::this_thread::sleep_for(backoff);
+    backoff = std::min(backoff * 2, retry_conf.max_wait);
   }
   return scoped_fd;
 }

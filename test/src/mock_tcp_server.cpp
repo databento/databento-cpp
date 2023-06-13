@@ -74,13 +74,17 @@ void MockTcpServer::Send() {
 void MockTcpServer::Close() { conn_fd_.Close(); }
 
 std::pair<std::uint16_t, int> MockTcpServer::InitSocket() {
+  return InitSocket(0);  // port will be assigned
+}
+
+std::pair<std::uint16_t, int> MockTcpServer::InitSocket(std::uint16_t port) {
   const int fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (fd == -1) {
     throw TcpError{errno, "Invalid fd"};
   }
   sockaddr_in addr_in{};
   addr_in.sin_family = AF_INET;
-  addr_in.sin_port = 0;  // will be assigned
+  addr_in.sin_port = port;
   addr_in.sin_addr.s_addr = INADDR_ANY;
   if (::bind(fd, reinterpret_cast<const sockaddr*>(&addr_in),
              sizeof(addr_in)) != 0) {
@@ -92,7 +96,12 @@ std::pair<std::uint16_t, int> MockTcpServer::InitSocket() {
                     &addr_size) == -1) {
     throw TcpError{errno, "Error fetching port"};
   }
-  const auto port = ntohs(addr_actual.sin_port);
+  const auto actual_port = ntohs(addr_actual.sin_port);
+  if (port == 0) {
+    port = actual_port;
+  } else if (port != actual_port) {
+    throw TcpError{{}, "Did not get requested port"};
+  }
   if (::listen(fd, 1) != 0) {
     throw TcpError{errno, "Error listening on port"};
   }

@@ -4,6 +4,7 @@
 #include <chrono>  // milliseconds
 #include <exception>
 #include <sstream>
+#include <thread>
 #include <utility>  // forward, move, swap
 
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
@@ -28,7 +29,7 @@ LiveThreaded::LiveThreaded(LiveThreaded&& other) noexcept
 
 LiveThreaded& LiveThreaded::operator=(LiveThreaded&& rhs) noexcept {
   if (impl_) {
-    impl_->keep_going = false;
+    impl_->keep_going.store(false, std::memory_order_relaxed);
   }
   std::swap(impl_, rhs.impl_);
   std::swap(thread_, rhs.thread_);
@@ -37,7 +38,7 @@ LiveThreaded& LiveThreaded::operator=(LiveThreaded&& rhs) noexcept {
 
 LiveThreaded::~LiveThreaded() {
   if (impl_) {
-    impl_->keep_going = false;
+    impl_->keep_going.store(false, std::memory_order_relaxed);
   }
 }
 
@@ -54,9 +55,15 @@ LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 
+const std::string& LiveThreaded::Dataset() const {
+  return impl_->blocking.Dataset();
+}
+
 const std::string& LiveThreaded::Gateway() const {
   return impl_->blocking.Gateway();
 }
+
+std::uint16_t LiveThreaded::Port() const { return impl_->blocking.Port(); }
 
 void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in) {
@@ -74,50 +81,103 @@ void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
   impl_->blocking.Subscribe(symbols, schema, stype_in, start);
 }
 
+void LiveThreaded::Start(RecordCallback callback) {
+  Start({}, std::move(callback), {});
+}
+
 void LiveThreaded::Start(databento::MetadataCallback metadata_callback,
                          RecordCallback record_callback) {
+  Start(std::move(metadata_callback), std::move(record_callback), {});
+}
+
+void LiveThreaded::Start(MetadataCallback metadata_callback,
+                         RecordCallback record_callback,
+                         ExceptionCallback exception_callback) {
+  // Deadlock check
+  if (std::this_thread::get_id() == thread_.Id()) {
+    std::ostringstream log_ss;
+    log_ss << __PRETTY_FUNCTION__
+           << " Called Start from callback thread, which would cause a "
+              "deadlock. Ignoring.";
+    impl_->log_receiver->Receive(LogLevel::Warning, log_ss.str());
+    return;
+  }
   // Safe to pass raw pointer because `thread_` cannot outlive `impl_`
   thread_ = detail::ScopedThread{&LiveThreaded::ProcessingThread, impl_.get(),
                                  std::move(metadata_callback),
-                                 std::move(record_callback)};
+                                 std::move(record_callback),
+                                 std::move(exception_callback)};
 }
 
-void LiveThreaded::Start(RecordCallback callback) {
-  // Safe to pass raw pointer because `thread_` cannot outlive `impl_`
-  thread_ =
-      detail::ScopedThread{&LiveThreaded::ProcessingThread, impl_.get(),
-                           databento::MetadataCallback{}, std::move(callback)};
-}
+void LiveThreaded::Reconnect() { impl_->blocking.Reconnect(); }
 
 void LiveThreaded::ProcessingThread(Impl* impl,
                                     MetadataCallback&& metadata_callback,
-                                    RecordCallback&& record_callback) {
+                                    RecordCallback&& record_callback,
+                                    ExceptionCallback&& exception_callback) {
+  // Thread safety: non-const calls to `blocking` are only performed from this
+  // thread
+
   constexpr std::chrono::milliseconds kTimeout{50};
 
-  try {
-    {
+  const auto metadata_cb{std::move(metadata_callback)};
+  const auto record_cb{std::move(record_callback)};
+  const auto exception_cb{std::move(exception_callback)};
+  // Start loop
+  while (impl->keep_going.load(std::memory_order_relaxed)) {
+    try {
       auto metadata = impl->blocking.Start();
-      if (metadata_callback) {
-        std::move(metadata_callback)(std::move(metadata));
+      if (metadata_cb) {
+        metadata_cb(std::move(metadata));
+      }
+    } catch (const std::exception& exc) {
+      if (ExceptionHandler(impl, exception_cb, exc, __PRETTY_FUNCTION__,
+                           "Caught exception starting session: ") ==
+          ExceptionAction::Restart) {
+        continue;  // restart Start loop
+      } else {
+        return;
       }
     }
-    auto record_cb{std::move(record_callback)};
-    // Thread safety: non-const calls to `blocking` are only performed from this
-    // thread
-    while (impl->keep_going.load()) {
-      const Record* rec = impl->blocking.NextRecord(kTimeout);
-      if (rec) {
-        if (record_cb(*rec) == KeepGoing::Stop) {
-          impl->blocking.Stop();
+    // NextRecord loop
+    while (impl->keep_going.load(std::memory_order_relaxed)) {
+      try {
+        const Record* rec = impl->blocking.NextRecord(kTimeout);
+        if (rec) {
+          if (record_cb(*rec) == KeepGoing::Stop) {
+            impl->blocking.Stop();
+            return;
+          }
+        }  // else timeout
+      } catch (const std::exception& exc) {
+        if (ExceptionHandler(impl, exception_cb, exc, __PRETTY_FUNCTION__,
+                             "Caught exception reading next record: ") ==
+            ExceptionAction::Restart) {
+          break;  // break out of NextRecord loop, to restart Start loop
+        } else {
           return;
         }
-      }  // else timeout
+      }
     }
-  } catch (const std::exception& exc) {
-    impl->blocking.Stop();
-    std::ostringstream log_ss;
-    log_ss << __PRETTY_FUNCTION__ << " Caught exception: " << exc.what()
-           << ". Stopping thread.";
-    impl->log_receiver->Receive(LogLevel::Error, log_ss.str());
   }
+}
+
+LiveThreaded::ExceptionAction LiveThreaded::ExceptionHandler(
+    Impl* impl, const ExceptionCallback& exception_callback,
+    const std::exception& exc, const char* pretty_function_name,
+    const char* message) {
+  if (exception_callback &&
+      exception_callback(exc) == ExceptionAction::Restart) {
+    std::ostringstream log_ss;
+    log_ss << pretty_function_name << ' ' << message << exc.what()
+           << ". Attempting to restart session.";
+    impl->log_receiver->Receive(LogLevel::Warning, log_ss.str());
+    return ExceptionAction::Restart;
+  }
+  impl->blocking.Stop();
+  std::ostringstream log_ss;
+  log_ss << pretty_function_name << ' ' << message << exc.what()
+         << ". Stopping thread.";
+  impl->log_receiver->Receive(LogLevel::Error, log_ss.str());
+  return ExceptionAction::Stop;
 }

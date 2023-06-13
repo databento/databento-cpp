@@ -1,8 +1,10 @@
 #include "databento/detail/http_client.hpp"
 
-#include <chrono>  // seconds
+#include <chrono>   // seconds
+#include <sstream>  // ostringstream
 
 #include "databento/exceptions.hpp"  // HttpResponseError, HttpRequestError, JsonResponseError
+#include "databento/log.hpp"      // ILogReceiver, LogLevel
 #include "databento/version.hpp"  // DATABENTO_VERSION
 
 using databento::detail::HttpClient;
@@ -13,17 +15,19 @@ const httplib::Headers HttpClient::kHeaders{
     {"user-agent", "Databento/" DATABENTO_VERSION " C++"},
 };
 
-HttpClient::HttpClient(const std::string& key, const std::string& gateway)
-    : client_{gateway} {
+HttpClient::HttpClient(databento::ILogReceiver* log_receiver,
+                       const std::string& key, const std::string& gateway)
+    : log_receiver_{log_receiver}, client_{gateway} {
   client_.set_default_headers(HttpClient::kHeaders);
   client_.set_basic_auth(key, "");
   client_.set_read_timeout(kTimeout);
   client_.set_write_timeout(kTimeout);
 }
 
-HttpClient::HttpClient(const std::string& key, const std::string& gateway,
+HttpClient::HttpClient(databento::ILogReceiver* log_receiver,
+                       const std::string& key, const std::string& gateway,
                        std::uint16_t port)
-    : client_{gateway, port} {
+    : log_receiver_{log_receiver}, client_{gateway, port} {
   client_.set_default_headers(HttpClient::kHeaders);
   client_.set_basic_auth(key, "");
   client_.set_read_timeout(kTimeout);
@@ -79,18 +83,44 @@ void HttpClient::GetRawStream(const std::string& path,
 }
 
 nlohmann::json HttpClient::CheckAndParseResponse(const std::string& path,
-                                                 httplib::Result&& res) {
+                                                 httplib::Result&& res) const {
   if (res.error() != httplib::Error::Success) {
     throw HttpRequestError{path, res.error()};
   }
-  const auto status_code = res.value().status;
+  auto& response = res.value();
+  const auto status_code = response.status;
   if (HttpClient::IsErrorStatus(status_code)) {
-    throw HttpResponseError{path, status_code, std::move(res.value().body)};
+    throw HttpResponseError{path, status_code, std::move(response.body)};
   }
+  CheckWarnings(response);
   try {
-    return nlohmann::json::parse(std::move(res.value().body));
+    return nlohmann::json::parse(std::move(response.body));
   } catch (const nlohmann::json::parse_error& parse_err) {
     throw JsonResponseError::ParseError(path, parse_err);
+  }
+}
+
+void HttpClient::CheckWarnings(const httplib::Response& response) const {
+  // Returns empty string if not found. `get_header_value` is case insensitive
+  const auto raw = response.get_header_value("X-Warning");
+  if (!raw.empty()) {
+    try {
+      const auto json = nlohmann::json::parse(raw);
+      if (json.is_array()) {
+        for (const auto& warning_json : json.items()) {
+          const std::string warning = warning_json.value();
+          std::ostringstream msg;
+          msg << __PRETTY_FUNCTION__ << " Server " << warning;
+          log_receiver_->Receive(LogLevel::Warning, msg.str());
+        }
+        return;
+      }
+    } catch (const std::exception&) {
+    }
+    std::ostringstream msg;
+    msg << __PRETTY_FUNCTION__
+        << " Failed to parse warnings from HTTP header. Raw contents: " << raw;
+    log_receiver_->Receive(LogLevel::Warning, msg.str());
   }
 }
 

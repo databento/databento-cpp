@@ -11,7 +11,6 @@
 #include <fstream>    // ofstream
 #include <ios>        // ios::binary
 #include <memory>     // unique_ptr
-#include <numeric>    // accumulate
 #include <string>
 #include <utility>  // move
 
@@ -19,10 +18,12 @@
 #include "databento/datetime.hpp"
 #include "databento/dbn_decoder.hpp"
 #include "databento/dbn_file_store.hpp"
+#include "databento/detail/json_helpers.hpp"
 #include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception, JsonResponseError
+#include "databento/log.hpp"
 #include "databento/metadata.hpp"
 #include "databento/timeseries.hpp"
 
@@ -45,154 +46,6 @@ std::string BuildTimeseriesPath(const char* slug) {
   return std::string{"/v"} + databento::kApiVersionStr + "/timeseries" + slug;
 }
 
-void SetIfNotEmpty(httplib::Params* params, const std::string& key,
-                   const std::string& value) {
-  if (!value.empty()) {
-    params->emplace(key, value);
-  }
-}
-
-void SetIfNotEmpty(httplib::Params* params, const std::string& key,
-                   const std::vector<databento::JobState>& states) {
-  if (!states.empty()) {
-    std::string value = std::accumulate(
-        states.begin(), states.end(), std::string{},
-        [](std::string acc, databento::JobState state) {
-          return acc.empty()
-                     ? databento::ToString(state)
-                     : std::move(acc) + "," + databento::ToString(state);
-        });
-    params->emplace(key, std::move(value));
-  }
-}
-
-template <typename T>
-void SetIfPositive(httplib::Params* params, const std::string& key,
-                   const T value) {
-  if (value > 0) {
-    params->emplace(key, std::to_string(value));
-  }
-}
-
-template <>
-void SetIfPositive<databento::UnixNanos>(httplib::Params* params,
-                                         const std::string& key,
-                                         const databento::UnixNanos value) {
-  if (value.time_since_epoch().count()) {
-    params->emplace(key, databento::ToString(value));
-  }
-}
-
-using databento::JsonResponseError;
-
-const nlohmann::json& CheckedAt(const std::string& endpoint,
-                                const nlohmann::json& json,
-                                const std::string& key) {
-  if (json.contains(key)) {
-    return json.at(key);
-  }
-  throw JsonResponseError::MissingKey(endpoint, key);
-}
-
-template <typename T>
-T FromCheckedAtString(const std::string& endpoint, const nlohmann::json& json,
-                      const std::string& key) {
-  const auto& val_json = ::CheckedAt(endpoint, json, key);
-  if (!val_json.is_string()) {
-    throw JsonResponseError::TypeMismatch(endpoint, key + " string", val_json);
-  }
-  return databento::FromString<T>(val_json);
-}
-
-template <typename T>
-T FromCheckedAtStringOrNull(const std::string& endpoint,
-                            const nlohmann::json& json, const std::string& key,
-                            T null_value) {
-  const auto& val_json = ::CheckedAt(endpoint, json, key);
-  if (val_json.is_null()) {
-    return null_value;
-  }
-  if (val_json.is_string()) {
-    return databento::FromString<T>(val_json);
-  }
-  throw JsonResponseError::TypeMismatch(endpoint, key + " null or string",
-                                        val_json);
-}
-
-template <typename T>
-T ParseAt(const std::string& endpoint, const nlohmann::json& json,
-          const std::string& key);
-
-template <>
-bool ParseAt(const std::string& endpoint, const nlohmann::json& json,
-             const std::string& key) {
-  const auto& val_json = ::CheckedAt(endpoint, json, key);
-  if (!val_json.is_boolean()) {
-    throw JsonResponseError::TypeMismatch(endpoint, key + " bool", val_json);
-  }
-  return val_json;
-}
-
-template <>
-std::string ParseAt(const std::string& endpoint, const nlohmann::json& json,
-                    const std::string& key) {
-  const auto& val_json = ::CheckedAt(endpoint, json, key);
-  if (val_json.is_null()) {
-    return {};
-  }
-  if (!val_json.is_string()) {
-    throw JsonResponseError::TypeMismatch(endpoint, key + " string", val_json);
-  }
-  return val_json;
-}
-
-template <>
-std::size_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
-                    const std::string& key) {
-  const auto& val_json = ::CheckedAt(endpoint, json, key);
-  if (val_json.is_null()) {
-    return 0;
-  }
-  if (!val_json.is_number_unsigned()) {
-    throw JsonResponseError::TypeMismatch(endpoint, key + " unsigned number",
-                                          val_json);
-  }
-  return val_json;
-}
-
-template <>
-double ParseAt(const std::string& endpoint, const nlohmann::json& json,
-               const std::string& key) {
-  const auto& val_json = ::CheckedAt(endpoint, json, key);
-  if (val_json.is_null()) {
-    return 0;
-  }
-  if (!val_json.is_number()) {
-    throw JsonResponseError::TypeMismatch(endpoint, key + " number", val_json);
-  }
-  return val_json;
-}
-
-template <>
-std::vector<std::string> ParseAt(const std::string& endpoint,
-                                 const nlohmann::json& json,
-                                 const std::string& key) {
-  const auto& symbols_json = ::CheckedAt(endpoint, json, key);
-  // if there's only one symbol, it returns a string not an array
-  if (symbols_json.is_string()) {
-    return {symbols_json};
-  }
-  if (!symbols_json.is_array()) {
-    throw JsonResponseError::TypeMismatch(endpoint, key + " array", json);
-  }
-  std::vector<std::string> res;
-  res.reserve(symbols_json.size());
-  for (const auto& item : symbols_json.items()) {
-    res.emplace_back(item.value());
-  }
-  return res;
-}
-
 constexpr auto kDefaultSTypeIn = databento::SType::RawSymbol;
 constexpr auto kDefaultSTypeOut = databento::SType::InstrumentId;
 
@@ -202,16 +55,21 @@ databento::BatchJob Parse(const std::string& endpoint,
   using databento::Delivery;
   using databento::Encoding;
   using databento::JobState;
+  using databento::JsonResponseError;
   using databento::Packaging;
   using databento::Schema;
   using databento::SplitDuration;
   using databento::SType;
+  using databento::detail::CheckedAt;
+  using databento::detail::FromCheckedAtString;
+  using databento::detail::FromCheckedAtStringOrNull;
+  using databento::detail::ParseAt;
 
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(endpoint, "object", json);
   }
   databento::BatchJob res;
-  res.id = ::CheckedAt(endpoint, json, "id");
+  res.id = CheckedAt(endpoint, json, "id");
   res.user_id = ParseAt<std::string>(endpoint, json, "user_id");
   res.bill_id = ParseAt<std::string>(endpoint, json, "bill_id");
   res.cost_usd = ParseAt<double>(endpoint, json, "cost_usd");
@@ -273,15 +131,19 @@ std::string PathJoin(const std::string& dir, const std::string& path) {
 }
 }  // namespace
 
-Historical::Historical(std::string key, HistoricalGateway gateway)
-    : key_{std::move(key)},
+Historical::Historical(ILogReceiver* log_receiver, std::string key,
+                       HistoricalGateway gateway)
+    : log_receiver_{log_receiver},
+      key_{std::move(key)},
       gateway_{UrlFromGateway(gateway)},
-      client_{key_, gateway_} {}
+      client_{log_receiver, key_, gateway_} {}
 
-Historical::Historical(std::string key, std::string gateway, std::uint16_t port)
-    : key_{std::move(key)},
+Historical::Historical(ILogReceiver* log_receiver, std::string key,
+                       std::string gateway, std::uint16_t port)
+    : log_receiver_{log_receiver},
+      key_{std::move(key)},
       gateway_{std::move(gateway)},
-      client_{key_, gateway_, port} {}
+      client_{log_receiver, key_, gateway_, port} {}
 
 static const std::string kBatchSubmitJobEndpoint = "Historical::BatchSubmitJob";
 
@@ -320,9 +182,9 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"delivery", ToString(delivery)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
-  ::SetIfPositive(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "split_size", split_size);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfPositive(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "split_size", split_size);
+  detail::SetIfPositive(&params, "limit", limit);
   return this->BatchSubmitJob(params);
 }
 databento::BatchJob Historical::BatchSubmitJob(
@@ -343,9 +205,9 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"delivery", ToString(delivery)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
-  ::SetIfNotEmpty(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "split_size", split_size);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfNotEmpty(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "split_size", split_size);
+  detail::SetIfPositive(&params, "limit", limit);
   return this->BatchSubmitJob(params);
 }
 databento::BatchJob Historical::BatchSubmitJob(const httplib::Params& params) {
@@ -363,15 +225,15 @@ std::vector<databento::BatchJob> Historical::BatchListJobs() {
 std::vector<databento::BatchJob> Historical::BatchListJobs(
     const std::vector<databento::JobState>& states, UnixNanos since) {
   httplib::Params params;
-  ::SetIfNotEmpty(&params, "states", states);
-  ::SetIfPositive(&params, "since", since.time_since_epoch().count());
+  detail::SetIfNotEmpty(&params, "states", states);
+  detail::SetIfPositive(&params, "since", since.time_since_epoch().count());
   return this->BatchListJobs(params);
 }
 std::vector<databento::BatchJob> Historical::BatchListJobs(
     const std::vector<databento::JobState>& states, const std::string& since) {
   httplib::Params params;
-  ::SetIfNotEmpty(&params, "states", states);
-  ::SetIfNotEmpty(&params, "since", since);
+  detail::SetIfNotEmpty(&params, "states", states);
+  detail::SetIfNotEmpty(&params, "since", since);
   return this->BatchListJobs(params);
 }
 std::vector<databento::BatchJob> Historical::BatchListJobs(
@@ -406,12 +268,13 @@ std::vector<databento::BatchFileDesc> Historical::BatchListFiles(
     const auto& file_obj = file_json.value();
     BatchFileDesc file_desc;
     file_desc.filename =
-        ::ParseAt<std::string>(kEndpoint, file_obj, "filename");
-    file_desc.size = ::ParseAt<std::size_t>(kEndpoint, file_obj, "size");
-    file_desc.hash = ::ParseAt<std::string>(kEndpoint, file_obj, "hash");
-    const auto& url_obj = ::CheckedAt(kEndpoint, file_obj, "urls");
-    file_desc.https_url = ::ParseAt<std::string>(kEndpoint, url_obj, "https");
-    file_desc.ftp_url = ::ParseAt<std::string>(kEndpoint, url_obj, "ftp");
+        detail::ParseAt<std::string>(kEndpoint, file_obj, "filename");
+    file_desc.size = detail::ParseAt<std::size_t>(kEndpoint, file_obj, "size");
+    file_desc.hash = detail::ParseAt<std::string>(kEndpoint, file_obj, "hash");
+    const auto& url_obj = detail::CheckedAt(kEndpoint, file_obj, "urls");
+    file_desc.https_url =
+        detail::ParseAt<std::string>(kEndpoint, url_obj, "https");
+    file_desc.ftp_url = detail::ParseAt<std::string>(kEndpoint, url_obj, "ftp");
     files.emplace_back(file_desc);
   }
   return files;
@@ -509,8 +372,8 @@ std::vector<std::string> Historical::MetadataListDatasets(
   static const std::string kEndpoint = "Historical::MetadataListDatasets";
   static const std::string kPath = ::BuildMetadataPath(".list_datasets");
   httplib::Params params{};
-  ::SetIfNotEmpty(&params, "start_date", date_range.start);
-  ::SetIfNotEmpty(&params, "end_date", date_range.end);
+  detail::SetIfNotEmpty(&params, "start_date", date_range.start);
+  detail::SetIfNotEmpty(&params, "end_date", date_range.end);
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_array()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
@@ -554,14 +417,14 @@ databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields() {
 databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
     const std::string& dataset) {
   httplib::Params params;
-  ::SetIfNotEmpty(&params, "dataset", dataset);
+  detail::SetIfNotEmpty(&params, "dataset", dataset);
   return this->MetadataListFields(params);
 }
 databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
     const std::string& dataset, Encoding encoding, Schema schema) {
   httplib::Params params{{"encoding", ToString(encoding)},
                          {"schema", ToString(schema)}};
-  ::SetIfNotEmpty(&params, "dataset", dataset);
+  detail::SetIfNotEmpty(&params, "dataset", dataset);
   return this->MetadataListFields(params);
 }
 databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
@@ -662,7 +525,8 @@ std::map<databento::Schema, double> Historical::MetadataListUnitPrices(
     throw JsonResponseError::TypeMismatch(kListUnitPricesEndpoint, "object",
                                           json);
   }
-  const auto& json_map = ::CheckedAt(kListUnitPricesEndpoint, json, mode_str);
+  const auto& json_map =
+      detail::CheckedAt(kListUnitPricesEndpoint, json, mode_str);
   std::map<Schema, double> prices;
   for (const auto& item : json_map.items()) {
     if (!item.value().is_number()) {
@@ -691,8 +555,9 @@ std::map<databento::FeedMode, double> Historical::MetadataListUnitPrices(
                                             mode_and_prices.key(),
                                             mode_and_prices.value());
     }
-    const auto& price_json = ::CheckedAt("Historical::MetadataListUnitPrices",
-                                         mode_and_prices.value(), schema_str);
+    const auto& price_json =
+        detail::CheckedAt("Historical::MetadataListUnitPrices",
+                          mode_and_prices.value(), schema_str);
     if (!price_json.is_number()) {
       throw JsonResponseError::TypeMismatch(kListUnitPricesEndpoint, "number",
                                             price_json);
@@ -726,7 +591,7 @@ Historical::MetadataGetDatasetCondition(const std::string& dataset,
                                         const DateRange& date_range) {
   httplib::Params params{{"dataset", dataset},
                          {"start_date", date_range.start}};
-  ::SetIfNotEmpty(&params, "end_date", date_range.end);
+  detail::SetIfNotEmpty(&params, "end_date", date_range.end);
   return MetadataGetDatasetCondition(params);
 }
 
@@ -747,11 +612,12 @@ Historical::MetadataGetDatasetCondition(const httplib::Params& params) {
       throw JsonResponseError::TypeMismatch(kEndpoint, "object", detail_json);
     }
     const std::string date =
-        ParseAt<std::string>(kEndpoint, detail_json, "date");
-    const DatasetCondition condition = FromCheckedAtString<DatasetCondition>(
-        kEndpoint, detail_json, "condition");
-    const std::string last_modified_date =
-        ParseAt<std::string>(kEndpoint, detail_json, "last_modified_date");
+        detail::ParseAt<std::string>(kEndpoint, detail_json, "date");
+    const DatasetCondition condition =
+        detail::FromCheckedAtString<DatasetCondition>(kEndpoint, detail_json,
+                                                      "condition");
+    const std::string last_modified_date = detail::ParseAt<std::string>(
+        kEndpoint, detail_json, "last_modified_date");
     details.emplace_back(
         DatasetConditionDetail{date, condition, last_modified_date});
   }
@@ -766,8 +632,9 @@ databento::DatasetRange Historical::MetadataGetDatasetRange(
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
   }
-  return DatasetRange{ParseAt<std::string>(kEndpoint, json, "start_date"),
-                      ParseAt<std::string>(kEndpoint, json, "end_date")};
+  return DatasetRange{
+      detail::ParseAt<std::string>(kEndpoint, json, "start_date"),
+      detail::ParseAt<std::string>(kEndpoint, json, "end_date")};
 }
 
 static const std::string kMetadataGetRecordCountEndpoint =
@@ -796,8 +663,8 @@ std::size_t Historical::MetadataGetRecordCount(
       {"symbols", JoinSymbolStrings(kMetadataGetRecordCountEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
-  ::SetIfPositive(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfPositive(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetRecordCount(params);
 }
 std::size_t Historical::MetadataGetRecordCount(
@@ -811,8 +678,8 @@ std::size_t Historical::MetadataGetRecordCount(
       {"symbols", JoinSymbolStrings(kMetadataGetRecordCountEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
-  ::SetIfNotEmpty(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfNotEmpty(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetRecordCount(params);
 }
 std::size_t Historical::MetadataGetRecordCount(const httplib::Params& params) {
@@ -852,8 +719,8 @@ std::size_t Historical::MetadataGetBillableSize(
       {"symbols", JoinSymbolStrings(kMetadataGetBillableSizeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
-  ::SetIfPositive(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfPositive(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetBillableSize(params);
 }
 std::size_t Historical::MetadataGetBillableSize(
@@ -867,8 +734,8 @@ std::size_t Historical::MetadataGetBillableSize(
       {"symbols", JoinSymbolStrings(kMetadataGetBillableSizeEndpoint, symbols)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
-  ::SetIfNotEmpty(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfNotEmpty(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetBillableSize(params);
 }
 std::size_t Historical::MetadataGetBillableSize(const httplib::Params& params) {
@@ -911,8 +778,8 @@ double Historical::MetadataGetCost(
       {"mode", ToString(mode)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
-  ::SetIfPositive(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfPositive(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetCost(params);
 }
 double Historical::MetadataGetCost(
@@ -928,8 +795,8 @@ double Historical::MetadataGetCost(
       {"mode", ToString(mode)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
-  ::SetIfNotEmpty(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfNotEmpty(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetCost(params);
 }
 double Historical::MetadataGetCost(const HttplibParams& params) {
@@ -959,15 +826,15 @@ databento::SymbologyResolution Historical::SymbologyResolve(
                          {"symbols", JoinSymbolStrings(kEndpoint, symbols)},
                          {"stype_in", ToString(stype_in)},
                          {"stype_out", ToString(stype_out)}};
-  ::SetIfNotEmpty(&params, "end_date", date_range.end);
-  ::SetIfNotEmpty(&params, "default_value", default_value);
+  detail::SetIfNotEmpty(&params, "end_date", date_range.end);
+  detail::SetIfNotEmpty(&params, "default_value", default_value);
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
   }
-  const auto& mappings_json = ::CheckedAt(kEndpoint, json, "result");
-  const auto& partial_json = ::CheckedAt(kEndpoint, json, "partial");
-  const auto& not_found_json = ::CheckedAt(kEndpoint, json, "not_found");
+  const auto& mappings_json = detail::CheckedAt(kEndpoint, json, "result");
+  const auto& partial_json = detail::CheckedAt(kEndpoint, json, "partial");
+  const auto& not_found_json = detail::CheckedAt(kEndpoint, json, "not_found");
   SymbologyResolution res{};
   if (!mappings_json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "mappings object",
@@ -984,9 +851,9 @@ databento::SymbologyResolution Historical::SymbologyResolve(
     mapping_intervals.reserve(mapping_json.size());
     for (const auto& interval_json : mapping_json.items()) {
       mapping_intervals.emplace_back(StrMappingInterval{
-          ::CheckedAt(kEndpoint, interval_json.value(), "d0"),
-          ::CheckedAt(kEndpoint, interval_json.value(), "d1"),
-          ::CheckedAt(kEndpoint, interval_json.value(), "s"),
+          detail::CheckedAt(kEndpoint, interval_json.value(), "d0"),
+          detail::CheckedAt(kEndpoint, interval_json.value(), "d1"),
+          detail::CheckedAt(kEndpoint, interval_json.value(), "s"),
       });
     }
     res.mappings.emplace(mapping.key(), std::move(mapping_intervals));
@@ -1054,8 +921,8 @@ void Historical::TimeseriesGetRange(
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
-  ::SetIfPositive(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfPositive(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
 
   this->TimeseriesGetRange(params, metadata_callback, record_callback);
 }
@@ -1074,8 +941,8 @@ void Historical::TimeseriesGetRange(
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
-  ::SetIfNotEmpty(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfNotEmpty(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
 
   this->TimeseriesGetRange(params, metadata_callback, record_callback);
 }
@@ -1162,8 +1029,8 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
-  ::SetIfPositive(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfPositive(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
   return this->TimeseriesGetRangeToFile(params, file_path);
 }
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
@@ -1180,8 +1047,8 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)},
       {"stype_out", ToString(stype_out)}};
-  ::SetIfNotEmpty(&params, "end", datetime_range.end);
-  ::SetIfPositive(&params, "limit", limit);
+  detail::SetIfNotEmpty(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
   return this->TimeseriesGetRangeToFile(params, file_path);
 }
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
@@ -1227,5 +1094,8 @@ Historical HistoricalBuilder::Build() {
   if (key_.empty()) {
     throw Exception{"'key' is unset"};
   }
-  return Historical{key_, gateway_};
+  if (log_receiver_ == nullptr) {
+    log_receiver_ = databento::ILogReceiver::Default();
+  }
+  return Historical{log_receiver_, key_, gateway_};
 }

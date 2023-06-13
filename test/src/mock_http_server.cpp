@@ -31,14 +31,23 @@ void MockHttpServer::MockGetJson(const std::string& path,
 void MockHttpServer::MockGetJson(
     const std::string& path, const std::map<std::string, std::string>& params,
     const nlohmann::json& json) {
-  server_.Get(path, [json, params](const httplib::Request& req,
-                                   httplib::Response& resp) {
+  this->MockGetJson(path, params, json, {});
+}
+
+void MockHttpServer::MockGetJson(
+    const std::string& path, const std::map<std::string, std::string>& params,
+    const nlohmann::json& json, const nlohmann::json& warnings) {
+  server_.Get(path, [json, params, warnings](const httplib::Request& req,
+                                             httplib::Response& resp) {
     if (!req.has_header("Authorization")) {
       resp.status = 401;
       return;
     }
     auto _auth = req.get_header_value("Authorization");
     CheckParams(params, req);
+    if (!warnings.empty()) {
+      resp.set_header("X-Warning", warnings.dump());
+    }
     resp.set_content(json.dump(), "application/json");
     resp.status = 200;
   });

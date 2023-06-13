@@ -27,6 +27,9 @@ class MockHttpServer {
   void MockGetJson(const std::string& path,
                    const std::map<std::string, std::string>& params,
                    const nlohmann::json& json);
+  void MockGetJson(const std::string& path,
+                   const std::map<std::string, std::string>& params,
+                   const nlohmann::json& json, const nlohmann::json& warnings);
   void MockPostJson(const std::string& path,
                     const std::map<std::string, std::string>& params,
                     const nlohmann::json& json);
