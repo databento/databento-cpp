@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.0 - 2023-06-05
+## 0.9.0 - 2023-06-13
 - Added `Reconnect` methods to `LiveBlocking` and `LiveThreaded`
 - Added optional `exception_callback` argument to `LiveThreaded::Start` to improve
   error handling options
@@ -8,6 +8,7 @@
 - Added support for logging warnings from Historical API
 - Changed `use_ts_out` default to `false`
 - Fixed missing definition for `operator==` for `ImbalanceMsg`
+- Removed 10 minute minimum request time range restriction
 
 ## 0.8.0 - 2023-05-16
 - Changed `end` and `end_date` to optional to support new forward-fill behaviour
