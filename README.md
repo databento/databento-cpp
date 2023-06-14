@@ -1,4 +1,12 @@
-# databento-cpp
+<a href="https://databento.com">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://dzv012k6yye9u.cloudfront.net/brand/logo-white.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://dzv012k6yye9u.cloudfront.net/brand/logo.png">
+    <img alt="Databento" src="https://dzv012k6yye9u.cloudfront.net/brand/logo-white.png" width="560px">
+  </picture>
+</a>
+
+# Pay as you go for market data
 
 [![test](https://github.com/databento/databento-cpp/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/databento/databento-cpp/actions/workflows/build.yaml)
 [![license](https://img.shields.io/github/license/databento/databento-cpp?color=blue)](./LICENSE)
