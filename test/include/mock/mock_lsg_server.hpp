@@ -39,14 +39,14 @@ class MockLsgServer {
   // Send a record split across two packets. Waiting on a condition variable
   // between packets.
   template <typename Rec>
-  void SplitSendRecord(Rec rec, std::mutex& mutex,
+  void SplitSendRecord(Rec rec, const bool& send_remaining, std::mutex& mutex,
                        std::condition_variable& cv) {
     const std::string first_part{reinterpret_cast<const char*>(&rec),
                                  sizeof(RecordHeader)};
     Send(first_part);
     {
       std::unique_lock<std::mutex> lock{mutex};
-      cv.wait(lock);
+      cv.wait(lock, [&send_remaining] { return send_remaining; });
     }
     const std::string second_part{
         reinterpret_cast<const char*>(&rec) + sizeof(RecordHeader),

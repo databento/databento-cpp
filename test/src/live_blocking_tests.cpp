@@ -190,16 +190,19 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
                         TimeDeltaNanos{},
                         100};
 
-  std::mutex mutex;
-  std::condition_variable cv;
+  bool send_remaining{};
+  std::mutex send_remaining_mutex;
+  std::condition_variable send_remaining_cv;
   const mock::MockLsgServer mock_server{
       dataset::kGlbxMdp3, kTsOut,
-      [kRec, &mutex, &cv](mock::MockLsgServer& self) {
+      [kRec, &send_remaining, &send_remaining_mutex,
+       &send_remaining_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.SendRecord(kRec);
         // should cause partial read
-        self.SplitSendRecord(kRec, mutex, cv);
+        self.SplitSendRecord(kRec, send_remaining, send_remaining_mutex,
+                             send_remaining_cv);
       }};
 
   LiveBlocking target{logger_.get(),      kKey,
@@ -211,9 +214,10 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
   // partial read and timeout occurs here
   ASSERT_EQ(target.NextRecord(std::chrono::milliseconds{10}), nullptr);
   {
-    const std::lock_guard<std::mutex> lock{mutex};
+    const std::lock_guard<std::mutex> lock{send_remaining_mutex};
+    send_remaining = true;
     // notify server to send remaining part of record
-    cv.notify_one();
+    send_remaining_cv.notify_one();
   }
   // recovers from partial read
   rec = target.NextRecord();
@@ -322,25 +326,30 @@ TEST_F(LiveBlockingTests, TestReconnect) {
                           {},
                           2};
 
-  std::mutex client_send_mutex;
-  std::condition_variable client_send_cv;
-  std::mutex server_send_mutex;
-  std::condition_variable server_send_cv;
+  bool should_close{};
+  std::mutex should_close_mutex;
+  std::condition_variable should_close_cv;
+  bool has_closed{};
+  std::mutex has_closed_mutex;
+  std::condition_variable has_closed_cv;
   std::unique_ptr<mock::MockLsgServer> mock_server{new mock::MockLsgServer{
       dataset::kXnasItch, kTsOut,
-      [&client_send_mutex, &client_send_cv, kRec, &server_send_mutex,
-       &server_send_cv](mock::MockLsgServer& self) {
+      [kRec, &has_closed, &has_closed_cv, &has_closed_mutex, &should_close,
+       &should_close_cv, &should_close_mutex](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         {
-          std::unique_lock<std::mutex> shutdown_lock{client_send_mutex};
-          client_send_cv.wait(shutdown_lock);
+          std::unique_lock<std::mutex> lock{should_close_mutex};
+          should_close_cv.wait(lock, [&should_close] { return should_close; });
         }
+        // Close connection
         self.Close();
         {
-          const std::lock_guard<std::mutex> _lock{server_send_mutex};
-          server_send_cv.notify_one();
+          const std::lock_guard<std::mutex> _lock{has_closed_mutex};
+          has_closed = true;
+          has_closed_cv.notify_one();
         }
+        // Wait for reconnect
         self.Accept();
         self.Authenticate();
         self.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol);
@@ -350,15 +359,16 @@ TEST_F(LiveBlockingTests, TestReconnect) {
   LiveBlocking target{logger_.get(),       kKey,
                       dataset::kXnasItch,  "127.0.0.1",
                       mock_server->Port(), kTsOut};
-  // close server
+  // Tell server to close connection
   {
-    const std::lock_guard<std::mutex> _lock{client_send_mutex};
-    client_send_cv.notify_one();
+    const std::lock_guard<std::mutex> _lock{should_close_mutex};
+    should_close = true;
+    should_close_cv.notify_one();
   }
-  // Server shuts down
+  // Wait for server to close connection
   {
-    std::unique_lock<std::mutex> shutdown_lock{server_send_mutex};
-    server_send_cv.wait(shutdown_lock);
+    std::unique_lock<std::mutex> lock{has_closed_mutex};
+    has_closed_cv.wait(lock, [&has_closed] { return has_closed; });
   }
   ASSERT_THROW(target.NextRecord(), databento::DbnResponseError);
   target.Reconnect();
