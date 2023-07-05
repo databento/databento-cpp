@@ -27,7 +27,12 @@ struct SymbologyResolution {
 // Converts a vector of symbols to a comma-delineated string for sending to
 // Databento's historical and live APIs.
 //
-// Throws InvalidArgumentError if symbols is empty.
+// Throws InvalidArgumentError if symbols is empty or the iterator range is
+// empty.
+std::string JoinSymbolStrings(
+    const std::string& method_name,
+    std::vector<std::string>::const_iterator symbols_begin,
+    std::vector<std::string>::const_iterator symbols_end);
 std::string JoinSymbolStrings(const std::string& method_name,
                               const std::vector<std::string>& symbols);
 std::string ToString(const StrMappingInterval& mapping_interval);

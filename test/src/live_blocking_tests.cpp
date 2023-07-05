@@ -86,6 +86,33 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
   target.Subscribe(kSymbols, kSchema, kSType);
 }
 
+TEST_F(LiveBlockingTests, TestSubscriptionChunking) {
+  constexpr auto kTsOut = false;
+  constexpr auto kDataset = dataset::kXnasItch;
+  constexpr auto kSymbol = "TEST";
+  constexpr auto kSymbolCount = 1000;
+  constexpr auto kSchema = Schema::Ohlcv1M;
+  constexpr auto kSType = SType::RawSymbol;
+
+  const mock::MockLsgServer mock_server{
+      kDataset, kTsOut, [](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        std::size_t i{};
+        while (i < 1000) {
+          const auto chunk_size = std::min(128UL, kSymbolCount - i);
+          const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
+          self.Subscribe(symbols_chunk, kSchema, kSType);
+          i += chunk_size;
+        }
+      }};
+
+  LiveBlocking target{logger_.get(),      kKey,  kDataset, "127.0.0.1",
+                      mock_server.Port(), kTsOut};
+  const std::vector<std::string> kSymbols(kSymbolCount, kSymbol);
+  target.Subscribe(kSymbols, kSchema, kSType);
+}
+
 TEST_F(LiveBlockingTests, TestNextRecord) {
   constexpr auto kTsOut = false;
   constexpr auto kRecCount = 12;

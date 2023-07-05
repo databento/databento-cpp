@@ -3,7 +3,8 @@
 #include <openssl/sha.h>  // SHA256, SHA256_DIGEST_LENGTH
 
 #include <algorithm>  // copy
-#include <cctype>
+#include <cctype>     // tolower
+#include <cstddef>    // ptrdiff_t
 #include <cstdlib>
 #include <ios>  //hex, setfill, setw
 #include <sstream>
@@ -53,16 +54,30 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in, UnixNanos start) {
-  std::ostringstream sub_msg;
-  sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
-          << "|symbols="
-          << JoinSymbolStrings("LiveBlocking::Subscribe", symbols);
-  if (start.time_since_epoch().count()) {
-    sub_msg << "|start=" << start.time_since_epoch().count();
+  static constexpr auto kMethodName = "Live::Subscribe";
+  constexpr std::ptrdiff_t kSymbolMaxChunkSize = 128;
+  if (symbols.empty()) {
+    throw InvalidArgumentError{kMethodName, "symbols",
+                               "must contain at least one symbol"};
   }
-  sub_msg << '\n';
+  auto symbols_it = symbols.begin();
+  while (symbols_it != symbols.end()) {
+    const auto chunk_size =
+        std::min(kSymbolMaxChunkSize, std::distance(symbols_it, symbols.end()));
 
-  client_.WriteAll(sub_msg.str());
+    std::ostringstream sub_msg;
+    sub_msg << "schema=" << ToString(schema)
+            << "|stype_in=" << ToString(stype_in) << "|symbols="
+            << JoinSymbolStrings(kMethodName, symbols_it,
+                                 symbols_it + chunk_size);
+    if (start.time_since_epoch().count()) {
+      sub_msg << "|start=" << start.time_since_epoch().count();
+    }
+    sub_msg << '\n';
+    client_.WriteAll(sub_msg.str());
+
+    symbols_it += chunk_size;
+  }
 }
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,

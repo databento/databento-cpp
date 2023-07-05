@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.1 - TBD
+
+#### Enhancements
+- Added constants for dataset codes for Databento Equity Basic and OPRA Pillar
+
+#### Bug fixes
+- Batch live subscriptions to avoid hitting max message length
+
 ## 0.9.0 - 2023-06-13
 
 #### Enhancements
