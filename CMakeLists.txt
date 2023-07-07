@@ -135,6 +135,8 @@ else()
     )
   endif()
   FetchContent_MakeAvailable(json)
+  # Ignore compiler warnings in headers
+  add_system_include_property(nlohmann_json)
 endif()
 # cpp-httplib
 set(httplib_version 0.11.4)

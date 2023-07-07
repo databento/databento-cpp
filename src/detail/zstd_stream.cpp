@@ -21,7 +21,7 @@ ZstdStream::ZstdStream(std::unique_ptr<IReadable> input,
 void ZstdStream::ReadExact(std::uint8_t* buffer, std::size_t length) {
   std::size_t size{};
   do {
-    size += ReadSome(buffer, length - size);
+    size += ReadSome(&buffer[size], length - size);
   } while (size < length && read_suggestion_ != 0);
   // check for end of stream without obtaining `length` bytes
   if (size < length) {

@@ -48,7 +48,7 @@ std::string MockLsgServer::Receive() {
   if (read_size == 1024) {
     throw TcpError{{}, "Overran buffer in MockLsgServer"};
   }
-  received.resize(static_cast<std::size_t>(read_size));
+  received.resize(read_size);
   return received;
 }
 

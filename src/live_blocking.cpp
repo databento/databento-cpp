@@ -161,7 +161,6 @@ std::string LiveBlocking::DecodeChallenge() {
     throw LiveApiError::UnexpectedMsg("Received malformed initial message",
                                       response);
   }
-  const auto version_line = response.substr(0, first_nl_pos);
   const auto find_start = first_nl_pos + 1;
   auto next_nl_pos = find_start == response.length()
                          ? std::string::npos

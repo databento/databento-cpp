@@ -96,12 +96,7 @@ std::vector<std::string> ParseAt(const std::string& endpoint,
   if (!symbols_json.is_array()) {
     throw JsonResponseError::TypeMismatch(endpoint, key + " array", json);
   }
-  std::vector<std::string> res;
-  res.reserve(symbols_json.size());
-  for (const auto& item : symbols_json.items()) {
-    res.emplace_back(item.value());
-  }
-  return res;
+  return {symbols_json.begin(), symbols_json.end()};
 }
 
 }  // namespace detail

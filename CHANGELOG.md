@@ -4,9 +4,13 @@
 
 #### Enhancements
 - Added constants for dataset codes for Databento Equity Basic and OPRA Pillar
+- Added `const char*` getters to records for fixed-length `char` arrays
+- Added `RType` getter to `Record`
 
 #### Bug fixes
 - Batch live subscriptions to avoid hitting max message length
+- Fix bug in Zstd decompression
+- Fix `Historical::BatchDownload` truncating file before writing each chunk
 
 ## 0.9.0 - 2023-06-13
 
