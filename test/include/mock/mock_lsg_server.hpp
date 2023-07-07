@@ -28,7 +28,7 @@ class MockLsgServer {
   void Authenticate();
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype);
-  void Start(Schema schema);
+  void Start();
   std::size_t Send(const std::string& msg);
   ::ssize_t UncheckedSend(const std::string& msg);
   template <typename Rec>

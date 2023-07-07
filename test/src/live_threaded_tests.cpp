@@ -33,6 +33,7 @@ class LiveThreadedTests : public testing::Test {
 
   static constexpr auto kKey = "32-character-with-lots-of-filler";
   static constexpr auto kTsOut = false;
+  static constexpr auto kLocalhost = "127.0.0.1";
 
   std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
 };
@@ -53,28 +54,24 @@ TEST_F(LiveThreadedTests, TestBasic) {
                                         [&kRec](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
-                                          self.Start(Schema::Mbo);
+                                          self.Start();
                                           self.SendRecord(kRec);
                                           self.SendRecord(kRec);
                                         }};
 
-  LiveThreaded target{logger_.get(),      kKey,
-                      dataset::kGlbxMdp3, "127.0.0.1",
+  LiveThreaded target{logger_.get(),      kKey,  dataset::kGlbxMdp3, kLocalhost,
                       mock_server.Port(), kTsOut};
-  std::atomic<std::uint32_t> call_count{};
+  std::uint32_t call_count{};
   target.Start([&call_count, &kRec](const Record& rec) {
     ++call_count;
     EXPECT_TRUE(rec.Holds<MboMsg>());
     EXPECT_EQ(rec.Get<MboMsg>(), kRec);
-    return databento::KeepGoing::Continue;
+    return call_count < 2 ? KeepGoing::Continue : KeepGoing::Stop;
   });
-  while (call_count < 2) {
-    std::this_thread::yield();
-  }
+  target.BlockForStop();
 }
 
 TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
-  constexpr auto kSchema = Schema::Ohlcv1M;
   const MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
                     1,
                     2,
@@ -92,7 +89,7 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
       [&kRec, &call_count](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Start(kSchema);
+        self.Start();
         self.SendRecord(kRec);
         while (call_count < 1) {
           std::this_thread::yield();
@@ -102,10 +99,10 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
         self.SendRecord(kRec);
       }};
 
-  LiveThreaded target{logger_.get(),      kKey, dataset::kXnasItch, "127.0.0.1",
+  LiveThreaded target{logger_.get(),      kKey, dataset::kXnasItch, kLocalhost,
                       mock_server.Port(), false};
   target.Start(
-      [kSchema](Metadata&& metadata) { EXPECT_EQ(metadata.schema, kSchema); },
+      [](Metadata&& metadata) { EXPECT_TRUE(metadata.has_mixed_schema); },
       [&call_count, &kRec](const Record& rec) {
         ++call_count;
         EXPECT_TRUE(rec.Holds<MboMsg>());
@@ -118,7 +115,6 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
 }
 
 TEST_F(LiveThreadedTests, TestStop) {
-  constexpr auto kSchema = Schema::Ohlcv1M;
   const MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
                     1,
                     2,
@@ -136,7 +132,7 @@ TEST_F(LiveThreadedTests, TestStop) {
       [&kRec, &call_count](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Start(kSchema);
+        self.Start();
         self.SendRecord(kRec);
         self.SendRecord(kRec);
         while (call_count < 1) {
@@ -151,10 +147,10 @@ TEST_F(LiveThreadedTests, TestStop) {
       }}};
 
   LiveThreaded target{logger_.get(),       kKey,
-                      dataset::kXnasItch,  "127.0.0.1",
+                      dataset::kXnasItch,  kLocalhost,
                       mock_server->Port(), kTsOut};
   target.Start(
-      [kSchema](Metadata&& metadata) { EXPECT_EQ(metadata.schema, kSchema); },
+      [](Metadata&& metadata) { EXPECT_TRUE(metadata.has_mixed_schema); },
       [&call_count, &kRec](const Record& rec) {
         ++call_count;
         EXPECT_EQ(call_count, 1) << "Record callback called more than once";
@@ -191,7 +187,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
         self.Accept();
         self.Authenticate();
         self.Subscribe(kAllSymbols, kSchema, kSType);
-        self.Start(kSchema);
+        self.Start();
         {
           std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
           should_close_cv.wait(shutdown_lock,
@@ -201,18 +197,16 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
         self.Accept();
         self.Authenticate();
         self.Subscribe(kAllSymbols, kSchema, kSType);
-        self.Start(kSchema);
+        self.Start();
         self.SendRecord(kRec);
       }};
-  LiveThreaded target{logger_.get(),      kKey,
-                      dataset::kXnasItch, "127.0.0.1",
+  LiveThreaded target{logger_.get(),      kKey,  dataset::kXnasItch, kLocalhost,
                       mock_server.Port(), kTsOut};
   std::atomic<std::int32_t> metadata_calls{};
-  const auto metadata_cb = [kSchema, &metadata_calls, &should_close,
-                            &should_close_cv,
+  const auto metadata_cb = [&metadata_calls, &should_close, &should_close_cv,
                             &should_close_mutex](Metadata&& metadata) {
     ++metadata_calls;
-    EXPECT_EQ(metadata.schema, kSchema);
+    EXPECT_TRUE(metadata.has_mixed_schema);
     // close server
     const std::lock_guard<std::mutex> _lock{should_close_mutex};
     should_close = true;
@@ -222,7 +216,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
   const auto record_cb = [&record_calls, kRec](const Record& record) {
     ++record_calls;
     EXPECT_EQ(record.Get<TradeMsg>(), kRec);
-    return KeepGoing::Continue;
+    return KeepGoing::Stop;
   };
   std::atomic<std::int32_t> exception_calls{};
   const auto exception_cb = [&exception_calls,
@@ -241,9 +235,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
   };
   target.Subscribe(kAllSymbols, kSchema, kSType);
   target.Start(metadata_cb, record_cb, exception_cb);
-  while (exception_calls == 0 || record_calls == 0) {
-    std::this_thread::yield();
-  }
+  target.BlockForStop();
   EXPECT_EQ(metadata_calls, 2);
   EXPECT_EQ(exception_calls, 1);
   EXPECT_EQ(record_calls, 1);
@@ -264,7 +256,7 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
        &should_close_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Start(kSchema);
+        self.Start();
         {
           std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
           should_close_cv.wait(shutdown_lock,
@@ -276,7 +268,7 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
         self.Subscribe(kSymbols, kSchema, kSType);
       }};
   LiveThreaded target{ILogReceiver::Default(), kKey,
-                      dataset::kXnasItch,      "127.0.0.1",
+                      dataset::kXnasItch,      kLocalhost,
                       mock_server.Port(),      kTsOut};
   std::atomic<std::int32_t> metadata_calls{};
   const auto metadata_cb = [&metadata_calls, &should_close, &should_close_cv,
@@ -292,9 +284,8 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
     ++record_calls;
     return KeepGoing::Continue;
   };
-  std::atomic<std::int32_t> exception_calls{};
-  const auto exception_cb = [&exception_calls, &target, &metadata_cb,
-                             &record_cb, &kSymbols](const std::exception& exc) {
+  const auto exception_cb = [&target, &metadata_cb, &record_cb,
+                             &kSymbols](const std::exception& exc) {
     EXPECT_NE(dynamic_cast<const databento::DbnResponseError*>(&exc), nullptr)
         << "Unexpected exception type";
     target.Reconnect();
@@ -304,17 +295,31 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
       GTEST_NONFATAL_FAILURE_("Unexpectedly called exception callback");
       return LiveThreaded::ExceptionAction::Stop;
     });
-    ++exception_calls;
     return LiveThreaded::ExceptionAction::Stop;
   };
   target.Start(metadata_cb, record_cb, exception_cb);
-  while (exception_calls == 0) {
-    std::this_thread::yield();
-  }
+  target.BlockForStop();
   std::clog.flush();
   const std::string output = testing::internal::GetCapturedStderr();
   EXPECT_NE(output.find("which would cause a deadlock"), std::string::npos)
       << "Got unexpected output: " << output;
+}
+
+TEST_F(LiveThreadedTests, TestBlockForStopTimeout) {
+  constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1S), 1, 2, 3, 4, 5};
+  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut,
+                                        [&kRec](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          self.Start();
+                                          self.SendRecord(kRec);
+                                        }};
+  LiveThreaded target{ILogReceiver::Default(), kKey,
+                      dataset::kXnasItch,      kLocalhost,
+                      mock_server.Port(),      kTsOut};
+  target.Start([](const Record&) { return KeepGoing::Continue; });
+  ASSERT_EQ(target.BlockForStop(std::chrono::milliseconds{100}),
+            KeepGoing::Continue);
 }
 }  // namespace test
 }  // namespace databento

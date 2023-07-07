@@ -707,8 +707,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   const auto& ch_def1 = ch_record1->Get<InstrumentDefMsg>();
   const auto& f_def1 = f_record1->Get<InstrumentDefMsg>();
   EXPECT_EQ(ch_def1, f_def1);
-  EXPECT_STREQ(ch_def1.exchange.data(), "XNAS");
-  EXPECT_STREQ(ch_def1.raw_symbol.data(), "MSFT");
+  EXPECT_STREQ(ch_def1.Exchange(), "XNAS");
+  EXPECT_STREQ(ch_def1.RawSymbol(), "MSFT");
   EXPECT_EQ(ch_def1.security_update_action, SecurityUpdateAction::Add);
   EXPECT_EQ(ch_def1.min_lot_size_round_lot, 100);
   EXPECT_EQ(ch_def1.instrument_class, InstrumentClass::Stock);
@@ -723,8 +723,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   const auto& ch_def2 = ch_record2->Get<InstrumentDefMsg>();
   const auto& f_def2 = f_record2->Get<InstrumentDefMsg>();
   EXPECT_EQ(ch_def2, f_def2);
-  EXPECT_STREQ(ch_def2.exchange.data(), "XNAS");
-  EXPECT_STREQ(ch_def2.raw_symbol.data(), "MSFT");
+  EXPECT_STREQ(ch_def2.Exchange(), "XNAS");
+  EXPECT_STREQ(ch_def2.RawSymbol(), "MSFT");
   EXPECT_EQ(ch_def2.security_update_action, SecurityUpdateAction::Add);
   EXPECT_EQ(ch_def2.min_lot_size_round_lot, 100);
   EXPECT_EQ(ch_def2.instrument_class, InstrumentClass::Stock);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0 - TBD
+
+#### Enhancements
+- Added `LiveThreaded::BlockForStop` to make it easier to wait for one or more records
+  before closing the session
+
 ## 0.9.1 - 2023-07-11
 
 #### Enhancements
@@ -44,18 +50,24 @@
 - Added initial support for live data with `LiveBlocking` and `LiveThreaded` clients
 - Added support for statistics schema
 - Added `SystemMsg` and `ErrorMsg` records for use in live data
-- Added `strike_price`, `strike_price_currency`, and `instrument_class` to `InstrumentDefMsg`
+- Added `strike_price`, `strike_price_currency`, and `instrument_class` to
+  `InstrumentDefMsg`
 - Added `FixedPx` helper class for formatting fixed prices
 - Added configurable log receiver `ILogReceiver`
-- Added `instrument_class`, `strike_price`, and `strike_price_currency` to definition schema
-- Added additional `condition` variants for `DatasetConditionDetail` (degraded, pending, missing)
-- Added additional member `last_modified_date` to `DatasetConditionDetail` Added `has_mixed_schema`, `has_mixed_stype_in`, and `ts_out` to `Metadata` to support live data
+- Added `instrument_class`, `strike_price`, and `strike_price_currency` to definition
+  schema
+- Added additional `condition` variants for `DatasetConditionDetail` (degraded, pending,
+  missing)
+- Added additional member `last_modified_date` to `DatasetConditionDetail`
+- Added `has_mixed_schema`, `has_mixed_stype_in`, and `ts_out` to `Metadata` to support
+  live data
 - Added optional `compression` parameter to `BatchSubmitJob`
 
 #### Breaking changes
 - Removed `related` and `related_security_id` from `InstrumentDefMsg`
 - Renamed `BatchJob.cost` to `cost_usd` and value now expressed as US dollars
-- Renamed `SType::ProductId` to `SType::InstrumentId` and `SType::Native` to `SType::RawSymbol`
+- Renamed `SType::ProductId` to `SType::InstrumentId` and `SType::Native` to
+  `SType::RawSymbol`
 - Renamed `RecordHeader::product_id` to `instrument_id`
 - Renamed `InstrumentDefMsg::symbol` to `raw_symbol`
 - Renamed `SymbolMapping::native_symbol` to `raw_symbol`

@@ -31,6 +31,7 @@ class LiveBlockingTests : public testing::Test {
   }
 
   static constexpr auto kKey = "32-character-with-lots-of-filler";
+  static constexpr auto kLocalhost = "127.0.0.1";
 
   std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
 };
@@ -44,26 +45,24 @@ TEST_F(LiveBlockingTests, TestAuthentication) {
                                         }};
 
   const LiveBlocking target{logger_.get(),      kKey,
-                            dataset::kXnasItch, "127.0.0.1",
+                            dataset::kXnasItch, kLocalhost,
                             mock_server.Port(), kTsOut};
 }
 
 TEST_F(LiveBlockingTests, TestStart) {
   constexpr auto kTsOut = false;
-  constexpr auto kSchema = Schema::Mbo;
   const mock::MockLsgServer mock_server{dataset::kGlbxMdp3, kTsOut,
                                         [](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
-                                          self.Start(kSchema);
+                                          self.Start();
                                         }};
 
-  LiveBlocking target{logger_.get(),      kKey,
-                      dataset::kGlbxMdp3, "127.0.0.1",
+  LiveBlocking target{logger_.get(),      kKey,  dataset::kGlbxMdp3, kLocalhost,
                       mock_server.Port(), kTsOut};
   const auto metadata = target.Start();
   EXPECT_EQ(metadata.version, 1);
-  EXPECT_EQ(metadata.schema, kSchema);
+  EXPECT_TRUE(metadata.has_mixed_schema);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
 }
 
@@ -81,7 +80,7 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
         self.Subscribe(kSymbols, kSchema, kSType);
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,  kDataset, "127.0.0.1",
+  LiveBlocking target{logger_.get(),      kKey,  kDataset, kLocalhost,
                       mock_server.Port(), kTsOut};
   target.Subscribe(kSymbols, kSchema, kSType);
 }
@@ -107,7 +106,7 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunking) {
         }
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,  kDataset, "127.0.0.1",
+  LiveBlocking target{logger_.get(),      kKey,  kDataset, kLocalhost,
                       mock_server.Port(), kTsOut};
   const std::vector<std::string> kSymbols(kSymbolCount, kSymbol);
   target.Subscribe(kSymbols, kSchema, kSType);
@@ -126,8 +125,7 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
         }
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,
-                      dataset::kXnasItch, "127.0.0.1",
+  LiveBlocking target{logger_.get(),      kKey,  dataset::kXnasItch, kLocalhost,
                       mock_server.Port(), kTsOut};
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
@@ -177,8 +175,7 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
         self.SendRecord(kRec);
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,
-                      dataset::kXnasItch, "127.0.0.1",
+  LiveBlocking target{logger_.get(),      kKey,  dataset::kXnasItch, kLocalhost,
                       mock_server.Port(), kTsOut};
   {
     // wait for server to send first record to avoid flaky timeouts
@@ -232,8 +229,7 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
                              send_remaining_cv);
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,
-                      dataset::kGlbxMdp3, "127.0.0.1",
+  LiveBlocking target{logger_.get(),      kKey,  dataset::kGlbxMdp3, kLocalhost,
                       mock_server.Port(), kTsOut};
   auto rec = target.NextRecord();
   ASSERT_TRUE(rec.Holds<MboMsg>());
@@ -276,8 +272,7 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
         }
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,
-                      dataset::kXnasItch, "127.0.0.1",
+  LiveBlocking target{logger_.get(),      kKey,  dataset::kXnasItch, kLocalhost,
                       mock_server.Port(), kTsOut};
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
@@ -323,7 +318,7 @@ TEST_F(LiveBlockingTests, TestStop) {
   };                              // namespace databento
 
   LiveBlocking target{logger_.get(),       kKey,
-                      dataset::kXnasItch,  "127.0.0.1",
+                      dataset::kXnasItch,  kLocalhost,
                       mock_server->Port(), kTsOut};
   ASSERT_EQ(target.NextRecord().Get<WithTsOut<TradeMsg>>(), kRec);
   target.Stop();
@@ -335,8 +330,8 @@ TEST_F(LiveBlockingTests, TestStop) {
 
 TEST_F(LiveBlockingTests, TestConnectWhenGatewayNotUp) {
   constexpr auto kTsOut = true;
-  ASSERT_THROW(LiveBlocking(logger_.get(), kKey, dataset::kXnasItch,
-                            "127.0.0.1", 80, kTsOut),
+  ASSERT_THROW(LiveBlocking(logger_.get(), kKey, dataset::kXnasItch, kLocalhost,
+                            80, kTsOut),
                databento::TcpError);
 }
 
@@ -380,11 +375,11 @@ TEST_F(LiveBlockingTests, TestReconnect) {
         self.Accept();
         self.Authenticate();
         self.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol);
-        self.Start(Schema::Trades);
+        self.Start();
         self.SendRecord(kRec);
       }}};
   LiveBlocking target{logger_.get(),       kKey,
-                      dataset::kXnasItch,  "127.0.0.1",
+                      dataset::kXnasItch,  kLocalhost,
                       mock_server->Port(), kTsOut};
   // Tell server to close connection
   {
@@ -401,7 +396,7 @@ TEST_F(LiveBlockingTests, TestReconnect) {
   target.Reconnect();
   target.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol);
   const auto metadata = target.Start();
-  ASSERT_EQ(metadata.schema, Schema::Trades);
+  EXPECT_TRUE(metadata.has_mixed_schema);
   const auto rec = target.NextRecord();
   ASSERT_TRUE(rec.Holds<TradeMsg>());
   ASSERT_EQ(rec.Get<TradeMsg>(), kRec);

@@ -4,6 +4,7 @@
 #include <openssl/sha.h>  // SHA256_DIGEST_LENGTH
 #include <sys/socket.h>   // recv
 
+#include <cstdint>
 #include <limits>
 #include <sstream>
 
@@ -99,7 +100,7 @@ void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
             std::string::npos);
 }
 
-void MockLsgServer::Start(Schema schema) {
+void MockLsgServer::Start() {
   const auto received = Receive();
   EXPECT_EQ(received, "start_session\n");
   Send("DBN\1");
@@ -111,8 +112,8 @@ void MockLsgServer::Start(Schema schema) {
   // dataset
   bytes_written += Send(dataset_);
   bytes_written += Send(std::string(16 - dataset_.length(), '\0'));
-  // schema
-  bytes_written += SendBytes(schema);
+  // mixed schema
+  bytes_written += SendBytes(std::numeric_limits<std::uint16_t>::max());
   // start
   bytes_written += SendBytes(std::uint64_t{0});
   // end

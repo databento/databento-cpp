@@ -40,7 +40,7 @@ int main() {
   };
   auto record_callback = [&symbol_mappings](const databento::Record& rec) {
     using databento::RType;
-    switch (rec.Header().rtype) {
+    switch (rec.RType()) {
       case RType::Mbo: {
         auto ohlcv = rec.Get<databento::WithTsOut<databento::MboMsg>>();
         std::cout << "Received tick for "
@@ -58,7 +58,7 @@ int main() {
         auto mapping = rec.Get<databento::SymbolMappingMsg>();
         std::cout << "Received symbol mapping: " << mapping << '\n';
         symbol_mappings.emplace(mapping.hd.instrument_id,
-                                mapping.stype_in_symbol.data());
+                                mapping.STypeInSymbol());
         break;
       }
       case RType::System: {
@@ -75,7 +75,7 @@ int main() {
       }
       default: {
         std::cerr << "Received unknown record with rtype " << std::hex
-                  << static_cast<std::uint16_t>(rec.Header().rtype) << '\n';
+                  << static_cast<std::uint16_t>(rec.RType()) << '\n';
       }
     }
     return databento::KeepGoing::Continue;

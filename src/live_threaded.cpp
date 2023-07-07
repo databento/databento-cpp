@@ -2,7 +2,9 @@
 
 #include <atomic>
 #include <chrono>  // milliseconds
+#include <condition_variable>
 #include <exception>
+#include <mutex>
 #include <sstream>
 #include <thread>
 #include <utility>  // forward, move, swap
@@ -19,8 +21,18 @@ struct LiveThreaded::Impl {
       : log_receiver{log_receiver},
         blocking{log_receiver, std::forward<A>(args)...} {}
 
+  void NotifyOfStop() {
+    const std::lock_guard<std::mutex> lock{last_cb_ret_mutex};
+    last_cb_ret = KeepGoing::Stop;
+    last_cb_ret_cv.notify_all();
+  }
+
   ILogReceiver* log_receiver;
+  // Set to false when destructor is called
   std::atomic<bool> keep_going{true};
+  KeepGoing last_cb_ret{KeepGoing::Continue};
+  std::mutex last_cb_ret_mutex;
+  std::condition_variable last_cb_ret_cv;
   LiveBlocking blocking;
 };
 
@@ -111,6 +123,27 @@ void LiveThreaded::Start(MetadataCallback metadata_callback,
 
 void LiveThreaded::Reconnect() { impl_->blocking.Reconnect(); }
 
+void LiveThreaded::BlockForStop() {
+  std::unique_lock<std::mutex> lock{impl_->last_cb_ret_mutex};
+  auto* impl = impl_.get();
+  // wait for stop
+  impl_->last_cb_ret_cv.wait(
+      lock, [impl] { return impl->last_cb_ret == KeepGoing::Stop; });
+}
+
+databento::KeepGoing LiveThreaded::BlockForStop(
+    std::chrono::milliseconds timeout) {
+  std::unique_lock<std::mutex> lock{impl_->last_cb_ret_mutex};
+  auto* impl = impl_.get();
+  // wait for stop
+  if (impl_->last_cb_ret_cv.wait_for(lock, timeout, [impl] {
+        return impl->last_cb_ret == KeepGoing::Stop;
+      })) {
+    return KeepGoing::Stop;
+  }
+  return KeepGoing::Continue;
+}
+
 void LiveThreaded::ProcessingThread(Impl* impl,
                                     MetadataCallback&& metadata_callback,
                                     RecordCallback&& record_callback,
@@ -146,6 +179,7 @@ void LiveThreaded::ProcessingThread(Impl* impl,
         if (rec) {
           if (record_cb(*rec) == KeepGoing::Stop) {
             impl->blocking.Stop();
+            impl->NotifyOfStop();
             return;
           }
         }  // else timeout
@@ -155,6 +189,7 @@ void LiveThreaded::ProcessingThread(Impl* impl,
             ExceptionAction::Restart) {
           break;  // break out of NextRecord loop, to restart Start loop
         } else {
+          impl->NotifyOfStop();
           return;
         }
       }
