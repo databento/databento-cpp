@@ -119,18 +119,19 @@ verbose_message("Applied compiler warnings.\n")
 include(FetchContent)
 # JSON
 if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_JSON)
-  find_package(nlohmann_json 3.11.2 REQUIRED)
+  find_package(nlohmann_json REQUIRED)
 else()
+  set(json_version 3.11.2)
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       json
-      URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+      URL https://github.com/nlohmann/json/releases/download/v${json_version}/json.tar.xz
     )
   else()
     # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
     FetchContent_Declare(
       json
-      URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+      URL https://github.com/nlohmann/json/releases/download/v${json_version}/json.tar.xz
       DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
   endif()
@@ -139,10 +140,10 @@ else()
   add_system_include_property(nlohmann_json)
 endif()
 # cpp-httplib
-set(httplib_version 0.11.4)
 if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
-  find_package(httplib ${httplib_version} REQUIRED)
+  find_package(httplib REQUIRED)
 else()
+  set(httplib_version 0.13.1)
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       httplib
