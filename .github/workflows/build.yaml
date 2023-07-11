@@ -11,10 +11,8 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [clang++, g++]
-
     name: build - ubuntu-latest - ${{ matrix.compiler}}
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -54,7 +52,6 @@ jobs:
   macos:
     name: build - macos-latest - clang++
     runs-on: macos-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -74,3 +71,29 @@ jobs:
         run: cmake --build build
       - name: Unit tests
         run: cd build && ctest --verbose
+
+  windows:
+    name: build - windows-latest - msvc
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-vcpkg
+        with:
+          path: build/vcpkg_installed
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./vcpkg.json') }}
+      - name: CMake configure
+        run: |
+          cmake -S . -B build `
+            -DDATABENTO_ENABLE_UNIT_TESTING=1 `
+            -DDATABENTO_ENABLE_EXAMPLES=1 `
+            -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake `
+            -DVCPKG_BUILD_TYPE=debug `
+            -DDATABENTO_USE_EXTERNAL_GTEST=0
+      - name: CMake build
+        run: cmake --build build --parallel 10
+      - name: Unit tests
+        run: cd build && ctest --verbose --exclude-regex cmake

@@ -108,9 +108,8 @@ void LiveThreaded::Start(MetadataCallback metadata_callback,
   // Deadlock check
   if (std::this_thread::get_id() == thread_.Id()) {
     std::ostringstream log_ss;
-    log_ss << __PRETTY_FUNCTION__
-           << " Called Start from callback thread, which would cause a "
-              "deadlock. Ignoring.";
+    log_ss << "[LiveThreaded::Start] Called Start from callback thread, which "
+              "would cause a deadlock. Ignoring.";
     impl_->log_receiver->Receive(LogLevel::Warning, log_ss.str());
     return;
   }
@@ -151,6 +150,7 @@ void LiveThreaded::ProcessingThread(Impl* impl,
   // Thread safety: non-const calls to `blocking` are only performed from this
   // thread
 
+  static constexpr auto kMethodName = "LiveThreaded::ProcessingThread";
   constexpr std::chrono::milliseconds kTimeout{50};
 
   const auto metadata_cb{std::move(metadata_callback)};
@@ -164,7 +164,7 @@ void LiveThreaded::ProcessingThread(Impl* impl,
         metadata_cb(std::move(metadata));
       }
     } catch (const std::exception& exc) {
-      if (ExceptionHandler(impl, exception_cb, exc, __PRETTY_FUNCTION__,
+      if (ExceptionHandler(impl, exception_cb, exc, kMethodName,
                            "Caught exception starting session: ") ==
           ExceptionAction::Restart) {
         continue;  // restart Start loop
@@ -184,7 +184,7 @@ void LiveThreaded::ProcessingThread(Impl* impl,
           }
         }  // else timeout
       } catch (const std::exception& exc) {
-        if (ExceptionHandler(impl, exception_cb, exc, __PRETTY_FUNCTION__,
+        if (ExceptionHandler(impl, exception_cb, exc, kMethodName,
                              "Caught exception reading next record: ") ==
             ExceptionAction::Restart) {
           break;  // break out of NextRecord loop, to restart Start loop

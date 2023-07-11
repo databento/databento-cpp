@@ -1,15 +1,16 @@
 #include "databento/detail/file_stream.hpp"
 
-#include <ios>  // streamsize
+#include <ios>  // ios, streamsize
 #include <sstream>
 
 #include "databento/exceptions.hpp"
 
 using databento::detail::FileStream;
 
-FileStream::FileStream(const std::string& file_path) : stream_{file_path} {
+FileStream::FileStream(const std::string& file_path)
+    : stream_{file_path, std::ios::binary} {
   if (stream_.fail()) {
-    throw InvalidArgumentError{"DbnFileStore", "file_path",
+    throw InvalidArgumentError{"FileStream", "file_path",
                                "Non-existent or invalid file"};
   }
 }

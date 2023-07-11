@@ -110,7 +110,7 @@ void HttpClient::CheckWarnings(const httplib::Response& response) const {
         for (const auto& warning_json : json.items()) {
           const std::string warning = warning_json.value();
           std::ostringstream msg;
-          msg << __PRETTY_FUNCTION__ << " Server " << warning;
+          msg << "[HttpClient::CheckWarnings] Server " << warning;
           log_receiver_->Receive(LogLevel::Warning, msg.str());
         }
         return;
@@ -118,8 +118,9 @@ void HttpClient::CheckWarnings(const httplib::Response& response) const {
     } catch (const std::exception&) {
     }
     std::ostringstream msg;
-    msg << __PRETTY_FUNCTION__
-        << " Failed to parse warnings from HTTP header. Raw contents: " << raw;
+    msg << "[HttpClient::CheckWarnings] Failed to parse warnings from HTTP "
+           "header. Raw contents: "
+        << raw;
     log_receiver_->Receive(LogLevel::Warning, msg.str());
   }
 }

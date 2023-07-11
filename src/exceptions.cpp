@@ -1,6 +1,10 @@
 #include "databento/exceptions.hpp"
 
+#ifdef _WIN32
+#include <winbase.h>  // FormatMessage, FORMAT_MESSAGE_FROM_SYSTEM
+#else
 #include <cstring>  // strerror
+#endif
 #include <sstream>  // ostringstream
 #include <utility>  // move
 
@@ -16,7 +20,14 @@ std::string HttpRequestError::BuildMessage(const std::string& request_path,
 using databento::TcpError;
 
 std::string TcpError::BuildMessage(int err_num, std::string message) {
+#ifdef _WIN32
+  char errbuf[300];
+  ::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, {}, err_num, {}, errbuf,
+                  sizeof(errbuf), {});
+  return std::move(message) + ": " + errbuf;
+#else
   return std::move(message) + ": " + std::strerror(err_num);
+#endif
 }
 
 using databento::HttpResponseError;

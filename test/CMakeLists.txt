@@ -108,6 +108,10 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_GTEST)
 
 else()
   include(FetchContent)
+  if(WIN32)
+    # Visual Studio by default links C runtimes dynamically but gtest by default links them statically
+    set(gtest_force_shared_crt ON CACHE BOOL "Link dynamic CRT" FORCE)
+  endif()
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       googletest
@@ -129,18 +133,17 @@ else()
       gtest_main
       ${${CMAKE_PROJECT_NAME}_TEST_LIB}
   )
+  # Ignore compiler warnings in headers
+  add_system_include_property(gtest)
 endif()
+
 
 #
 # Add the unit tests
 #
 
-add_test(
-  NAME
-    ${PROJECT_NAME}
-  COMMAND
-    ${PROJECT_NAME}
-)
+include(GoogleTest)
+gtest_discover_tests(${PROJECT_NAME})
 
 #
 # Copy test data

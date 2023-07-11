@@ -1,8 +1,12 @@
 #include "mock/mock_lsg_server.hpp"
 
-#include <netinet/in.h>   // sockaddr_in
+#ifdef _WIN32
+#include <winsock2.h>
+#else
+#include <netinet/in.h>  // sockaddr_in
+#include <sys/socket.h>  // recv
+#endif
 #include <openssl/sha.h>  // SHA256_DIGEST_LENGTH
-#include <sys/socket.h>   // recv
 
 #include <cstdint>
 #include <limits>
@@ -54,13 +58,18 @@ std::string MockLsgServer::Receive() {
 }
 
 std::size_t MockLsgServer::Send(const std::string& msg) {
-  const auto write_size = ::write(conn_fd_.Get(), msg.data(), msg.length());
+  const auto write_size = UncheckedSend(msg);
   EXPECT_EQ(write_size, msg.length());
   return static_cast<std::size_t>(write_size);
 }
 
 ::ssize_t MockLsgServer::UncheckedSend(const std::string& msg) {
-  return ::write(conn_fd_.Get(), msg.data(), msg.length());
+// MSG_NOSIGNAL doesn't exist on Windows, but also isn't necessary
+#ifdef _WIN32
+  constexpr int MSG_NOSIGNAL = {};
+#endif
+  // Don't send a SIGPIPE if the connection is closed
+  return ::send(conn_fd_.Get(), msg.data(), msg.length(), MSG_NOSIGNAL);
 }
 
 void MockLsgServer::Authenticate() {
@@ -134,7 +143,7 @@ void MockLsgServer::Start() {
 
 void MockLsgServer::Close() { conn_fd_.Close(); }
 
-int MockLsgServer::InitSocketAndSetPort() {
+databento::detail::Socket MockLsgServer::InitSocketAndSetPort() {
   const auto pair = MockTcpServer::InitSocket();
   port_ = pair.first;
   return pair.second;

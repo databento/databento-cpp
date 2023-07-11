@@ -63,6 +63,7 @@ You'll need to ensure the following dependencies are installed:
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
 - [nlohmann\_json (header-only)](https://github.com/nlohmann/json)
 - [cpp-httplib (header-only)](https://github.com/yhirose/cpp-httplib)
+- [dirent (Windows-only, header-only)](https://github.com/tronkko/dirent)
 
 By default, cpp-httplib and nlohmann\_json are downloaded by CMake as part of the build process.
 If you would like to use a local version of these libraries, enable the CMake flag

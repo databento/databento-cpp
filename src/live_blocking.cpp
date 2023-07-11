@@ -153,7 +153,7 @@ std::string LiveBlocking::DecodeChallenge() {
   std::string response{buffer_.data(), buffer_size_};
   {
     std::ostringstream log_ss;
-    log_ss << __PRETTY_FUNCTION__ << " Challenge: " << response;
+    log_ss << "[LiveBlocking::DecodeChallenge] Challenge: " << response;
     log_receiver_->Receive(LogLevel::Debug, log_ss.str());
   }
   auto first_nl_pos = response.find('\n');
@@ -208,8 +208,9 @@ std::uint64_t LiveBlocking::Authenticate() {
   const std::uint64_t session_id = DecodeAuthResp();
 
   std::ostringstream log_ss;
-  log_ss << __PRETTY_FUNCTION__
-         << " Successfully authenticated with session_id " << session_id;
+  log_ss << "[LiveBlocking::Authenticate] Successfully authenticated with "
+            "session_id "
+         << session_id;
   log_receiver_->Receive(LogLevel::Info, log_ss.str());
 
   return session_id;
@@ -261,7 +262,8 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
   const std::string response{buffer_.cbegin(), nl_it};
   {
     std::ostringstream log_ss;
-    log_ss << __PRETTY_FUNCTION__ << " Authentication response: " << response;
+    log_ss << "[LiveBlocking::DecodeAuthResp] Authentication response: "
+           << response;
     log_receiver_->Receive(LogLevel::Debug, log_ss.str());
   }
   // set in case Read call also read records. One beyond newline

@@ -14,6 +14,9 @@
 #include <memory>     // unique_ptr
 #include <string>
 #include <utility>  // move
+#ifdef _WIN32
+#include <direct.h>  // _mkdir
+#endif
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
@@ -113,7 +116,12 @@ void TryCreateDir(const std::string& dir_name) {
   const std::unique_ptr<DIR, int (*)(DIR*)> dir{::opendir(dir_name.c_str()),
                                                 &::closedir};
   if (dir == nullptr) {
-    const int ret = ::mkdir(dir_name.c_str(), 0777);
+    const int ret =
+#ifdef _WIN32
+        ::_mkdir(dir_name.c_str());
+#else
+        ::mkdir(dir_name.c_str(), 0777);
+#endif
     if (ret != 0) {
       throw databento::Exception{std::string{"Unable to create directory "} +
                                  dir_name + ": " + ::strerror(errno)};

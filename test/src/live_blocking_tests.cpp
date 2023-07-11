@@ -89,7 +89,7 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunking) {
   constexpr auto kTsOut = false;
   constexpr auto kDataset = dataset::kXnasItch;
   constexpr auto kSymbol = "TEST";
-  constexpr auto kSymbolCount = 1000;
+  constexpr std::size_t kSymbolCount = 1000;
   constexpr auto kSchema = Schema::Ohlcv1M;
   constexpr auto kSType = SType::RawSymbol;
 
@@ -99,7 +99,8 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunking) {
         self.Authenticate();
         std::size_t i{};
         while (i < 1000) {
-          const auto chunk_size = std::min(128UL, kSymbolCount - i);
+          const auto chunk_size =
+              std::min(static_cast<std::size_t>(128), kSymbolCount - i);
           const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
           self.Subscribe(symbols_chunk, kSchema, kSType);
           i += chunk_size;

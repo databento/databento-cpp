@@ -1,7 +1,14 @@
 #pragma once
 
 #include <gtest/gtest.h>  // EXPECT_EQ
-#include <unistd.h>       // write
+#ifdef _WIN32
+#include <basetsd.h>   // SSIZE_T
+#include <winsock2.h>  // send
+
+using ssize_t = SSIZE_T;
+#else
+#include <sys/socket.h>  // send
+#endif
 
 #include <condition_variable>
 #include <functional>  // function
@@ -57,13 +64,13 @@ class MockLsgServer {
   void Close();
 
  private:
-  int InitSocketAndSetPort();
-  int InitSocketAndSetPort(int port);
+  detail::Socket InitSocketAndSetPort();
+  detail::Socket InitSocketAndSetPort(int port);
   std::string Receive();
 
   template <typename T>
   std::size_t SendBytes(T bytes) {
-    const auto write_size = ::write(conn_fd_.Get(), &bytes, sizeof(bytes));
+    const auto write_size = ::send(conn_fd_.Get(), &bytes, sizeof(bytes), {});
     EXPECT_EQ(write_size, sizeof(bytes)) << ::strerror(errno);
     return static_cast<std::size_t>(write_size);
   }

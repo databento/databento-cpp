@@ -2,6 +2,10 @@
 #include <ctime>
 #include <iomanip>
 #include <iostream>  // setw
+#ifdef _WIN32
+// _mkgmtime is equivalent to timegm
+#define timegm _mkgmtime
+#endif
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"

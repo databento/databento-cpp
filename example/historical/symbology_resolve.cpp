@@ -1,5 +1,3 @@
-#include <sysexits.h>
-
 #include <iostream>
 #include <vector>
 
@@ -12,7 +10,7 @@ int main(int argc, char* argv[]) {
   if (argc < 6) {
     std::cerr << "USAGE: symbology-resolve <DATASET> <STYPE_IN> <STYPE_OUT> "
                  "<DATE> <SYMBOLS...>\n";
-    return EX_USAGE;
+    return 1;
   }
   const auto stype_in = databento::FromString<databento::SType>(argv[2]);
   const auto stype_out = databento::FromString<databento::SType>(argv[3]);

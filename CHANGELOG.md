@@ -3,6 +3,7 @@
 ## 0.10.0 - TBD
 
 #### Enhancements
+- Added preliminary support for Windows
 - Added `LiveThreaded::BlockForStop` to make it easier to wait for one or more records
   before closing the session
 
