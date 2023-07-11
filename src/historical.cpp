@@ -246,8 +246,9 @@ std::vector<databento::BatchJob> Historical::BatchListJobs(
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
   std::vector<BatchJob> jobs;
-  std::transform(json.begin(), json.end(), std::back_inserter(jobs),
-                 [](const auto& item) { return ::Parse(kEndpoint, item); });
+  std::transform(
+      json.begin(), json.end(), std::back_inserter(jobs),
+      [](const nlohmann::json& item) { return ::Parse(kEndpoint, item); });
   return jobs;
 }
 
@@ -859,7 +860,7 @@ databento::SymbologyResolution Historical::SymbologyResolve(
     std::vector<StrMappingInterval> mapping_intervals;
     std::transform(mapping_json.begin(), mapping_json.end(),
                    std::back_inserter(mapping_intervals),
-                   [](const auto& interval_json) {
+                   [](const nlohmann::json& interval_json) {
                      return StrMappingInterval{
                          detail::CheckedAt(kEndpoint, interval_json, "d0"),
                          detail::CheckedAt(kEndpoint, interval_json, "d1"),
