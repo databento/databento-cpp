@@ -17,19 +17,13 @@ if(${PROJECT_NAME_UPPERCASE}_ENABLE_CPPCHECK)
     set(
       CMAKE_CXX_CPPCHECK ${CPPCHECK}
       --enable=all
-      --suppress=missingIncludeSystem
+      --suppress=missingIncludeSystem  # False positives
       --suppress=preprocessorErrorDirective
-      --suppress=unusedFunction
-      --suppress=unmatchedSuppression
+      --suppress=unusedFunction        # False positives
+      --suppress=unmatchedSuppression  # Support different cppcheck versions
       --inline-suppr
       --relative-paths=${CMAKE_SOURCE_DIR}
       --quiet
-      -I${CMAKE_SOURCE_DIR}/include
-      -I${CMAKE_SOURCE_DIR}/src
-      # Ignore tests
-      -i${CMAKE_SOURCE_DIR}/test
-      # Ignore third-party dependencies
-      -i${CMAKE_BINARY_DIR}
     )
     message(STATUS "Cppcheck finished setting up.")
   else()

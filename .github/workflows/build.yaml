@@ -4,7 +4,6 @@ name: build
 
 on:
   push:
-    branches: [main, dev]
 
 jobs:
   ubuntu:
@@ -20,9 +19,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install dependencies
+        # pcre is a dependency of cppcheck
         run: |
           sudo apt-get update
-          sudo apt-get install libzstd-dev ninja-build
+          sudo apt-get install libpcre3 libpcre3-dev libzstd-dev ninja-build
+      - name: Install cppcheck
+        run: |
+          git clone https://github.com/danmar/cppcheck.git
+          cd cppcheck
+          cmake -S. -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DUSE_MATCHCOMPILER=1 \
+            -DHAVE_RULES=1
+          cmake --build build --config Release
+          sudo cmake --install build --prefix /usr
       - name: Install gtest
         uses: MarkusJx/googletest-installer@v1.1
       - name: CMake configure
@@ -33,6 +43,7 @@ jobs:
             -DDATABENTO_ENABLE_UNIT_TESTING=1 \
             -DDATABENTO_ENABLE_EXAMPLES=1 \
             -DDATABENTO_ENABLE_CLANG_TIDY=1 \
+            -DDATABENTO_ENABLE_CPPCHECK=1 \
             -DDATABENTO_ENABLE_ASAN=1 \
             -DDATABENTO_ENABLE_UBSAN=1
       - name: CMake build
@@ -48,7 +59,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install dependencies
-        run: brew install cmake googletest openssl@3 ninja zstd
+        run: brew install cmake cppcheck googletest openssl@3 ninja zstd
       # Don't enable clang-tidy on macOS because it's incredibly slow
       - name: CMake configure
         run: |
@@ -56,8 +67,8 @@ jobs:
             -GNinja \
             -DDATABENTO_ENABLE_UNIT_TESTING=1 \
             -DDATABENTO_ENABLE_EXAMPLES=1 \
-            -DDATABENTO_ENABLE_ASAN=1 \
-            -DDATABENTO_ENABLE_UBSAN=1 \
+            -DDATABENTO_ENABLE_CPPCHECK=1 \
+            -DDATABENTO_ENABLE_TSAN=1 \
             -DOPENSSL_ROOT_DIR=$(brew --prefix openssl@3)
       - name: CMake build
         run: cmake --build build

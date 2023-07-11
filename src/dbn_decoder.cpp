@@ -151,7 +151,7 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
   const auto version_and_size =
       DbnDecoder::DecodeMetadataVersionAndSize(buffer_.data(), 8);
   buffer_.resize(version_and_size.second);
-  input_->ReadExact(buffer_.data(), version_and_size.second);
+  input_->ReadExact(buffer_.data(), buffer_.size());
   buffer_idx_ = buffer_.size();
   return DbnDecoder::DecodeMetadataFields(version_and_size.first, buffer_);
 }

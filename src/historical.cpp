@@ -10,6 +10,7 @@
 #include <exception>  // exception, exception_ptr
 #include <fstream>    // ofstream
 #include <ios>        // ios::binary
+#include <iterator>   // back_inserter
 #include <memory>     // unique_ptr
 #include <string>
 #include <utility>  // move
@@ -245,10 +246,9 @@ std::vector<databento::BatchJob> Historical::BatchListJobs(
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
   std::vector<BatchJob> jobs;
-  jobs.reserve(json.size());
-  for (const auto& job_json : json.items()) {
-    jobs.emplace_back(::Parse(kEndpoint, job_json.value()));
-  }
+  std::transform(
+      json.begin(), json.end(), std::back_inserter(jobs),
+      [](const nlohmann::json& item) { return ::Parse(kEndpoint, item); });
   return jobs;
 }
 
@@ -316,6 +316,21 @@ std::string Historical::BatchDownload(const std::string& output_dir,
   return output_path;
 }
 
+void Historical::StreamToFile(const std::string& url_path,
+                              const HttplibParams& params,
+                              const std::string& file_path) {
+  std::ofstream out_file{file_path, std::ios::binary};
+  if (out_file.fail()) {
+    throw InvalidArgumentError{"Historical::StreamToFile", "file_path",
+                               "Failed to open file"};
+  }
+  this->client_.GetRawStream(
+      url_path, params, [&out_file](const char* data, std::size_t length) {
+        out_file.write(data, static_cast<std::streamsize>(length));
+        return true;
+      });
+}
+
 void Historical::DownloadFile(const std::string& url,
                               const std::string& output_path) {
   static const std::string kEndpoint = "Historical::BatchDownload";
@@ -338,12 +353,7 @@ void Historical::DownloadFile(const std::string& url,
     path = url.substr(slash);
   }
 
-  client_.GetRawStream(
-      path, {}, [&output_path](const char* data, std::size_t length) {
-        std::ofstream out_file{output_path};
-        out_file.write(data, static_cast<std::streamsize>(length));
-        return KeepGoing::Continue;
-      });
+  StreamToFile(path, {}, output_path);
 }
 
 std::map<std::string, std::int32_t> Historical::MetadataListPublishers() {
@@ -848,14 +858,15 @@ databento::SymbologyResolution Historical::SymbologyResolve(
                                             mapping_json);
     }
     std::vector<StrMappingInterval> mapping_intervals;
-    mapping_intervals.reserve(mapping_json.size());
-    for (const auto& interval_json : mapping_json.items()) {
-      mapping_intervals.emplace_back(StrMappingInterval{
-          detail::CheckedAt(kEndpoint, interval_json.value(), "d0"),
-          detail::CheckedAt(kEndpoint, interval_json.value(), "d1"),
-          detail::CheckedAt(kEndpoint, interval_json.value(), "s"),
-      });
-    }
+    std::transform(mapping_json.begin(), mapping_json.end(),
+                   std::back_inserter(mapping_intervals),
+                   [](const nlohmann::json& interval_json) {
+                     return StrMappingInterval{
+                         detail::CheckedAt(kEndpoint, interval_json, "d0"),
+                         detail::CheckedAt(kEndpoint, interval_json, "d1"),
+                         detail::CheckedAt(kEndpoint, interval_json, "s"),
+                     };
+                   });
     res.mappings.emplace(mapping.key(), std::move(mapping_intervals));
   }
   if (!partial_json.is_array()) {
@@ -1053,19 +1064,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
 }
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
     const HttplibParams& params, const std::string& file_path) {
-  {
-    std::ofstream out_file{file_path, std::ios::binary};
-    if (out_file.fail()) {
-      throw InvalidArgumentError{kTimeseriesGetRangeEndpoint, "file_path",
-                                 "Non-existent or invalid file"};
-    }
-    this->client_.GetRawStream(
-        kTimeseriesGetRangePath, params,
-        [&out_file](const char* data, std::size_t length) {
-          out_file.write(data, static_cast<std::streamsize>(length));
-          return true;
-        });
-  }  // close out_file
+  StreamToFile(kTimeseriesGetRangePath, params, file_path);
   return DbnFileStore{file_path};
 }
 

@@ -7,16 +7,26 @@
 #include "stream_op_helper.hpp"      // StreamOpBuilder
 
 namespace databento {
+std::string JoinSymbolStrings(
+    const std::string& method_name,
+    std::vector<std::string>::const_iterator symbols_begin,
+    std::vector<std::string>::const_iterator symbols_end) {
+  if (symbols_begin == symbols_end) {
+    throw InvalidArgumentError{method_name, "symbols", "Cannot be empty"};
+  }
+  return std::accumulate(symbols_begin, symbols_end, std::string{},
+                         [](std::string acc, const std::string& sym) {
+                           return acc.empty() ? sym
+                                              : std::move(acc) + ',' + sym;
+                         });
+}
+
 std::string JoinSymbolStrings(const std::string& method_name,
                               const std::vector<std::string>& symbols) {
   if (symbols.empty()) {
     throw InvalidArgumentError{method_name, "symbols", "Cannot be empty"};
   }
-  return std::accumulate(symbols.begin(), symbols.end(), std::string{},
-                         [](std::string acc, const std::string& sym) {
-                           return acc.empty() ? sym
-                                              : std::move(acc) + ',' + sym;
-                         });
+  return JoinSymbolStrings(method_name, symbols.begin(), symbols.end());
 }
 
 std::string ToString(const StrMappingInterval& mapping_interval) {

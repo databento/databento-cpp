@@ -36,6 +36,7 @@ class Record {
   explicit Record(RecordHeader* record) : record_{record} {}
 
   const RecordHeader& Header() const { return *record_; }
+  ::databento::RType RType() const { return record_->rtype; }
 
   template <typename T>
   bool Holds() const {
@@ -53,7 +54,7 @@ class Record {
 
   std::size_t Size() const;
   static std::size_t SizeOfSchema(Schema schema);
-  static RType RTypeFromSchema(Schema schema);
+  static ::databento::RType RTypeFromSchema(Schema schema);
 
  private:
   RecordHeader* record_;
@@ -167,6 +168,21 @@ static_assert(sizeof(OhlcvMsg) == 56, "OhlcvMsg size must match C");
 // Instrument definition.
 struct InstrumentDefMsg {
   static bool HasRType(RType rtype) { return rtype == RType::InstrumentDef; }
+
+  const char* Currency() const { return currency.data(); }
+  const char* SettlCurrency() const { return settl_currency.data(); }
+  const char* SecSubType() const { return secsubtype.data(); }
+  const char* RawSymbol() const { return raw_symbol.data(); }
+  const char* Group() const { return group.data(); }
+  const char* Exchange() const { return exchange.data(); }
+  const char* Asset() const { return asset.data(); }
+  const char* Cfi() const { return cfi.data(); }
+  const char* SecurityType() const { return security_type.data(); }
+  const char* UnitOfMeasure() const { return unit_of_measure.data(); }
+  const char* Underlying() const { return underlying.data(); }
+  const char* StrikePriceCurrency() const {
+    return strike_price_currency.data();
+  }
 
   RecordHeader hd;
   UnixNanos ts_recv;
@@ -307,6 +323,9 @@ struct ErrorMsg {
 /// A symbol mapping message.
 struct SymbolMappingMsg {
   static bool HasRType(RType rtype) { return rtype == RType::SymbolMapping; }
+
+  const char* STypeInSymbol() const { return stype_in_symbol.data(); }
+  const char* STypeOutSymbol() const { return stype_out_symbol.data(); }
 
   RecordHeader hd;
   std::array<char, 22> stype_in_symbol;

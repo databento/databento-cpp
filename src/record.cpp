@@ -9,7 +9,6 @@
 
 using databento::Record;
 using databento::RecordHeader;
-using databento::RType;
 
 std::size_t RecordHeader::Size() const {
   return static_cast<size_t>(length) * kLengthMultiplier;
@@ -58,43 +57,43 @@ std::size_t Record::SizeOfSchema(const Schema schema) {
   }
 }
 
-RType Record::RTypeFromSchema(const Schema schema) {
+databento::RType Record::RTypeFromSchema(const Schema schema) {
   switch (schema) {
     case Schema::Mbo: {
-      return RType::Mbo;
+      return databento::RType::Mbo;
     }
     case Schema::Mbp1: {
-      return RType::Mbp1;
+      return databento::RType::Mbp1;
     }
     case Schema::Mbp10: {
-      return RType::Mbp10;
+      return databento::RType::Mbp10;
     }
     case Schema::Trades: {
-      return RType::Mbp0;
+      return databento::RType::Mbp0;
     }
     case Schema::Tbbo: {
-      return RType::Mbp1;
+      return databento::RType::Mbp1;
     }
     case Schema::Ohlcv1S: {
-      return RType::Ohlcv1S;
+      return databento::RType::Ohlcv1S;
     }
     case Schema::Ohlcv1M: {
-      return RType::Ohlcv1M;
+      return databento::RType::Ohlcv1M;
     }
     case Schema::Ohlcv1H: {
-      return RType::Ohlcv1H;
+      return databento::RType::Ohlcv1H;
     }
     case Schema::Ohlcv1D: {
-      return RType::Ohlcv1D;
+      return databento::RType::Ohlcv1D;
     }
     case Schema::Definition: {
-      return RType::InstrumentDef;
+      return databento::RType::InstrumentDef;
     }
     case Schema::Statistics: {
-      return RType::Statistics;
+      return databento::RType::Statistics;
     }
     case Schema::Imbalance: {
-      return RType::Imbalance;
+      return databento::RType::Imbalance;
     }
     default: {
       throw InvalidArgumentError{

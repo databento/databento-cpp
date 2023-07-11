@@ -181,18 +181,21 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
                           {},
                           2};
 
-  std::mutex client_send_mutex;
-  std::condition_variable client_send_cv;
+  bool should_close{};
+  std::mutex should_close_mutex;
+  std::condition_variable should_close_cv;
   const mock::MockLsgServer mock_server{
       dataset::kXnasItch, kTsOut,
-      [&client_send_mutex, &client_send_cv, kRec](mock::MockLsgServer& self) {
+      [&should_close, &should_close_mutex, &should_close_cv,
+       kRec](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Subscribe(kAllSymbols, kSchema, kSType);
         self.Start(kSchema);
         {
-          std::unique_lock<std::mutex> shutdown_lock{client_send_mutex};
-          client_send_cv.wait(shutdown_lock);
+          std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
+          should_close_cv.wait(shutdown_lock,
+                               [&should_close] { return should_close; });
         }
         self.Close();
         self.Accept();
@@ -205,13 +208,15 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
                       dataset::kXnasItch, "127.0.0.1",
                       mock_server.Port(), kTsOut};
   std::atomic<std::int32_t> metadata_calls{};
-  const auto metadata_cb = [kSchema, &metadata_calls, &client_send_cv,
-                            &client_send_mutex](Metadata&& metadata) {
+  const auto metadata_cb = [kSchema, &metadata_calls, &should_close,
+                            &should_close_cv,
+                            &should_close_mutex](Metadata&& metadata) {
     ++metadata_calls;
     EXPECT_EQ(metadata.schema, kSchema);
     // close server
-    const std::lock_guard<std::mutex> _lock{client_send_mutex};
-    client_send_cv.notify_one();
+    const std::lock_guard<std::mutex> _lock{should_close_mutex};
+    should_close = true;
+    should_close_cv.notify_one();
   };
   std::atomic<std::int32_t> record_calls{};
   const auto record_cb = [&record_calls, kRec](const Record& record) {
@@ -249,35 +254,38 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
   constexpr auto kSType = SType::Parent;
   const std::vector<std::string> kSymbols = {"LO.OPT", "6E.FUT"};
 
-  std::mutex client_send_mutex;
-  std::condition_variable client_send_cv;
+  bool should_close{};
+  std::mutex should_close_mutex;
+  std::condition_variable should_close_cv;
   testing::internal::CaptureStderr();
   const mock::MockLsgServer mock_server{
       dataset::kXnasItch, kTsOut,
-      [&client_send_mutex, &client_send_cv,
-       &kSymbols](mock::MockLsgServer& self) {
+      [&kSymbols, &should_close, &should_close_mutex,
+       &should_close_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Start(kSchema);
         {
-          std::unique_lock<std::mutex> shutdown_lock{client_send_mutex};
-          client_send_cv.wait(shutdown_lock);
+          std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
+          should_close_cv.wait(shutdown_lock,
+                               [&should_close] { return should_close; });
         }
         self.Close();
         self.Accept();
         self.Authenticate();
         self.Subscribe(kSymbols, kSchema, kSType);
       }};
-  std::unique_ptr<LiveThreaded> target{
-      new LiveThreaded{ILogReceiver::Default(), kKey, dataset::kXnasItch,
-                       "127.0.0.1", mock_server.Port(), kTsOut}};
+  LiveThreaded target{ILogReceiver::Default(), kKey,
+                      dataset::kXnasItch,      "127.0.0.1",
+                      mock_server.Port(),      kTsOut};
   std::atomic<std::int32_t> metadata_calls{};
-  const auto metadata_cb = [&metadata_calls, &client_send_cv,
-                            &client_send_mutex](Metadata&&) {
+  const auto metadata_cb = [&metadata_calls, &should_close, &should_close_cv,
+                            &should_close_mutex](Metadata&&) {
     ++metadata_calls;
     // close server
-    const std::lock_guard<std::mutex> _lock{client_send_mutex};
-    client_send_cv.notify_one();
+    const std::lock_guard<std::mutex> _lock{should_close_mutex};
+    should_close = true;
+    should_close_cv.notify_one();
   };
   std::atomic<std::int32_t> record_calls{};
   const auto record_cb = [&record_calls](const Record&) {
@@ -289,17 +297,17 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
                              &record_cb, &kSymbols](const std::exception& exc) {
     EXPECT_NE(dynamic_cast<const databento::DbnResponseError*>(&exc), nullptr)
         << "Unexpected exception type";
-    target->Reconnect();
-    target->Subscribe(kSymbols, kSchema, kSType);
+    target.Reconnect();
+    target.Subscribe(kSymbols, kSchema, kSType);
     // Not supposed to do this
-    target->Start(metadata_cb, record_cb, [](const std::exception&) {
+    target.Start(metadata_cb, record_cb, [](const std::exception&) {
       GTEST_NONFATAL_FAILURE_("Unexpectedly called exception callback");
       return LiveThreaded::ExceptionAction::Stop;
     });
     ++exception_calls;
     return LiveThreaded::ExceptionAction::Stop;
   };
-  target->Start(metadata_cb, record_cb, exception_cb);
+  target.Start(metadata_cb, record_cb, exception_cb);
   while (exception_calls == 0) {
     std::this_thread::yield();
   }

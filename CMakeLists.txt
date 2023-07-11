@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.9.0 LANGUAGES CXX)
+project("databento" VERSION 0.9.1 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
@@ -135,6 +135,8 @@ else()
     )
   endif()
   FetchContent_MakeAvailable(json)
+  # Ignore compiler warnings in headers
+  add_system_include_property(nlohmann_json)
 endif()
 # cpp-httplib
 set(httplib_version 0.11.4)

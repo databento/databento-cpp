@@ -89,30 +89,33 @@ TEST_F(TcpClientTests, TestReadSomeClose) {
 }
 
 TEST_F(TcpClientTests, TestReadSomeTimeout) {
-  std::mutex mutex;
-  std::condition_variable cv;
-  const mock::MockTcpServer mock_server{
-      [&mutex, &cv](mock::MockTcpServer& server) {
-        // simulate slow or delayed send
-        server.Accept();
-        server.SetSend("hello");
-        // wait for timeout
-        {
-          std::unique_lock<std::mutex> lock{mutex};
-          cv.wait(lock);
-        }
-        // then send
-        server.Send();
-        server.Close();
-      }};
+  bool has_timed_out{};
+  std::mutex has_timed_out_mutex;
+  std::condition_variable has_timed_out_cv;
+  const mock::MockTcpServer mock_server{[&has_timed_out, &has_timed_out_mutex,
+                                         &has_timed_out_cv](
+                                            mock::MockTcpServer& server) {
+    // simulate slow or delayed send
+    server.Accept();
+    server.SetSend("hello");
+    // wait for timeout
+    {
+      std::unique_lock<std::mutex> lock{has_timed_out_mutex};
+      has_timed_out_cv.wait(lock, [&has_timed_out] { return has_timed_out; });
+    }
+    // then send
+    server.Send();
+    server.Close();
+  }};
   target_ = {"127.0.0.1", mock_server.Port()};
 
   std::array<char, 10> buffer{0};
   const auto res = target_.ReadSome(buffer.data(), buffer.size(),
                                     std::chrono::milliseconds{5});
   {
-    const std::lock_guard<std::mutex> lock{mutex};
-    cv.notify_one();
+    const std::lock_guard<std::mutex> lock{has_timed_out_mutex};
+    has_timed_out = true;
+    has_timed_out_cv.notify_one();
   }
   EXPECT_EQ(res.status, detail::TcpClient::Status::Timeout);
   EXPECT_EQ(res.read_size, 0);

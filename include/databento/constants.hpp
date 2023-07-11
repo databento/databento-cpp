@@ -18,7 +18,13 @@ static constexpr auto kUndefOrderSize =
 // This is not necessarily a comprehensive list of available datasets. Please
 // use `Historical.MetadataListDatasets` to retrieve an up-to-date list.
 namespace dataset {
+// The dataset code for Databento Equity Basic.
+static constexpr auto kDbeqBasic = "DBEQ.BASIC";
+// The dataset code for CME Globex MDP 3.0.
 static constexpr auto kGlbxMdp3 = "GLBX.MDP3";
+// The dataset code for OPRA.PILLAR.
+static constexpr auto kOpraPillar = "OPRA.PILLAR";
+// The dataset code for Nasdaq TotalView ITCH.
 static constexpr auto kXnasItch = "XNAS.ITCH";
 }  // namespace dataset
 }  // namespace databento
