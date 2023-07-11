@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.9.1 - TBD
+## 0.9.1 - 2023-07-11
 
 #### Enhancements
 - Added constants for dataset codes for Databento Equity Basic and OPRA Pillar
