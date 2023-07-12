@@ -6,6 +6,9 @@
 - Added preliminary support for Windows
 - Added `LiveThreaded::BlockForStop` to make it easier to wait for one or more records
   before closing the session
+- Switch `BatchSubmitJob` to use form data to avoid query param length limit
+- Switch `SymbologyResolve` to use POST request with form data to avoid query param
+  length limit
 
 ## 0.9.1 - 2023-07-11
 

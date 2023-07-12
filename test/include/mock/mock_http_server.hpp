@@ -40,6 +40,8 @@ class MockHttpServer {
  private:
   static void CheckParams(const std::map<std::string, std::string>& params,
                           const httplib::Request& req);
+  static void CheckFormParams(const std::map<std::string, std::string>& params,
+                              const httplib::Request& req);
 
   httplib::Server server_{};
   const int port_{};

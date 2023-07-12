@@ -647,16 +647,16 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
       {"status", 0},
   };
 
-  mock_server_.MockGetJson("/v0/symbology.resolve",
-                           {
-                               {"dataset", dataset::kGlbxMdp3},
-                               {"start_date", "2022-06-06"},
-                               {"end_date", "2022-06-10"},
-                               {"symbols", "ESM2"},
-                               {"stype_in", "raw_symbol"},
-                               {"stype_out", "instrument_id"},
-                           },
-                           kResp);
+  mock_server_.MockPostJson("/v0/symbology.resolve",
+                            {
+                                {"dataset", dataset::kGlbxMdp3},
+                                {"start_date", "2022-06-06"},
+                                {"end_date", "2022-06-10"},
+                                {"symbols", "ESM2"},
+                                {"stype_in", "raw_symbol"},
+                                {"stype_out", "instrument_id"},
+                            },
+                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",

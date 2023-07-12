@@ -846,7 +846,7 @@ databento::SymbologyResolution Historical::SymbologyResolve(
                          {"stype_out", ToString(stype_out)}};
   detail::SetIfNotEmpty(&params, "end_date", date_range.end);
   detail::SetIfNotEmpty(&params, "default_value", default_value);
-  const nlohmann::json json = client_.GetJson(kPath, params);
+  const nlohmann::json json = client_.PostJson(kPath, params);
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
   }
