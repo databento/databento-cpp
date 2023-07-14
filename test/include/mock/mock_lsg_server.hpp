@@ -70,7 +70,9 @@ class MockLsgServer {
 
   template <typename T>
   std::size_t SendBytes(T bytes) {
-    const auto write_size = ::send(conn_fd_.Get(), &bytes, sizeof(bytes), {});
+    const auto write_size =
+        ::send(conn_fd_.Get(), reinterpret_cast<const char*>(&bytes),
+               sizeof(bytes), {});
     EXPECT_EQ(write_size, sizeof(bytes)) << ::strerror(errno);
     return static_cast<std::size_t>(write_size);
   }
