@@ -6,9 +6,18 @@
 - Added preliminary support for Windows
 - Added `LiveThreaded::BlockForStop` to make it easier to wait for one or more records
   before closing the session
-- Switch `BatchSubmitJob` to use form data to avoid query param length limit
-- Switch `SymbologyResolve` to use POST request with form data to avoid query param
+- Changed `TimeseriesGetRange` to request a Zstd-compressed result for more efficient
+  data transfer
+- Switched `BatchSubmitJob` to use form data to avoid query param length limit
+- Switched `SymbologyResolve` to use POST request with form data to avoid query param
   length limit
+
+#### Breaking changes
+- Changed size-related fields and `limit` parameters to use `std::uint64_t` for consistency
+  across architectures
+
+#### Bug fixes
+- Removed usage of non-portable `__PRETTY_FUNCTION__`
 
 ## 0.9.1 - 2023-07-11
 
@@ -18,9 +27,9 @@
 - Added `RType` getter to `Record`
 
 #### Bug fixes
-- Batch live subscriptions to avoid hitting max message length
-- Fix bug in Zstd decompression
-- Fix `Historical::BatchDownload` truncating file before writing each chunk
+- Added batching for live subscriptions to avoid hitting max message length
+- Fixed bug in Zstd decompression
+- Fixed `Historical::BatchDownload` truncating file before writing each chunk
 
 ## 0.9.0 - 2023-06-13
 

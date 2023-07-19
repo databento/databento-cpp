@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -23,21 +24,21 @@ struct BatchJob {
   Schema schema;
   std::string start;
   std::string end;
-  std::size_t limit;
+  std::uint64_t limit;
   Encoding encoding;
   Compression compression;
   SplitDuration split_duration;
-  std::size_t split_size;
+  std::uint64_t split_size;
   bool split_symbols;
   Packaging packaging;
   Delivery delivery;
-  std::size_t record_count;
+  std::uint64_t record_count;
   // Size in bytes.
-  std::size_t billed_size;
+  std::uint64_t billed_size;
   // Size in bytes.
-  std::size_t actual_size;
+  std::uint64_t actual_size;
   // Size in bytes.
-  std::size_t package_size;
+  std::uint64_t package_size;
   JobState state;
   std::string ts_received;
   // Empty if it hasn't been queued.
@@ -54,7 +55,7 @@ struct BatchJob {
 // Description of a batch file.
 struct BatchFileDesc {
   std::string filename;
-  std::size_t size;
+  std::uint64_t size;
   std::string hash;
   std::string https_url;
   std::string ftp_url;
