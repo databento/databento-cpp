@@ -58,8 +58,8 @@ std::string ParseAt(const std::string& endpoint, const nlohmann::json& json,
 }
 
 template <>
-std::size_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
-                    const std::string& key) {
+std::uint64_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
+                      const std::string& key) {
   const auto& val_json = CheckedAt(endpoint, json, key);
   if (val_json.is_null()) {
     return 0;

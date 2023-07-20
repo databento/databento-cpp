@@ -1,7 +1,6 @@
 #pragma once
 
 #include <gtest/gtest.h>  // EXPECT_EQ
-#include <unistd.h>       // access
 
 #include <cassert>  // assert
 #include <cstdio>   // remove

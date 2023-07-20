@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.9.1 LANGUAGES CXX)
+project("databento" VERSION 0.10.0 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
@@ -24,7 +24,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(cmake/StandardSettings.cmake)
 include(cmake/StaticAnalyzers.cmake)
 include(cmake/Utils.cmake)
-message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...\n")
+message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...")
 
 if(NOT CMAKE_BUILD_TYPE)
   if(IS_MAIN_PROJECT)
@@ -41,7 +41,7 @@ endif()
 #
 
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
-  message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there.\n")
+  message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there.")
 endif()
 
 #
@@ -51,7 +51,7 @@ endif()
 include(TestBigEndian)
 test_big_endian(IS_BIG_ENDIAN)
 if(IS_BIG_ENDIAN)
-  message(FATAL_ERROR "Big-endian platforms aren't supported because DBN parsing assumes the data is little-endian and in native byte order.\n")
+  message(FATAL_ERROR "Big-endian platforms aren't supported because DBN parsing assumes the data is little-endian and in native byte order.")
 endif()
 
 #
@@ -94,7 +94,7 @@ set_target_properties(
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
 )
 
-message(STATUS "Added all header and implementation files.\n")
+message(STATUS "Added all header and implementation files.")
 
 #
 # Set the project standard and warnings
@@ -110,7 +110,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(${PROJECT_NAME} PRIVATE -fstandalone-debug)
 endif()
 
-verbose_message("Applied compiler warnings.\n")
+verbose_message("Applied compiler warnings.")
 
 #
 # Model project dependencies
@@ -119,18 +119,19 @@ verbose_message("Applied compiler warnings.\n")
 include(FetchContent)
 # JSON
 if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_JSON)
-  find_package(nlohmann_json 3.11.2 REQUIRED)
+  find_package(nlohmann_json REQUIRED)
 else()
+  set(json_version 3.11.2)
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       json
-      URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+      URL https://github.com/nlohmann/json/releases/download/v${json_version}/json.tar.xz
     )
   else()
     # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
     FetchContent_Declare(
       json
-      URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+      URL https://github.com/nlohmann/json/releases/download/v${json_version}/json.tar.xz
       DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
   endif()
@@ -139,10 +140,10 @@ else()
   add_system_include_property(nlohmann_json)
 endif()
 # cpp-httplib
-set(httplib_version 0.11.4)
 if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
-  find_package(httplib ${httplib_version} REQUIRED)
+  find_package(httplib REQUIRED)
 else()
+  set(httplib_version 0.13.1)
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       httplib
@@ -167,6 +168,18 @@ if(OPENSSL_FOUND)
 endif()
 find_package(Zstd REQUIRED)
 find_package(Threads REQUIRED)
+
+#
+# Platform-specific dependencies
+#
+if(WIN32)
+  find_path(
+    DIRENT_INCLUDE_DIR "dirent.h"
+    PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include"
+    REQUIRED
+  )
+  target_include_directories(${PROJECT_NAME} PRIVATE ${DIRENT_INCLUDE_DIR})
+endif()
 
 target_link_libraries(
   ${PROJECT_NAME}
@@ -209,7 +222,7 @@ message(STATUS "Finished setting up include directories.")
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.\n")
+verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 
 #
 # Format the project using the `clang-format` target (i.e: cmake --build build --target clang-format)
@@ -318,7 +331,14 @@ if(${PROJECT_NAME_UPPERCASE}_GENERATE_EXPORT_HEADER)
   message(STATUS "Generated the export header `${PROJECT_NAME}_export.h` and installed it.")
 endif()
 
-message(STATUS "Finished building requirements for installing the package.\n")
+message(STATUS "Finished building requirements for installing the package.")
+
+#
+# Platform-specific
+#
+if(WIN32)
+    add_compile_definitions(NOMINMAX)
+endif()
 
 #
 # Unit testing setup

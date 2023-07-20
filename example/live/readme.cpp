@@ -13,10 +13,8 @@ using namespace databento;
 int main() {
   std::unordered_map<std::uint32_t, std::string> symbol_mappings;
 
-  auto client = LiveBuilder{}
-                    .SetKey("$YOUR_API_KEY")
-                    .SetDataset("GLBX.MDP3")
-                    .BuildThreaded();
+  auto client =
+      LiveBuilder{}.SetKeyFromEnv().SetDataset("GLBX.MDP3").BuildThreaded();
 
   auto handler = [&symbol_mappings](const Record& rec) {
     if (rec.Holds<TradeMsg>()) {
@@ -26,8 +24,7 @@ int main() {
                 << '\n';
     } else if (rec.Holds<SymbolMappingMsg>()) {
       auto mapping = rec.Get<SymbolMappingMsg>();
-      symbol_mappings[mapping.hd.instrument_id] =
-          mapping.stype_out_symbol.data();
+      symbol_mappings[mapping.hd.instrument_id] = mapping.STypeOutSymbol();
     }
     return KeepGoing::Continue;
   };

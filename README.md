@@ -63,6 +63,7 @@ You'll need to ensure the following dependencies are installed:
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
 - [nlohmann\_json (header-only)](https://github.com/nlohmann/json)
 - [cpp-httplib (header-only)](https://github.com/yhirose/cpp-httplib)
+- [dirent (Windows-only, header-only)](https://github.com/tronkko/dirent)
 
 By default, cpp-httplib and nlohmann\_json are downloaded by CMake as part of the build process.
 If you would like to use a local version of these libraries, enable the CMake flag
@@ -86,10 +87,8 @@ using namespace databento;
 int main() {
   std::unordered_map<std::uint32_t, std::string> symbol_mappings;
 
-  auto client = LiveBuilder{}
-                    .SetKey("$YOUR_API_KEY")
-                    .SetDataset("GLBX.MDP3")
-                    .BuildThreaded();
+  auto client =
+      LiveBuilder{}.SetKeyFromEnv().SetDataset("GLBX.MDP3").BuildThreaded();
 
   auto handler = [&symbol_mappings](const Record& rec) {
     if (rec.Holds<TradeMsg>()) {
@@ -99,8 +98,7 @@ int main() {
                 << '\n';
     } else if (rec.Holds<SymbolMappingMsg>()) {
       auto mapping = rec.Get<SymbolMappingMsg>();
-      symbol_mappings[mapping.hd.instrument_id] =
-          mapping.stype_out_symbol.data();
+      symbol_mappings[mapping.hd.instrument_id] = mapping.STypeOutSymbol();
     }
     return KeepGoing::Continue;
   };

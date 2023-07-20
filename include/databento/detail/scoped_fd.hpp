@@ -1,25 +1,39 @@
 #pragma once
 
+#ifdef _WIN32
+#include <winsock2.h>  // SOCKET
+#endif
+
 namespace databento {
 namespace detail {
+#ifdef _WIN32
+using Socket = SOCKET;
+#else
+using Socket = int;
+#endif
+
 // RAII wrapper that closes the file descriptor on destruction
 class ScopedFd {
  public:
+#ifdef _WIN32
+  static constexpr Socket kUnset = INVALID_SOCKET;
+#else
+  static constexpr Socket kUnset = -1;
+#endif
+
   ScopedFd() = default;
-  explicit ScopedFd(int fd) : fd_{fd} {}
+  explicit ScopedFd(Socket fd) : fd_{fd} {}
   ScopedFd(const ScopedFd&) = delete;
   ScopedFd& operator=(const ScopedFd&) = delete;
   ScopedFd(ScopedFd&& other) noexcept;
   ScopedFd& operator=(ScopedFd&& rhs) noexcept;
   ~ScopedFd();
 
-  int Get() const { return fd_; }
+  Socket Get() const { return fd_; }
   void Close();
 
  private:
-  static constexpr auto kUnset = -1;
-
-  int fd_{kUnset};
+  Socket fd_{kUnset};
 };
 }  // namespace detail
 }  // namespace databento

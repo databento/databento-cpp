@@ -1,10 +1,12 @@
 #include "mock/mock_http_server.hpp"
 
-#include <fstream>    // ifstream
-#include <ios>        // streamsize
-#include <iostream>   // cerr
-#include <sstream>    // ostringstream
-#include <stdexcept>  // runtime_error
+#include <gtest/gtest.h>  // EXPECT_*
+#include <httplib.h>
+
+#include <fstream>   // ifstream
+#include <ios>       // streamsize
+#include <iostream>  // cerr
+#include <sstream>   // ostringstream
 #include <vector>
 
 using databento::mock::MockHttpServer;
@@ -54,16 +56,17 @@ void MockHttpServer::MockGetJson(
 }
 
 void MockHttpServer::MockPostJson(
-    const std::string& path, const std::map<std::string, std::string>& params,
+    const std::string& path,
+    const std::map<std::string, std::string>& form_params,
     const nlohmann::json& json) {
-  server_.Post(path, [json, params](const httplib::Request& req,
-                                    httplib::Response& resp) {
+  server_.Post(path, [json, form_params](const httplib::Request& req,
+                                         httplib::Response& resp) {
     if (!req.has_header("Authorization")) {
       resp.status = 401;
       return;
     }
     auto _auth = req.get_header_value("Authorization");
-    CheckParams(params, req);
+    CheckFormParams(form_params, req);
     resp.set_content(json.dump(), "application/json");
     resp.status = 200;
   });
@@ -110,19 +113,31 @@ void MockHttpServer::CheckParams(
     const std::map<std::string, std::string>& params,
     const httplib::Request& req) {
   for (const auto& param : params) {
-    if (!req.has_param(param.first)) {
-      std::ostringstream err_msg;
-      err_msg << "Missing query param " << param.first;
-      std::cerr << err_msg.str() << '\n';
-      throw std::runtime_error{err_msg.str()};
-    }
-    if (req.get_param_value(param.first) != param.second) {
-      std::ostringstream err_msg;
-      err_msg << "Incorrect query param value for " << param.first
-              << ". Expected " << param.second << ", found "
-              << req.get_param_value(param.first);
-      std::cerr << err_msg.str() << '\n';
-      throw std::runtime_error{err_msg.str()};
+    EXPECT_TRUE(req.has_param(param.first))
+        << "Missing query param " << param.first;
+    EXPECT_EQ(req.get_param_value(param.first), param.second)
+        << "Incorrect query param value for " << param.first << ". Expected "
+        << param.second << ", found " << req.get_param_value(param.first);
+  }
+}
+
+void MockHttpServer::CheckFormParams(
+    const std::map<std::string, std::string>& params,
+    const httplib::Request& req) {
+  EXPECT_EQ(req.get_header_value("content-type"),
+            "application/x-www-form-urlencoded")
+      << "Request body is not form data";
+  httplib::Params form_params;
+  httplib::detail::parse_query_text(req.body, form_params);
+  for (const auto& param : params) {
+    const auto param_it = form_params.find(param.first);
+    if (param_it == form_params.end()) {
+      EXPECT_NE(param_it, form_params.end())
+          << "Missing for mparam " << param.first;
+    } else {
+      EXPECT_EQ(param_it->second, param.second)
+          << "Incorrect form param value for " << param.first << ". Expected "
+          << param.second << ", found " << param_it->second;
     }
   }
 }

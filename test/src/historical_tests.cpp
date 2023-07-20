@@ -24,6 +24,17 @@
 #include "mock/mock_http_server.hpp"
 #include "temp_file.hpp"
 
+#ifdef _WIN32
+namespace {
+int setenv(const char* name, const char* value, int overwrite) {
+  EXPECT_EQ(overwrite, 1) << "This shim only supports overwriting";
+  return _putenv_s(name, value);
+}
+
+int unsetenv(const char* name) { return ::_putenv_s(name, ""); }
+}  // namespace
+#endif
+
 namespace databento {
 namespace test {
 constexpr auto kApiKey = "HIST_SECRET";
@@ -636,16 +647,16 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
       {"status", 0},
   };
 
-  mock_server_.MockGetJson("/v0/symbology.resolve",
-                           {
-                               {"dataset", dataset::kGlbxMdp3},
-                               {"start_date", "2022-06-06"},
-                               {"end_date", "2022-06-10"},
-                               {"symbols", "ESM2"},
-                               {"stype_in", "raw_symbol"},
-                               {"stype_out", "instrument_id"},
-                           },
-                           kResp);
+  mock_server_.MockPostJson("/v0/symbology.resolve",
+                            {
+                                {"dataset", dataset::kGlbxMdp3},
+                                {"start_date", "2022-06-06"},
+                                {"end_date", "2022-06-10"},
+                                {"symbols", "ESM2"},
+                                {"stype_in", "raw_symbol"},
+                                {"stype_out", "instrument_id"},
+                            },
+                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
@@ -810,7 +821,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const TempFile temp_file{testing::TempDir() + "/" + __FUNCTION__};
+  const TempFile temp_file{testing::TempDir() +
+                           "/TestTimeseriesGetRangeToFile"};
   target.TimeseriesGetRangeToFile(dataset::kGlbxMdp3,
                                   {"2022-10-21T13:30", "2022-10-21T20:00"},
                                   {"CYZ2"}, Schema::Tbbo, temp_file.Path());

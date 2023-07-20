@@ -1,9 +1,14 @@
 #include "mock/mock_lsg_server.hpp"
 
-#include <netinet/in.h>   // sockaddr_in
+#ifdef _WIN32
+#include <winsock2.h>
+#else
+#include <netinet/in.h>  // sockaddr_in
+#include <sys/socket.h>  // recv
+#endif
 #include <openssl/sha.h>  // SHA256_DIGEST_LENGTH
-#include <sys/socket.h>   // recv
 
+#include <cstdint>
 #include <limits>
 #include <sstream>
 
@@ -53,13 +58,18 @@ std::string MockLsgServer::Receive() {
 }
 
 std::size_t MockLsgServer::Send(const std::string& msg) {
-  const auto write_size = ::write(conn_fd_.Get(), msg.data(), msg.length());
+  const auto write_size = UncheckedSend(msg);
   EXPECT_EQ(write_size, msg.length());
   return static_cast<std::size_t>(write_size);
 }
 
 ::ssize_t MockLsgServer::UncheckedSend(const std::string& msg) {
-  return ::write(conn_fd_.Get(), msg.data(), msg.length());
+// MSG_NOSIGNAL doesn't exist on Windows, but also isn't necessary
+#ifdef _WIN32
+  constexpr int MSG_NOSIGNAL = {};
+#endif
+  // Don't send a SIGPIPE if the connection is closed
+  return ::send(conn_fd_.Get(), msg.data(), msg.length(), MSG_NOSIGNAL);
 }
 
 void MockLsgServer::Authenticate() {
@@ -99,7 +109,7 @@ void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
             std::string::npos);
 }
 
-void MockLsgServer::Start(Schema schema) {
+void MockLsgServer::Start() {
   const auto received = Receive();
   EXPECT_EQ(received, "start_session\n");
   Send("DBN\1");
@@ -111,8 +121,8 @@ void MockLsgServer::Start(Schema schema) {
   // dataset
   bytes_written += Send(dataset_);
   bytes_written += Send(std::string(16 - dataset_.length(), '\0'));
-  // schema
-  bytes_written += SendBytes(schema);
+  // mixed schema
+  bytes_written += SendBytes(std::numeric_limits<std::uint16_t>::max());
   // start
   bytes_written += SendBytes(std::uint64_t{0});
   // end
@@ -133,7 +143,7 @@ void MockLsgServer::Start(Schema schema) {
 
 void MockLsgServer::Close() { conn_fd_.Close(); }
 
-int MockLsgServer::InitSocketAndSetPort() {
+databento::detail::Socket MockLsgServer::InitSocketAndSetPort() {
   const auto pair = MockTcpServer::InitSocket();
   port_ = pair.first;
   return pair.second;

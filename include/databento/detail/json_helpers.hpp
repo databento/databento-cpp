@@ -77,8 +77,8 @@ template <>
 std::string ParseAt(const std::string& endpoint, const nlohmann::json& json,
                     const std::string& key);
 template <>
-std::size_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
-                    const std::string& key);
+std::uint64_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
+                      const std::string& key);
 template <>
 double ParseAt(const std::string& endpoint, const nlohmann::json& json,
                const std::string& key);

@@ -1,2 +1,5 @@
 build
+CMakeSettings.json
+vcpkg_installed
+.vs
 !*.zst

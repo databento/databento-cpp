@@ -41,10 +41,9 @@ nlohmann::json HttpClient::GetJson(const std::string& path,
 }
 
 nlohmann::json HttpClient::PostJson(const std::string& path,
-                                    const httplib::Params& params) {
-  // need to fully specify, otherwise sent as application/x-www-form-urlencoded
-  const std::string full_path = httplib::append_query_params(path, params);
-  httplib::Result res = client_.Post(full_path);
+                                    const httplib::Params& form_params) {
+  // params will be encoded as form data
+  httplib::Result res = client_.Post(path, {}, form_params);
   return HttpClient::CheckAndParseResponse(path, std::move(res));
 }
 
@@ -110,7 +109,7 @@ void HttpClient::CheckWarnings(const httplib::Response& response) const {
         for (const auto& warning_json : json.items()) {
           const std::string warning = warning_json.value();
           std::ostringstream msg;
-          msg << __PRETTY_FUNCTION__ << " Server " << warning;
+          msg << "[HttpClient::CheckWarnings] Server " << warning;
           log_receiver_->Receive(LogLevel::Warning, msg.str());
         }
         return;
@@ -118,8 +117,9 @@ void HttpClient::CheckWarnings(const httplib::Response& response) const {
     } catch (const std::exception&) {
     }
     std::ostringstream msg;
-    msg << __PRETTY_FUNCTION__
-        << " Failed to parse warnings from HTTP header. Raw contents: " << raw;
+    msg << "[HttpClient::CheckWarnings] Failed to parse warnings from HTTP "
+           "header. Raw contents: "
+        << raw;
     log_receiver_->Receive(LogLevel::Warning, msg.str());
   }
 }

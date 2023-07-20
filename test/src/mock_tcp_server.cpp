@@ -1,9 +1,13 @@
 #include "mock/mock_tcp_server.hpp"
 
 #include <gtest/gtest.h>  // ASSERT_EQ
-#include <netinet/in.h>   // IPPROTO_TCP, ntohs, sockaddr_in, TCP_NODELAY
-#include <sys/socket.h>   // AF_INET, listen, recv, setsocketopt, socket
-#include <unistd.h>       // close, socklen_t, write
+#ifdef _WIN32
+#include <winsock2.h>
+#else
+#include <netinet/in.h>  // IPPROTO_TCP, ntohs, sockaddr_in, TCP_NODELAY
+#include <sys/socket.h>  // AF_INET, listen, recv, send, setsocketopt, socket
+#include <unistd.h>      // close, socklen_t
+#endif
 
 #include <thread>  // this_thread
 
@@ -45,11 +49,16 @@ void MockTcpServer::Accept() {
   auto addr_len = static_cast<socklen_t>(sizeof(addr));
   conn_fd_ = detail::ScopedFd{
       ::accept(socket_.Get(), reinterpret_cast<sockaddr*>(&addr), &addr_len)};
+  const int flag = 1;
+#ifdef _WIN32
+  const auto flag_ptr = reinterpret_cast<const char*>(&flag);
+#else
+  const auto flag_ptr = &flag;
+#endif
   // Disable Nagle's algorithm for finer control over when packets are sent
   // during testing
-  const int flag = 1;
-  const auto res =
-      ::setsockopt(socket_.Get(), IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(int));
+  const auto res = ::setsockopt(socket_.Get(), IPPROTO_TCP, TCP_NODELAY,
+                                flag_ptr, sizeof(int));
   if (res < 0) {
     throw TcpError{errno, "Failed to disable Nagle's algorithm"};
   }
@@ -67,19 +76,22 @@ void MockTcpServer::Receive() {
 
 void MockTcpServer::Send() {
   const std::lock_guard<std::mutex> send_guard{send_mutex_};
-  const auto write_size = ::write(conn_fd_.Get(), send_.data(), send_.length());
+  const auto write_size =
+      ::send(conn_fd_.Get(), send_.data(), send_.length(), {});
   ASSERT_EQ(write_size, send_.length());
 }
 
 void MockTcpServer::Close() { conn_fd_.Close(); }
 
-std::pair<std::uint16_t, int> MockTcpServer::InitSocket() {
+std::pair<std::uint16_t, databento::detail::Socket>
+MockTcpServer::InitSocket() {
   return InitSocket(0);  // port will be assigned
 }
 
-std::pair<std::uint16_t, int> MockTcpServer::InitSocket(std::uint16_t port) {
-  const int fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (fd == -1) {
+std::pair<std::uint16_t, databento::detail::Socket> MockTcpServer::InitSocket(
+    std::uint16_t port) {
+  const detail::Socket fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (fd == detail::ScopedFd::kUnset) {
     throw TcpError{errno, "Invalid fd"};
   }
   sockaddr_in addr_in{};
@@ -108,7 +120,7 @@ std::pair<std::uint16_t, int> MockTcpServer::InitSocket(std::uint16_t port) {
   return {port, fd};
 }
 
-int MockTcpServer::InitSocketAndSetPort() {
+databento::detail::Socket MockTcpServer::InitSocketAndSetPort() {
   auto pair = InitSocket();
   port_ = pair.first;
   return pair.second;

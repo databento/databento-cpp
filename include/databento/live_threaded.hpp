@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <functional>  // function
 #include <memory>      // unique_ptr
 #include <string>
@@ -76,6 +77,10 @@ class LiveThreaded {
              ExceptionCallback exception_callback);
   // Closes the current connection, and attempts to reconnect to the gateway.
   void Reconnect();
+  // Blocking wait with an optional timeout for the session to close when the
+  // record_callback or the exception_callback return Stop.
+  void BlockForStop();
+  KeepGoing BlockForStop(std::chrono::milliseconds timeout);
 
  private:
   struct Impl;

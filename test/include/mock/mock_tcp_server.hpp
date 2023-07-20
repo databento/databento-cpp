@@ -17,8 +17,9 @@ class MockTcpServer {
   MockTcpServer();
   explicit MockTcpServer(std::function<void(MockTcpServer&)> serve_fn);
 
-  static std::pair<std::uint16_t, int> InitSocket();
-  static std::pair<std::uint16_t, int> InitSocket(std::uint16_t port);
+  static std::pair<std::uint16_t, detail::Socket> InitSocket();
+  static std::pair<std::uint16_t, detail::Socket> InitSocket(
+      std::uint16_t port);
 
   std::uint16_t Port() const { return port_; }
   // Set the data the server will send to its client.
@@ -33,11 +34,11 @@ class MockTcpServer {
 
  private:
   void Serve();
-  int InitSocketAndSetPort();
+  detail::Socket InitSocketAndSetPort();
 
   std::uint16_t port_{};
   detail::ScopedFd socket_{};
-  detail::ScopedFd conn_fd_{-1};
+  detail::ScopedFd conn_fd_{};
   std::string received_;
   mutable std::mutex received_mutex_;
   std::string send_;

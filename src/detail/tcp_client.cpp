@@ -1,13 +1,18 @@
 #include "databento/detail/tcp_client.hpp"
 
+#ifdef _WIN32
+#include <winsock2.h>  // closesocket, recv, send, socket
+#else
 #include <netdb.h>       // addrinfo, gai_strerror, getaddrinfo, freeaddrinfo
 #include <netinet/in.h>  // htons, IPPROTO_TCP
 #include <sys/poll.h>    // pollfd, POLLHUP
-#include <sys/socket.h>  // AF_INET, connect, sockaddr, sockaddr_in, socket, SOCK_STREAM
-#include <unistd.h>  // close, read, ssize_t
+#include <sys/socket.h>  // AF_INET, connect, recv, send, sockaddr, sockaddr_in, socket, SOCK_STREAM
+#include <unistd.h>  // close, ssize_t
+
+#include <cerrno>  // errno
+#endif
 
 #include <algorithm>  // max
-#include <cerrno>     // errno
 #include <memory>     // unique_ptr
 #include <sstream>
 #include <thread>
@@ -15,6 +20,16 @@
 #include "databento/exceptions.hpp"  // TcpError
 
 using databento::detail::TcpClient;
+
+namespace {
+int GetErrNo() {
+#ifdef _WIN32
+  return ::WSAGetLastError();
+#else
+  return errno;
+#endif
+}
+}  // namespace
 
 TcpClient::TcpClient(const std::string& gateway, std::uint16_t port)
     : TcpClient{gateway, port, {}} {}
@@ -29,9 +44,9 @@ void TcpClient::WriteAll(const std::string& str) {
 
 void TcpClient::WriteAll(const char* buffer, std::size_t size) {
   do {
-    const ::ssize_t res = ::write(socket_.Get(), buffer, size);
+    const ::ssize_t res = ::send(socket_.Get(), buffer, size, {});
     if (res < 0) {
-      throw TcpError{errno, "Error writing to socket"};
+      throw TcpError{::GetErrNo(), "Error writing to socket"};
     }
     size -= static_cast<std::size_t>(res);
     buffer += res;
@@ -41,14 +56,14 @@ void TcpClient::WriteAll(const char* buffer, std::size_t size) {
 void TcpClient::ReadExact(char* buffer, std::size_t size) {
   const ::ssize_t res = ::recv(socket_.Get(), buffer, size, MSG_WAITALL);
   if (res != static_cast<::ssize_t>(size)) {
-    throw TcpError{errno, "Error reading from socket"};
+    throw TcpError{::GetErrNo(), "Error reading from socket"};
   }
 }
 
 TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size) {
-  const ::ssize_t res = ::read(socket_.Get(), buffer, max_size);
+  const ::ssize_t res = ::recv(socket_.Get(), buffer, max_size, {});
   if (res < 0) {
-    throw TcpError{errno, "Error reading from socket"};
+    throw TcpError{::GetErrNo(), "Error reading from socket"};
   }
   return {static_cast<std::size_t>(res),
           res == 0 ? Status::Closed : Status::Ok};
@@ -56,13 +71,18 @@ TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size) {
 
 TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size,
                                       std::chrono::milliseconds timeout) {
-  pollfd fds{socket_.Get(), POLLHUP | POLLIN, {}};
+  pollfd fds{socket_.Get(), POLLIN, {}};
   // passing a timeout of -1 blocks indefinitely, which is the equivalent of
   // having no timeout
   const auto timeout_ms =
       timeout.count() ? static_cast<int>(timeout.count()) : -1;
   while (true) {
-    const int poll_status = ::poll(&fds, 1, timeout_ms);
+    const int poll_status =
+#ifdef _WIN32
+        ::WSAPoll(&fds, 1, timeout_ms);
+#else
+        ::poll(&fds, 1, timeout_ms);
+#endif
     if (poll_status > 0) {
       return ReadSome(buffer, max_size);
     }
@@ -70,8 +90,9 @@ TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size,
       return {0, Status::Timeout};
     }
     // Retry if EAGAIN or EINTR
-    if (errno != EAGAIN && errno != EINTR) {
-      throw TcpError{errno, "Incorrect poll"};
+    const int err_num = ::GetErrNo();
+    if (err_num != EAGAIN && err_num != EINTR) {
+      throw TcpError{err_num, "Incorrect poll"};
     }
   }
 }
@@ -81,9 +102,9 @@ void TcpClient::Close() { socket_.Close(); }
 databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
                                                   std::uint16_t port,
                                                   RetryConf retry_conf) {
-  const int fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  const detail::Socket fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (fd == -1) {
-    throw TcpError{errno, "Failed to create socket"};
+    throw TcpError{::GetErrNo(), "Failed to create socket"};
   }
   ScopedFd scoped_fd{fd};
 
@@ -110,11 +131,11 @@ databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
       std::ostringstream err_msg;
       err_msg << "Socket failed to connect after " << max_attempts
               << " attempts";
-      throw TcpError{errno, err_msg.str()};
+      throw TcpError{::GetErrNo(), err_msg.str()};
     }
     // TODO(cg): Log
     std::this_thread::sleep_for(backoff);
-    backoff = std::min(backoff * 2, retry_conf.max_wait);
+    backoff = (std::min)(backoff * 2, retry_conf.max_wait);
   }
   return scoped_fd;
 }

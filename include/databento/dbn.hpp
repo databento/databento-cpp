@@ -10,8 +10,10 @@
 
 namespace databento {
 struct MappingInterval {
+  // The start date of the interval (inclusive) as
   // YYYYMMDD e.g. 2022-10-08 is represented as 20221008
   std::uint32_t start_date;
+  // The end date of the interval (exclusive) as
   // YYYYMMDD e.g. 2022-10-08 is represented as 20221008
   std::uint32_t end_date;
   std::string symbol;
