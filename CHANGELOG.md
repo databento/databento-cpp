@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.10.0 - TBD
+## 0.10.0 - 2023-07-20
 
 #### Enhancements
 - Added preliminary support for Windows
