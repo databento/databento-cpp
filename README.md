@@ -109,7 +109,7 @@ int main() {
   return 0;
 }
 ```
-To run this program, replace `$YOUR_API_KEY` with an actual API key.
+To run this program, set the `DATABENTO_API_KEY` environment variable with an actual API key.
 
 ### Historical
 
@@ -123,7 +123,7 @@ Here is a simple program that fetches 10 minutes worth of historical trades for 
 using namespace databento;
 
 int main() {
-  auto client = HistoricalBuilder{}.SetKey("$YOUR_API_KEY").Build();
+  auto client = HistoricalBuilder{}.SetKeyFromEnv().Build();
   auto print_trades = [](const Record& record) {
     const auto& trade_msg = record.Get<TradeMsg>();
     std::cout << trade_msg << '\n';
@@ -136,7 +136,7 @@ int main() {
 }
 ```
 
-To run this program, replace `$YOUR_API_KEY` with an actual API key.
+To run this program, set the `DATABENTO_API_KEY` environment variable with an actual API key.
 
 Additional example standalone executables are provided in the [examples](./examples) directory.
 These examples can be compiled by enabling the cmake option `DATABENTO_ENABLE_EXAMPLES` with `-DDATABENTO_ENABLE_EXAMPLES=1` during the configure step.
