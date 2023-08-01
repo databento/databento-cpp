@@ -18,6 +18,9 @@ Your `CMakeLists.txt` should look something like the following:
 
 ```cmake
 # CMakeLists.txt
+cmake_minimum_required(VERSION 3.14)
+
+project(databento_example)
 include(FetchContent)
 
 FetchContent_Declare(
@@ -27,8 +30,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(databento)
 
-add_library(my_library)
-target_link_libraries(my_library PRIVATE databento::databento)
+add_executable(example main.cpp)
+target_link_libraries(example PRIVATE databento::databento)
 ```
 
 Alternatively, you can clone the source code from GitHub [here](https://github.com/databento/databento-cpp).
@@ -52,7 +55,7 @@ In your project's `CMakeLists.txt`, add the following:
 ```cmake
 # CMakeLists.txt
 find_package(databento REQUIRED)
-target_link_libraries(your_target PRIVATE databento::databento)
+target_link_libraries(example PRIVATE databento::databento)
 ```
 
 ### Dependencies
