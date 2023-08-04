@@ -36,17 +36,15 @@ target_link_libraries(example PRIVATE databento::databento)
 
 Alternatively, you can clone the source code from GitHub [here](https://github.com/databento/databento-cpp).
 
-To install the library at the system level, build and install it with the following:
+To install the library to `/usr`, build and install it with the following:
 
 ```sh
 git clone https://github.com/databento/databento-cpp
 cd databento-cpp
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-  -DCMAKE_INSTALL_PREFIX='/usr' \
-  -DDATABENTO_USE_EXTERNAL_JSON=ON \
-  -DDATABENTO_USE_EXTERNAL_HTTPLIB=ON
-cmake --build build --target databento
+  -DCMAKE_INSTALL_PREFIX='/usr'
+cmake --build build --target databento --parallel 8
 cmake --install build
 ```
 

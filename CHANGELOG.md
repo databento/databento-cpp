@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.10.1 - TBD
+
+#### Bug fixes
+- Fixed installation of `nlohmann_json` when using bundled version
+
 ## 0.10.0 - 2023-07-20
 
 #### Enhancements

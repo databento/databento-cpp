@@ -122,6 +122,8 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_JSON)
   find_package(nlohmann_json REQUIRED)
 else()
   set(json_version 3.11.2)
+  # Required to correctly install nlohmann_json
+  set(JSON_Install ON)
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       json
