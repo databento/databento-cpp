@@ -2,6 +2,9 @@
 
 ## 0.10.1 - TBD
 
+#### Enhancements
+- Added `raw_instrument_id` to definition schema
+
 #### Bug fixes
 - Fixed installation of `nlohmann_json` when using bundled version
 
@@ -59,7 +62,7 @@
 
 #### Breaking changes
 - Renamed `booklevel` MBP field to `levels` for brevity and consistent naming
-- Removed `open_interest_qty` and `cleared_volume` fields from definitions schema
+- Removed `open_interest_qty` and `cleared_volume` fields from definition schema
   that were always unset
 
 ## 0.7.0 - 2023-04-28

@@ -44,7 +44,7 @@ cd databento-cpp
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DCMAKE_INSTALL_PREFIX='/usr'
-cmake --build build --target databento --parallel 8
+cmake --build build --target databento --parallel
 cmake --install build
 ```
 
