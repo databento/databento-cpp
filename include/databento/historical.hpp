@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <map>  // map, multimap
+#include <map>  // multimap
 #include <string>
 #include <vector>
 
@@ -10,7 +10,7 @@
 #include "databento/dbn_file_store.hpp"
 #include "databento/detail/http_client.hpp"  // HttpClient
 #include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Packaging, Schema, SType
-#include "databento/metadata.hpp"  // DatasetConditionDetail, DatasetRange, FieldsByDatasetEncodingAndSchema, PriceByFeedMode, PriceByFeedModeAndSchema, PriceBySchema
+#include "databento/metadata.hpp"  // DatasetConditionDetail, DatasetRange, FieldDetail, PublisherDetail, UnitPricesForMode
 #include "databento/symbology.hpp"  // SymbologyResolution
 #include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
 
@@ -80,22 +80,13 @@ class Historical {
    */
 
   // Retrievs a mapping of publisher name to publisher ID.
-  std::map<std::string, std::int32_t> MetadataListPublishers();
+  std::vector<PublisherDetail> MetadataListPublishers();
   std::vector<std::string> MetadataListDatasets();
   std::vector<std::string> MetadataListDatasets(const DateRange& date_range);
   std::vector<Schema> MetadataListSchemas(const std::string& dataset);
-  FieldsByDatasetEncodingAndSchema MetadataListFields();
-  FieldsByDatasetEncodingAndSchema MetadataListFields(
+  std::vector<FieldDetail> MetadataListFields(Encoding encoding, Schema schema);
+  std::vector<UnitPricesForMode> MetadataListUnitPrices(
       const std::string& dataset);
-  FieldsByDatasetEncodingAndSchema MetadataListFields(
-      const std::string& dataset, Encoding encoding, Schema schema);
-  PriceByFeedModeAndSchema MetadataListUnitPrices(const std::string& dataset);
-  PriceBySchema MetadataListUnitPrices(const std::string& dataset,
-                                       FeedMode mode);
-  PriceByFeedMode MetadataListUnitPrices(const std::string& dataset,
-                                         Schema schema);
-  double MetadataListUnitPrices(const std::string& dataset, FeedMode mode,
-                                Schema schema);
   std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const std::string& dataset);
   std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
@@ -245,8 +236,6 @@ class Historical {
   std::uint64_t MetadataGetRecordCount(const HttplibParams& params);
   std::uint64_t MetadataGetBillableSize(const HttplibParams& params);
   double MetadataGetCost(const HttplibParams& params);
-  FieldsByDatasetEncodingAndSchema MetadataListFields(
-      const HttplibParams& params);
   void TimeseriesGetRange(const HttplibParams& params,
                           const MetadataCallback& metadata_callback,
                           const RecordCallback& record_callback);

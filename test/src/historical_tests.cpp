@@ -276,8 +276,14 @@ TEST_F(HistoricalTests, TestBatchDownloadSingleInvalidFile) {
 
 TEST_F(HistoricalTests, TestMetadataListPublishers) {
   const nlohmann::json kResp{
-      {"GLBX", 1},
-      {"XNAS", 2},
+      {{"publisher_id", 1},
+       {"dataset", "GLBX.MDP3"},
+       {"venue", "GLBX"},
+       {"description", "CME Globex MDP 3.0"}},
+      {{"publisher_id", 2},
+       {"dataset", "XNAS.ITCH"},
+       {"venue", "XNAS"},
+       {"description", "Nasdaq TotalView ITCH"}},
   };
   mock_server_.MockGetJson("/v0/metadata.list_publishers", kResp);
   const auto port = mock_server_.ListenOnThread();
@@ -286,8 +292,12 @@ TEST_F(HistoricalTests, TestMetadataListPublishers) {
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListPublishers();
   EXPECT_EQ(res.size(), kResp.size());
-  EXPECT_EQ(res.at("GLBX"), kResp.at("GLBX"));
-  EXPECT_EQ(res.at("XNAS"), kResp.at("XNAS"));
+  const auto glbx_exp =
+      PublisherDetail{1, "GLBX.MDP3", "GLBX", "CME Globex MDP 3.0"};
+  const auto xnas_exp =
+      PublisherDetail{2, "XNAS.ITCH", "XNAS", "Nasdaq TotalView ITCH"};
+  EXPECT_EQ(res[0], glbx_exp);
+  EXPECT_EQ(res[1], xnas_exp);
 }
 
 TEST_F(HistoricalTests, TestMetadataListDatasets_Simple) {
@@ -361,35 +371,19 @@ TEST_F(HistoricalTests, TestMetadataListSchemas_Full) {
 }
 
 TEST_F(HistoricalTests, TestMetadataListFields) {
-  const nlohmann::json kResp{{dataset::kGlbxMdp3,
-                              {{"dbn",
-                                {{"trades",
-                                  {{"length", "uint8_t"},
-                                   {"rtype", "uint8_t"},
-                                   {"dataset_id", "uint16_t"}}}}}}}};
+  const nlohmann::json kResp{{{"name", "length"}, {"type", "uint8_t"}},
+                             {{"name", "rtype"}, {"type", "uint8_t"}},
+                             {{"name", "dataset_id"}, {"type", "uint16_t"}}};
   mock_server_.MockGetJson("/v0/metadata.list_fields",
-                           {{"dataset", dataset::kGlbxMdp3},
-                            {"encoding", "dbn"},
-                            {"schema", "trades"}},
-                           kResp);
+                           {{"encoding", "dbn"}, {"schema", "trades"}}, kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListFields(dataset::kGlbxMdp3, Encoding::Dbn,
-                                             Schema::Trades);
-  const FieldsByDatasetEncodingAndSchema kExp{
-      {dataset::kGlbxMdp3,
-       {{Encoding::Dbn,
-         {{Schema::Trades,
-           {{"length", "uint8_t"},
-            {"rtype", "uint8_t"},
-            {"dataset_id", "uint16_t"}}}}}}}};
-  const auto& tradesRes =
-      res.at(dataset::kGlbxMdp3).at(Encoding::Dbn).at(Schema::Trades);
-  EXPECT_EQ(tradesRes.at("length"), "uint8_t");
-  EXPECT_EQ(tradesRes.at("rtype"), "uint8_t");
-  EXPECT_EQ(tradesRes.at("dataset_id"), "uint16_t");
+  const auto res = target.MetadataListFields(Encoding::Dbn, Schema::Trades);
+  const std::vector<FieldDetail> kExp{
+      {"length", "uint8_t"}, {"rtype", "uint8_t"}, {"dataset_id", "uint16_t"}};
+  EXPECT_EQ(res, kExp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
@@ -414,27 +408,21 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  const auto conditions = target.MetadataGetDatasetCondition(
+  const auto res = target.MetadataGetDatasetCondition(
       dataset::kXnasItch, {"2022-11-06", "2022-11-10"});
-  ASSERT_EQ(conditions.size(), 4);
-  EXPECT_EQ(conditions[0].date, "2022-11-07");
-  EXPECT_EQ(conditions[1].date, "2022-11-08");
-  EXPECT_EQ(conditions[2].date, "2022-11-09");
-  EXPECT_EQ(conditions[3].date, "2022-11-10");
-  EXPECT_EQ(conditions[0].condition, DatasetCondition::Available);
-  EXPECT_EQ(conditions[1].condition, DatasetCondition::Degraded);
-  EXPECT_EQ(conditions[2].condition, DatasetCondition::Pending);
-  EXPECT_EQ(conditions[3].condition, DatasetCondition::Missing);
-  EXPECT_EQ(conditions[0].last_modified_date, "2023-03-01");
-  EXPECT_EQ(conditions[1].last_modified_date, "2023-03-01");
-  EXPECT_EQ(conditions[2].last_modified_date, "2023-03-01");
-  EXPECT_EQ(conditions[3].last_modified_date, "2023-03-01");
+  const std::vector<DatasetConditionDetail> kExp{
+      {"2022-11-07", DatasetCondition::Available, "2023-03-01"},
+      {"2022-11-08", DatasetCondition::Degraded, "2023-03-01"},
+      {"2022-11-09", DatasetCondition::Pending, "2023-03-01"},
+      {"2022-11-10", DatasetCondition::Missing, "2023-03-01"},
+  };
+  EXPECT_EQ(res, kExp);
 }
 
-TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {
+TEST_F(HistoricalTests, TestMetadataListUnitPrices) {
   const nlohmann::json kResp{
-      {"historical-streaming",
-       {{"mbo", 21.05}, {"mbp-1", 82.05}, {"status", 62.72}}}};
+      {{"mode", "historical-streaming"},
+       {"unit_prices", {{"mbo", 21.05}, {"mbp-1", 82.05}, {"status", 62.72}}}}};
   mock_server_.MockGetJson("/v0/metadata.list_unit_prices",
                            {{"dataset", dataset::kGlbxMdp3}}, kResp);
   const auto port = mock_server_.ListenOnThread();
@@ -442,76 +430,11 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices_Dataset) {
   databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3);
-  const std::map<Schema, double> kExp{
-      {Schema::Mbo, 21.05}, {Schema::Mbp1, 82.05}, {Schema::Status, 62.72}};
+  const UnitPricesForMode kExp{
+      FeedMode::HistoricalStreaming,
+      {{Schema::Mbo, 21.05}, {Schema::Mbp1, 82.05}, {Schema::Status, 62.72}}};
   ASSERT_EQ(res.size(), 1);
-  const auto& hist_streaming_res = res.at(FeedMode::HistoricalStreaming);
-  ASSERT_EQ(hist_streaming_res.size(), kExp.size());
-  for (const auto& schema_and_price : kExp) {
-    EXPECT_DOUBLE_EQ(schema_and_price.second, kExp.at(schema_and_price.first))
-        << "Key " << ToString(schema_and_price.first);
-  }
-}
-
-TEST_F(HistoricalTests, TestMetadataListUnitPrices_FeedMode) {
-  const nlohmann::json kResp{
-      {"historical-streaming",
-       {{"mbo", 21.05}, {"mbp-1", 82.05}, {"status", 62.72}}}};
-  mock_server_.MockGetJson(
-      "/v0/metadata.list_unit_prices",
-      {{"dataset", dataset::kGlbxMdp3}, {"mode", "historical-streaming"}},
-      kResp);
-  const auto port = mock_server_.ListenOnThread();
-
-  databento::Historical target{logger_.get(), kApiKey, "localhost",
-                               static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3,
-                                                 FeedMode::HistoricalStreaming);
-  const std::map<Schema, double> kExp{
-      {Schema::Mbo, 21.05}, {Schema::Mbp1, 82.05}, {Schema::Status, 62.72}};
-  ASSERT_EQ(res.size(), kExp.size());
-  for (const auto& schema_and_price : kExp) {
-    EXPECT_DOUBLE_EQ(schema_and_price.second, kExp.at(schema_and_price.first))
-        << "Key " << ToString(schema_and_price.first);
-  }
-}
-
-TEST_F(HistoricalTests, TestMetadataListUnitPrices_FullySpecified) {
-  const nlohmann::json kResp = 43.21;
-  mock_server_.MockGetJson(
-      "/v0/metadata.list_unit_prices",
-      {{"dataset", dataset::kGlbxMdp3}, {"schema", "mbo"}, {"mode", "live"}},
-      kResp);
-  const auto port = mock_server_.ListenOnThread();
-
-  databento::Historical target{logger_.get(), kApiKey, "localhost",
-                               static_cast<std::uint16_t>(port)};
-  const auto res = target.MetadataListUnitPrices(dataset::kGlbxMdp3,
-                                                 FeedMode::Live, Schema::Mbo);
-  EXPECT_DOUBLE_EQ(res, kResp);
-}
-
-TEST_F(HistoricalTests, TestMetadataListUnitPrices_Schema) {
-  const nlohmann::json kResp{{"historical-streaming", {{"mbo", 21.05}}},
-                             {"historical", {{"mbo", 19.95}}},
-                             {"live", {{"mbo", 43.14}}}};
-  mock_server_.MockGetJson("/v0/metadata.list_unit_prices",
-                           {{"dataset", dataset::kGlbxMdp3}, {"schema", "mbo"}},
-                           kResp);
-  const auto port = mock_server_.ListenOnThread();
-
-  databento::Historical target{logger_.get(), kApiKey, "localhost",
-                               static_cast<std::uint16_t>(port)};
-  const auto res =
-      target.MetadataListUnitPrices(dataset::kGlbxMdp3, Schema::Mbo);
-  const std::map<FeedMode, double> kExp{{FeedMode::HistoricalStreaming, 21.05},
-                                        {FeedMode::Historical, 19.95},
-                                        {FeedMode::Live, 43.14}};
-  ASSERT_EQ(res.size(), kExp.size());
-  for (const auto& mode_and_price : kExp) {
-    EXPECT_DOUBLE_EQ(mode_and_price.second, kExp.at(mode_and_price.first))
-        << "Key " << ToString(mode_and_price.first);
-  }
+  EXPECT_EQ(res[0], kExp);
 }
 
 TEST_F(HistoricalTests, TestMetadataGetDatasetRange) {

@@ -1,12 +1,27 @@
 # Changelog
 
-## 0.10.1 - TBD
+## 0.11.0 - TBD
 
 #### Enhancements
 - Added `raw_instrument_id` to definition schema
+- Added `operator==` and `operator!=` implementations for `DatasetConditionDetail` and
+  `DatasetRange`
+
+#### Breaking changes
+- Changed `MetadataListPublishers` to return a `vector<PublisherDetail>`
+- `MetadataListFields`:
+  - Changed return type to `vector<FieldDetail>`
+  - Made `encoding` and `schema` parameters required
+  - Removed `dataset` parameter
+- `MetadataListUnitPrices`:
+  - Changed return type to `vector<UnitPricesForMode>`
+  - Made `dataset` parameter required
+  - Removed `mode` and `schema` parameters
 
 #### Bug fixes
 - Fixed installation of `nlohmann_json` when using bundled version
+- Added missing `operator!=` implementations for `Metadata`, `MappingInterval`, and
+  `SymbolMapping`
 
 ## 0.10.0 - 2023-07-20
 

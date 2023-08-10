@@ -80,6 +80,9 @@ template <>
 std::uint64_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
                       const std::string& key);
 template <>
+std::uint16_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
+                      const std::string& key);
+template <>
 double ParseAt(const std::string& endpoint, const nlohmann::json& json,
                const std::string& key);
 template <>
