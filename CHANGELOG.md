@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.11.0 - TBD
+## 0.11.0 - 2023-08-10
 
 #### Enhancements
 - Added `raw_instrument_id` to definition schema
