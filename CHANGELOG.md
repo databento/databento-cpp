@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.11.0 - 2023-08-10
+
+#### Enhancements
+- Added `raw_instrument_id` to definition schema
+- Added `operator==` and `operator!=` implementations for `DatasetConditionDetail` and
+  `DatasetRange`
+
+#### Breaking changes
+- Changed `MetadataListPublishers` to return a `vector<PublisherDetail>`
+- `MetadataListFields`:
+  - Changed return type to `vector<FieldDetail>`
+  - Made `encoding` and `schema` parameters required
+  - Removed `dataset` parameter
+- `MetadataListUnitPrices`:
+  - Changed return type to `vector<UnitPricesForMode>`
+  - Made `dataset` parameter required
+  - Removed `mode` and `schema` parameters
+
+#### Bug fixes
+- Fixed installation of `nlohmann_json` when using bundled version
+- Added missing `operator!=` implementations for `Metadata`, `MappingInterval`, and
+  `SymbolMapping`
+
 ## 0.10.0 - 2023-07-20
 
 #### Enhancements
@@ -54,7 +77,7 @@
 
 #### Breaking changes
 - Renamed `booklevel` MBP field to `levels` for brevity and consistent naming
-- Removed `open_interest_qty` and `cleared_volume` fields from definitions schema
+- Removed `open_interest_qty` and `cleared_volume` fields from definition schema
   that were always unset
 
 ## 0.7.0 - 2023-04-28

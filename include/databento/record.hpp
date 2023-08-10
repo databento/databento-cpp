@@ -199,7 +199,7 @@ struct InstrumentDefMsg {
   std::int64_t price_ratio;
   std::int32_t inst_attrib_value;
   std::uint32_t underlying_id;
-  std::array<char, 4> _reserved1;
+  std::uint32_t raw_instrument_id;
   std::int32_t market_depth_implied;
   std::int32_t market_depth;
   std::uint32_t market_segment_id;

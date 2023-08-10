@@ -18,6 +18,9 @@ Your `CMakeLists.txt` should look something like the following:
 
 ```cmake
 # CMakeLists.txt
+cmake_minimum_required(VERSION 3.14)
+
+project(databento_example)
 include(FetchContent)
 
 FetchContent_Declare(
@@ -27,23 +30,21 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(databento)
 
-add_library(my_library)
-target_link_libraries(my_library PRIVATE databento::databento)
+add_executable(example main.cpp)
+target_link_libraries(example PRIVATE databento::databento)
 ```
 
 Alternatively, you can clone the source code from GitHub [here](https://github.com/databento/databento-cpp).
 
-To install the library at the system level, build and install it with the following:
+To install the library to `/usr`, build and install it with the following:
 
 ```sh
 git clone https://github.com/databento/databento-cpp
 cd databento-cpp
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-  -DCMAKE_INSTALL_PREFIX='/usr' \
-  -DDATABENTO_USE_EXTERNAL_JSON=ON \
-  -DDATABENTO_USE_EXTERNAL_HTTPLIB=ON
-cmake --build build --target databento
+  -DCMAKE_INSTALL_PREFIX='/usr'
+cmake --build build --target databento --parallel
 cmake --install build
 ```
 
@@ -52,7 +53,7 @@ In your project's `CMakeLists.txt`, add the following:
 ```cmake
 # CMakeLists.txt
 find_package(databento REQUIRED)
-target_link_libraries(your_target PRIVATE databento::databento)
+target_link_libraries(example PRIVATE databento::databento)
 ```
 
 ### Dependencies
@@ -109,7 +110,7 @@ int main() {
   return 0;
 }
 ```
-To run this program, replace `$YOUR_API_KEY` with an actual API key.
+To run this program, set the `DATABENTO_API_KEY` environment variable with an actual API key.
 
 ### Historical
 
@@ -123,7 +124,7 @@ Here is a simple program that fetches 10 minutes worth of historical trades for 
 using namespace databento;
 
 int main() {
-  auto client = HistoricalBuilder{}.SetKey("$YOUR_API_KEY").Build();
+  auto client = HistoricalBuilder{}.SetKeyFromEnv().Build();
   auto print_trades = [](const Record& record) {
     const auto& trade_msg = record.Get<TradeMsg>();
     std::cout << trade_msg << '\n';
@@ -136,7 +137,7 @@ int main() {
 }
 ```
 
-To run this program, replace `$YOUR_API_KEY` with an actual API key.
+To run this program, set the `DATABENTO_API_KEY` environment variable with an actual API key.
 
 Additional example standalone executables are provided in the [examples](./examples) directory.
 These examples can be compiled by enabling the cmake option `DATABENTO_ENABLE_EXAMPLES` with `-DDATABENTO_ENABLE_EXAMPLES=1` during the configure step.

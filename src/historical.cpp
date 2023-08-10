@@ -366,22 +366,29 @@ void Historical::DownloadFile(const std::string& url,
   StreamToFile(path, {}, output_path);
 }
 
-std::map<std::string, std::int32_t> Historical::MetadataListPublishers() {
+std::vector<databento::PublisherDetail> Historical::MetadataListPublishers() {
   static const std::string kEndpoint = "Historical::MetadataListPublishers";
   static const std::string kPath = ::BuildMetadataPath(".list_publishers");
   const nlohmann::json json = client_.GetJson(kPath, httplib::Params{});
-  std::map<std::string, std::int32_t> publisher_to_pub_id;
-  if (!json.is_object()) {
-    throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
+  if (!json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
-  for (const auto& pair : json.items()) {
-    if (!pair.value().is_number_integer()) {
-      throw JsonResponseError::TypeMismatch(kEndpoint, "integer number",
-                                            pair.key(), pair.value());
+  std::vector<PublisherDetail> publisher_details;
+  for (const auto& detail_json : json) {
+    if (!detail_json.is_object()) {
+      throw JsonResponseError::TypeMismatch(kEndpoint, "object", detail_json);
     }
-    publisher_to_pub_id.emplace(pair.key(), pair.value());
+    const auto id =
+        detail::ParseAt<std::uint16_t>(kEndpoint, detail_json, "publisher_id");
+    auto dataset =
+        detail::ParseAt<std::string>(kEndpoint, detail_json, "dataset");
+    auto venue = detail::ParseAt<std::string>(kEndpoint, detail_json, "venue");
+    auto description =
+        detail::ParseAt<std::string>(kEndpoint, detail_json, "description");
+    publisher_details.emplace_back(PublisherDetail{
+        id, std::move(dataset), std::move(venue), std::move(description)});
   }
-  return publisher_to_pub_id;
+  return publisher_details;
 }
 
 std::vector<std::string> Historical::MetadataListDatasets() {
@@ -431,174 +438,61 @@ std::vector<databento::Schema> Historical::MetadataListSchemas(
   return schemas;
 }
 
-databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields() {
-  return this->MetadataListFields(httplib::Params{});
-}
-databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
-    const std::string& dataset) {
-  httplib::Params params;
-  detail::SetIfNotEmpty(&params, "dataset", dataset);
-  return this->MetadataListFields(params);
-}
-databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
-    const std::string& dataset, Encoding encoding, Schema schema) {
-  httplib::Params params{{"encoding", ToString(encoding)},
-                         {"schema", ToString(schema)}};
-  detail::SetIfNotEmpty(&params, "dataset", dataset);
-  return this->MetadataListFields(params);
-}
-databento::FieldsByDatasetEncodingAndSchema Historical::MetadataListFields(
-    const httplib::Params& params) {
+std::vector<databento::FieldDetail> Historical::MetadataListFields(
+    Encoding encoding, Schema schema) {
   static const std::string kEndpoint = "Historical::MetadataListFields";
   static const std::string kPath = ::BuildMetadataPath(".list_fields");
-  const nlohmann::json json = client_.GetJson(kPath, params);
-  if (!json.is_object()) {
-    throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
+  const nlohmann::json json = client_.GetJson(
+      kPath, {{"encoding", ToString(encoding)}, {"schema", ToString(schema)}});
+  if (!json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
-  FieldsByDatasetEncodingAndSchema fields;
-  for (const auto& dataset_and_fields : json.items()) {
-    if (!dataset_and_fields.value().is_object()) {
-      throw JsonResponseError::TypeMismatch(kEndpoint, "object",
-                                            dataset_and_fields.key(),
-                                            dataset_and_fields.value());
+  std::vector<FieldDetail> field_details;
+  for (const auto& detail_json : json) {
+    if (!detail_json.is_object()) {
+      throw JsonResponseError::TypeMismatch(kEndpoint, "object", detail_json);
     }
-    FieldsByEncodingAndSchema fields_by_encoding_and_schema;
-    for (const auto& encoding_and_fields : dataset_and_fields.value().items()) {
-      if (!encoding_and_fields.value().is_object()) {
-        throw JsonResponseError::TypeMismatch(kEndpoint, "nested object",
-                                              encoding_and_fields.key(),
-                                              encoding_and_fields.value());
-      }
-      FieldsByEncodingAndSchema::mapped_type fields_by_schema;
-      for (const auto& schema_and_fields :
-           encoding_and_fields.value().items()) {
-        if (!schema_and_fields.value().is_object()) {
-          throw JsonResponseError::TypeMismatch(
-              kEndpoint, "nested nested object", schema_and_fields.key(),
-              schema_and_fields.value());
-        }
-        FieldDefinition field_def;
-        for (const auto& field_and_type : schema_and_fields.value().items()) {
-          if (!field_and_type.value().is_string()) {
-            throw JsonResponseError::TypeMismatch(kEndpoint, "string",
-                                                  field_and_type.key(),
-                                                  field_and_type.value());
-          }
-          field_def.emplace(field_and_type.key(), field_and_type.value());
-        }
-        fields_by_schema.emplace(FromString<Schema>(schema_and_fields.key()),
-                                 std::move(field_def));
-      }
-      fields_by_encoding_and_schema.emplace(
-          FromString<Encoding>(encoding_and_fields.key()),
-          std::move(fields_by_schema));
-    }
-    fields.emplace(dataset_and_fields.key(),
-                   std::move(fields_by_encoding_and_schema));
+    auto name = detail::ParseAt<std::string>(kEndpoint, detail_json, "name");
+    auto type = detail::ParseAt<std::string>(kEndpoint, detail_json, "type");
+    field_details.emplace_back(FieldDetail{std::move(name), std::move(type)});
   }
-  return fields;
+  return field_details;
 }
 
-static const std::string kListUnitPricesEndpoint =
-    "Historical::MetadataListUnitPrices";
-static const std::string kListUnitPricesPath =
-    ::BuildMetadataPath(".list_unit_prices");
-
-std::map<databento::FeedMode, std::map<databento::Schema, double>>
-Historical::MetadataListUnitPrices(const std::string& dataset) {
-  const nlohmann::json json = client_.GetJson(
-      kListUnitPricesPath, httplib::Params{{"dataset", dataset}});
-  if (!json.is_object()) {
-    throw JsonResponseError::TypeMismatch(kListUnitPricesEndpoint, "object",
-                                          json);
+std::vector<databento::UnitPricesForMode> Historical::MetadataListUnitPrices(
+    const std::string& dataset) {
+  static const std::string kEndpoint = "Historical::MetadataListUnitPrices";
+  static const std::string kPath = ::BuildMetadataPath(".list_unit_prices");
+  const nlohmann::json json =
+      client_.GetJson(kPath, httplib::Params{{"dataset", dataset}});
+  if (!json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
-  std::map<FeedMode, std::map<Schema, double>> prices;
-  for (const auto& mode_and_prices : json.items()) {
-    if (!mode_and_prices.value().is_object()) {
-      throw JsonResponseError::TypeMismatch(kListUnitPricesEndpoint, "object",
-                                            mode_and_prices.key(),
-                                            mode_and_prices.value());
+  std::vector<UnitPricesForMode> res;
+  for (const auto& mode_json : json) {
+    if (!mode_json.is_object()) {
+      throw JsonResponseError::TypeMismatch(kEndpoint, "object", mode_json);
     }
-    decltype(prices)::mapped_type schema_prices;
-    for (const auto& schema_and_price : mode_and_prices.value().items()) {
-      if (!schema_and_price.value().is_number()) {
+    const auto mode =
+        detail::FromCheckedAtString<FeedMode>(kEndpoint, mode_json, "mode");
+    std::map<Schema, double> unit_prices;
+    const auto unit_prices_json =
+        detail::CheckedAt(kEndpoint, mode_json, "unit_prices");
+    if (!unit_prices_json.is_object()) {
+      throw JsonResponseError::TypeMismatch(kEndpoint, "nested object",
+                                            unit_prices_json);
+    }
+    for (const auto& schema_json : unit_prices_json.items()) {
+      if (!schema_json.value().is_number()) {
         throw JsonResponseError::TypeMismatch(
-            kListUnitPricesEndpoint, "nested number", schema_and_price.key(),
-            schema_and_price.value());
+            kEndpoint, "nested number", schema_json.key(), schema_json.value());
       }
-      schema_prices.emplace(FromString<Schema>(schema_and_price.key()),
-                            schema_and_price.value());
+      unit_prices.emplace(FromString<Schema>(schema_json.key()),
+                          schema_json.value());
     }
-    prices.emplace(FromString<FeedMode>(mode_and_prices.key()),
-                   std::move(schema_prices));
+    res.emplace_back(UnitPricesForMode{mode, std::move(unit_prices)});
   }
-  return prices;
-}
-
-std::map<databento::Schema, double> Historical::MetadataListUnitPrices(
-    const std::string& dataset, databento::FeedMode mode) {
-  const std::string mode_str = ToString(mode);
-  const nlohmann::json json = client_.GetJson(
-      kListUnitPricesPath,
-      httplib::Params{{"dataset", dataset}, {"mode", mode_str}});
-  if (!json.is_object()) {
-    throw JsonResponseError::TypeMismatch(kListUnitPricesEndpoint, "object",
-                                          json);
-  }
-  const auto& json_map =
-      detail::CheckedAt(kListUnitPricesEndpoint, json, mode_str);
-  std::map<Schema, double> prices;
-  for (const auto& item : json_map.items()) {
-    if (!item.value().is_number()) {
-      throw JsonResponseError::TypeMismatch(kListUnitPricesEndpoint, "number",
-                                            item.key(), item.value());
-    }
-    prices.emplace(FromString<Schema>(item.key()), item.value());
-  }
-  return prices;
-}
-
-std::map<databento::FeedMode, double> Historical::MetadataListUnitPrices(
-    const std::string& dataset, databento::Schema schema) {
-  const std::string schema_str = ToString(schema);
-  const nlohmann::json json = client_.GetJson(
-      kListUnitPricesPath,
-      httplib::Params{{"dataset", dataset}, {"schema", schema_str}});
-  if (!json.is_object()) {
-    throw JsonResponseError::TypeMismatch(kListUnitPricesEndpoint, "object",
-                                          json);
-  }
-  std::map<FeedMode, double> prices;
-  for (const auto& mode_and_prices : json.items()) {
-    if (!mode_and_prices.value().is_object()) {
-      throw JsonResponseError::TypeMismatch(kListUnitPricesEndpoint, "object",
-                                            mode_and_prices.key(),
-                                            mode_and_prices.value());
-    }
-    const auto& price_json =
-        detail::CheckedAt("Historical::MetadataListUnitPrices",
-                          mode_and_prices.value(), schema_str);
-    if (!price_json.is_number()) {
-      throw JsonResponseError::TypeMismatch(kListUnitPricesEndpoint, "number",
-                                            price_json);
-    }
-
-    prices.emplace(FromString<FeedMode>(mode_and_prices.key()), price_json);
-  }
-  return prices;
-}
-
-double Historical::MetadataListUnitPrices(const std::string& dataset,
-                                          FeedMode mode, Schema schema) {
-  const nlohmann::json json = client_.GetJson(
-      kListUnitPricesPath, httplib::Params{{"dataset", dataset},
-                                           {"mode", ToString(mode)},
-                                           {"schema", ToString(schema)}});
-  if (!json.is_number()) {
-    throw JsonResponseError::TypeMismatch("Historical::MetadataListUnitPrices",
-                                          "number", json);
-  }
-  return json;
+  return res;
 }
 
 std::vector<databento::DatasetConditionDetail>
@@ -631,15 +525,15 @@ Historical::MetadataGetDatasetCondition(const httplib::Params& params) {
     if (!detail_json.is_object()) {
       throw JsonResponseError::TypeMismatch(kEndpoint, "object", detail_json);
     }
-    const std::string date =
+    std::string date =
         detail::ParseAt<std::string>(kEndpoint, detail_json, "date");
     const DatasetCondition condition =
         detail::FromCheckedAtString<DatasetCondition>(kEndpoint, detail_json,
                                                       "condition");
-    const std::string last_modified_date = detail::ParseAt<std::string>(
+    std::string last_modified_date = detail::ParseAt<std::string>(
         kEndpoint, detail_json, "last_modified_date");
-    details.emplace_back(
-        DatasetConditionDetail{date, condition, last_modified_date});
+    details.emplace_back(DatasetConditionDetail{std::move(date), condition,
+                                                std::move(last_modified_date)});
   }
   return details;
 }

@@ -13,9 +13,10 @@
 #include "databento/dbn_decoder.hpp"
 #include "databento/detail/tcp_client.hpp"
 #include "databento/exceptions.hpp"  // LiveApiError
-#include "databento/log.hpp"
-#include "databento/record.hpp"     // Record
-#include "databento/symbology.hpp"  // JoinSymbolStrings
+#include "databento/log.hpp"         // ILogReceiver
+#include "databento/record.hpp"      // Record
+#include "databento/symbology.hpp"   // JoinSymbolStrings
+#include "databento/version.hpp"     // DATABENTO_VERSION
 
 using databento::LiveBlocking;
 
@@ -237,7 +238,8 @@ std::string LiveBlocking::GenerateCramReply(const std::string& challenge_key) {
 std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
   std::ostringstream reply_stream;
   reply_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
-               << "ts_out=" << send_ts_out_ << '\n';
+               << "ts_out=" << send_ts_out_
+               << "|client=C++ " DATABENTO_VERSION "\n";
   return reply_stream.str();
 }
 

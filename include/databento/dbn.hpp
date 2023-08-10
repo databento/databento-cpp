@@ -71,9 +71,15 @@ inline bool operator==(const MappingInterval& lhs, const MappingInterval& rhs) {
   return lhs.start_date == rhs.start_date && lhs.end_date == rhs.end_date &&
          lhs.symbol == rhs.symbol;
 }
+inline bool operator!=(const MappingInterval& lhs, const MappingInterval& rhs) {
+  return !(lhs == rhs);
+}
 
 inline bool operator==(const SymbolMapping& lhs, const SymbolMapping& rhs) {
   return lhs.raw_symbol == rhs.raw_symbol && lhs.intervals == rhs.intervals;
+}
+inline bool operator!=(const SymbolMapping& lhs, const SymbolMapping& rhs) {
+  return !(lhs == rhs);
 }
 
 inline bool operator==(const Metadata& lhs, const Metadata& rhs) {
@@ -87,6 +93,9 @@ inline bool operator==(const Metadata& lhs, const Metadata& rhs) {
          lhs.stype_out == rhs.stype_out && lhs.ts_out == rhs.ts_out &&
          lhs.symbols == rhs.symbols && lhs.partial == rhs.partial &&
          lhs.not_found == rhs.not_found && lhs.mappings == rhs.mappings;
+}
+inline bool operator!=(const Metadata& lhs, const Metadata& rhs) {
+  return !(lhs == rhs);
 }
 
 std::string ToString(const Metadata& metadata);

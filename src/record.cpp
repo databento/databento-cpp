@@ -121,6 +121,7 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
          lhs.price_ratio == rhs.price_ratio &&
          lhs.inst_attrib_value == rhs.inst_attrib_value &&
          lhs.underlying_id == rhs.underlying_id &&
+         lhs.raw_instrument_id == rhs.raw_instrument_id &&
          lhs.market_depth_implied == rhs.market_depth_implied &&
          lhs.market_depth == rhs.market_depth &&
          lhs.market_segment_id == rhs.market_segment_id &&
@@ -352,6 +353,7 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("price_ratio", instr_def_msg.price_ratio)
       .AddField("inst_attrib_value", instr_def_msg.inst_attrib_value)
       .AddField("underlying_id", instr_def_msg.underlying_id)
+      .AddField("raw_instrument_id", instr_def_msg.raw_instrument_id)
       .AddField("market_depth_implied", instr_def_msg.market_depth_implied)
       .AddField("market_depth", instr_def_msg.market_depth)
       .AddField("market_segment_id", instr_def_msg.market_segment_id)
