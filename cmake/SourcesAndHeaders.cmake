@@ -16,6 +16,7 @@ set(headers
   include/databento/live_threaded.hpp
   include/databento/log.hpp
   include/databento/metadata.hpp
+  include/databento/publishers.hpp
   include/databento/record.hpp
   include/databento/symbology.hpp
   include/databento/timeseries.hpp
@@ -46,6 +47,7 @@ set(sources
   src/live_threaded.cpp
   src/log.cpp
   src/metadata.cpp
+  src/publishers.cpp
   src/record.cpp
   src/symbology.cpp
   src/detail/file_stream.cpp
