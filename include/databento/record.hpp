@@ -21,7 +21,8 @@ struct RecordHeader {
   std::uint8_t length;
   // The record type.
   RType rtype;
-  // The publisher ID assigned by Databento.
+  // The publisher ID assigned by Databento, which denotes the dataset and
+  // venue.
   std::uint16_t publisher_id;
   // The numeric ID assigned to the instrument.
   std::uint32_t instrument_id;
