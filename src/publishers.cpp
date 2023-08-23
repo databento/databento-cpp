@@ -6,8 +6,8 @@
 
 #include "databento/exceptions.hpp"  // InvalidArgumentError
 
-// NOLINTBEGIN(bugprone-branch-clone)
 namespace databento {
+// NOLINTBEGIN(bugprone-branch-clone)
 
 const char* ToString(Venue venue) {
   switch (venue) {
@@ -401,7 +401,7 @@ Dataset FromString(const std::string& str) {
                              "unknown value '" + str + '\''};
 }
 
-constexpr Venue PublisherVenue(Publisher publisher) {
+Venue PublisherVenue(Publisher publisher) {
   switch (publisher) {
     case Publisher::GlbxMdp3Glbx: {
       return Venue::Glbx;
@@ -529,9 +529,15 @@ constexpr Venue PublisherVenue(Publisher publisher) {
     case Publisher::DbeqBasicEprl: {
       return Venue::Eprl;
     }
+    default: {
+      throw InvalidArgumentError{
+          "PublisherVenue", "publisher",
+          "unknown conversion for " +
+              std::to_string(static_cast<std::uint16_t>(publisher))};
+    }
   }
 }
-constexpr Dataset PublisherDataset(Publisher publisher) {
+Dataset PublisherDataset(Publisher publisher) {
   switch (publisher) {
     case Publisher::GlbxMdp3Glbx: {
       return Dataset::GlbxMdp3;
@@ -658,6 +664,12 @@ constexpr Dataset PublisherDataset(Publisher publisher) {
     }
     case Publisher::DbeqBasicEprl: {
       return Dataset::DbeqBasic;
+    }
+    default: {
+      throw InvalidArgumentError{
+          "PublisherDataset", "publisher",
+          "unknown conversion for " +
+              std::to_string(static_cast<std::uint16_t>(publisher))};
     }
   }
 }
@@ -932,6 +944,5 @@ Publisher FromString(const std::string& str) {
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
 }
-
-}  // namespace databento
 // NOLINTEND(bugprone-branch-clone)
+}  // namespace databento

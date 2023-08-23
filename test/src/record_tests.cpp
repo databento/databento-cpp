@@ -2,14 +2,36 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"  // TimeDeltaNanos, UnixNanos
 #include "databento/enums.hpp"
+#include "databento/publishers.hpp"
 #include "databento/record.hpp"
 
 namespace databento {
 namespace test {
+TEST(RecordTests, TestPublisher) {
+  const TradeMsg target{
+      RecordHeader{sizeof(TradeMsg) / RecordHeader::kLengthMultiplier,
+                   RType::Mbp0,
+                   static_cast<std::uint16_t>(Publisher::OpraPillarEdgo),
+                   1,
+                   {}},
+      55000000000,
+      500,
+      Action::Add,
+      Side::Bid,
+      {},
+      0,
+      {},
+      {},
+      126239};
+  EXPECT_EQ(target.hd.Publisher(), Publisher::OpraPillarEdgo);
+  EXPECT_EQ(PublisherVenue(target.hd.Publisher()), Venue::Edgo);
+  EXPECT_EQ(PublisherDataset(target.hd.Publisher()), Dataset::OpraPillar);
+}
 TEST(RecordTests, TestMbp10MsgToString) {
   Mbp10Msg target{
       RecordHeader{sizeof(Mbp10Msg) / RecordHeader::kLengthMultiplier,

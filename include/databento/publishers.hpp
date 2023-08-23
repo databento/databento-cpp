@@ -220,10 +220,10 @@ enum class Publisher : std::uint16_t {
 };
 
 // Get a Publisher's Venue.
-constexpr Venue PublisherVenue(Publisher publisher);
+Venue PublisherVenue(Publisher publisher);
 
 // Get a Publisher's Dataset.
-constexpr Dataset PublisherDataset(Publisher publisher);
+Dataset PublisherDataset(Publisher publisher);
 
 template <typename T>
 T FromString(const std::string& str);
@@ -241,5 +241,4 @@ const char* ToString(Publisher publisher);
 std::ostream& operator<<(std::ostream& out, Publisher publisher);
 template <>
 Publisher FromString(const std::string& str);
-
 }  // namespace databento
