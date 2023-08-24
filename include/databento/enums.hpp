@@ -4,6 +4,8 @@
 #include <iosfwd>
 #include <string>
 
+#include "databento/publishers.hpp"  // Dataset, Publisher, Venue, FromString
+
 namespace databento {
 // Represents a historical data center gateway location.
 enum class HistoricalGateway : std::uint8_t {
@@ -286,8 +288,6 @@ std::ostream& operator<<(std::ostream& out, StatType stat_type);
 std::ostream& operator<<(std::ostream& out,
                          StatUpdateAction stat_update_action);
 
-template <typename T>
-T FromString(const std::string& str);
 template <>
 Schema FromString(const std::string& str);
 template <>

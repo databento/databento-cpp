@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0 - 2023-08-24
+
+##### Enhancements
+- Added the `Publisher`, `Venue`, and `Dataset` enums
+- Added `Publisher` getters to `Record` and `RecordHeader` to convert the
+  `publisher_id` to its enum
+
 ## 0.11.0 - 2023-08-10
 
 #### Enhancements

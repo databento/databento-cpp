@@ -10,7 +10,8 @@
 
 #include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
-#include "databento/flag_set.hpp"  // FlagSet
+#include "databento/flag_set.hpp"    // FlagSet
+#include "databento/publishers.hpp"  // Publisher
 
 namespace databento {
 // Common data for all Databento Records.
@@ -21,7 +22,8 @@ struct RecordHeader {
   std::uint8_t length;
   // The record type.
   RType rtype;
-  // The publisher ID assigned by Databento.
+  // The publisher ID assigned by Databento, which denotes the dataset and
+  // venue.
   std::uint16_t publisher_id;
   // The numeric ID assigned to the instrument.
   std::uint32_t instrument_id;
@@ -29,6 +31,10 @@ struct RecordHeader {
   UnixNanos ts_event;
 
   std::size_t Size() const;
+  // Retrieve the publisher based on the publisher ID.
+  enum Publisher Publisher() const {
+    return static_cast<enum Publisher>(publisher_id);
+  }
 };
 
 class Record {
@@ -37,6 +43,7 @@ class Record {
 
   const RecordHeader& Header() const { return *record_; }
   ::databento::RType RType() const { return record_->rtype; }
+  enum Publisher Publisher() const { return Header().Publisher(); }
 
   template <typename T>
   bool Holds() const {
