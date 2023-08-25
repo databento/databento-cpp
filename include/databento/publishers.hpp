@@ -144,7 +144,7 @@ enum class Publisher : std::uint16_t {
   // CBOE BZX
   BatsPitchBats = 5,
   // CBOE BYX
-  BatyPitchBats = 6,
+  BatyPitchBaty = 6,
   // CBOE EDGA
   EdgaPitchEdga = 7,
   // CBOE EDGX

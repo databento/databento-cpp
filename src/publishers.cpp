@@ -418,8 +418,8 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::BatsPitchBats: {
       return Venue::Bats;
     }
-    case Publisher::BatyPitchBats: {
-      return Venue::Bats;
+    case Publisher::BatyPitchBaty: {
+      return Venue::Baty;
     }
     case Publisher::EdgaPitchEdga: {
       return Venue::Edga;
@@ -554,7 +554,7 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::BatsPitchBats: {
       return Dataset::BatsPitch;
     }
-    case Publisher::BatyPitchBats: {
+    case Publisher::BatyPitchBaty: {
       return Dataset::BatyPitch;
     }
     case Publisher::EdgaPitchEdga: {
@@ -691,8 +691,8 @@ const char* ToString(Publisher publisher) {
     case Publisher::BatsPitchBats: {
       return "BATS.PITCH.BATS";
     }
-    case Publisher::BatyPitchBats: {
-      return "BATY.PITCH.BATS";
+    case Publisher::BatyPitchBaty: {
+      return "BATY.PITCH.BATY";
     }
     case Publisher::EdgaPitchEdga: {
       return "EDGA.PITCH.EDGA";
@@ -830,8 +830,8 @@ Publisher FromString(const std::string& str) {
   if (str == "BATS.PITCH.BATS") {
     return Publisher::BatsPitchBats;
   }
-  if (str == "BATY.PITCH.BATS") {
-    return Publisher::BatyPitchBats;
+  if (str == "BATY.PITCH.BATY") {
+    return Publisher::BatyPitchBaty;
   }
   if (str == "EDGA.PITCH.EDGA") {
     return Publisher::EdgaPitchEdga;
