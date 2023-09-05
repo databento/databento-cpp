@@ -99,10 +99,6 @@ void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
       received.find("symbols=" +
                     JoinSymbolStrings("MockLsgServer::Subscribe", symbols)),
       std::string::npos);
-  EXPECT_NE(
-      received.find("symbols=" +
-                    JoinSymbolStrings("MockLsgServer::Subscribe", symbols)),
-      std::string::npos);
   EXPECT_NE(received.find(std::string{"schema="} + ToString(schema)),
             std::string::npos);
   EXPECT_NE(received.find(std::string{"stype_in="} + ToString(stype)),
