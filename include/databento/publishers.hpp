@@ -217,6 +217,8 @@ enum class Publisher : std::uint16_t {
   DbeqBasicIexg = 41,
   // DBEQ Basic - MIAX Pearl
   DbeqBasicEprl = 42,
+  // NYSE Arca Integrated
+  ArcxPillarArcx = 43,
 };
 
 // Get a Publisher's Venue.

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.2 - TBD
+### Enhancements
+- Added `ARCX.PILLAR.ARCX` publisher
+
 ## 0.12.1 - 2023-08-25
 ### Bug fixes
 - Fixed typo in `BATY.PITCH.BATY` publisher

@@ -529,6 +529,9 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::DbeqBasicEprl: {
       return Venue::Eprl;
     }
+    case Publisher::ArcxPillarArcx: {
+      return Venue::Arcx;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherVenue", "publisher",
@@ -664,6 +667,9 @@ Dataset PublisherDataset(Publisher publisher) {
     }
     case Publisher::DbeqBasicEprl: {
       return Dataset::DbeqBasic;
+    }
+    case Publisher::ArcxPillarArcx: {
+      return Dataset::ArcxPillar;
     }
     default: {
       throw InvalidArgumentError{
@@ -801,6 +807,9 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::DbeqBasicEprl: {
       return "DBEQ.BASIC.EPRL";
+    }
+    case Publisher::ArcxPillarArcx: {
+      return "ARCX.PILLAR.ARCX";
     }
     default: {
       return "Unknown";
@@ -940,6 +949,9 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "DBEQ.BASIC.EPRL") {
     return Publisher::DbeqBasicEprl;
+  }
+  if (str == "ARCX.PILLAR.ARCX") {
+    return Publisher::ArcxPillarArcx;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
