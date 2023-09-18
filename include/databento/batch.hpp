@@ -27,6 +27,9 @@ struct BatchJob {
   std::uint64_t limit;
   Encoding encoding;
   Compression compression;
+  bool pretty_px;
+  bool pretty_ts;
+  bool map_symbols;
   SplitDuration split_duration;
   std::uint64_t split_size;
   bool split_symbols;

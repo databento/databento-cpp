@@ -52,6 +52,8 @@ std::string BuildTimeseriesPath(const char* slug) {
 }
 
 constexpr auto kDefaultSTypeIn = databento::SType::RawSymbol;
+constexpr auto kDefaultEncoding = databento::Encoding::Dbn;
+constexpr auto kDefaultCompression = databento::Compression::Zstd;
 constexpr auto kDefaultSTypeOut = databento::SType::InstrumentId;
 
 databento::BatchJob Parse(const std::string& endpoint,
@@ -89,6 +91,9 @@ databento::BatchJob Parse(const std::string& endpoint,
   res.encoding = FromCheckedAtString<Encoding>(endpoint, json, "encoding");
   res.compression = FromCheckedAtStringOrNull<Compression>(
       endpoint, json, "compression", Compression::None);
+  res.pretty_px = ParseAt<bool>(endpoint, json, "pretty_px");
+  res.pretty_ts = ParseAt<bool>(endpoint, json, "pretty_ts");
+  res.map_symbols = ParseAt<bool>(endpoint, json, "map_symbols");
   res.split_duration = FromCheckedAtStringOrNull<SplitDuration>(
       endpoint, json, "split_duration", SplitDuration::None);
   res.split_size = ParseAt<std::uint64_t>(endpoint, json, "split_size");
@@ -161,32 +166,33 @@ databento::BatchJob Historical::BatchSubmitJob(
 
     const std::string& dataset, const std::vector<std::string>& symbols,
     Schema schema, const DateTimeRange<UnixNanos>& datetime_range) {
-  return this->BatchSubmitJob(dataset, symbols, schema, datetime_range,
-                              Compression::Zstd, SplitDuration::Day, {},
-                              Packaging::None, Delivery::Download,
-                              kDefaultSTypeIn, kDefaultSTypeOut, {});
+  return this->BatchSubmitJob(
+      dataset, symbols, schema, datetime_range, kDefaultEncoding,
+      kDefaultCompression, {}, SplitDuration::Day, {}, Packaging::None,
+      Delivery::Download, kDefaultSTypeIn, kDefaultSTypeOut, {});
 }
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, const std::vector<std::string>& symbols,
     Schema schema, const DateTimeRange<std::string>& datetime_range) {
-  return this->BatchSubmitJob(dataset, symbols, schema, datetime_range,
-                              Compression::Zstd, SplitDuration::Day, {},
-                              Packaging::None, Delivery::Download,
-                              kDefaultSTypeIn, kDefaultSTypeOut, {});
+  return this->BatchSubmitJob(
+      dataset, symbols, schema, datetime_range, kDefaultEncoding,
+      kDefaultCompression, {}, SplitDuration::Day, {}, Packaging::None,
+      Delivery::Download, kDefaultSTypeIn, kDefaultSTypeOut, {});
 }
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, const std::vector<std::string>& symbols,
     Schema schema, const DateTimeRange<UnixNanos>& datetime_range,
-    Compression compression, SplitDuration split_duration,
-    std::uint64_t split_size, Packaging packaging, Delivery delivery,
-    SType stype_in, SType stype_out, std::uint64_t limit) {
+    Encoding encoding, Compression compression, bool map_symbols,
+    SplitDuration split_duration, std::uint64_t split_size, Packaging packaging,
+    Delivery delivery, SType stype_in, SType stype_out, std::uint64_t limit) {
   httplib::Params params{
       {"dataset", dataset},
       {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
+      {"encoding", ToString(encoding)},
       {"compression", ToString(compression)},
-      {"encoding", "dbn"},
+      {"map_symbols", std::to_string(map_symbols)},
       {"split_duration", ToString(split_duration)},
       {"packaging", ToString(packaging)},
       {"delivery", ToString(delivery)},
@@ -200,16 +206,17 @@ databento::BatchJob Historical::BatchSubmitJob(
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, const std::vector<std::string>& symbols,
     Schema schema, const DateTimeRange<std::string>& datetime_range,
-    Compression compression, SplitDuration split_duration,
-    std::uint64_t split_size, Packaging packaging, Delivery delivery,
-    SType stype_in, SType stype_out, std::uint64_t limit) {
+    Encoding encoding, Compression compression, bool map_symbols,
+    SplitDuration split_duration, std::uint64_t split_size, Packaging packaging,
+    Delivery delivery, SType stype_in, SType stype_out, std::uint64_t limit) {
   httplib::Params params{
       {"dataset", dataset},
       {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
       {"schema", ToString(schema)},
+      {"encoding", ToString(encoding)},
       {"compression", ToString(compression)},
-      {"encoding", "dbn"},
+      {"map_symbols", std::to_string(map_symbols)},
       {"split_duration", ToString(split_duration)},
       {"packaging", ToString(packaging)},
       {"delivery", ToString(delivery)},
@@ -343,22 +350,20 @@ void Historical::StreamToFile(const std::string& url_path,
 
 void Historical::DownloadFile(const std::string& url,
                               const std::string& output_path) {
-  static const std::string kEndpoint = "Historical::BatchDownload";
+  static const std::string kEndpoint = "Historical::DownloadFile";
   // extract path from URL
   const auto protocol_divider = url.find("://");
   std::string path;
   if (protocol_divider == std::string::npos) {
     const auto slash = url.find_first_of('/');
     if (slash == std::string::npos) {
-      throw InvalidArgumentError{"Historical::DownloadFile", "url",
-                                 "No slashes"};
+      throw InvalidArgumentError{kEndpoint, "url", "No slashes"};
     }
     path = url.substr(slash);
   } else {
     const auto slash = url.find('/', protocol_divider + 3);
     if (slash == std::string::npos) {
-      throw InvalidArgumentError{"Historical::DownloadFile", "url",
-                                 "No slashes"};
+      throw InvalidArgumentError{kEndpoint, "url", "No slashes"};
     }
     path = url.substr(slash);
   }

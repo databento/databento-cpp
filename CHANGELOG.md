@@ -1,7 +1,13 @@
 # Changelog
 
-## 0.12.2 - TBD
+## 0.13.0 - TBD
 ### Enhancements
+- Added `map_symbols` option to `BatchSubmitJob`. When `true`, appends the
+  raw symbol to every record (available for CSV and JSON text encodings) reducing the
+  need to look at the `symbology.json` file
+- Added `encoding` option to `BatchSubmitJob` to allow requesting non-DBN encoded
+  data through the client
+- Added `map_symbols`, `pretty_px`, and `pretty_ts` to `BatchJob` response
 - Added `ARCX.PILLAR.ARCX` publisher
 
 ## 0.12.1 - 2023-08-25

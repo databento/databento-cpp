@@ -50,7 +50,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
       {"actual_size", 2022690},
       {"bill_id", "73186317471eb623d161a1"},
       {"billed_size", 5156064},
-      {"compression", "zstd"},
+      {"compression", nullptr},
       {"cost_usd", 0.119089},
       {"dataset", "XNAS.ITCH"},
       {"delivery", "download"},
@@ -84,6 +84,9 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
                             {{"dataset", dataset::kXnasItch},
                              {"start", "2022-05-17"},
                              {"end", "2022-07-03"},
+                             {"encoding", "dbn"},
+                             {"compression", "zstd"},
+                             {"map_symbols", "false"},
                              {"symbols", "CLH3"},
                              {"schema", "trades"}},
                             kResp);
@@ -98,6 +101,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
   EXPECT_NEAR(res.cost_usd, 0.11908, 1e-2);
   EXPECT_EQ(res.encoding, Encoding::Dbn);
   // null handling
+  EXPECT_EQ(res.compression, Compression::None);
   EXPECT_EQ(res.split_size, 0);
 }
 
@@ -118,6 +122,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
        {"packaging", nullptr},
        {"pretty_px", false},
        {"pretty_ts", false},
+       {"map_symbols", false},
        {"progress", 100},
        {"record_count", 107418},
        {"schema", "trades"},
