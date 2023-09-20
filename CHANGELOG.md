@@ -10,6 +10,9 @@
 - Added `map_symbols`, `pretty_px`, and `pretty_ts` to `BatchJob` response
 - Added `ARCX.PILLAR.ARCX` publisher
 
+### Breaking changes
+- Remove `default_value` parameter from `Historical::SymbologyResolve`
+
 ## 0.12.1 - 2023-08-25
 ### Bug fixes
 - Fixed typo in `BATY.PITCH.BATY` publisher

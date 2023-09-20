@@ -733,13 +733,6 @@ double Historical::MetadataGetCost(const HttplibParams& params) {
 databento::SymbologyResolution Historical::SymbologyResolve(
     const std::string& dataset, const std::vector<std::string>& symbols,
     SType stype_in, SType stype_out, const DateRange& date_range) {
-  return this->SymbologyResolve(dataset, symbols, stype_in, stype_out,
-                                date_range, {});
-}
-databento::SymbologyResolution Historical::SymbologyResolve(
-    const std::string& dataset, const std::vector<std::string>& symbols,
-    SType stype_in, SType stype_out, const DateRange& date_range,
-    const std::string& default_value) {
   static const std::string kEndpoint = "Historical::SymbologyResolve";
   static const std::string kPath = ::BuildSymbologyPath(".resolve");
   httplib::Params params{{"dataset", dataset},
@@ -748,7 +741,6 @@ databento::SymbologyResolution Historical::SymbologyResolve(
                          {"stype_in", ToString(stype_in)},
                          {"stype_out", ToString(stype_out)}};
   detail::SetIfNotEmpty(&params, "end_date", date_range.end);
-  detail::SetIfNotEmpty(&params, "default_value", default_value);
   const nlohmann::json json = client_.PostJson(kPath, params);
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);

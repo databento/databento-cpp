@@ -155,11 +155,6 @@ class Historical {
                                        const std::vector<std::string>& symbols,
                                        SType stype_in, SType stype_out,
                                        const DateRange& date_range);
-  SymbologyResolution SymbologyResolve(const std::string& dataset,
-                                       const std::vector<std::string>& symbols,
-                                       SType stype_in, SType stype_out,
-                                       const DateRange& date_range,
-                                       const std::string& default_value);
 
   /*
    * Timeseries API
