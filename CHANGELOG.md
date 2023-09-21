@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.13.0 - TBD
+## 0.13.0 - 2023-09-21
 ### Enhancements
 - Added `pretty_px` option for `BatchSubmitJob`, which formats prices to the correct
   scale using the fixed-precision scalar 1e-9 (available for CSV and JSON text
