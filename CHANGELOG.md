@@ -15,6 +15,7 @@
   data through the client
 - Added `map_symbols`, `pretty_px`, and `pretty_ts` to `BatchJob` response
 - Added `ARCX.PILLAR.ARCX` publisher
+- Added `ClosePrice` and `NetChange` `StatType`s used in the `OPRA.PILLAR` dataset
 
 ### Breaking changes
 - Remove `default_value` parameter from `Historical::SymbologyResolve`

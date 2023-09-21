@@ -233,6 +233,11 @@ enum StatType : std::uint16_t {
   // The volume-weighted average price (VWAP) for a fixing period. `price` will
   // be set.
   FixingPrice = 10,
+  // The last trade price during a trading session. `price` will be set.
+  ClosePrice = 11,
+  // The change in price from the close price of the previous trading session to
+  // the most recent trading session. `price` will be set.
+  NetChange = 12,
 };
 }  // namespace stat_type
 using stat_type::StatType;
