@@ -418,8 +418,8 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::BatsPitchBats: {
       return Venue::Bats;
     }
-    case Publisher::BatyPitchBats: {
-      return Venue::Bats;
+    case Publisher::BatyPitchBaty: {
+      return Venue::Baty;
     }
     case Publisher::EdgaPitchEdga: {
       return Venue::Edga;
@@ -529,6 +529,9 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::DbeqBasicEprl: {
       return Venue::Eprl;
     }
+    case Publisher::ArcxPillarArcx: {
+      return Venue::Arcx;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherVenue", "publisher",
@@ -554,7 +557,7 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::BatsPitchBats: {
       return Dataset::BatsPitch;
     }
-    case Publisher::BatyPitchBats: {
+    case Publisher::BatyPitchBaty: {
       return Dataset::BatyPitch;
     }
     case Publisher::EdgaPitchEdga: {
@@ -665,6 +668,9 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::DbeqBasicEprl: {
       return Dataset::DbeqBasic;
     }
+    case Publisher::ArcxPillarArcx: {
+      return Dataset::ArcxPillar;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -691,8 +697,8 @@ const char* ToString(Publisher publisher) {
     case Publisher::BatsPitchBats: {
       return "BATS.PITCH.BATS";
     }
-    case Publisher::BatyPitchBats: {
-      return "BATY.PITCH.BATS";
+    case Publisher::BatyPitchBaty: {
+      return "BATY.PITCH.BATY";
     }
     case Publisher::EdgaPitchEdga: {
       return "EDGA.PITCH.EDGA";
@@ -802,6 +808,9 @@ const char* ToString(Publisher publisher) {
     case Publisher::DbeqBasicEprl: {
       return "DBEQ.BASIC.EPRL";
     }
+    case Publisher::ArcxPillarArcx: {
+      return "ARCX.PILLAR.ARCX";
+    }
     default: {
       return "Unknown";
     }
@@ -830,8 +839,8 @@ Publisher FromString(const std::string& str) {
   if (str == "BATS.PITCH.BATS") {
     return Publisher::BatsPitchBats;
   }
-  if (str == "BATY.PITCH.BATS") {
-    return Publisher::BatyPitchBats;
+  if (str == "BATY.PITCH.BATY") {
+    return Publisher::BatyPitchBaty;
   }
   if (str == "EDGA.PITCH.EDGA") {
     return Publisher::EdgaPitchEdga;
@@ -940,6 +949,9 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "DBEQ.BASIC.EPRL") {
     return Publisher::DbeqBasicEprl;
+  }
+  if (str == "ARCX.PILLAR.ARCX") {
+    return Publisher::ArcxPillarArcx;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

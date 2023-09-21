@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.13.0 - 2023-09-21
+### Enhancements
+- Added `pretty_px` option for `BatchSubmitJob`, which formats prices to the correct
+  scale using the fixed-precision scalar 1e-9 (available for CSV and JSON text
+  encodings)
+- Added `pretty_ts` option for `BatchSubmitJob`, which formats timestamps as ISO 8601
+  strings (available for CSV and JSON text encodings)
+- Added `map_symbols` option to `BatchSubmitJob`, which appends appends the raw symbol
+  to every record (available for CSV and JSON text encodings) reducing the need to look
+  at the `symbology.json` file
+- Added `split_symbols` option for `BatchSubmitJob`, which will split files by raw symbol
+- Added `encoding` option to `BatchSubmitJob` to allow requesting non-DBN encoded
+  data through the client
+- Added `map_symbols`, `pretty_px`, and `pretty_ts` to `BatchJob` response
+- Added `ARCX.PILLAR.ARCX` publisher
+- Added `ClosePrice` and `NetChange` `StatType`s used in the `OPRA.PILLAR` dataset
+
+### Breaking changes
+- Remove `default_value` parameter from `Historical::SymbologyResolve`
+
+## 0.12.1 - 2023-08-25
+### Bug fixes
+- Fixed typo in `BATY.PITCH.BATY` publisher
+
 ## 0.12.0 - 2023-08-24
 
 ##### Enhancements

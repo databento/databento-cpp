@@ -49,7 +49,9 @@ class Historical {
                           const std::vector<std::string>& symbols,
                           Schema schema,
                           const DateTimeRange<UnixNanos>& datetime_range,
-                          Compression compression, SplitDuration split_duration,
+                          Encoding encoding, Compression compression,
+                          bool pretty_px, bool pretty_ts, bool map_symbols,
+                          bool split_symbols, SplitDuration split_duration,
                           std::uint64_t split_size, Packaging packaging,
                           Delivery delivery, SType stype_in, SType stype_out,
                           std::uint64_t limit);
@@ -57,7 +59,9 @@ class Historical {
                           const std::vector<std::string>& symbols,
                           Schema schema,
                           const DateTimeRange<std::string>& datetime_range,
-                          Compression compression, SplitDuration split_duration,
+                          Encoding encoding, Compression compression,
+                          bool pretty_px, bool pretty_ts, bool map_symbols,
+                          bool split_symbols, SplitDuration split_duration,
                           std::uint64_t split_size, Packaging packaging,
                           Delivery delivery, SType stype_in, SType stype_out,
                           std::uint64_t limit);
@@ -153,11 +157,6 @@ class Historical {
                                        const std::vector<std::string>& symbols,
                                        SType stype_in, SType stype_out,
                                        const DateRange& date_range);
-  SymbologyResolution SymbologyResolve(const std::string& dataset,
-                                       const std::vector<std::string>& symbols,
-                                       SType stype_in, SType stype_out,
-                                       const DateRange& date_range,
-                                       const std::string& default_value);
 
   /*
    * Timeseries API
