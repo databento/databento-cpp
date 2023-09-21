@@ -87,7 +87,10 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
                              {"end", "2022-07-03"},
                              {"encoding", "dbn"},
                              {"compression", "zstd"},
+                             {"pretty_px", "0"},
+                             {"pretty_ts", "0"},
                              {"map_symbols", "0"},
+                             {"split_symbols", "0"},
                              {"symbols", "CLH3"},
                              {"schema", "trades"}},
                             kResp);

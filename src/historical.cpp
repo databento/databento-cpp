@@ -166,25 +166,28 @@ databento::BatchJob Historical::BatchSubmitJob(
 
     const std::string& dataset, const std::vector<std::string>& symbols,
     Schema schema, const DateTimeRange<UnixNanos>& datetime_range) {
-  return this->BatchSubmitJob(
-      dataset, symbols, schema, datetime_range, kDefaultEncoding,
-      kDefaultCompression, {}, SplitDuration::Day, {}, Packaging::None,
-      Delivery::Download, kDefaultSTypeIn, kDefaultSTypeOut, {});
+  return this->BatchSubmitJob(dataset, symbols, schema, datetime_range,
+                              kDefaultEncoding, kDefaultCompression, {}, {}, {},
+                              {}, SplitDuration::Day, {}, Packaging::None,
+                              Delivery::Download, kDefaultSTypeIn,
+                              kDefaultSTypeOut, {});
 }
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, const std::vector<std::string>& symbols,
     Schema schema, const DateTimeRange<std::string>& datetime_range) {
-  return this->BatchSubmitJob(
-      dataset, symbols, schema, datetime_range, kDefaultEncoding,
-      kDefaultCompression, {}, SplitDuration::Day, {}, Packaging::None,
-      Delivery::Download, kDefaultSTypeIn, kDefaultSTypeOut, {});
+  return this->BatchSubmitJob(dataset, symbols, schema, datetime_range,
+                              kDefaultEncoding, kDefaultCompression, {}, {}, {},
+                              {}, SplitDuration::Day, {}, Packaging::None,
+                              Delivery::Download, kDefaultSTypeIn,
+                              kDefaultSTypeOut, {});
 }
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, const std::vector<std::string>& symbols,
     Schema schema, const DateTimeRange<UnixNanos>& datetime_range,
-    Encoding encoding, Compression compression, bool map_symbols,
-    SplitDuration split_duration, std::uint64_t split_size, Packaging packaging,
-    Delivery delivery, SType stype_in, SType stype_out, std::uint64_t limit) {
+    Encoding encoding, Compression compression, bool pretty_px, bool pretty_ts,
+    bool map_symbols, bool split_symbols, SplitDuration split_duration,
+    std::uint64_t split_size, Packaging packaging, Delivery delivery,
+    SType stype_in, SType stype_out, std::uint64_t limit) {
   httplib::Params params{
       {"dataset", dataset},
       {"start", ToString(datetime_range.start)},
@@ -192,7 +195,10 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"schema", ToString(schema)},
       {"encoding", ToString(encoding)},
       {"compression", ToString(compression)},
+      {"pretty_px", std::to_string(pretty_px)},
+      {"pretty_ts", std::to_string(pretty_ts)},
       {"map_symbols", std::to_string(map_symbols)},
+      {"split_symbols", std::to_string(split_symbols)},
       {"split_duration", ToString(split_duration)},
       {"packaging", ToString(packaging)},
       {"delivery", ToString(delivery)},
@@ -206,9 +212,10 @@ databento::BatchJob Historical::BatchSubmitJob(
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, const std::vector<std::string>& symbols,
     Schema schema, const DateTimeRange<std::string>& datetime_range,
-    Encoding encoding, Compression compression, bool map_symbols,
-    SplitDuration split_duration, std::uint64_t split_size, Packaging packaging,
-    Delivery delivery, SType stype_in, SType stype_out, std::uint64_t limit) {
+    Encoding encoding, Compression compression, bool pretty_px, bool pretty_ts,
+    bool map_symbols, bool split_symbols, SplitDuration split_duration,
+    std::uint64_t split_size, Packaging packaging, Delivery delivery,
+    SType stype_in, SType stype_out, std::uint64_t limit) {
   httplib::Params params{
       {"dataset", dataset},
       {"start", datetime_range.start},
@@ -216,7 +223,10 @@ databento::BatchJob Historical::BatchSubmitJob(
       {"schema", ToString(schema)},
       {"encoding", ToString(encoding)},
       {"compression", ToString(compression)},
+      {"pretty_px", std::to_string(pretty_px)},
+      {"pretty_ts", std::to_string(pretty_ts)},
       {"map_symbols", std::to_string(map_symbols)},
+      {"split_symbols", std::to_string(split_symbols)},
       {"split_duration", ToString(split_duration)},
       {"packaging", ToString(packaging)},
       {"delivery", ToString(delivery)},

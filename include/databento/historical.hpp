@@ -50,7 +50,8 @@ class Historical {
                           Schema schema,
                           const DateTimeRange<UnixNanos>& datetime_range,
                           Encoding encoding, Compression compression,
-                          bool map_symbols, SplitDuration split_duration,
+                          bool pretty_px, bool pretty_ts, bool map_symbols,
+                          bool split_symbols, SplitDuration split_duration,
                           std::uint64_t split_size, Packaging packaging,
                           Delivery delivery, SType stype_in, SType stype_out,
                           std::uint64_t limit);
@@ -59,7 +60,8 @@ class Historical {
                           Schema schema,
                           const DateTimeRange<std::string>& datetime_range,
                           Encoding encoding, Compression compression,
-                          bool map_symbols, SplitDuration split_duration,
+                          bool pretty_px, bool pretty_ts, bool map_symbols,
+                          bool split_symbols, SplitDuration split_duration,
                           std::uint64_t split_size, Packaging packaging,
                           Delivery delivery, SType stype_in, SType stype_out,
                           std::uint64_t limit);
