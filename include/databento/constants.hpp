@@ -18,7 +18,7 @@ static constexpr auto kUndefOrderSize =
 // This is not necessarily a comprehensive list of available datasets. Please
 // use `Historical.MetadataListDatasets` to retrieve an up-to-date list.
 namespace dataset {
-// The dataset code for Databento Equity Basic.
+// The dataset code for Databento Equities Basic.
 static constexpr auto kDbeqBasic = "DBEQ.BASIC";
 // The dataset code for CME Globex MDP 3.0.
 static constexpr auto kGlbxMdp3 = "GLBX.MDP3";
