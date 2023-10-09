@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.1 - TBD
+### Enhancements
+- Added new publisher values in preparation for DBEQ.PLUS
+
 ## 0.13.0 - 2023-09-21
 ### Enhancements
 - Added `pretty_px` option for `BatchSubmitJob`, which formats prices to the correct

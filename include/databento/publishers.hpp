@@ -129,6 +129,16 @@ enum class Dataset : std::uint16_t {
   ArcxPillar = 21,
   // IEX TOPS
   IexgTops = 22,
+  // Databento Equities Plus
+  DbeqPlus = 23,
+  // NYSE BBO
+  XnysBbo = 24,
+  // NYSE Trades
+  XnysTrades = 25,
+  // Nasdaq QBBO
+  XnasQbbo = 26,
+  // Nasdaq NLS
+  XnasNls = 27,
 };
 
 // A specific Venue from a specific data source.
@@ -219,6 +229,32 @@ enum class Publisher : std::uint16_t {
   DbeqBasicEprl = 42,
   // NYSE Arca Integrated
   ArcxPillarArcx = 43,
+  // NYSE BBO
+  XnysBboXnys = 44,
+  // NYSE Trades
+  XnysTradesXnys = 45,
+  // Nasdaq QBBO
+  XnasQbboXnas = 46,
+  // Nasdaq Trades
+  XnasNlsXnas = 47,
+  // DBEQ Plus - NYSE Chicago
+  DbeqPlusXchi = 48,
+  // DBEQ Plus - NYSE National
+  DbeqPlusXcis = 49,
+  // DBEQ Plus - IEX
+  DbeqPlusIexg = 50,
+  // DBEQ Plus - MIAX Pearl
+  DbeqPlusEprl = 51,
+  // DBEQ Plus - Nasdaq
+  DbeqPlusXnas = 52,
+  // DBEQ Plus - NYSE
+  DbeqPlusXnys = 53,
+  // DBEQ Plus - FINRA/NYSE TRF
+  DbeqPlusFinn = 54,
+  // DBEQ Plus - FINRA/Nasdaq TRF Carteret
+  DbeqPlusFiny = 55,
+  // DBEQ Plus - FINRA/Nasdaq TRF Chicago
+  DbeqPlusFinc = 56,
 };
 
 // Get a Publisher's Venue.
