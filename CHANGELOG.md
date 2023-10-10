@@ -3,6 +3,9 @@
 ## 0.13.1 - TBD
 ### Enhancements
 - Added new publisher values in preparation for DBEQ.PLUS
+- Added `ToIso8601` for `UnixNanos` for converting to human-readable ISO8601 datetime
+  string
+- Added `kUndefTimestamp` and `kUndefStatQuantity` constants
 
 ## 0.13.0 - 2023-09-21
 ### Enhancements

@@ -11,8 +11,6 @@ Checks: >
     -google-readability-casting,
     -google-runtime-references,
     modernize-deprecated-headers,
-    misc-*,
-    -misc-non-private-member-variables-in-classes,
     performance-*,
     portability-*'
 WarningsAsErrors: '*'

@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 
 #include "databento/constants.hpp"
@@ -42,7 +41,7 @@ TEST(RecordTests, TestMbp10MsgToString) {
       Side::Bid,
       {},
       0,
-      UnixNanos{},
+      UnixNanos{std::chrono::nanoseconds{1'696'957'072'000'020'500}},
       TimeDeltaNanos{100},
       50,
       {}};
@@ -56,14 +55,14 @@ TEST(RecordTests, TestMbp10MsgToString) {
   }
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(Mbp10Msg {
-    hd = RecordHeader { length = 92, rtype = Mbp10, publisher_id = 1, instrument_id = 1, ts_event = 0 },
+    hd = RecordHeader { length = 92, rtype = Mbp10, publisher_id = 1, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z },
     price = 0.100000000,
     size = 10,
     action = Add,
     side = Bid,
     flags = 0b00000000,
     depth = 0,
-    ts_recv = 0,
+    ts_recv = 2023-10-10T16:57:52.000020500Z,
     ts_in_delta = 100,
     sequence = 50,
     levels = {
@@ -152,12 +151,12 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
       {}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(InstrumentDefMsg {
-    hd = RecordHeader { length = 90, rtype = InstrumentDef, publisher_id = 1, instrument_id = 1, ts_event = 0 },
-    ts_recv = 0,
+    hd = RecordHeader { length = 90, rtype = InstrumentDef, publisher_id = 1, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z },
+    ts_recv = 1970-01-01T00:00:00.000000000Z,
     min_price_increment = 0.000000001,
     display_factor = 2,
-    expiration = 0,
-    activation = 0,
+    expiration = 1970-01-01T00:00:00.000000000Z,
+    activation = 1970-01-01T00:00:00.000000000Z,
     high_limit_price = 0.000000005,
     low_limit_price = 0.000000006,
     max_price_variation = 0.000000007,
@@ -222,7 +221,7 @@ TEST(RecordTests, TestImbalanceMsgToString) {
                    RType::Imbalance, 1, 1, UnixNanos{}},
       UnixNanos{},
       1,
-      UnixNanos{},
+      UnixNanos{std::chrono::nanoseconds{kUndefTimestamp}},
       3,
       4,
       5,
@@ -243,10 +242,10 @@ TEST(RecordTests, TestImbalanceMsgToString) {
       {}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(ImbalanceMsg {
-    hd = RecordHeader { length = 28, rtype = Imbalance, publisher_id = 1, instrument_id = 1, ts_event = 0 },
-    ts_recv = 0,
+    hd = RecordHeader { length = 28, rtype = Imbalance, publisher_id = 1, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z },
+    ts_recv = 1970-01-01T00:00:00.000000000Z,
     ref_price = 0.000000001,
-    auction_time = 0,
+    auction_time = UNDEF_TIMESTAMP,
     cont_book_clr_price = 0.000000003,
     auct_interest_clr_price = 0.000000004,
     ssr_filling_price = 0.000000005,
