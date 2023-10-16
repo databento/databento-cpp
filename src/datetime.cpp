@@ -1,6 +1,6 @@
-// NOLINTNEXTLINE(modernize-deprecated-headers): no thread-safe version in STL
 #include "databento/datetime.hpp"
 
+// NOLINTNEXTLINE(modernize-deprecated-headers): no thread-safe version in STL
 #include <time.h>  // gmtime_r or gmtime_s
 
 #include <array>
