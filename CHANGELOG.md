@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.13.1 - TBD
+## 0.13.1 - 2023-10-23
 ### Enhancements
 - Added new publisher values in preparation for DBEQ.PLUS
 - Added `ToIso8601` for `UnixNanos` for converting to human-readable ISO8601 datetime
