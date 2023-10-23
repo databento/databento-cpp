@@ -318,6 +318,21 @@ const char* ToString(Dataset dataset) {
     case Dataset::IexgTops: {
       return "IEXG.TOPS";
     }
+    case Dataset::DbeqPlus: {
+      return "DBEQ.PLUS";
+    }
+    case Dataset::XnysBbo: {
+      return "XNYS.BBO";
+    }
+    case Dataset::XnysTrades: {
+      return "XNYS.TRADES";
+    }
+    case Dataset::XnasQbbo: {
+      return "XNAS.QBBO";
+    }
+    case Dataset::XnasNls: {
+      return "XNAS.NLS";
+    }
     default: {
       return "Unknown";
     }
@@ -396,6 +411,21 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "IEXG.TOPS") {
     return Dataset::IexgTops;
+  }
+  if (str == "DBEQ.PLUS") {
+    return Dataset::DbeqPlus;
+  }
+  if (str == "XNYS.BBO") {
+    return Dataset::XnysBbo;
+  }
+  if (str == "XNYS.TRADES") {
+    return Dataset::XnysTrades;
+  }
+  if (str == "XNAS.QBBO") {
+    return Dataset::XnasQbbo;
+  }
+  if (str == "XNAS.NLS") {
+    return Dataset::XnasNls;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -531,6 +561,45 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::ArcxPillarArcx: {
       return Venue::Arcx;
+    }
+    case Publisher::XnysBboXnys: {
+      return Venue::Xnys;
+    }
+    case Publisher::XnysTradesXnys: {
+      return Venue::Xnys;
+    }
+    case Publisher::XnasQbboXnas: {
+      return Venue::Xnas;
+    }
+    case Publisher::XnasNlsXnas: {
+      return Venue::Xnas;
+    }
+    case Publisher::DbeqPlusXchi: {
+      return Venue::Xchi;
+    }
+    case Publisher::DbeqPlusXcis: {
+      return Venue::Xcis;
+    }
+    case Publisher::DbeqPlusIexg: {
+      return Venue::Iexg;
+    }
+    case Publisher::DbeqPlusEprl: {
+      return Venue::Eprl;
+    }
+    case Publisher::DbeqPlusXnas: {
+      return Venue::Xnas;
+    }
+    case Publisher::DbeqPlusXnys: {
+      return Venue::Xnys;
+    }
+    case Publisher::DbeqPlusFinn: {
+      return Venue::Finn;
+    }
+    case Publisher::DbeqPlusFiny: {
+      return Venue::Finy;
+    }
+    case Publisher::DbeqPlusFinc: {
+      return Venue::Finc;
     }
     default: {
       throw InvalidArgumentError{
@@ -671,6 +740,45 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::ArcxPillarArcx: {
       return Dataset::ArcxPillar;
     }
+    case Publisher::XnysBboXnys: {
+      return Dataset::XnysBbo;
+    }
+    case Publisher::XnysTradesXnys: {
+      return Dataset::XnysTrades;
+    }
+    case Publisher::XnasQbboXnas: {
+      return Dataset::XnasQbbo;
+    }
+    case Publisher::XnasNlsXnas: {
+      return Dataset::XnasNls;
+    }
+    case Publisher::DbeqPlusXchi: {
+      return Dataset::DbeqPlus;
+    }
+    case Publisher::DbeqPlusXcis: {
+      return Dataset::DbeqPlus;
+    }
+    case Publisher::DbeqPlusIexg: {
+      return Dataset::DbeqPlus;
+    }
+    case Publisher::DbeqPlusEprl: {
+      return Dataset::DbeqPlus;
+    }
+    case Publisher::DbeqPlusXnas: {
+      return Dataset::DbeqPlus;
+    }
+    case Publisher::DbeqPlusXnys: {
+      return Dataset::DbeqPlus;
+    }
+    case Publisher::DbeqPlusFinn: {
+      return Dataset::DbeqPlus;
+    }
+    case Publisher::DbeqPlusFiny: {
+      return Dataset::DbeqPlus;
+    }
+    case Publisher::DbeqPlusFinc: {
+      return Dataset::DbeqPlus;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -810,6 +918,45 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::ArcxPillarArcx: {
       return "ARCX.PILLAR.ARCX";
+    }
+    case Publisher::XnysBboXnys: {
+      return "XNYS.BBO.XNYS";
+    }
+    case Publisher::XnysTradesXnys: {
+      return "XNYS.TRADES.XNYS";
+    }
+    case Publisher::XnasQbboXnas: {
+      return "XNAS.QBBO.XNAS";
+    }
+    case Publisher::XnasNlsXnas: {
+      return "XNAS.NLS.XNAS";
+    }
+    case Publisher::DbeqPlusXchi: {
+      return "DBEQ.PLUS.XCHI";
+    }
+    case Publisher::DbeqPlusXcis: {
+      return "DBEQ.PLUS.XCIS";
+    }
+    case Publisher::DbeqPlusIexg: {
+      return "DBEQ.PLUS.IEXG";
+    }
+    case Publisher::DbeqPlusEprl: {
+      return "DBEQ.PLUS.EPRL";
+    }
+    case Publisher::DbeqPlusXnas: {
+      return "DBEQ.PLUS.XNAS";
+    }
+    case Publisher::DbeqPlusXnys: {
+      return "DBEQ.PLUS.XNYS";
+    }
+    case Publisher::DbeqPlusFinn: {
+      return "DBEQ.PLUS.FINN";
+    }
+    case Publisher::DbeqPlusFiny: {
+      return "DBEQ.PLUS.FINY";
+    }
+    case Publisher::DbeqPlusFinc: {
+      return "DBEQ.PLUS.FINC";
     }
     default: {
       return "Unknown";
@@ -952,6 +1099,45 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "ARCX.PILLAR.ARCX") {
     return Publisher::ArcxPillarArcx;
+  }
+  if (str == "XNYS.BBO.XNYS") {
+    return Publisher::XnysBboXnys;
+  }
+  if (str == "XNYS.TRADES.XNYS") {
+    return Publisher::XnysTradesXnys;
+  }
+  if (str == "XNAS.QBBO.XNAS") {
+    return Publisher::XnasQbboXnas;
+  }
+  if (str == "XNAS.NLS.XNAS") {
+    return Publisher::XnasNlsXnas;
+  }
+  if (str == "DBEQ.PLUS.XCHI") {
+    return Publisher::DbeqPlusXchi;
+  }
+  if (str == "DBEQ.PLUS.XCIS") {
+    return Publisher::DbeqPlusXcis;
+  }
+  if (str == "DBEQ.PLUS.IEXG") {
+    return Publisher::DbeqPlusIexg;
+  }
+  if (str == "DBEQ.PLUS.EPRL") {
+    return Publisher::DbeqPlusEprl;
+  }
+  if (str == "DBEQ.PLUS.XNAS") {
+    return Publisher::DbeqPlusXnas;
+  }
+  if (str == "DBEQ.PLUS.XNYS") {
+    return Publisher::DbeqPlusXnys;
+  }
+  if (str == "DBEQ.PLUS.FINN") {
+    return Publisher::DbeqPlusFinn;
+  }
+  if (str == "DBEQ.PLUS.FINY") {
+    return Publisher::DbeqPlusFiny;
+  }
+  if (str == "DBEQ.PLUS.FINC") {
+    return Publisher::DbeqPlusFinc;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

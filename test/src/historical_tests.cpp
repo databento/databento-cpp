@@ -6,8 +6,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <stdexcept>  // logic_error
-#include <thread>
-#include <utility>  // move
+#include <utility>    // move
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"

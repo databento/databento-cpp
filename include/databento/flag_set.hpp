@@ -13,6 +13,8 @@ class FlagSet {
   // Indicates it's the last message in the packet from the venue for a given
   // `instrument_id`.
   static constexpr Repr kLast = 1 << 7;
+  // Indicates a top-of-book message, not an individual order.
+  static constexpr Repr kTob = 1 << 6;
   // Indicates the message was sourced from a replay, such as a snapshot
   // server.
   static constexpr Repr kSnapshot = 1 << 5;

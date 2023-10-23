@@ -114,7 +114,13 @@ void HttpClient::CheckWarnings(const httplib::Response& response) const {
         }
         return;
       }
-    } catch (const std::exception&) {
+    } catch (const std::exception& exc) {
+      std::ostringstream msg;
+      msg << "[HttpClient::CheckWarnings] Failed to parse warnings from HTTP "
+             "header: "
+          << exc.what() << ". Raw contents: " << raw;
+      log_receiver_->Receive(LogLevel::Warning, msg.str());
+      return;
     }
     std::ostringstream msg;
     msg << "[HttpClient::CheckWarnings] Failed to parse warnings from HTTP "

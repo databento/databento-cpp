@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
+
 #include "databento/constants.hpp"
+#include "databento/datetime.hpp"
 #include "databento/dbn.hpp"
 
 namespace databento {
@@ -10,8 +13,8 @@ TEST(DbnTests, TestMetadataToString) {
                         dataset::kGlbxMdp3,
                         false,
                         Schema::Ohlcv1D,
-                        {},
-                        {},
+                        UnixNanos{std::chrono::seconds{1696959347}},
+                        UnixNanos{std::chrono::seconds{1696950000}},
                         {},
                         false,
                         SType::RawSymbol,
@@ -28,8 +31,8 @@ TEST(DbnTests, TestMetadataToString) {
     dataset = "GLBX.MDP3",
     has_mixed_schema = false,
     schema = ohlcv-1d,
-    start = 0,
-    end = 0,
+    start = 2023-10-10T17:35:47.000000000Z,
+    end = 2023-10-10T15:00:00.000000000Z,
     limit = 0,
     has_mixed_stype_in = false,
     stype_in = raw_symbol,

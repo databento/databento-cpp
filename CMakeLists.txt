@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.13.0 LANGUAGES CXX)
+project("databento" VERSION 0.13.1 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
@@ -348,6 +348,7 @@ endif()
 
 if(${PROJECT_NAME_UPPERCASE}_ENABLE_UNIT_TESTING)
   unset(CMAKE_CXX_CPPCHECK) # disable cppcheck for tests
+  unset(CMAKE_CXX_CLANG_TIDY) # disable clang-tidy for tests
   enable_testing()
   message(STATUS "Build unit tests for the project.")
   add_subdirectory(test)

@@ -9,16 +9,22 @@ static constexpr auto kApiVersionStr = "0";
 static constexpr auto kApiKeyLength = 32;
 // The decimal scaler of fixed prices.
 static constexpr std::int64_t kFixedPriceScale = 1000000000;
-// The sentinel value for a null or undefined price.
+// The sentinel value for an unset or null price.
 static constexpr auto kUndefPrice = std::numeric_limits<std::int64_t>::max();
-// The sentinel value for a null or undefined order size.
+// The sentinel value for an unset or null order size.
 static constexpr auto kUndefOrderSize =
     std::numeric_limits<std::uint32_t>::max();
+// The sentinel value for an unset statistic quantity.
+static constexpr auto kUndefStatQuantity =
+    std::numeric_limits<std::int32_t>::max();
+// The sentinel value for an unset or null timestamp.
+static constexpr auto kUndefTimestamp =
+    std::numeric_limits<std::uint64_t>::max();
 
 // This is not necessarily a comprehensive list of available datasets. Please
 // use `Historical.MetadataListDatasets` to retrieve an up-to-date list.
 namespace dataset {
-// The dataset code for Databento Equity Basic.
+// The dataset code for Databento Equities Basic.
 static constexpr auto kDbeqBasic = "DBEQ.BASIC";
 // The dataset code for CME Globex MDP 3.0.
 static constexpr auto kGlbxMdp3 = "GLBX.MDP3";

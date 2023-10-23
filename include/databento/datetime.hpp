@@ -14,6 +14,9 @@ using UnixNanos =
 // A representation of the difference between two timestamps.
 using TimeDeltaNanos = std::chrono::duration<int32_t, std::nano>;
 std::string ToString(UnixNanos unix_nanos);
+// Format the UNIX timestamp as a human-readable ISO8601 string of format
+// YYYY-MM-DDTHH:MM:SS.fffffffffZ
+std::string ToIso8601(UnixNanos unix_nanos);
 std::string ToString(TimeDeltaNanos td_nanos);
 // Converts a YYYYMMDD integer to a YYYY-MM-DD string.
 std::string DateFromIso8601Int(std::uint32_t date_int);
