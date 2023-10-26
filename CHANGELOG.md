@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.2 - TBD
+### Enhancements
+- Added new publisher values in preparation for IFEU.IMPACT and NDEX.IMPACT datasets
+
 ## 0.13.1 - 2023-10-23
 ### Enhancements
 - Added new publisher values in preparation for DBEQ.PLUS
