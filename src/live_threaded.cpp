@@ -55,15 +55,17 @@ LiveThreaded::~LiveThreaded() {
 }
 
 LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
-                           std::string dataset, bool send_ts_out)
+                           std::string dataset, bool send_ts_out,
+                           VersionUpgradePolicy upgrade_policy)
     : impl_{new Impl{log_receiver, std::move(key), std::move(dataset),
-                     send_ts_out}} {}
+                     send_ts_out, upgrade_policy}} {}
 
 LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, std::string gateway,
-                           std::uint16_t port, bool send_ts_out)
+                           std::uint16_t port, bool send_ts_out,
+                           VersionUpgradePolicy upgrade_policy)
     : impl_{new Impl{log_receiver, std::move(key), std::move(dataset),
-                     std::move(gateway), port, send_ts_out}} {}
+                     std::move(gateway), port, send_ts_out, upgrade_policy}} {}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 
@@ -76,6 +78,12 @@ const std::string& LiveThreaded::Gateway() const {
 }
 
 std::uint16_t LiveThreaded::Port() const { return impl_->blocking.Port(); }
+
+bool LiveThreaded::SendTsOut() const { return impl_->blocking.SendTsOut(); }
+
+databento::VersionUpgradePolicy LiveThreaded::UpgradePolicy() const {
+  return impl_->blocking.UpgradePolicy();
+}
 
 void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in) {

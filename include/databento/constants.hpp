@@ -20,6 +20,10 @@ static constexpr auto kUndefStatQuantity =
 // The sentinel value for an unset or null timestamp.
 static constexpr auto kUndefTimestamp =
     std::numeric_limits<std::uint64_t>::max();
+// The current version of the DBN encoding.
+static constexpr auto kDbnVersion = 2;
+// The length of fixed-length symbol strings.
+static constexpr auto kSymbolCstrLen = 71;
 
 // This is not necessarily a comprehensive list of available datasets. Please
 // use `Historical.MetadataListDatasets` to retrieve an up-to-date list.

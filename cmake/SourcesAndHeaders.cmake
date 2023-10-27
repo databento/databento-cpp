@@ -1,5 +1,6 @@
 set(headers
   include/databento/batch.hpp
+  include/databento/compat.hpp
   include/databento/constants.hpp
   include/databento/datetime.hpp
   include/databento/dbn.hpp
@@ -34,6 +35,7 @@ set(headers
 
 set(sources
   src/batch.cpp
+  src/compat.cpp
   src/datetime.cpp
   src/dbn.cpp
   src/dbn_decoder.cpp

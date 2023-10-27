@@ -7,7 +7,8 @@ namespace databento {
 namespace detail {
 namespace test {
 TEST(FileStreamTests, TestReadExactInsufficient) {
-  const std::string file_path = TEST_BUILD_DIR "/data/test_data.ohlcv-1d.dbn";
+  const std::string file_path =
+      TEST_BUILD_DIR "/data/test_data.ohlcv-1d.v1.dbn";
   databento::detail::FileStream target{file_path};
   std::vector<std::uint8_t> buffer(1024);  // File is less than 1KiB
   try {
@@ -20,7 +21,8 @@ TEST(FileStreamTests, TestReadExactInsufficient) {
 }
 
 TEST(FileStreamTests, TestReadSomeLessThanMax) {
-  const std::string file_path = TEST_BUILD_DIR "/data/test_data.ohlcv-1d.dbn";
+  const std::string file_path =
+      TEST_BUILD_DIR "/data/test_data.ohlcv-1d.v1.dbn";
   databento::detail::FileStream target{file_path};
   std::vector<std::uint8_t> buffer(1024);  // File is less than 1KiB
   const auto read_size = target.ReadSome(buffer.data(), buffer.size());

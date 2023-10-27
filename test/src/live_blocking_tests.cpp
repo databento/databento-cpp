@@ -44,9 +44,9 @@ TEST_F(LiveBlockingTests, TestAuthentication) {
                                           self.Authenticate();
                                         }};
 
-  const LiveBlocking target{logger_.get(),      kKey,
-                            dataset::kXnasItch, kLocalhost,
-                            mock_server.Port(), kTsOut};
+  const LiveBlocking target{
+      logger_.get(),      kKey,   dataset::kXnasItch,    kLocalhost,
+      mock_server.Port(), kTsOut, VersionUpgradePolicy{}};
 }
 
 TEST_F(LiveBlockingTests, TestStart) {
@@ -58,8 +58,9 @@ TEST_F(LiveBlockingTests, TestStart) {
                                           self.Start();
                                         }};
 
-  LiveBlocking target{logger_.get(),      kKey,  dataset::kGlbxMdp3, kLocalhost,
-                      mock_server.Port(), kTsOut};
+  LiveBlocking target{
+      logger_.get(),      kKey,   dataset::kGlbxMdp3,    kLocalhost,
+      mock_server.Port(), kTsOut, VersionUpgradePolicy{}};
   const auto metadata = target.Start();
   EXPECT_EQ(metadata.version, 1);
   EXPECT_TRUE(metadata.has_mixed_schema);
@@ -80,8 +81,13 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
         self.Subscribe(kSymbols, kSchema, kSType);
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,  kDataset, kLocalhost,
-                      mock_server.Port(), kTsOut};
+  LiveBlocking target{logger_.get(),
+                      kKey,
+                      kDataset,
+                      kLocalhost,
+                      mock_server.Port(),
+                      kTsOut,
+                      VersionUpgradePolicy{}};
   target.Subscribe(kSymbols, kSchema, kSType);
 }
 
@@ -107,8 +113,13 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunking) {
         }
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,  kDataset, kLocalhost,
-                      mock_server.Port(), kTsOut};
+  LiveBlocking target{logger_.get(),
+                      kKey,
+                      kDataset,
+                      kLocalhost,
+                      mock_server.Port(),
+                      kTsOut,
+                      VersionUpgradePolicy{}};
   const std::vector<std::string> kSymbols(kSymbolCount, kSymbol);
   target.Subscribe(kSymbols, kSchema, kSType);
 }
@@ -126,8 +137,9 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
         }
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,  dataset::kXnasItch, kLocalhost,
-                      mock_server.Port(), kTsOut};
+  LiveBlocking target{
+      logger_.get(),      kKey,   dataset::kXnasItch,    kLocalhost,
+      mock_server.Port(), kTsOut, VersionUpgradePolicy{}};
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
     ASSERT_TRUE(rec.Holds<OhlcvMsg>()) << "Failed on call " << i;
@@ -176,8 +188,9 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
         self.SendRecord(kRec);
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,  dataset::kXnasItch, kLocalhost,
-                      mock_server.Port(), kTsOut};
+  LiveBlocking target{
+      logger_.get(),      kKey,   dataset::kXnasItch,    kLocalhost,
+      mock_server.Port(), kTsOut, VersionUpgradePolicy{}};
   {
     // wait for server to send first record to avoid flaky timeouts
     std::unique_lock<std::mutex> lock{send_mutex};
@@ -230,8 +243,9 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
                              send_remaining_cv);
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,  dataset::kGlbxMdp3, kLocalhost,
-                      mock_server.Port(), kTsOut};
+  LiveBlocking target{
+      logger_.get(),      kKey,   dataset::kGlbxMdp3,    kLocalhost,
+      mock_server.Port(), kTsOut, VersionUpgradePolicy{}};
   auto rec = target.NextRecord();
   ASSERT_TRUE(rec.Holds<MboMsg>());
   EXPECT_EQ(rec.Get<MboMsg>(), kRec);
@@ -273,8 +287,9 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
         }
       }};
 
-  LiveBlocking target{logger_.get(),      kKey,  dataset::kXnasItch, kLocalhost,
-                      mock_server.Port(), kTsOut};
+  LiveBlocking target{
+      logger_.get(),      kKey,   dataset::kXnasItch,    kLocalhost,
+      mock_server.Port(), kTsOut, VersionUpgradePolicy{}};
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
     ASSERT_TRUE(rec.Holds<WithTsOut<TradeMsg>>()) << "Failed on call " << i;
@@ -318,9 +333,9 @@ TEST_F(LiveBlockingTests, TestStop) {
                               }}  // namespace test
   };                              // namespace databento
 
-  LiveBlocking target{logger_.get(),       kKey,
-                      dataset::kXnasItch,  kLocalhost,
-                      mock_server->Port(), kTsOut};
+  LiveBlocking target{
+      logger_.get(),       kKey,   dataset::kXnasItch,    kLocalhost,
+      mock_server->Port(), kTsOut, VersionUpgradePolicy{}};
   ASSERT_EQ(target.NextRecord().Get<WithTsOut<TradeMsg>>(), kRec);
   target.Stop();
   has_stopped = true;
@@ -332,7 +347,7 @@ TEST_F(LiveBlockingTests, TestStop) {
 TEST_F(LiveBlockingTests, TestConnectWhenGatewayNotUp) {
   constexpr auto kTsOut = true;
   ASSERT_THROW(LiveBlocking(logger_.get(), kKey, dataset::kXnasItch, kLocalhost,
-                            80, kTsOut),
+                            80, kTsOut, VersionUpgradePolicy{}),
                databento::TcpError);
 }
 
@@ -379,9 +394,9 @@ TEST_F(LiveBlockingTests, TestReconnect) {
         self.Start();
         self.SendRecord(kRec);
       }}};
-  LiveBlocking target{logger_.get(),       kKey,
-                      dataset::kXnasItch,  kLocalhost,
-                      mock_server->Port(), kTsOut};
+  LiveBlocking target{
+      logger_.get(),       kKey,   dataset::kXnasItch,    kLocalhost,
+      mock_server->Port(), kTsOut, VersionUpgradePolicy{}};
   // Tell server to close connection
   {
     const std::lock_guard<std::mutex> _lock{should_close_mutex};

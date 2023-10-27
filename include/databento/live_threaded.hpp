@@ -33,9 +33,10 @@ class LiveThreaded {
       std::function<ExceptionAction(const std::exception&)>;
 
   LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
-               bool send_ts_out);
+               bool send_ts_out, VersionUpgradePolicy upgrade_policy);
   LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
-               std::string gateway, std::uint16_t port, bool send_ts_out);
+               std::string gateway, std::uint16_t port, bool send_ts_out,
+               VersionUpgradePolicy upgrade_policy);
   LiveThreaded(const LiveThreaded&) = delete;
   LiveThreaded& operator=(const LiveThreaded&) = delete;
   LiveThreaded(LiveThreaded&& other) noexcept;
@@ -50,6 +51,8 @@ class LiveThreaded {
   const std::string& Dataset() const;
   const std::string& Gateway() const;
   std::uint16_t Port() const;
+  bool SendTsOut() const;
+  VersionUpgradePolicy UpgradePolicy() const;
 
   /*
    * Methods

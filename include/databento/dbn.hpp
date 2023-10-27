@@ -56,6 +56,9 @@ struct Metadata {
   SType stype_out;
   // Whether the records contain an appended send timestamp.
   bool ts_out;
+  // The length in bytes of fixed-length symbol strings, including a null
+  // terminator byte.
+  std::size_t symbol_cstr_len;
   // The original query input symbols from the request.
   std::vector<std::string> symbols;
   // Symbols that did not resolve for _at least one day_ in the query time
@@ -91,6 +94,7 @@ inline bool operator==(const Metadata& lhs, const Metadata& rhs) {
          (lhs.has_mixed_stype_in ? rhs.has_mixed_stype_in
                                  : lhs.stype_in == rhs.stype_in) &&
          lhs.stype_out == rhs.stype_out && lhs.ts_out == rhs.ts_out &&
+         lhs.symbol_cstr_len == rhs.symbol_cstr_len &&
          lhs.symbols == rhs.symbols && lhs.partial == rhs.partial &&
          lhs.not_found == rhs.not_found && lhs.mappings == rhs.mappings;
 }

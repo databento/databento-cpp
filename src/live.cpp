@@ -39,6 +39,12 @@ LiveBuilder& LiveBuilder::SetSendTsOut(bool send_ts_out) {
   return *this;
 }
 
+LiveBuilder& LiveBuilder::SetUpgradePolicy(
+    VersionUpgradePolicy upgrade_policy) {
+  upgrade_policy_ = upgrade_policy;
+  return *this;
+}
+
 LiveBuilder& LiveBuilder::SetLogReceiver(
     databento::ILogReceiver* log_receiver) {
   log_receiver_ = log_receiver;
@@ -47,12 +53,14 @@ LiveBuilder& LiveBuilder::SetLogReceiver(
 
 databento::LiveBlocking LiveBuilder::BuildBlocking() {
   Validate();
-  return databento::LiveBlocking{log_receiver_, key_, dataset_, send_ts_out_};
+  return databento::LiveBlocking{log_receiver_, key_, dataset_, send_ts_out_,
+                                 upgrade_policy_};
 }
 
 databento::LiveThreaded LiveBuilder::BuildThreaded() {
   Validate();
-  return databento::LiveThreaded{log_receiver_, key_, dataset_, send_ts_out_};
+  return databento::LiveThreaded{log_receiver_, key_, dataset_, send_ts_out_,
+                                 upgrade_policy_};
 }
 
 void LiveBuilder::Validate() {

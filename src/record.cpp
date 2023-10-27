@@ -119,6 +119,7 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
          lhs.unit_of_measure_qty == rhs.unit_of_measure_qty &&
          lhs.min_price_increment_amount == rhs.min_price_increment_amount &&
          lhs.price_ratio == rhs.price_ratio &&
+         lhs.strike_price == rhs.strike_price &&
          lhs.inst_attrib_value == rhs.inst_attrib_value &&
          lhs.underlying_id == rhs.underlying_id &&
          lhs.raw_instrument_id == rhs.raw_instrument_id &&
@@ -146,7 +147,6 @@ bool databento::operator==(const InstrumentDefMsg& lhs,
          lhs.underlying == rhs.underlying &&
          lhs.strike_price_currency == rhs.strike_price_currency &&
          lhs.instrument_class == rhs.instrument_class &&
-         lhs.strike_price == rhs.strike_price &&
          lhs.match_algorithm == rhs.match_algorithm &&
          lhs.md_security_trading_status == rhs.md_security_trading_status &&
          lhs.main_fraction == rhs.main_fraction &&
@@ -351,6 +351,7 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("min_price_increment_amount",
                 FixPx{instr_def_msg.min_price_increment_amount})
       .AddField("price_ratio", instr_def_msg.price_ratio)
+      .AddField("strike_price", FixPx{instr_def_msg.strike_price})
       .AddField("inst_attrib_value", instr_def_msg.inst_attrib_value)
       .AddField("underlying_id", instr_def_msg.underlying_id)
       .AddField("raw_instrument_id", instr_def_msg.raw_instrument_id)
@@ -383,7 +384,6 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("underlying", instr_def_msg.underlying)
       .AddField("strike_price_currency", instr_def_msg.strike_price_currency)
       .AddField("instrument_class", instr_def_msg.instrument_class)
-      .AddField("strike_price", FixPx{instr_def_msg.strike_price})
       .AddField("match_algorithm", instr_def_msg.match_algorithm)
       .AddField("md_security_trading_status",
                 instr_def_msg.md_security_trading_status)
@@ -493,7 +493,9 @@ std::ostream& operator<<(std::ostream& stream,
       .SetTypeName("SymbolMappingMsg")
       .Build()
       .AddField("hd", symbol_mapping_msg.hd)
+      .AddField("stype_in", symbol_mapping_msg.stype_in)
       .AddField("stype_in_symbol", symbol_mapping_msg.stype_in_symbol)
+      .AddField("stype_out", symbol_mapping_msg.stype_out)
       .AddField("stype_out_symbol", symbol_mapping_msg.stype_out_symbol)
       .AddField("start_ts", symbol_mapping_msg.start_ts)
       .AddField("end_ts", symbol_mapping_msg.end_ts)

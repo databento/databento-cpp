@@ -59,8 +59,9 @@ TEST_F(LiveThreadedTests, TestBasic) {
                                           self.SendRecord(kRec);
                                         }};
 
-  LiveThreaded target{logger_.get(),      kKey,  dataset::kGlbxMdp3, kLocalhost,
-                      mock_server.Port(), kTsOut};
+  LiveThreaded target{
+      logger_.get(),      kKey,   dataset::kGlbxMdp3,    kLocalhost,
+      mock_server.Port(), kTsOut, VersionUpgradePolicy{}};
   std::uint32_t call_count{};
   target.Start([&call_count, &kRec](const Record& rec) {
     ++call_count;
@@ -99,8 +100,9 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
         self.SendRecord(kRec);
       }};
 
-  LiveThreaded target{logger_.get(),      kKey, dataset::kXnasItch, kLocalhost,
-                      mock_server.Port(), false};
+  LiveThreaded target{
+      logger_.get(),      kKey,  dataset::kXnasItch,    kLocalhost,
+      mock_server.Port(), false, VersionUpgradePolicy{}};
   target.Start(
       [](Metadata&& metadata) { EXPECT_TRUE(metadata.has_mixed_schema); },
       [&call_count, &kRec](const Record& rec) {
@@ -146,9 +148,9 @@ TEST_F(LiveThreadedTests, TestStop) {
         }
       }}};
 
-  LiveThreaded target{logger_.get(),       kKey,
-                      dataset::kXnasItch,  kLocalhost,
-                      mock_server->Port(), kTsOut};
+  LiveThreaded target{
+      logger_.get(),       kKey,   dataset::kXnasItch,    kLocalhost,
+      mock_server->Port(), kTsOut, VersionUpgradePolicy{}};
   target.Start(
       [](Metadata&& metadata) { EXPECT_TRUE(metadata.has_mixed_schema); },
       [&call_count, &kRec](const Record& rec) {
@@ -200,8 +202,9 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
         self.Start();
         self.SendRecord(kRec);
       }};
-  LiveThreaded target{logger_.get(),      kKey,  dataset::kXnasItch, kLocalhost,
-                      mock_server.Port(), kTsOut};
+  LiveThreaded target{
+      logger_.get(),      kKey,   dataset::kXnasItch,    kLocalhost,
+      mock_server.Port(), kTsOut, VersionUpgradePolicy{}};
   std::atomic<std::int32_t> metadata_calls{};
   const auto metadata_cb = [&metadata_calls, &should_close, &should_close_cv,
                             &should_close_mutex](Metadata&& metadata) {
@@ -267,9 +270,9 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
         self.Authenticate();
         self.Subscribe(kSymbols, kSchema, kSType);
       }};
-  LiveThreaded target{ILogReceiver::Default(), kKey,
-                      dataset::kXnasItch,      kLocalhost,
-                      mock_server.Port(),      kTsOut};
+  LiveThreaded target{
+      ILogReceiver::Default(), kKey,   dataset::kXnasItch,    kLocalhost,
+      mock_server.Port(),      kTsOut, VersionUpgradePolicy{}};
   std::atomic<std::int32_t> metadata_calls{};
   const auto metadata_cb = [&metadata_calls, &should_close, &should_close_cv,
                             &should_close_mutex](Metadata&&) {
@@ -314,9 +317,9 @@ TEST_F(LiveThreadedTests, TestBlockForStopTimeout) {
                                           self.Start();
                                           self.SendRecord(kRec);
                                         }};
-  LiveThreaded target{ILogReceiver::Default(), kKey,
-                      dataset::kXnasItch,      kLocalhost,
-                      mock_server.Port(),      kTsOut};
+  LiveThreaded target{
+      ILogReceiver::Default(), kKey,   dataset::kXnasItch,    kLocalhost,
+      mock_server.Port(),      kTsOut, VersionUpgradePolicy{}};
   target.Start([](const Record&) { return KeepGoing::Continue; });
   ASSERT_EQ(target.BlockForStop(std::chrono::milliseconds{100}),
             KeepGoing::Continue);
