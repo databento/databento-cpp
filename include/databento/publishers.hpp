@@ -85,6 +85,8 @@ enum class Venue : std::uint16_t {
   Ifeu = 38,
   // ICE Endex
   Ndex = 39,
+  // Databento Equities - Consolidated
+  Dbeq = 40,
 };
 
 // A source of data.
@@ -267,6 +269,10 @@ enum class Publisher : std::uint16_t {
   IfeuImpactIfeu = 57,
   // ICE Endex
   NdexImpactNdex = 58,
+  // DBEQ Basic - Consolidated
+  DbeqBasicDbeq = 59,
+  // DBEQ Plus - Consolidated
+  DbeqPlusDbeq = 60,
 };
 
 // Get a Publisher's Venue.

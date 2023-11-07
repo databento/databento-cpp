@@ -128,6 +128,9 @@ const char* ToString(Venue venue) {
     case Venue::Ndex: {
       return "NDEX";
     }
+    case Venue::Dbeq: {
+      return "DBEQ";
+    }
     default: {
       return "Unknown";
     }
@@ -257,6 +260,9 @@ Venue FromString(const std::string& str) {
   }
   if (str == "NDEX") {
     return Venue::Ndex;
+  }
+  if (str == "DBEQ") {
+    return Venue::Dbeq;
   }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
@@ -631,6 +637,12 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::NdexImpactNdex: {
       return Venue::Ndex;
     }
+    case Publisher::DbeqBasicDbeq: {
+      return Venue::Dbeq;
+    }
+    case Publisher::DbeqPlusDbeq: {
+      return Venue::Dbeq;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherVenue", "publisher",
@@ -814,6 +826,12 @@ Dataset PublisherDataset(Publisher publisher) {
     }
     case Publisher::NdexImpactNdex: {
       return Dataset::NdexImpact;
+    }
+    case Publisher::DbeqBasicDbeq: {
+      return Dataset::DbeqBasic;
+    }
+    case Publisher::DbeqPlusDbeq: {
+      return Dataset::DbeqPlus;
     }
     default: {
       throw InvalidArgumentError{
@@ -999,6 +1017,12 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::NdexImpactNdex: {
       return "NDEX.IMPACT.NDEX";
+    }
+    case Publisher::DbeqBasicDbeq: {
+      return "DBEQ.BASIC.DBEQ";
+    }
+    case Publisher::DbeqPlusDbeq: {
+      return "DBEQ.PLUS.DBEQ";
     }
     default: {
       return "Unknown";
@@ -1186,6 +1210,12 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "NDEX.IMPACT.NDEX") {
     return Publisher::NdexImpactNdex;
+  }
+  if (str == "DBEQ.BASIC.DBEQ") {
+    return Publisher::DbeqBasicDbeq;
+  }
+  if (str == "DBEQ.PLUS.DBEQ") {
+    return Publisher::DbeqPlusDbeq;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

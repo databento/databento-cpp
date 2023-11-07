@@ -17,7 +17,9 @@
 - Added `kSymbolCstrLen`, `kSymbolCstrLenV1`, and `kSymbolCstrLenV2` constants for the
   length of fixed-length symbol strings in different DBN versions
 - Added new publisher values in preparation for IFEU.IMPACT and NDEX.IMPACT datasets
+- Added new publisher values for consolidated DBEQ.BASIC and DBEQ.PLUS
 - Added `kMaxRecordLen` constant for the the length of the largest record type
+- Added ability to convert `FlagSet` to underlying representation
 
 ### Breaking changes
 - The old `InstrumentDefMsg` is now `InstrumentDefMsgV1` in `compat.hpp`
