@@ -60,5 +60,11 @@ TEST(FlagSetTests, TestToString) {
   ss << kFlagSet;
   ASSERT_EQ(ss.str(), "0b00010000");
 }
+
+TEST(FlagSetTests, TestConversionOperator) {
+  constexpr FlagSet kFlagSet = FlagSet::kMbp | FlagSet::kTob;
+  const auto raw = std::uint8_t{kFlagSet};
+  ASSERT_EQ(raw, 0b01010000);
+}
 }  // namespace test
 }  // namespace databento

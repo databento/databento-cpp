@@ -87,7 +87,7 @@ struct MboMsg {
   std::uint32_t sequence;
 };
 static_assert(sizeof(MboMsg) == 56, "MboMsg size must match Rust");
-static_assert(alignof(MboMsg) == 8);
+static_assert(alignof(MboMsg) == 8, "Must have 8-byte alignment");
 
 struct BidAskPair {
   std::int64_t bid_px;
@@ -98,7 +98,7 @@ struct BidAskPair {
   std::uint32_t ask_ct;
 };
 static_assert(sizeof(BidAskPair) == 32, "BidAskPair size must match Rust");
-static_assert(alignof(BidAskPair) == 8);
+static_assert(alignof(BidAskPair) == 8, "Must have 8-byte alignment");
 
 namespace detail {
 template <std::size_t N>
@@ -144,14 +144,14 @@ struct TradeMsg {
   std::uint32_t sequence;
 };
 static_assert(sizeof(TradeMsg) == 48, "TradeMsg size must match Rust");
-static_assert(alignof(TradeMsg) == 8);
+static_assert(alignof(TradeMsg) == 8, "Must have 8-byte alignment");
 
 using Mbp1Msg = detail::MbpMsg<1>;
 using TbboMsg = Mbp1Msg;
 using Mbp10Msg = detail::MbpMsg<10>;
 
-static_assert(alignof(Mbp1Msg) == 8);
-static_assert(alignof(Mbp10Msg) == 8);
+static_assert(alignof(Mbp1Msg) == 8, "Must have 8-byte alignment");
+static_assert(alignof(Mbp10Msg) == 8, "Must have 8-byte alignment");
 static_assert(sizeof(Mbp1Msg) == sizeof(TradeMsg) + sizeof(BidAskPair),
               "Mbp1Msg size must match Rust");
 static_assert(sizeof(Mbp10Msg) == sizeof(TradeMsg) + sizeof(BidAskPair) * 10,
@@ -182,7 +182,7 @@ struct OhlcvMsg {
   std::uint64_t volume;
 };
 static_assert(sizeof(OhlcvMsg) == 56, "OhlcvMsg size must match Rust");
-static_assert(alignof(OhlcvMsg) == 8);
+static_assert(alignof(OhlcvMsg) == 8, "Must have 8-byte alignment");
 
 // Instrument definition.
 struct InstrumentDefMsg {
@@ -269,7 +269,7 @@ struct InstrumentDefMsg {
 };
 static_assert(sizeof(InstrumentDefMsg) == 400,
               "InstrumentDefMsg size must match Rust");
-static_assert(alignof(InstrumentDefMsg) == 8);
+static_assert(alignof(InstrumentDefMsg) == 8, "Must have 8-byte alignment");
 
 // An order imbalance message.
 struct ImbalanceMsg {
@@ -302,7 +302,7 @@ struct ImbalanceMsg {
   std::array<char, 1> dummy;
 };
 static_assert(sizeof(ImbalanceMsg) == 112, "ImbalanceMsg size must match Rust");
-static_assert(alignof(ImbalanceMsg) == 8);
+static_assert(alignof(ImbalanceMsg) == 8, "Must have 8-byte alignment");
 
 /// A statistics message. A catchall for various data disseminated by
 /// publishers. The `stat_type` indicates the statistic contained in the
@@ -326,7 +326,7 @@ struct StatMsg {
   std::array<char, 6> dummy;
 };
 static_assert(sizeof(StatMsg) == 64, "StatMsg size must match Rust");
-static_assert(alignof(StatMsg) == 8);
+static_assert(alignof(StatMsg) == 8, "Must have 8-byte alignment");
 
 // An error message from the Live Subscription Gateway (LSG). This will never
 // be present in historical data.
@@ -340,7 +340,7 @@ struct ErrorMsg {
   std::array<char, 64> err;
 };
 static_assert(sizeof(ErrorMsg) == 80, "ErrorMsg size must match Rust");
-static_assert(alignof(ErrorMsg) == 8);
+static_assert(alignof(ErrorMsg) == 8, "Must have 8-byte alignment");
 
 /// A symbol mapping message.
 struct SymbolMappingMsg {
@@ -360,7 +360,7 @@ struct SymbolMappingMsg {
 };
 static_assert(sizeof(SymbolMappingMsg) == 176,
               "SymbolMappingMsg size must match Rust");
-static_assert(alignof(SymbolMappingMsg) == 8);
+static_assert(alignof(SymbolMappingMsg) == 8, "Must have 8-byte alignment");
 
 struct SystemMsg {
   static bool HasRType(RType rtype) { return rtype == RType::System; }
@@ -375,7 +375,7 @@ struct SystemMsg {
   std::array<char, 64> msg;
 };
 static_assert(sizeof(SystemMsg) == 80, "SystemMsg size must match Rust");
-static_assert(alignof(SystemMsg) == 8);
+static_assert(alignof(SystemMsg) == 8, "Must have 8-byte alignment");
 
 inline bool operator==(const RecordHeader& lhs, const RecordHeader& rhs) {
   return lhs.length == rhs.length && lhs.rtype == rhs.rtype &&

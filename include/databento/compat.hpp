@@ -14,10 +14,7 @@ static constexpr std::size_t kSymbolCstrLenV1 = 22;
 static constexpr std::size_t kSymbolCstrLenV2 = kSymbolCstrLen;
 
 constexpr std::size_t VersionSymbolCstrLen(std::uint8_t version) {
-  if (version < 2) {
-    return kSymbolCstrLenV1;
-  }
-  return kSymbolCstrLenV2;
+  return version < 2 ? kSymbolCstrLenV1 : kSymbolCstrLenV2;
 }
 
 using InstrumentDefMsgV2 = InstrumentDefMsg;
@@ -111,7 +108,8 @@ struct InstrumentDefMsgV1 {
   // padding for alignment
   std::array<char, 3> dummy;
 };
-static_assert(sizeof(InstrumentDefMsgV1) == 360);
+static_assert(sizeof(InstrumentDefMsgV1) == 360, "Size must match Rust");
+static_assert(alignof(InstrumentDefMsgV1) == 8, "Must have 8-byte alignment");
 
 /// A symbol mapping message.
 struct SymbolMappingMsgV1 {
@@ -129,7 +127,8 @@ struct SymbolMappingMsgV1 {
   UnixNanos start_ts;
   UnixNanos end_ts;
 };
-static_assert(sizeof(SymbolMappingMsgV1) == 80);
+static_assert(sizeof(SymbolMappingMsgV1) == 80, "Size must match Rust");
+static_assert(alignof(SymbolMappingMsgV1) == 8, "Must have 8-byte alignment");
 
 bool operator==(const InstrumentDefMsgV1& lhs, const InstrumentDefMsgV1& rhs);
 inline bool operator!=(const InstrumentDefMsgV1& lhs,
