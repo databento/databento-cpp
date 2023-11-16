@@ -2,6 +2,9 @@
 
 ## 0.15.0 - TBD
 
+### Enhancements
+- Added `PitSymbolMap` helper for keeping track of symbology mappings in Live
+
 ### Bug fixes
 - Fixed misaligned read undefined behavior when decoding records
 

@@ -1,22 +1,21 @@
 #include <csignal>  // sig_atomic_t
 #include <cstdint>
+#include <databento/constants.hpp>
+#include <databento/dbn.hpp>
+#include <databento/enums.hpp>
+#include <databento/live.hpp>
+#include <databento/live_threaded.hpp>
+#include <databento/log.hpp>
+#include <databento/record.hpp>
+#include <databento/symbol_map.hpp>
+#include <databento/with_ts_out.hpp>
 #include <iostream>
 #include <memory>
-#include <unordered_map>
-
-#include "databento/constants.hpp"
-#include "databento/dbn.hpp"
-#include "databento/enums.hpp"
-#include "databento/live.hpp"
-#include "databento/live_threaded.hpp"
-#include "databento/log.hpp"
-#include "databento/record.hpp"
-#include "databento/with_ts_out.hpp"
 
 static std::sig_atomic_t volatile gSignal;
 
 int main() {
-  std::unordered_map<std::uint32_t, std::string> symbol_mappings;
+  databento::PitSymbolMap symbol_mappings;
   std::unique_ptr<databento::ILogReceiver> log_receiver{
       new databento::ConsoleLogReceiver{databento::LogLevel::Debug}};
 
@@ -24,6 +23,7 @@ int main() {
                     .SetLogReceiver(log_receiver.get())
                     .SetKeyFromEnv()
                     .SetDataset(databento::dataset::kGlbxMdp3)
+                    .SetUpgradePolicy(databento::VersionUpgradePolicy::Upgrade)
                     .BuildThreaded();
 
   // Set up signal handler for Ctrl+C
@@ -44,7 +44,7 @@ int main() {
       case RType::Mbo: {
         auto ohlcv = rec.Get<databento::WithTsOut<databento::MboMsg>>();
         std::cout << "Received tick for "
-                  << symbol_mappings.at(ohlcv.rec.hd.instrument_id)
+                  << symbol_mappings[ohlcv.rec.hd.instrument_id]
                   << " with ts_out " << ohlcv.ts_out.time_since_epoch().count()
                   << ": " << ohlcv.rec << '\n';
         break;
@@ -56,9 +56,7 @@ int main() {
       }
       case RType::SymbolMapping: {
         auto mapping = rec.Get<databento::SymbolMappingMsg>();
-        std::cout << "Received symbol mapping: " << mapping << '\n';
-        symbol_mappings.emplace(mapping.hd.instrument_id,
-                                mapping.STypeInSymbol());
+        symbol_mappings.OnSymbolMapping(mapping);
         break;
       }
       case RType::System: {
