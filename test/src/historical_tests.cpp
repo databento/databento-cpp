@@ -292,7 +292,7 @@ TEST_F(HistoricalTests, TestMetadataListPublishers) {
       {{"publisher_id", 2},
        {"dataset", "XNAS.ITCH"},
        {"venue", "XNAS"},
-       {"description", "Nasdaq TotalView ITCH"}},
+       {"description", "Nasdaq TotalView-ITCH"}},
   };
   mock_server_.MockGetJson("/v0/metadata.list_publishers", kResp);
   const auto port = mock_server_.ListenOnThread();
@@ -304,7 +304,7 @@ TEST_F(HistoricalTests, TestMetadataListPublishers) {
   const auto glbx_exp =
       PublisherDetail{1, "GLBX.MDP3", "GLBX", "CME Globex MDP 3.0"};
   const auto xnas_exp =
-      PublisherDetail{2, "XNAS.ITCH", "XNAS", "Nasdaq TotalView ITCH"};
+      PublisherDetail{2, "XNAS.ITCH", "XNAS", "Nasdaq TotalView-ITCH"};
   EXPECT_EQ(res[0], glbx_exp);
   EXPECT_EQ(res[1], xnas_exp);
 }

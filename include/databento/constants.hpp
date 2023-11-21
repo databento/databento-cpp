@@ -34,7 +34,7 @@ static constexpr auto kDbeqBasic = "DBEQ.BASIC";
 static constexpr auto kGlbxMdp3 = "GLBX.MDP3";
 // The dataset code for OPRA.PILLAR.
 static constexpr auto kOpraPillar = "OPRA.PILLAR";
-// The dataset code for Nasdaq TotalView ITCH.
+// The dataset code for Nasdaq TotalView-ITCH.
 static constexpr auto kXnasItch = "XNAS.ITCH";
 }  // namespace dataset
 }  // namespace databento
