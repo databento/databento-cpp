@@ -1,6 +1,17 @@
 # Changelog
 
-## 0.14.0 - TBD
+## 0.14.0 - 2023-11-23
+
+This release adds support for DBN v2.
+
+DBN v2 delivers improvements to the `Metadata` header symbology, new `stype_in` and `stype_out`
+fields for `SymbolMappingMsg`, and extends the symbol field length for `SymbolMappingMsg` and
+`InstrumentDefMsg`. The entire change notes are available [here](https://github.com/databento/dbn/releases/tag/v0.14.0).
+Users who wish to convert DBN v1 files to v2 can use the `dbn-cli` tool available in the [databento-dbn](https://github.com/databento/dbn/) crate.
+On a future date, the Databento live and historical APIs will stop serving DBN v1.
+
+This release is fully compatible with both DBN v1 and v2, and so should be seamless for most users.
+
 ### Enhancements
 - Added support for DBN encoding version 2 (DBNv2), affecting `SymbolMappingMsg`,
   `InstrumentDefMsg`, and `Metadata`
