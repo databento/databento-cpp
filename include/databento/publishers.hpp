@@ -81,6 +81,12 @@ enum class Venue : std::uint16_t {
   Bato = 36,
   // MEMX LLC Options
   Mxop = 37,
+  // ICE Futures Europe (Commodities)
+  Ifeu = 38,
+  // ICE Endex
+  Ndex = 39,
+  // Databento Equities - Consolidated
+  Dbeq = 40,
 };
 
 // A source of data.
@@ -139,17 +145,21 @@ enum class Dataset : std::uint16_t {
   XnasQbbo = 26,
   // Nasdaq NLS
   XnasNls = 27,
+  // ICE Futures Europe (Commodities) iMpact
+  IfeuImpact = 28,
+  // ICE Endex iMpact
+  NdexImpact = 29,
 };
 
 // A specific Venue from a specific data source.
 enum class Publisher : std::uint16_t {
   // CME Globex MDP 3.0
   GlbxMdp3Glbx = 1,
-  // Nasdaq TotalView ITCH
+  // Nasdaq TotalView-ITCH
   XnasItchXnas = 2,
-  // Nasdaq BX TotalView ITCH
+  // Nasdaq BX TotalView-ITCH
   XbosItchXbos = 3,
-  // Nasdaq PSX TotalView ITCH
+  // Nasdaq PSX TotalView-ITCH
   XpsxItchXpsx = 4,
   // Cboe BZX Depth Pitch
   BatsPitchBats = 5,
@@ -255,6 +265,14 @@ enum class Publisher : std::uint16_t {
   DbeqPlusFiny = 55,
   // DBEQ Plus - FINRA/Nasdaq TRF Chicago
   DbeqPlusFinc = 56,
+  // ICE Futures Europe (Commodities)
+  IfeuImpactIfeu = 57,
+  // ICE Endex
+  NdexImpactNdex = 58,
+  // DBEQ Basic - Consolidated
+  DbeqBasicDbeq = 59,
+  // DBEQ Plus - Consolidated
+  DbeqPlusDbeq = 60,
 };
 
 // Get a Publisher's Venue.

@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.14.0 - 2023-11-23
+
+This release adds support for DBN v2.
+
+DBN v2 delivers improvements to the `Metadata` header symbology, new `stype_in` and `stype_out`
+fields for `SymbolMappingMsg`, and extends the symbol field length for `SymbolMappingMsg` and
+`InstrumentDefMsg`. The entire change notes are available [here](https://github.com/databento/dbn/releases/tag/v0.14.0).
+Users who wish to convert DBN v1 files to v2 can use the `dbn-cli` tool available in the [databento-dbn](https://github.com/databento/dbn/) crate.
+On a future date, the Databento live and historical APIs will stop serving DBN v1.
+
+This release is fully compatible with both DBN v1 and v2, and so should be seamless for most users.
+
+### Enhancements
+- Added support for DBN encoding version 2 (DBNv2), affecting `SymbolMappingMsg`,
+  `InstrumentDefMsg`, and `Metadata`
+  - Version 1 structs can be converted to version 2 structs with the `ToV2()` method
+- Added `symbol_cstr_len` field to `Metadata` to indicate the length of fixed symbol
+  strings
+- Added `stype_in` and `stype_out` fields to `SymbolMappingMsg` to provide more context
+  with live symbology updates
+- Added `IndexTs` methods to every record type which returns the primary timestamp
+- Added `VersionUpgradePolicy` enum to allow specifying how to handle decoding records
+  from prior DBN versions
+- Added `InstrumentDefMsgV2` and `SymbolMappingMsgV2` type aliases
+- Added `kDbnVersion` constant for current DBN version
+- Added `kSymbolCstrLen`, `kSymbolCstrLenV1`, and `kSymbolCstrLenV2` constants for the
+  length of fixed-length symbol strings in different DBN versions
+- Added new publisher values in preparation for IFEU.IMPACT and NDEX.IMPACT datasets
+- Added new publisher values for consolidated DBEQ.BASIC and DBEQ.PLUS
+- Added `kMaxRecordLen` constant for the the length of the largest record type
+- Added ability to convert `FlagSet` to underlying representation
+
+### Breaking changes
+- The old `InstrumentDefMsg` is now `InstrumentDefMsgV1` in `compat.hpp`
+- The old `SymbolMappingMsg` is now `SymbolMappingMsgV1` in `compat.hpp`
+- Converted the following enums to enum classes to allow safely adding new variants:
+  `SecurityUpdateAction` and `SType`
+- Renamed `dummy` to `reserved` in `InstrumentDefMsg`
+- Removed `reserved2`, `reserved3`, `reserved4`, and `reserved5` from `InstrumentDefMsg`
+- Moved position of `strike_price` within `InstrumentDefMsg`
+- Removed deprecated `SecurityUpdateAction::Invalid` variant
+
 ## 0.13.1 - 2023-10-23
 ### Enhancements
 - Added new publisher values in preparation for DBEQ.PLUS

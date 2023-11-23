@@ -20,6 +20,10 @@ static constexpr auto kUndefStatQuantity =
 // The sentinel value for an unset or null timestamp.
 static constexpr auto kUndefTimestamp =
     std::numeric_limits<std::uint64_t>::max();
+// The current version of the DBN encoding.
+static constexpr auto kDbnVersion = 2;
+// The length of fixed-length symbol strings.
+static constexpr auto kSymbolCstrLen = 71;
 
 // This is not necessarily a comprehensive list of available datasets. Please
 // use `Historical.MetadataListDatasets` to retrieve an up-to-date list.
@@ -30,7 +34,7 @@ static constexpr auto kDbeqBasic = "DBEQ.BASIC";
 static constexpr auto kGlbxMdp3 = "GLBX.MDP3";
 // The dataset code for OPRA.PILLAR.
 static constexpr auto kOpraPillar = "OPRA.PILLAR";
-// The dataset code for Nasdaq TotalView ITCH.
+// The dataset code for Nasdaq TotalView-ITCH.
 static constexpr auto kXnasItch = "XNAS.ITCH";
 }  // namespace dataset
 }  // namespace databento

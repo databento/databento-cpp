@@ -25,7 +25,8 @@ constexpr std::size_t kBucketIdLength = 5;
 }  // namespace
 
 LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
-                           std::string dataset, bool send_ts_out)
+                           std::string dataset, bool send_ts_out,
+                           VersionUpgradePolicy upgrade_policy)
 
     : log_receiver_{log_receiver},
       key_{std::move(key)},
@@ -33,18 +34,21 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       gateway_{DetermineGateway()},
       port_{13000},
       send_ts_out_{send_ts_out},
+      upgrade_policy_{upgrade_policy},
       client_{gateway_, port_},
       session_id_{this->Authenticate()} {}
 
 LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, std::string gateway,
-                           std::uint16_t port, bool send_ts_out)
+                           std::uint16_t port, bool send_ts_out,
+                           VersionUpgradePolicy upgrade_policy)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
       gateway_{std::move(gateway)},
       port_{port},
       send_ts_out_{send_ts_out},
+      upgrade_policy_{upgrade_policy},
       client_{gateway_, port_},
       session_id_{this->Authenticate()} {}
 
@@ -99,13 +103,17 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
 databento::Metadata LiveBlocking::Start() {
   constexpr auto kMetadataPreludeSize = 8;
   client_.WriteAll("start_session\n");
-  client_.ReadExact(buffer_.data(), kMetadataPreludeSize);
+  client_.ReadExact(read_buffer_.data(), kMetadataPreludeSize);
   const auto version_and_size = DbnDecoder::DecodeMetadataVersionAndSize(
-      reinterpret_cast<std::uint8_t*>(buffer_.data()), kMetadataPreludeSize);
+      reinterpret_cast<std::uint8_t*>(read_buffer_.data()),
+      kMetadataPreludeSize);
   std::vector<std::uint8_t> meta_buffer(version_and_size.second);
   client_.ReadExact(reinterpret_cast<char*>(meta_buffer.data()),
                     version_and_size.second);
-  return DbnDecoder::DecodeMetadataFields(version_and_size.first, meta_buffer);
+  auto metadata =
+      DbnDecoder::DecodeMetadataFields(version_and_size.first, meta_buffer);
+  version_ = metadata.version;
+  return metadata;
 }
 
 const databento::Record& LiveBlocking::NextRecord() { return *NextRecord({}); }
@@ -135,6 +143,8 @@ const databento::Record* LiveBlocking::NextRecord(
   }
   current_record_ = Record{BufferRecordHeader()};
   buffer_idx_ += current_record_.Size();
+  current_record_ = DbnDecoder::DecodeRecordCompat(
+      version_, upgrade_policy_, &compat_buffer_, current_record_);
   return &current_record_;
 }
 
@@ -146,12 +156,13 @@ void LiveBlocking::Reconnect() {
 }
 
 std::string LiveBlocking::DecodeChallenge() {
-  buffer_size_ = client_.ReadSome(buffer_.data(), buffer_.size()).read_size;
+  buffer_size_ =
+      client_.ReadSome(read_buffer_.data(), read_buffer_.size()).read_size;
   if (buffer_size_ == 0) {
     throw LiveApiError{"Gateway closed socket during authentication"};
   }
   // first line is version
-  std::string response{buffer_.data(), buffer_size_};
+  std::string response{read_buffer_.data(), buffer_size_};
   {
     std::ostringstream log_ss;
     log_ss << "[LiveBlocking::DecodeChallenge] Challenge: " << response;
@@ -168,13 +179,14 @@ std::string LiveBlocking::DecodeChallenge() {
                          : response.find('\n', find_start);
   while (next_nl_pos == std::string::npos) {
     // read more
-    buffer_size_ +=
-        client_.ReadSome(&buffer_[buffer_size_], buffer_.size() - buffer_size_)
-            .read_size;
+    buffer_size_ += client_
+                        .ReadSome(&read_buffer_[buffer_size_],
+                                  read_buffer_.size() - buffer_size_)
+                        .read_size;
     if (buffer_size_ == 0) {
       throw LiveApiError{"Gateway closed socket during authentication"};
     }
-    response = {buffer_.data(), buffer_size_};
+    response = {read_buffer_.data(), buffer_size_};
     next_nl_pos = response.find('\n', find_start);
   }
   const auto challenge_line =
@@ -249,19 +261,20 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
   buffer_size_ = 0;
   do {
     buffer_idx_ = buffer_size_;
-    const auto read_size =
-        client_.ReadSome(&buffer_[buffer_idx_], buffer_.size() - buffer_idx_)
-            .read_size;
+    const auto read_size = client_
+                               .ReadSome(&read_buffer_[buffer_idx_],
+                                         read_buffer_.size() - buffer_idx_)
+                               .read_size;
     if (read_size == 0) {
       throw LiveApiError{
           "Unexpected end of message received from server after replying to "
           "CRAM"};
     }
     buffer_size_ += read_size;
-    nl_it = std::find(buffer_.begin() + buffer_idx_,
-                      buffer_.begin() + buffer_size_, '\n');
-  } while (nl_it == buffer_.end());
-  const std::string response{buffer_.cbegin(), nl_it};
+    nl_it = std::find(read_buffer_.begin() + buffer_idx_,
+                      read_buffer_.begin() + buffer_size_, '\n');
+  } while (nl_it == read_buffer_.end());
+  const std::string response{read_buffer_.cbegin(), nl_it};
   {
     std::ostringstream log_ss;
     log_ss << "[LiveBlocking::DecodeAuthResp] Authentication response: "
@@ -319,16 +332,16 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
 databento::detail::TcpClient::Result LiveBlocking::FillBuffer(
     std::chrono::milliseconds timeout) {
   // Shift data forward
-  std::copy(buffer_.cbegin() + static_cast<std::ptrdiff_t>(buffer_idx_),
-            buffer_.cend(), buffer_.begin());
+  std::copy(read_buffer_.cbegin() + static_cast<std::ptrdiff_t>(buffer_idx_),
+            read_buffer_.cend(), read_buffer_.begin());
   buffer_size_ -= buffer_idx_;
   buffer_idx_ = 0;
   const auto read_res = client_.ReadSome(
-      &buffer_[buffer_size_], buffer_.size() - buffer_size_, timeout);
+      &read_buffer_[buffer_size_], read_buffer_.size() - buffer_size_, timeout);
   buffer_size_ += read_res.read_size;
   return read_res;
 }
 
 databento::RecordHeader* LiveBlocking::BufferRecordHeader() {
-  return reinterpret_cast<RecordHeader*>(&buffer_[buffer_idx_]);
+  return reinterpret_cast<RecordHeader*>(&read_buffer_[buffer_idx_]);
 }

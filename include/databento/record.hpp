@@ -8,7 +8,8 @@
 #include <string>
 #include <tuple>  // tie
 
-#include "databento/datetime.hpp"  // UnixNanos
+#include "databento/constants.hpp"  // kSymbolCstrLen
+#include "databento/datetime.hpp"   // UnixNanos
 #include "databento/enums.hpp"
 #include "databento/flag_set.hpp"    // FlagSet
 #include "databento/publishers.hpp"  // Publisher
@@ -71,6 +72,8 @@ class Record {
 struct MboMsg {
   static bool HasRType(RType rtype) { return rtype == RType::Mbo; }
 
+  UnixNanos IndexTs() const { return ts_recv; }
+
   RecordHeader hd;
   std::uint64_t order_id;
   std::int64_t price;
@@ -83,8 +86,8 @@ struct MboMsg {
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
 };
-
-static_assert(sizeof(MboMsg) == 56, "MboMsg size must match C");
+static_assert(sizeof(MboMsg) == 56, "MboMsg size must match Rust");
+static_assert(alignof(MboMsg) == 8, "Must have 8-byte alignment");
 
 struct BidAskPair {
   std::int64_t bid_px;
@@ -94,8 +97,8 @@ struct BidAskPair {
   std::uint32_t bid_ct;
   std::uint32_t ask_ct;
 };
-
-static_assert(sizeof(BidAskPair) == 32, "BidAskPair size must match C");
+static_assert(sizeof(BidAskPair) == 32, "BidAskPair size must match Rust");
+static_assert(alignof(BidAskPair) == 8, "Must have 8-byte alignment");
 
 namespace detail {
 template <std::size_t N>
@@ -105,6 +108,8 @@ struct MbpMsg {
   static bool HasRType(RType rtype) {
     return static_cast<std::uint8_t>(rtype) == N;
   }
+
+  UnixNanos IndexTs() const { return ts_recv; }
 
   RecordHeader hd;
   std::int64_t price;
@@ -119,11 +124,12 @@ struct MbpMsg {
   std::uint32_t sequence;
   std::array<BidAskPair, N> levels;
 };
-
 }  // namespace detail
 
 struct TradeMsg {
   static bool HasRType(RType rtype) { return rtype == RType::Mbp0; }
+
+  UnixNanos IndexTs() const { return ts_recv; }
 
   RecordHeader hd;
   std::int64_t price;
@@ -136,16 +142,20 @@ struct TradeMsg {
   UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
-  // 0-sized types don't exist in C++ so levels is omitted
 };
+static_assert(sizeof(TradeMsg) == 48, "TradeMsg size must match Rust");
+static_assert(alignof(TradeMsg) == 8, "Must have 8-byte alignment");
 
 using Mbp1Msg = detail::MbpMsg<1>;
 using TbboMsg = Mbp1Msg;
 using Mbp10Msg = detail::MbpMsg<10>;
 
-static_assert(sizeof(TradeMsg) == 48, "TradeMsg size must match C");
+static_assert(alignof(Mbp1Msg) == 8, "Must have 8-byte alignment");
+static_assert(alignof(Mbp10Msg) == 8, "Must have 8-byte alignment");
 static_assert(sizeof(Mbp1Msg) == sizeof(TradeMsg) + sizeof(BidAskPair),
-              "Mbp1Msg size must match C");
+              "Mbp1Msg size must match Rust");
+static_assert(sizeof(Mbp10Msg) == sizeof(TradeMsg) + sizeof(BidAskPair) * 10,
+              "Mbp10Msg size must match Rust");
 
 // Aggregate of open, high, low, and close prices with volume.
 struct OhlcvMsg {
@@ -162,6 +172,8 @@ struct OhlcvMsg {
     }
   }
 
+  UnixNanos IndexTs() const { return hd.ts_event; }
+
   RecordHeader hd;
   std::int64_t open;
   std::int64_t high;
@@ -169,13 +181,14 @@ struct OhlcvMsg {
   std::int64_t close;
   std::uint64_t volume;
 };
-
-static_assert(sizeof(OhlcvMsg) == 56, "OhlcvMsg size must match C");
+static_assert(sizeof(OhlcvMsg) == 56, "OhlcvMsg size must match Rust");
+static_assert(alignof(OhlcvMsg) == 8, "Must have 8-byte alignment");
 
 // Instrument definition.
 struct InstrumentDefMsg {
   static bool HasRType(RType rtype) { return rtype == RType::InstrumentDef; }
 
+  UnixNanos IndexTs() const { return ts_recv; }
   const char* Currency() const { return currency.data(); }
   const char* SettlCurrency() const { return settl_currency.data(); }
   const char* SecSubType() const { return secsubtype.data(); }
@@ -204,6 +217,7 @@ struct InstrumentDefMsg {
   std::int64_t unit_of_measure_qty;
   std::int64_t min_price_increment_amount;
   std::int64_t price_ratio;
+  std::int64_t strike_price;
   std::int32_t inst_attrib_value;
   std::uint32_t underlying_id;
   std::uint32_t raw_instrument_id;
@@ -215,11 +229,9 @@ struct InstrumentDefMsg {
   std::int32_t min_lot_size_block;
   std::int32_t min_lot_size_round_lot;
   std::uint32_t min_trade_vol;
-  std::array<char, 4> _reserved2;
   std::int32_t contract_multiplier;
   std::int32_t decay_quantity;
   std::int32_t original_contract_size;
-  std::array<char, 4> _reserved3;
   std::uint16_t trading_reference_date;
   std::int16_t appl_id;
   std::uint16_t maturity_year;
@@ -228,7 +240,7 @@ struct InstrumentDefMsg {
   std::array<char, 4> currency;
   std::array<char, 4> settl_currency;
   std::array<char, 6> secsubtype;
-  std::array<char, 22> raw_symbol;
+  std::array<char, kSymbolCstrLen> raw_symbol;
   std::array<char, 21> group;
   std::array<char, 5> exchange;
   std::array<char, 7> asset;
@@ -238,9 +250,6 @@ struct InstrumentDefMsg {
   std::array<char, 21> underlying;
   std::array<char, 4> strike_price_currency;
   InstrumentClass instrument_class;
-  std::array<char, 2> _reserved4;
-  std::int64_t strike_price;
-  std::array<char, 6> _reserved5;
   MatchAlgorithm match_algorithm;
   std::uint8_t md_security_trading_status;
   std::uint8_t main_fraction;
@@ -256,16 +265,17 @@ struct InstrumentDefMsg {
   std::int8_t contract_multiplier_unit;
   std::int8_t flow_schedule_type;
   std::uint8_t tick_rule;
-  // padding for alignment
-  std::array<char, 3> dummy;
+  std::array<char, 10> reserved;
 };
-
-static_assert(sizeof(InstrumentDefMsg) == 360,
-              "InstrumentDefMsg size must match C");
+static_assert(sizeof(InstrumentDefMsg) == 400,
+              "InstrumentDefMsg size must match Rust");
+static_assert(alignof(InstrumentDefMsg) == 8, "Must have 8-byte alignment");
 
 // An order imbalance message.
 struct ImbalanceMsg {
   static bool HasRType(RType rtype) { return rtype == RType::Imbalance; }
+
+  UnixNanos IndexTs() const { return ts_recv; }
 
   RecordHeader hd;
   UnixNanos ts_recv;
@@ -291,14 +301,16 @@ struct ImbalanceMsg {
   // padding for alignment
   std::array<char, 1> dummy;
 };
-
-static_assert(sizeof(ImbalanceMsg) == 112, "ImbalanceMsg size must match C");
+static_assert(sizeof(ImbalanceMsg) == 112, "ImbalanceMsg size must match Rust");
+static_assert(alignof(ImbalanceMsg) == 8, "Must have 8-byte alignment");
 
 /// A statistics message. A catchall for various data disseminated by
 /// publishers. The `stat_type` indicates the statistic contained in the
 /// message.
 struct StatMsg {
   static bool HasRType(RType rtype) { return rtype == RType::Statistics; }
+
+  UnixNanos IndexTs() const { return ts_recv; }
 
   RecordHeader hd;
   UnixNanos ts_recv;
@@ -313,39 +325,47 @@ struct StatMsg {
   std::uint8_t stat_flags;
   std::array<char, 6> dummy;
 };
-
-static_assert(sizeof(StatMsg) == 64, "StatMsg size must match C");
+static_assert(sizeof(StatMsg) == 64, "StatMsg size must match Rust");
+static_assert(alignof(StatMsg) == 8, "Must have 8-byte alignment");
 
 // An error message from the Live Subscription Gateway (LSG). This will never
 // be present in historical data.
 struct ErrorMsg {
   static bool HasRType(RType rtype) { return rtype == RType::Error; }
 
+  UnixNanos IndexTs() const { return hd.ts_event; }
   const char* Err() const { return err.data(); }
 
   RecordHeader hd;
   std::array<char, 64> err;
 };
+static_assert(sizeof(ErrorMsg) == 80, "ErrorMsg size must match Rust");
+static_assert(alignof(ErrorMsg) == 8, "Must have 8-byte alignment");
 
 /// A symbol mapping message.
 struct SymbolMappingMsg {
   static bool HasRType(RType rtype) { return rtype == RType::SymbolMapping; }
 
+  UnixNanos IndexTs() const { return hd.ts_event; }
   const char* STypeInSymbol() const { return stype_in_symbol.data(); }
   const char* STypeOutSymbol() const { return stype_out_symbol.data(); }
 
   RecordHeader hd;
-  std::array<char, 22> stype_in_symbol;
-  std::array<char, 22> stype_out_symbol;
-  // padding for alignment
-  std::array<char, 4> dummy;
+  SType stype_in;
+  std::array<char, kSymbolCstrLen> stype_in_symbol;
+  SType stype_out;
+  std::array<char, kSymbolCstrLen> stype_out_symbol;
   UnixNanos start_ts;
   UnixNanos end_ts;
 };
+static_assert(sizeof(SymbolMappingMsg) == 176,
+              "SymbolMappingMsg size must match Rust");
+static_assert(alignof(SymbolMappingMsg) == 8, "Must have 8-byte alignment");
 
 struct SystemMsg {
   static bool HasRType(RType rtype) { return rtype == RType::System; }
 
+  UnixNanos IndexTs() const { return hd.ts_event; }
   const char* Msg() const { return msg.data(); }
   bool IsHeartbeat() const {
     return std::strncmp(msg.data(), "Heartbeat", 9) == 0;
@@ -354,6 +374,8 @@ struct SystemMsg {
   RecordHeader hd;
   std::array<char, 64> msg;
 };
+static_assert(sizeof(SystemMsg) == 80, "SystemMsg size must match Rust");
+static_assert(alignof(SystemMsg) == 8, "Must have 8-byte alignment");
 
 inline bool operator==(const RecordHeader& lhs, const RecordHeader& rhs) {
   return lhs.length == rhs.length && lhs.rtype == rhs.rtype &&
@@ -473,7 +495,9 @@ inline bool operator!=(const SystemMsg& lhs, const SystemMsg& rhs) {
 
 inline bool operator==(const SymbolMappingMsg& lhs,
                        const SymbolMappingMsg& rhs) {
-  return lhs.hd == rhs.hd && lhs.stype_in_symbol == rhs.stype_in_symbol &&
+  return lhs.hd == rhs.hd && lhs.stype_in == rhs.stype_in &&
+         lhs.stype_in_symbol == rhs.stype_in_symbol &&
+         lhs.stype_out == rhs.stype_out &&
          lhs.stype_out_symbol == rhs.stype_out_symbol &&
          lhs.start_ts == rhs.start_ts && lhs.end_ts == rhs.end_ts;
 }
@@ -507,4 +531,7 @@ std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg);
 std::string ToString(const SymbolMappingMsg& symbol_mapping_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const SymbolMappingMsg& symbol_mapping_msg);
+
+// The length in bytes of the largest record type.
+static constexpr std::size_t kMaxRecordLen = sizeof(InstrumentDefMsg);
 }  // namespace databento

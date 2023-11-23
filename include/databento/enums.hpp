@@ -50,12 +50,26 @@ enum class Compression : std::uint8_t {
 };
 
 // Represents a symbology type.
-enum class SType : std::uint8_t {
+namespace stype {
+enum SType : std::uint8_t {
+  // Symbology using a unique numeric ID.
   InstrumentId = 0,
+  // Symbology using the original symbols provided by the publisher.
   RawSymbol = 1,
+  // A Databento-specific symbology where one symbol may point to different
+  // instruments at different points of time, e.g. to always refer to the front
+  // month future.
   Continuous = 3,
+  // A Databento-specific symbology for referring to a group of symbols by one
+  // "parent" symbol, e.g. ES.FUT to refer to all ES futures.
   Parent = 4,
+  // Symbology for US equities using NASDAQ Integrated suffix conventions.
+  Nasdaq = 5,
+  // Symbology for US equities using CMS suffix conventions.
+  Cms = 6,
 };
+}  // namespace stype
+using SType = stype::SType;
 
 // Represents the duration of time at which batch files will be split.
 enum class SplitDuration : std::uint8_t {
@@ -185,12 +199,14 @@ enum MatchAlgorithm : char {
 }  // namespace match_algorithm
 using match_algorithm::MatchAlgorithm;
 
-enum class SecurityUpdateAction : char {
+namespace security_update_action {
+enum SecurityUpdateAction : char {
   Add = 'A',
   Modify = 'M',
   Delete = 'D',
-  Invalid = '~',
 };
+}
+using security_update_action::SecurityUpdateAction;
 
 enum class UserDefinedInstrument : char {
   No = 'N',
@@ -248,6 +264,12 @@ enum class StatUpdateAction : std::uint8_t {
   Delete = 2,
 };
 
+// How to handle decoding DBN data from a prior version.
+enum class VersionUpgradePolicy : std::uint8_t {
+  AsIs = 0,
+  Upgrade = 1,
+};
+
 // Convert a HistoricalGateway to a URL.
 const char* UrlFromGateway(HistoricalGateway gateway);
 
@@ -270,6 +292,7 @@ const char* ToString(SecurityUpdateAction update_action);
 const char* ToString(UserDefinedInstrument user_def_instr);
 const char* ToString(StatType stat_type);
 const char* ToString(StatUpdateAction stat_update_action);
+const char* ToString(VersionUpgradePolicy upgrade_policy);
 
 std::ostream& operator<<(std::ostream& out, Schema schema);
 std::ostream& operator<<(std::ostream& out, Encoding encoding);
@@ -292,6 +315,8 @@ std::ostream& operator<<(std::ostream& out,
 std::ostream& operator<<(std::ostream& out, StatType stat_type);
 std::ostream& operator<<(std::ostream& out,
                          StatUpdateAction stat_update_action);
+std::ostream& operator<<(std::ostream& out,
+                         VersionUpgradePolicy upgrade_policy);
 
 template <>
 Schema FromString(const std::string& str);

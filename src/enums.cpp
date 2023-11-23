@@ -410,9 +410,6 @@ const char* ToString(SecurityUpdateAction update_action) {
     case SecurityUpdateAction::Delete: {
       return "Delete";
     }
-    case SecurityUpdateAction::Invalid: {
-      return "Invalid";
-    }
     default: {
       return "Unknown";
     }
@@ -478,6 +475,20 @@ const char* ToString(StatUpdateAction stat_update_action) {
     }
     case StatUpdateAction::Delete: {
       return "Delete";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(VersionUpgradePolicy upgrade_policy) {
+  switch (upgrade_policy) {
+    case VersionUpgradePolicy::AsIs: {
+      return "AsIs";
+    }
+    case VersionUpgradePolicy::Upgrade: {
+      return "Upgrade";
     }
     default: {
       return "Unknown";
@@ -580,6 +591,12 @@ std::ostream& operator<<(std::ostream& out, StatType stat_type) {
 std::ostream& operator<<(std::ostream& out,
                          StatUpdateAction stat_update_action) {
   out << ToString(stat_update_action);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out,
+                         VersionUpgradePolicy upgrade_policy) {
+  out << ToString(upgrade_policy);
   return out;
 }
 

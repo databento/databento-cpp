@@ -23,7 +23,8 @@ std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
                     .AddField("has_mixed_stype_in", metadata.has_mixed_stype_in)
                     .AddField("stype_in", metadata.stype_in)
                     .AddField("stype_out", metadata.stype_out)
-                    .AddField("ts_out", metadata.ts_out);
+                    .AddField("ts_out", metadata.ts_out)
+                    .AddField("symbol_cstr_len", metadata.symbol_cstr_len);
 
   // format symbols, partial, and not_found
   constexpr auto kVecCount = 3;

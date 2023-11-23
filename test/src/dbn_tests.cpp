@@ -9,7 +9,7 @@
 namespace databento {
 namespace test {
 TEST(DbnTests, TestMetadataToString) {
-  const Metadata target{1,
+  const Metadata target{kDbnVersion,
                         dataset::kGlbxMdp3,
                         false,
                         Schema::Ohlcv1D,
@@ -20,6 +20,7 @@ TEST(DbnTests, TestMetadataToString) {
                         SType::RawSymbol,
                         SType::InstrumentId,
                         false,
+                        kSymbolCstrLen,
                         {"NGG3", "NGQ4"},
                         {"ng"},
                         {"nf"},
@@ -27,7 +28,7 @@ TEST(DbnTests, TestMetadataToString) {
                          {"NGQ4", {{20220601, 20220701, "4"}}}}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(Metadata {
-    version = 1,
+    version = 2,
     dataset = "GLBX.MDP3",
     has_mixed_schema = false,
     schema = ohlcv-1d,
@@ -38,6 +39,7 @@ TEST(DbnTests, TestMetadataToString) {
     stype_in = raw_symbol,
     stype_out = instrument_id,
     ts_out = false,
+    symbol_cstr_len = 71,
     symbols = { "NGG3", "NGQ4" },
     partial = { "ng" },
     not_found = { "nf" },

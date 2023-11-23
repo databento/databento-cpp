@@ -7,6 +7,7 @@
 #include <ios>      // streamsize, ios::binary, ios::ate
 #include <memory>
 
+#include "databento/compat.hpp"
 #include "databento/constants.hpp"
 #include "databento/dbn.hpp"
 #include "databento/dbn_decoder.hpp"
@@ -15,6 +16,7 @@
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"
+#include "databento/ireadable.hpp"
 #include "databento/record.hpp"
 
 namespace databento {
@@ -26,10 +28,16 @@ class DbnDecoderTests : public testing::Test {
   std::unique_ptr<DbnDecoder> channel_target_;
   detail::ScopedThread write_thread_;
 
-  void ReadFromFile(const std::string& schema_str,
-                    const std::string& extension) {
-    const std::string file_path =
-        TEST_BUILD_DIR "/data/test_data." + schema_str + extension;
+  void ReadFromFile(const std::string& schema_str, const std::string& extension,
+                    std::uint8_t version) {
+    ReadFromFile(schema_str, extension, version, VersionUpgradePolicy::AsIs);
+  }
+
+  void ReadFromFile(const std::string& schema_str, const std::string& extension,
+                    std::uint8_t version, VersionUpgradePolicy upgrade_policy) {
+    const char* version_str = version == 1 ? ".v1" : "";
+    const std::string file_path = TEST_BUILD_DIR "/data/test_data." +
+                                  schema_str + version_str + extension;
     // Channel setup
     write_thread_ = detail::ScopedThread{[this, file_path] {
       std::ifstream input_file{file_path, std::ios::binary | std::ios::ate};
@@ -43,9 +51,13 @@ class DbnDecoderTests : public testing::Test {
                      size);
       channel_.Finish();
     }};
-    channel_target_.reset(new DbnDecoder{channel_});
+    channel_target_.reset(new DbnDecoder{
+        std::unique_ptr<IReadable>{new detail::SharedChannel{channel_}},
+        upgrade_policy});
     // File setup
-    file_target_.reset(new DbnDecoder{detail::FileStream{file_path}});
+    file_target_.reset(new DbnDecoder{
+        std::unique_ptr<IReadable>{new detail::FileStream{file_path}},
+        upgrade_policy});
   }
 
   static void AssertMappings(const std::vector<SymbolMapping>& mappings) {
@@ -60,9 +72,24 @@ class DbnDecoderTests : public testing::Test {
   }
 };
 
+template <typename D>
+void AssertDefEq(const Record* ch_record, const Record* f_record) {
+  ASSERT_TRUE(ch_record->Holds<D>());
+  ASSERT_TRUE(f_record->Holds<D>());
+  const auto& ch_def = ch_record->Get<D>();
+  const auto& f_def = f_record->Get<D>();
+  EXPECT_EQ(ch_def, f_def);
+  EXPECT_STREQ(ch_def.Exchange(), "XNAS");
+  EXPECT_STREQ(ch_def.RawSymbol(), "MSFT");
+  EXPECT_EQ(ch_def.security_update_action, SecurityUpdateAction::Add);
+  EXPECT_EQ(ch_def.min_lot_size_round_lot, 100);
+  EXPECT_EQ(ch_def.instrument_class, InstrumentClass::Stock);
+  EXPECT_EQ(ch_def.strike_price, kUndefPrice);
+}
+
 TEST_F(DbnDecoderTests, TestDecodeDbz) {
   try {
-    ReadFromFile("mbo", ".dbz");
+    ReadFromFile("mbo", ".dbz", 0);
 
     FAIL() << "Decoding DBZ should throw";
   } catch (const DbnResponseError& err) {
@@ -72,28 +99,76 @@ TEST_F(DbnDecoderTests, TestDecodeDbz) {
   }
 }
 
-class DbnDecoderSchemaTests : public DbnDecoderTests,
-                              public testing::WithParamInterface<const char*> {
-};
-
-INSTANTIATE_TEST_SUITE_P(
-    TestFiles, DbnDecoderSchemaTests, testing::Values(".dbn", ".dbn.zst"),
-    [](const testing::TestParamInfo<const char*>& test_info) {
-      const auto size = ::strlen(test_info.param);
-      return ::strncmp(test_info.param + size - 3, "zst", 3) == 0
-                 ? "Zstd"
-                 : "Uncompressed";
-    });
-
-// Expected data for these tests obtained using the `dbn` CLI tool
-
-TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
-  ReadFromFile("mbo", GetParam());
+TEST_F(DbnDecoderTests, TestDecodeDefinitionUpgrade) {
+  ReadFromFile("definition", ".dbn", 1, VersionUpgradePolicy::Upgrade);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
   EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.dataset, dataset::kXnasItch);
+  EXPECT_EQ(ch_metadata.schema, Schema::Definition);
+  EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1633305600000000000);
+  EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1641254400000000000);
+  EXPECT_EQ(ch_metadata.limit, 2);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
+  EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"MSFT"});
+  EXPECT_TRUE(ch_metadata.partial.empty());
+  EXPECT_TRUE(ch_metadata.not_found.empty());
+  EXPECT_EQ(ch_metadata.mappings.size(), 1);
+  const auto& mapping = ch_metadata.mappings.at(0);
+  EXPECT_EQ(mapping.raw_symbol, "MSFT");
+  ASSERT_EQ(mapping.intervals.size(), 62);
+  const auto& interval = mapping.intervals.at(0);
+  EXPECT_EQ(interval.symbol, "6819");
+  EXPECT_EQ(interval.start_date, 20211004);
+  EXPECT_EQ(interval.end_date, 20211005);
+
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  AssertDefEq<InstrumentDefMsgV2>(ch_record1, f_record1);
+  AssertDefEq<InstrumentDefMsgV2>(ch_record2, f_record2);
+}
+
+class DbnDecoderSchemaTests
+    : public DbnDecoderTests,
+      public testing::WithParamInterface<std::pair<const char*, std::uint8_t>> {
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    TestFiles, DbnDecoderSchemaTests,
+    testing::Values(std::make_pair(".dbn", 1), std::make_pair(".dbn", 2),
+                    std::make_pair(".dbn.zst", 1),
+                    std::make_pair(".dbn.zst", 2)),
+    [](const testing::TestParamInfo<std::pair<const char*, std::uint8_t>>&
+           test_info) {
+      const auto extension = test_info.param.first;
+      const auto version = test_info.param.second;
+      const auto size = ::strlen(extension);
+      return ::strncmp(extension + size - 3, "zst", 3) == 0
+                 ? "ZstdDBNv" + std::to_string(version)
+                 : "UncompressedDBNv" + std::to_string(version);
+    });
+
+// Expected data for these tests obtained using the `dbn` CLI tool
+
+TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("mbo", extension, version);
+
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
+  EXPECT_EQ(ch_metadata, f_metadata);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(ch_metadata.schema, Schema::Mbo);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
@@ -155,12 +230,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
-  ReadFromFile("mbp-1", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("mbp-1", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(ch_metadata.schema, Schema::Mbp1);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
@@ -233,12 +310,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
-  ReadFromFile("mbp-10", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("mbp-10", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(ch_metadata.schema, Schema::Mbp10);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
@@ -335,12 +414,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
-  ReadFromFile("tbbo", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("tbbo", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(ch_metadata.schema, Schema::Tbbo);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
@@ -413,12 +494,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
-  ReadFromFile("trades", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("trades", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(ch_metadata.schema, Schema::Trades);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
@@ -479,12 +562,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1D) {
-  ReadFromFile("ohlcv-1d", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("ohlcv-1d", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(ch_metadata.schema, Schema::Ohlcv1D);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
@@ -499,12 +584,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1D) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
-  ReadFromFile("ohlcv-1h", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("ohlcv-1h", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(ch_metadata.schema, Schema::Ohlcv1H);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
@@ -557,12 +644,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
-  ReadFromFile("ohlcv-1m", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("ohlcv-1m", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(ch_metadata.schema, Schema::Ohlcv1M);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
@@ -615,12 +704,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
-  ReadFromFile("ohlcv-1s", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("ohlcv-1s", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(ch_metadata.schema, Schema::Ohlcv1S);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
@@ -673,12 +764,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
-  ReadFromFile("definition", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("definition", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kXnasItch);
   EXPECT_EQ(ch_metadata.schema, Schema::Definition);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1633305600000000000);
@@ -702,42 +795,29 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   const auto f_record1 = file_target_->DecodeRecord();
   ASSERT_NE(ch_record1, nullptr);
   ASSERT_NE(f_record1, nullptr);
-  ASSERT_TRUE(ch_record1->Holds<InstrumentDefMsg>());
-  ASSERT_TRUE(f_record1->Holds<InstrumentDefMsg>());
-  const auto& ch_def1 = ch_record1->Get<InstrumentDefMsg>();
-  const auto& f_def1 = f_record1->Get<InstrumentDefMsg>();
-  EXPECT_EQ(ch_def1, f_def1);
-  EXPECT_STREQ(ch_def1.Exchange(), "XNAS");
-  EXPECT_STREQ(ch_def1.RawSymbol(), "MSFT");
-  EXPECT_EQ(ch_def1.security_update_action, SecurityUpdateAction::Add);
-  EXPECT_EQ(ch_def1.min_lot_size_round_lot, 100);
-  EXPECT_EQ(ch_def1.instrument_class, InstrumentClass::Stock);
-  EXPECT_EQ(ch_def1.strike_price, kUndefPrice);
 
   const auto ch_record2 = channel_target_->DecodeRecord();
   const auto f_record2 = file_target_->DecodeRecord();
   ASSERT_NE(ch_record2, nullptr);
   ASSERT_NE(f_record2, nullptr);
-  ASSERT_TRUE(ch_record2->Holds<InstrumentDefMsg>());
-  ASSERT_TRUE(f_record2->Holds<InstrumentDefMsg>());
-  const auto& ch_def2 = ch_record2->Get<InstrumentDefMsg>();
-  const auto& f_def2 = f_record2->Get<InstrumentDefMsg>();
-  EXPECT_EQ(ch_def2, f_def2);
-  EXPECT_STREQ(ch_def2.Exchange(), "XNAS");
-  EXPECT_STREQ(ch_def2.RawSymbol(), "MSFT");
-  EXPECT_EQ(ch_def2.security_update_action, SecurityUpdateAction::Add);
-  EXPECT_EQ(ch_def2.min_lot_size_round_lot, 100);
-  EXPECT_EQ(ch_def2.instrument_class, InstrumentClass::Stock);
-  EXPECT_EQ(ch_def2.strike_price, kUndefPrice);
+  if (version == 1) {
+    AssertDefEq<InstrumentDefMsgV1>(ch_record1, f_record1);
+    AssertDefEq<InstrumentDefMsgV1>(ch_record2, f_record2);
+  } else {
+    AssertDefEq<InstrumentDefMsgV2>(ch_record1, f_record1);
+    AssertDefEq<InstrumentDefMsgV2>(ch_record2, f_record2);
+  }
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeImbalance) {
-  ReadFromFile("imbalance", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("imbalance", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kXnasItch);
   EXPECT_EQ(ch_metadata.schema, Schema::Imbalance);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1633305600000000000);
@@ -774,12 +854,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeImbalance) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeStatistics) {
-  ReadFromFile("statistics", GetParam());
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("statistics", extension, version);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, version);
   EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(ch_metadata.schema, Schema::Statistics);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 2814749767106560);

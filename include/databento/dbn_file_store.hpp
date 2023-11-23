@@ -1,10 +1,10 @@
 #pragma once
 
-#include <memory>  // unique_ptr
 #include <string>
 
 #include "databento/dbn.hpp"          // Metadata
 #include "databento/dbn_decoder.hpp"  // DbnDecoder
+#include "databento/enums.hpp"        // VersionUpgradePolicy
 #include "databento/timeseries.hpp"   // MetadataCallback, RecordCallback
 
 namespace databento {
@@ -12,6 +12,8 @@ namespace databento {
 class DbnFileStore {
  public:
   explicit DbnFileStore(const std::string& file_path);
+  DbnFileStore(const std::string& file_path,
+               VersionUpgradePolicy upgrade_policy);
 
   void Replay(const MetadataCallback& metadata_callback,
               const RecordCallback& record_callback);

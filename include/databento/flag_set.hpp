@@ -34,6 +34,8 @@ class FlagSet {
       std::uint8_t repr)
       : repr_{repr} {}
 
+  explicit constexpr operator std::uint8_t() const { return repr_; }
+
   constexpr FlagSet operator~() const {
     return FlagSet{static_cast<Repr>(~repr_)};
   }
