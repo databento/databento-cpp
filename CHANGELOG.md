@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.15.0 - TBD
+
+### Bug fixes
+- Fixed misaligned read undefined behavior when decoding records
+
 ## 0.14.0 - 2023-11-23
 
 This release adds support for DBN v2.

@@ -11,7 +11,7 @@
 #include "databento/dbn.hpp"                // Metadata
 #include "databento/detail/tcp_client.hpp"  // TcpClient
 #include "databento/enums.hpp"   // Schema, SType, VersionUpgradePolicy
-#include "databento/record.hpp"  // Record
+#include "databento/record.hpp"  // Record, RecordHeader
 
 namespace databento {
 class ILogReceiver;
@@ -93,10 +93,13 @@ class LiveBlocking {
   std::uint8_t version_{};
   VersionUpgradePolicy upgrade_policy_;
   detail::TcpClient client_;
-  std::array<char, kMaxStrLen> read_buffer_{};
+  // Must be 8-byte aligned for records
+  alignas(RecordHeader) std::array<char, kMaxStrLen> read_buffer_{};
   std::size_t buffer_size_{};
   std::size_t buffer_idx_{};
-  std::array<std::uint8_t, kMaxRecordLen> compat_buffer_{};
+  // Must be 8-byte aligned for records
+  alignas(
+      RecordHeader) std::array<std::uint8_t, kMaxRecordLen> compat_buffer_{};
   std::uint64_t session_id_;
   Record current_record_{nullptr};
 };
