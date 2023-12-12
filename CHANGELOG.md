@@ -4,6 +4,7 @@
 
 ### Enhancements
 - Added `PitSymbolMap` helper for keeping track of symbology mappings in Live
+- Added new publisher value for OPRA MIAX Sapphire
 
 ### Bug fixes
 - Fixed misaligned read undefined behavior when decoding records
