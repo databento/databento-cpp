@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.14.0 LANGUAGES CXX)
+project("databento" VERSION 0.14.1 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #

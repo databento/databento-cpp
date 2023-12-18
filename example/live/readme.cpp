@@ -3,28 +3,26 @@
 // NOLINTBEGIN(google-build-using-namespace)
 #include <chrono>
 #include <databento/live.hpp>
+#include <databento/symbol_map.hpp>
 #include <iostream>
 #include <string>
 #include <thread>
-#include <unordered_map>
 
 using namespace databento;
 
 int main() {
-  std::unordered_map<std::uint32_t, std::string> symbol_mappings;
+  PitSymbolMap symbol_mappings;
 
   auto client =
       LiveBuilder{}.SetKeyFromEnv().SetDataset("GLBX.MDP3").BuildThreaded();
 
   auto handler = [&symbol_mappings](const Record& rec) {
+    symbol_mappings.OnRecord(rec);
     if (rec.Holds<TradeMsg>()) {
       auto trade = rec.Get<TradeMsg>();
       std::cout << "Received trade for "
                 << symbol_mappings[trade.hd.instrument_id] << ':' << trade
                 << '\n';
-    } else if (rec.Holds<SymbolMappingMsg>()) {
-      auto mapping = rec.Get<SymbolMappingMsg>();
-      symbol_mappings[mapping.hd.instrument_id] = mapping.STypeOutSymbol();
     }
     return KeepGoing::Continue;
   };

@@ -27,24 +27,25 @@ set(
   test_sources
   src/batch_tests.cpp
   src/datetime_tests.cpp
-  src/dbn_tests.cpp
   src/dbn_decoder_tests.cpp
+  src/dbn_tests.cpp
   src/file_stream_tests.cpp
   src/flag_set_tests.cpp
   src/historical_tests.cpp
   src/http_client_tests.cpp
-  src/live_tests.cpp
   src/live_blocking_tests.cpp
+  src/live_tests.cpp
   src/live_threaded_tests.cpp
   src/log_tests.cpp
   src/metadata_tests.cpp
-  src/mock_lsg_server.cpp
   src/mock_http_server.cpp
+  src/mock_lsg_server.cpp
   src/mock_tcp_server.cpp
   src/record_tests.cpp
   src/scoped_thread_tests.cpp
   src/shared_channel_tests.cpp
   src/stream_op_helper_tests.cpp
+  src/symbol_map_tests.cpp
   src/symbology_tests.cpp
   src/tcp_client_tests.cpp
   src/zstd_stream_tests.cpp

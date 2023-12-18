@@ -131,6 +131,9 @@ const char* ToString(Venue venue) {
     case Venue::Dbeq: {
       return "DBEQ";
     }
+    case Venue::Sphr: {
+      return "SPHR";
+    }
     default: {
       return "Unknown";
     }
@@ -263,6 +266,9 @@ Venue FromString(const std::string& str) {
   }
   if (str == "DBEQ") {
     return Venue::Dbeq;
+  }
+  if (str == "SPHR") {
+    return Venue::Sphr;
   }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
@@ -643,6 +649,9 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::DbeqPlusDbeq: {
       return Venue::Dbeq;
     }
+    case Publisher::OpraPillarSphr: {
+      return Venue::Sphr;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherVenue", "publisher",
@@ -832,6 +841,9 @@ Dataset PublisherDataset(Publisher publisher) {
     }
     case Publisher::DbeqPlusDbeq: {
       return Dataset::DbeqPlus;
+    }
+    case Publisher::OpraPillarSphr: {
+      return Dataset::OpraPillar;
     }
     default: {
       throw InvalidArgumentError{
@@ -1023,6 +1035,9 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::DbeqPlusDbeq: {
       return "DBEQ.PLUS.DBEQ";
+    }
+    case Publisher::OpraPillarSphr: {
+      return "OPRA.PILLAR.SPHR";
     }
     default: {
       return "Unknown";
@@ -1216,6 +1231,9 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "DBEQ.PLUS.DBEQ") {
     return Publisher::DbeqPlusDbeq;
+  }
+  if (str == "OPRA.PILLAR.SPHR") {
+    return Publisher::OpraPillarSphr;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

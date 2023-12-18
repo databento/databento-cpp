@@ -19,6 +19,7 @@ set(headers
   include/databento/metadata.hpp
   include/databento/publishers.hpp
   include/databento/record.hpp
+  include/databento/symbol_map.hpp
   include/databento/symbology.hpp
   include/databento/timeseries.hpp
   include/databento/with_ts_out.hpp
@@ -51,6 +52,7 @@ set(sources
   src/metadata.cpp
   src/publishers.cpp
   src/record.cpp
+  src/symbol_map.cpp
   src/symbology.cpp
   src/detail/file_stream.cpp
   src/detail/http_client.cpp

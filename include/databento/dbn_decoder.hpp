@@ -10,7 +10,7 @@
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"  // Upgrade Policy
 #include "databento/ireadable.hpp"
-#include "databento/record.hpp"
+#include "databento/record.hpp"  // Record, RecordHeader
 
 namespace databento {
 // DBN decoder. Set upgrade_policy to control how DBN version 1 data should be
@@ -68,7 +68,9 @@ class DbnDecoder {
   std::unique_ptr<IReadable> input_;
   std::vector<std::uint8_t> read_buffer_;
   std::size_t buffer_idx_{};
-  std::array<std::uint8_t, kMaxRecordLen> compat_buffer_{};
+  // Must be 8-byte aligned for records
+  alignas(
+      RecordHeader) std::array<std::uint8_t, kMaxRecordLen> compat_buffer_{};
   Record current_record_{nullptr};
 };
 }  // namespace databento

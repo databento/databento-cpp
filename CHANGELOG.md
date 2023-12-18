@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.1 - 2023-12-18
+
+### Enhancements
+- Added `PitSymbolMap` helper for keeping track of symbology mappings in Live
+- Added new publisher value for OPRA MIAX Sapphire
+
+### Bug fixes
+- Fixed misaligned read undefined behavior when decoding records
+
 ## 0.14.0 - 2023-11-23
 
 This release adds support for DBN v2.
