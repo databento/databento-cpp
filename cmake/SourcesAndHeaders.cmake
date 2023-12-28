@@ -5,6 +5,7 @@ set(headers
   include/databento/datetime.hpp
   include/databento/dbn.hpp
   include/databento/dbn_decoder.hpp
+  include/databento/dbn_encoder.hpp
   include/databento/dbn_file_store.hpp
   include/databento/enums.hpp
   include/databento/exceptions.hpp
@@ -12,6 +13,7 @@ set(headers
   include/databento/flag_set.hpp
   include/databento/historical.hpp
   include/databento/ireadable.hpp
+  include/databento/iwritable.hpp
   include/databento/live.hpp
   include/databento/live_blocking.hpp
   include/databento/live_threaded.hpp
@@ -40,6 +42,7 @@ set(sources
   src/datetime.cpp
   src/dbn.cpp
   src/dbn_decoder.cpp
+  src/dbn_encoder.cpp
   src/enums.cpp
   src/exceptions.cpp
   src/dbn_file_store.cpp
