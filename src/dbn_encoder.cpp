@@ -31,6 +31,7 @@ constexpr std::size_t kBufferCapacity = 8UL * 1024;
 constexpr std::uint32_t kSymbolCstrLenV1 = 22;
 constexpr std::uint64_t NULL_RECORD_COUNT = std::numeric_limits<std::uint64_t>::max();
 constexpr std::uint64_t NULL_LIMIT = 0;
+constexpr std::uint8_t NULL_STYPE = std::numeric_limits<std::uint8_t>::max();
 
 }  // namespace
 
@@ -208,7 +209,12 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable& writer) {
   std::uint64_t end_count = metadata.end.time_since_epoch().count();
   encode_range_and_counts(metadata.version, metadata.start.time_since_epoch().count(), &end_count, &metadata.limit, writer);
 
-  auto stype_in = static_cast<std::uint8_t>(metadata.stype_in);
+  std::uint8_t stype_in;
+  if (metadata.has_mixed_stype_in) {
+    stype_in = NULL_STYPE;
+  } else {
+    stype_in = static_cast<std::uint8_t>(metadata.stype_in);
+  }
   writer.Write(&stype_in, sizeof(stype_in));
 
   auto stype_out = static_cast<std::uint8_t>(metadata.stype_out);
