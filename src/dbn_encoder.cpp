@@ -31,6 +31,7 @@ constexpr std::size_t kBufferCapacity = 8UL * 1024;
 constexpr std::uint32_t kSymbolCstrLenV1 = 22;
 constexpr std::uint64_t NULL_RECORD_COUNT = std::numeric_limits<std::uint64_t>::max();
 constexpr std::uint64_t NULL_LIMIT = 0;
+constexpr std::uint16_t NULL_SCHEMA = std::numeric_limits<std::uint16_t>::max();
 constexpr std::uint8_t NULL_STYPE = std::numeric_limits<std::uint8_t>::max();
 
 }  // namespace
@@ -203,8 +204,14 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable& writer) {
   encode_fixed_len_cstr<kDatasetCstrLen>(metadata.dataset, writer);
 
   // assuming little endian, it is currently required for the cmake stage to pass
-  std::memcpy(tmp, &metadata.schema, sizeof(metadata.schema));
-  writer.Write(tmp, sizeof(metadata.schema));
+  std::uint16_t raw_schema;
+  if (metadata.has_mixed_schema) {
+    raw_schema = NULL_SCHEMA;
+  } else {
+    raw_schema = static_cast<std::uint16_t>(metadata.schema);
+  }
+  std::memcpy(tmp, &raw_schema, sizeof(raw_schema));
+  writer.Write(tmp, sizeof(raw_schema));
 
   std::uint64_t end_count = metadata.end.time_since_epoch().count();
   encode_range_and_counts(metadata.version, metadata.start.time_since_epoch().count(), &end_count, &metadata.limit, writer);
