@@ -29,7 +29,7 @@ int main() {
   // Set up signal handler for Ctrl+C
   std::signal(SIGINT, [](int signal) { gSignal = signal; });
 
-  std::vector<std::string> symbols{"ESM3", "ESM3 C4200", "ESM3 P4100"};
+  std::vector<std::string> symbols{"ESZ4", "ESZ4 C4200", "ESZ4 P4100"};
   client.Subscribe(symbols, databento::Schema::Definition,
                    databento::SType::RawSymbol);
   client.Subscribe(symbols, databento::Schema::Mbo,
