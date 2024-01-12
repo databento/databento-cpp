@@ -467,6 +467,8 @@ std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg) {
       .Build()
       .AddField("hd", err_msg.hd)
       .AddField("err", err_msg.err)
+      .AddField("code", err_msg.code)
+      .AddField("is_last", err_msg.is_last)
       .Finish();
 }
 
@@ -480,6 +482,7 @@ std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg) {
       .Build()
       .AddField("hd", system_msg.hd)
       .AddField("msg", system_msg.msg)
+      .AddField("code", system_msg.code)
       .Finish();
 }
 

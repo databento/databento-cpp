@@ -18,7 +18,9 @@ constexpr std::size_t VersionSymbolCstrLen(std::uint8_t version) {
 }
 
 using InstrumentDefMsgV2 = InstrumentDefMsg;
+using ErrorMsgV2 = ErrorMsg;
 using SymbolMappingMsgV2 = SymbolMappingMsg;
+using SystemMsgV2 = SystemMsg;
 
 // DBN version 1 instrument definition.
 struct InstrumentDefMsgV1 {
@@ -111,6 +113,21 @@ struct InstrumentDefMsgV1 {
 static_assert(sizeof(InstrumentDefMsgV1) == 360, "Size must match Rust");
 static_assert(alignof(InstrumentDefMsgV1) == 8, "Must have 8-byte alignment");
 
+// An error message from the Live Subscription Gateway (LSG). This will never
+// be present in historical data.
+struct ErrorMsgV1 {
+  static bool HasRType(RType rtype) { return rtype == RType::Error; }
+
+  ErrorMsgV2 ToV2() const;
+  UnixNanos IndexTs() const { return hd.ts_event; }
+  const char* Err() const { return err.data(); }
+
+  RecordHeader hd;
+  std::array<char, 64> err;
+};
+static_assert(sizeof(ErrorMsgV1) == 80, "ErrorMsg size must match Rust");
+static_assert(alignof(ErrorMsgV1) == 8, "Must have 8-byte alignment");
+
 /// A symbol mapping message.
 struct SymbolMappingMsgV1 {
   static bool HasRType(RType rtype) { return rtype == RType::SymbolMapping; }
@@ -130,9 +147,31 @@ struct SymbolMappingMsgV1 {
 static_assert(sizeof(SymbolMappingMsgV1) == 80, "Size must match Rust");
 static_assert(alignof(SymbolMappingMsgV1) == 8, "Must have 8-byte alignment");
 
+struct SystemMsgV1 {
+  static bool HasRType(RType rtype) { return rtype == RType::System; }
+
+  SystemMsgV2 ToV2() const;
+  UnixNanos IndexTs() const { return hd.ts_event; }
+  const char* Msg() const { return msg.data(); }
+  bool IsHeartbeat() const {
+    return std::strncmp(msg.data(), "Heartbeat", 9) == 0;
+  }
+
+  RecordHeader hd;
+  std::array<char, 64> msg;
+};
+static_assert(sizeof(SystemMsgV1) == 80, "SystemMsg size must match Rust");
+static_assert(alignof(SystemMsgV1) == 8, "Must have 8-byte alignment");
+
 bool operator==(const InstrumentDefMsgV1& lhs, const InstrumentDefMsgV1& rhs);
 inline bool operator!=(const InstrumentDefMsgV1& lhs,
                        const InstrumentDefMsgV1& rhs) {
+  return !(lhs == rhs);
+}
+inline bool operator==(const ErrorMsgV1& lhs, const ErrorMsgV1& rhs) {
+  return std::tie(lhs.hd, lhs.err) == std::tie(rhs.hd, rhs.err);
+}
+inline bool operator!=(const ErrorMsgV1& lhs, const ErrorMsgV1& rhs) {
   return !(lhs == rhs);
 }
 inline bool operator==(const SymbolMappingMsgV1& lhs,
@@ -146,10 +185,20 @@ inline bool operator!=(const SymbolMappingMsgV1& lhs,
                        const SymbolMappingMsgV1& rhs) {
   return !(lhs == rhs);
 }
+inline bool operator==(const SystemMsgV1& lhs, const SystemMsgV1& rhs) {
+  return std::tie(lhs.hd, lhs.msg) == std::tie(rhs.hd, rhs.msg);
+}
+inline bool operator!=(const SystemMsgV1& lhs, const SystemMsgV1& rhs) {
+  return !(lhs == rhs);
+}
 std::string ToString(const InstrumentDefMsgV1& instr_def_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsgV1& instr_def_msg);
+std::string ToString(const ErrorMsgV1& err_msg);
+std::ostream& operator<<(std::ostream& stream, const ErrorMsgV1& err_msg);
 std::string ToString(const SymbolMappingMsgV1& symbol_mapping_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const SymbolMappingMsgV1& symbol_mapping_msg);
+std::string ToString(const SystemMsgV1& sys_msg);
+std::ostream& operator<<(std::ostream& stream, const SystemMsgV1& sys_msg);
 }  // namespace databento
