@@ -92,6 +92,17 @@ InstrumentDefMsgV2 InstrumentDefMsgV1::ToV2() const {
   return ret;
 }
 
+ErrorMsgV2 ErrorMsgV1::ToV2() const {
+  ErrorMsgV2 ret{
+      RecordHeader{sizeof(ErrorMsgV2) / RecordHeader::kLengthMultiplier,
+                   RType::Error, hd.publisher_id, hd.instrument_id},
+      {},
+      std::numeric_limits<std::uint8_t>::max(),
+      std::numeric_limits<std::uint8_t>::max()};
+  std::copy(err.begin(), err.end(), ret.err.begin());
+  return ret;
+}
+
 SymbolMappingMsgV2 SymbolMappingMsgV1::ToV2() const {
   SymbolMappingMsgV2 ret{
       RecordHeader{sizeof(SymbolMappingMsgV2) / RecordHeader::kLengthMultiplier,
@@ -108,6 +119,16 @@ SymbolMappingMsgV2 SymbolMappingMsgV1::ToV2() const {
             ret.stype_in_symbol.begin());
   std::copy(stype_out_symbol.begin(), stype_out_symbol.end(),
             ret.stype_out_symbol.begin());
+  return ret;
+}
+
+SystemMsgV2 SystemMsgV1::ToV2() const {
+  SystemMsgV2 ret{
+      RecordHeader{sizeof(SystemMsgV2) / RecordHeader::kLengthMultiplier,
+                   RType::System, hd.publisher_id, hd.instrument_id},
+      {},
+      std::numeric_limits<std::uint8_t>::max()};
+  std::copy(msg.begin(), msg.end(), ret.msg.begin());
   return ret;
 }
 
@@ -245,6 +266,16 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("tick_rule", instr_def_msg.tick_rule)
       .Finish();
 }
+std::string ToString(const ErrorMsgV1& err_msg) { return MakeString(err_msg); }
+std::ostream& operator<<(std::ostream& stream, const ErrorMsgV1& err_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("ErrorMsgV1")
+      .Build()
+      .AddField("hd", err_msg.hd)
+      .AddField("err", err_msg.err)
+      .Finish();
+}
 std::string ToString(const SymbolMappingMsgV1& symbol_mapping_msg) {
   return MakeString(symbol_mapping_msg);
 }
@@ -259,6 +290,18 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("stype_out_symbol", symbol_mapping_msg.stype_out_symbol)
       .AddField("start_ts", symbol_mapping_msg.start_ts)
       .AddField("end_ts", symbol_mapping_msg.end_ts)
+      .Finish();
+}
+std::string ToString(const SystemMsgV1& system_msg) {
+  return MakeString(system_msg);
+}
+std::ostream& operator<<(std::ostream& stream, const SystemMsgV1& system_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("SystemMsgV1")
+      .Build()
+      .AddField("hd", system_msg.hd)
+      .AddField("msg", system_msg.msg)
       .Finish();
 }
 }  // namespace databento

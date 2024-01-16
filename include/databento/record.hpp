@@ -337,9 +337,11 @@ struct ErrorMsg {
   const char* Err() const { return err.data(); }
 
   RecordHeader hd;
-  std::array<char, 64> err;
+  std::array<char, 302> err;
+  std::uint8_t code;
+  std::uint8_t is_last;
 };
-static_assert(sizeof(ErrorMsg) == 80, "ErrorMsg size must match Rust");
+static_assert(sizeof(ErrorMsg) == 320, "ErrorMsg size must match Rust");
 static_assert(alignof(ErrorMsg) == 8, "Must have 8-byte alignment");
 
 /// A symbol mapping message.
@@ -372,9 +374,10 @@ struct SystemMsg {
   }
 
   RecordHeader hd;
-  std::array<char, 64> msg;
+  std::array<char, 303> msg;
+  std::uint8_t code;
 };
-static_assert(sizeof(SystemMsg) == 80, "SystemMsg size must match Rust");
+static_assert(sizeof(SystemMsg) == 320, "SystemMsg size must match Rust");
 static_assert(alignof(SystemMsg) == 8, "Must have 8-byte alignment");
 
 inline bool operator==(const RecordHeader& lhs, const RecordHeader& rhs) {
@@ -480,14 +483,15 @@ inline bool operator!=(const StatMsg& lhs, const StatMsg& rhs) {
 }
 
 inline bool operator==(const ErrorMsg& lhs, const ErrorMsg& rhs) {
-  return lhs.hd == rhs.hd && lhs.err == rhs.err;
+  return lhs.hd == rhs.hd && lhs.err == rhs.err && lhs.code == rhs.code &&
+         lhs.is_last == rhs.is_last;
 }
 inline bool operator!=(const ErrorMsg& lhs, const ErrorMsg& rhs) {
   return !(lhs == rhs);
 }
 
 inline bool operator==(const SystemMsg& lhs, const SystemMsg& rhs) {
-  return lhs.hd == rhs.hd && lhs.msg == rhs.msg;
+  return lhs.hd == rhs.hd && lhs.msg == rhs.msg && lhs.code == rhs.code;
 }
 inline bool operator!=(const SystemMsg& lhs, const SystemMsg& rhs) {
   return !(lhs == rhs);

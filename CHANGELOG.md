@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.15.0 - 2023-01-16
+
+### Breaking changes
+- Increased size of `SystemMsg` and `ErrorMsg` to provide better messages from Live
+  gateway
+  - Increased length of `err` and `msg` fields for more detailed messages
+  - Added `is_last` field to `ErrorMsg` to indicate the last error in a chain
+  - Added `code` field to `SystemMsg` and `ErrorMsg`, although currently unused
+  - Added new `is_last` parameter to `ErrorMsg::new`
+  - Decoding these is backwards-compatible and records with longer messages won't be
+    sent during the DBN version 2 migration period
+  - Renamed previous records to `ErrorMsgV1` and `SystemMsgV1`
+
 ## 0.14.1 - 2023-12-18
 
 ### Enhancements
