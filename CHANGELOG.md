@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.15.0 - 2023-01-16
+## 0.15.0 - 2024-01-16
 
 ### Breaking changes
 - Increased size of `SystemMsg` and `ErrorMsg` to provide better messages from Live
