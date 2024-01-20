@@ -10,6 +10,6 @@ class IWritable {
  public:
   virtual ~IWritable() = default;
 
-  virtual void Write(const std::uint8_t* buffer, std::uint32_t length) = 0;
+  virtual void Write(const std::uint8_t* buffer, std::size_t length) = 0;
 };
 }  // namespace databento

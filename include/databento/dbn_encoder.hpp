@@ -1,10 +1,5 @@
 #pragma once
 
-#include <cstddef>  // size_t
-#include <cstdint>  // uint8_t
-#include <memory>   // unique_ptr
-#include <string>
-
 #include "databento/dbn.hpp"
 #include "databento/iwritable.hpp"
 

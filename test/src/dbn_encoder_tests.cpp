@@ -65,7 +65,7 @@ class DbnEncoderTests : public testing::Test {
 
 struct FakeWritable : IWritable {
   std::vector<std::uint8_t> written_bytes;
-  void Write(const std::uint8_t* buffer, std::uint32_t length) override {
+  void Write(const std::uint8_t* buffer, std::size_t length) override {
     written_bytes.insert(written_bytes.end(), buffer, buffer + length);
   }
 };
