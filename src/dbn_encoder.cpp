@@ -63,33 +63,38 @@ std::uint32_t calc_length(const databento::Metadata& metadata) {
   return kFixedMetadataLen + var_len_counts_size + c_str_count * symbol_cstr_len + mappings_len;
 }
 
-
+static
 void encode_date(std::uint32_t date, databento::IWritable& writer) {
   // in c++ the date is already represented as a uint32, so this function doesn't really do anything compared to rust
   writer.Write(reinterpret_cast<const std::uint8_t *>(&date), sizeof(date));
 }
 
-template <std::uint32_t LEN>
-void encode_fixed_len_cstr(const std::string & str, databento::IWritable& writer) {
+static
+void encode_fixed_len_cstr(const std::size_t symbol_cstr_len, const std::string & str, databento::IWritable& writer) {
   // check if string is printable (rust checks if it is ascii)
   if (!std::all_of(str.begin(), str.end(), [](unsigned char ch) {return std::isprint(ch);})) {
     throw databento::InvalidArgumentError("encode_fixed_len_cstr", "str", "must only contain printable characters");
   }
 
-  if (str.size() > LEN) {
+  if (str.size() > symbol_cstr_len) {
     std::string details("value too large to fit, can be at most ");
-    details.append(std::to_string(LEN)).append(", was ").append(std::to_string(str.size()));
+    details.append(std::to_string(symbol_cstr_len)).append(", was ").append(std::to_string(str.size()));
     throw databento::InvalidArgumentError("encode_fixed_len_cstr", "str", std::move(details));
   }
 
-  std::uint8_t tmp[LEN]{};
-  std::memcpy(tmp, str.data(), str.size());
-  writer.Write(tmp, LEN);
+  // write the string
+  writer.Write(reinterpret_cast<const std::uint8_t *>(str.data()), str.size());
+
+  // write padding
+  for (std::size_t i = str.size(); i < symbol_cstr_len; ++i) {
+    const std::uint8_t zero = 0;
+    writer.Write(&zero, sizeof(zero));
+  }
 }
 
-template <std::uint32_t LEN>
-void encode_symbol_mapping(const databento::SymbolMapping & symbol_mapping, databento::IWritable& writer) {
-  encode_fixed_len_cstr<LEN>(symbol_mapping.raw_symbol, writer);
+static
+void encode_symbol_mapping(const std::size_t symbol_cstr_len, const databento::SymbolMapping & symbol_mapping, databento::IWritable& writer) {
+  encode_fixed_len_cstr(symbol_cstr_len, symbol_mapping.raw_symbol, writer);
   // encode interval_count
   const std::uint32_t length = symbol_mapping.intervals.size(); // assume that this will not overflow
   // assuming little endian, it is currently required for the cmake stage to pass
@@ -98,7 +103,7 @@ void encode_symbol_mapping(const databento::SymbolMapping & symbol_mapping, data
   for (const databento::MappingInterval& interval: symbol_mapping.intervals) {
     encode_date(interval.start_date, writer);
     encode_date(interval.end_date, writer);
-    encode_fixed_len_cstr<LEN>(interval.symbol, writer);
+    encode_fixed_len_cstr(symbol_cstr_len, interval.symbol, writer);
   }
 }
 
@@ -138,36 +143,24 @@ void encode_range_and_counts(std::uint8_t version,
 }
 
 static
-void encode_repeated_symbol_cstr(const std::uint8_t version, const std::vector<std::string> & symbols, databento::IWritable& writer) {
+void encode_repeated_symbol_cstr(const std::size_t symbol_cstr_len, const std::vector<std::string> & symbols, databento::IWritable& writer) {
   // write number of symbols (length)
   const std::uint32_t length = symbols.size(); // assume that this will never overflow, who even has more than 4 billion symbols anyway
   writer.Write(reinterpret_cast<const std::uint8_t *>(&length), sizeof(length));
 
-  if (version == 1) {
-    for (const auto& symbol: symbols) {
-      encode_fixed_len_cstr<kSymbolCstrLenV1>(symbol, writer);
-    }
-  } else {
-    for (const auto& symbol: symbols) {
-      encode_fixed_len_cstr<databento::kSymbolCstrLen>(symbol, writer);
-    }
+  for (const auto& symbol: symbols) {
+    encode_fixed_len_cstr(symbol_cstr_len, symbol, writer);
   }
 }
 
 static
-void encode_symbol_mappings(const std::uint8_t version, const std::vector<databento::SymbolMapping> & symbol_mappings, databento::IWritable& writer) {
+void encode_symbol_mappings(const std::size_t symbol_cstr_len, const std::vector<databento::SymbolMapping> & symbol_mappings, databento::IWritable& writer) {
   // encode mappings_count
   const std::uint32_t length = symbol_mappings.size(); // assume that this will never overflow, who even has more than 4 billion mappings anyway
   writer.Write(reinterpret_cast<const std::uint8_t *>(&length), sizeof(length));
 
-  if (version == 1) {
-    for (const auto& mapping: symbol_mappings) {
-      encode_symbol_mapping<kSymbolCstrLenV1>(mapping, writer);
-    }
-  } else {
-    for (const auto& mapping: symbol_mappings) {
-      encode_symbol_mapping<databento::kSymbolCstrLen>(mapping, writer);
-    }
+  for (const auto& mapping: symbol_mappings) {
+    encode_symbol_mapping(symbol_cstr_len, mapping, writer);
   }
 }
 
@@ -186,7 +179,7 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable& writer) {
   // assuming little endian, it is currently required for the cmake stage to pass
   writer.Write(reinterpret_cast<const std::uint8_t *>(&length), sizeof(length));
 
-  encode_fixed_len_cstr<kDatasetCstrLen>(metadata.dataset, writer);
+  encode_fixed_len_cstr(kDatasetCstrLen, metadata.dataset, writer);
 
   // assuming little endian, it is currently required for the cmake stage to pass
   std::uint16_t raw_schema;
@@ -238,10 +231,10 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable& writer) {
   writer.Write(reinterpret_cast<const std::uint8_t *>(&schema_definition_length), sizeof(schema_definition_length));
 
 
-  encode_repeated_symbol_cstr(metadata.version, metadata.symbols, writer);
-  encode_repeated_symbol_cstr(metadata.version, metadata.partial, writer);
-  encode_repeated_symbol_cstr(metadata.version, metadata.not_found, writer);
-  encode_symbol_mappings(metadata.version, metadata.mappings, writer);
+  encode_repeated_symbol_cstr(metadata.symbol_cstr_len, metadata.symbols, writer);
+  encode_repeated_symbol_cstr(metadata.symbol_cstr_len, metadata.partial, writer);
+  encode_repeated_symbol_cstr(metadata.symbol_cstr_len, metadata.not_found, writer);
+  encode_symbol_mappings(metadata.symbol_cstr_len, metadata.mappings, writer);
 }
 
 
