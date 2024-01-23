@@ -23,7 +23,6 @@ int main() {
                     .SetLogReceiver(log_receiver.get())
                     .SetKeyFromEnv()
                     .SetDataset(databento::dataset::kGlbxMdp3)
-                    .SetUpgradePolicy(databento::VersionUpgradePolicy::Upgrade)
                     .BuildThreaded();
 
   // Set up signal handler for Ctrl+C

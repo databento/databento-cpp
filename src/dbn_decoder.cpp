@@ -57,7 +57,7 @@ DbnDecoder::DbnDecoder(detail::FileStream file_stream)
           new detail::FileStream{std::move(file_stream)}}) {}
 
 DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input)
-    : DbnDecoder(std::move(input), VersionUpgradePolicy::AsIs) {}
+    : DbnDecoder(std::move(input), VersionUpgradePolicy::Upgrade) {}
 
 DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input,
                        VersionUpgradePolicy upgrade_policy)

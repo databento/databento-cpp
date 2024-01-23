@@ -14,8 +14,7 @@
 
 namespace databento {
 // DBN decoder. Set upgrade_policy to control how DBN version 1 data should be
-// handled. Currently it defaults to returning this data as-is, but this default
-// will change in a future version.
+// handled. Defaults to upgrading DBNv1 data to version 2 (the current version).
 class DbnDecoder {
  public:
   explicit DbnDecoder(detail::SharedChannel channel);

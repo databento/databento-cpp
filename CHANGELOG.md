@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.0 - TBD
+
+### Breaking changes
+- Changed default `upgrade_policy` to `Upgrade` so by default the primary record types
+  can always be used
+
 ## 0.15.0 - 2024-01-16
 
 ### Breaking changes
