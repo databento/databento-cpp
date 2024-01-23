@@ -66,9 +66,7 @@ std::uint32_t calc_length(const databento::Metadata& metadata) {
 
 void encode_date(std::uint32_t date, databento::IWritable& writer) {
   // in c++ the date is already represented as a uint32, so this function doesn't really do anything compared to rust
-  std::uint8_t tmp[sizeof(date)];
-  std::memcpy(tmp, &date, sizeof(date));
-  writer.Write(tmp, sizeof(date));
+  writer.Write(reinterpret_cast<const std::uint8_t *>(&date), sizeof(date));
 }
 
 template <std::uint32_t LEN>
@@ -94,10 +92,8 @@ void encode_symbol_mapping(const databento::SymbolMapping & symbol_mapping, data
   encode_fixed_len_cstr<LEN>(symbol_mapping.raw_symbol, writer);
   // encode interval_count
   const std::uint32_t length = symbol_mapping.intervals.size(); // assume that this will not overflow
-  std::uint8_t tmp[sizeof(std::uint32_t)];
   // assuming little endian, it is currently required for the cmake stage to pass
-  std::memcpy(tmp, &length, sizeof(length));
-  writer.Write(tmp, sizeof(length));
+  writer.Write(reinterpret_cast<const std::uint8_t *>(&length), sizeof(length));
 
   for (const databento::MappingInterval& interval: symbol_mapping.intervals) {
     encode_date(interval.start_date, writer);
@@ -123,27 +119,21 @@ void encode_range_and_counts(std::uint8_t version,
                              const std::uint64_t* maybe_end,
                              const std::uint64_t* maybe_limit,
                              databento::IWritable& writer) {
-  std::uint8_t tmp[8]{};
-
   // assuming little endian, it is currently required for the cmake stage to pass
-  std::memcpy(tmp, &start, sizeof(start));
-  writer.Write(tmp, sizeof(start));
+  writer.Write(reinterpret_cast<const std::uint8_t *>(&start), sizeof(start));
 
   std::uint64_t tmp_uint64 = deref_or(maybe_end, databento::kUndefTimestamp);
   // assuming little endian, it is currently required for the cmake stage to pass
-  std::memcpy(tmp, &tmp_uint64, sizeof(tmp_uint64));
-  writer.Write(tmp, sizeof(tmp_uint64));
+  writer.Write(reinterpret_cast<const std::uint8_t *>(&tmp_uint64), sizeof(tmp_uint64));
 
   tmp_uint64 = deref_or(maybe_limit, NULL_LIMIT);
   // assuming little endian, it is currently required for the cmake stage to pass
-  std::memcpy(tmp, &tmp_uint64, sizeof(tmp_uint64));
-  writer.Write(tmp, sizeof(tmp_uint64));
+  writer.Write(reinterpret_cast<const std::uint8_t *>(&tmp_uint64), sizeof(tmp_uint64));
 
   if (version == 1) {
     tmp_uint64 = NULL_RECORD_COUNT;
     // assuming little endian, it is currently required for the cmake stage to pass
-    std::memcpy(tmp, &tmp_uint64, sizeof(tmp_uint64));
-    writer.Write(tmp, sizeof(tmp_uint64));
+    writer.Write(reinterpret_cast<const std::uint8_t *>(&tmp_uint64), sizeof(tmp_uint64));
   }
 }
 
@@ -151,9 +141,7 @@ static
 void encode_repeated_symbol_cstr(const std::uint8_t version, const std::vector<std::string> & symbols, databento::IWritable& writer) {
   // write number of symbols (length)
   const std::uint32_t length = symbols.size(); // assume that this will never overflow, who even has more than 4 billion symbols anyway
-  std::uint8_t tmp[sizeof(std::uint32_t)];
-  std::memcpy(tmp, &length, sizeof(length));
-  writer.Write(tmp, sizeof(length));
+  writer.Write(reinterpret_cast<const std::uint8_t *>(&length), sizeof(length));
 
   if (version == 1) {
     for (const auto& symbol: symbols) {
@@ -170,9 +158,7 @@ static
 void encode_symbol_mappings(const std::uint8_t version, const std::vector<databento::SymbolMapping> & symbol_mappings, databento::IWritable& writer) {
   // encode mappings_count
   const std::uint32_t length = symbol_mappings.size(); // assume that this will never overflow, who even has more than 4 billion mappings anyway
-  std::uint8_t tmp[sizeof(std::uint32_t)];
-  std::memcpy(tmp, &length, sizeof(length));
-  writer.Write(tmp, sizeof(length));
+  writer.Write(reinterpret_cast<const std::uint8_t *>(&length), sizeof(length));
 
   if (version == 1) {
     for (const auto& mapping: symbol_mappings) {
@@ -198,8 +184,7 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable& writer) {
 
   std::uint32_t length = calc_length(metadata);
   // assuming little endian, it is currently required for the cmake stage to pass
-  std::memcpy(tmp, &length, sizeof(length));
-  writer.Write(tmp, sizeof(length));
+  writer.Write(reinterpret_cast<const std::uint8_t *>(&length), sizeof(length));
 
   encode_fixed_len_cstr<kDatasetCstrLen>(metadata.dataset, writer);
 
@@ -210,8 +195,7 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable& writer) {
   } else {
     raw_schema = static_cast<std::uint16_t>(metadata.schema);
   }
-  std::memcpy(tmp, &raw_schema, sizeof(raw_schema));
-  writer.Write(tmp, sizeof(raw_schema));
+  writer.Write(reinterpret_cast<const std::uint8_t *>(&raw_schema), sizeof(raw_schema));
 
   std::uint64_t end_count = metadata.end.time_since_epoch().count();
   encode_range_and_counts(metadata.version, metadata.start.time_since_epoch().count(), &end_count, &metadata.limit, writer);
@@ -237,23 +221,21 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable& writer) {
 
     std::uint16_t symbol_cstr_len = metadata.symbol_cstr_len;
     // assuming little endian, it is currently required for the cmake stage to pass
-    std::memcpy(tmp, &symbol_cstr_len, sizeof(symbol_cstr_len));
-    writer.Write(tmp, sizeof(symbol_cstr_len));
+    writer.Write(reinterpret_cast<const std::uint8_t *>(&symbol_cstr_len), sizeof(symbol_cstr_len));
   }
 
   // padding
   if (metadata.version == 1) {
-    memset(tmp, 0, kReservedLenV1);
+    std::memset(tmp, 0, kReservedLenV1);
     writer.Write(tmp, kReservedLenV1);
   } else {
-    memset(tmp, 0, kReservedLen);
+    std::memset(tmp, 0, kReservedLen);
     writer.Write(tmp, kReservedLen);
   }
 
   // schema_definition_length, not supported by DBN v1 nor v2
   const std::uint32_t schema_definition_length = 0;
-  std::memcpy(tmp, &schema_definition_length, sizeof(schema_definition_length));
-  writer.Write(tmp, sizeof(schema_definition_length));
+  writer.Write(reinterpret_cast<const std::uint8_t *>(&schema_definition_length), sizeof(schema_definition_length));
 
 
   encode_repeated_symbol_cstr(metadata.version, metadata.symbols, writer);
