@@ -106,7 +106,8 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
         std::to_string(res.version)};
   }
   auto read_buffer_it = buffer.cbegin();
-  res.dataset = std::string{Consume(read_buffer_it, kDatasetCstrLen)};
+  const auto dataset_cstr = Consume(read_buffer_it, kDatasetCstrLen);
+  res.dataset = std::string{dataset_cstr, strnlen(dataset_cstr, kDatasetCstrLen)};
   const auto raw_schema = Consume<std::uint16_t>(read_buffer_it);
   if (raw_schema == std::numeric_limits<std::uint16_t>::max()) {
     res.has_mixed_schema = true;
