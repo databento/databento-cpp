@@ -46,6 +46,18 @@ const char* Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
   byte_it += num_bytes;
   return reinterpret_cast<const char*>(pos);
 }
+
+std::string Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
+                    const std::ptrdiff_t num_bytes, const char* context) {
+  const auto cstr = Consume(byte_it, num_bytes);
+  // strnlen isn't portable
+  const std::size_t str_len = std::find(cstr, cstr + num_bytes, '\0') - cstr;
+  if (str_len == num_bytes) {
+    throw databento::DbnResponseError{std::string{"Invalid "} + context +
+                                      " missing null terminator"};
+  }
+  return std::string{cstr, str_len};
+}
 }  // namespace
 
 DbnDecoder::DbnDecoder(detail::SharedChannel channel)
@@ -106,7 +118,7 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
         std::to_string(res.version)};
   }
   auto read_buffer_it = buffer.cbegin();
-  res.dataset = std::string{Consume(read_buffer_it, kDatasetCstrLen)};
+  res.dataset = Consume(read_buffer_it, kDatasetCstrLen, "dataset");
   const auto raw_schema = Consume<std::uint16_t>(read_buffer_it);
   if (raw_schema == std::numeric_limits<std::uint16_t>::max()) {
     res.has_mixed_schema = true;
@@ -266,8 +278,8 @@ bool DbnDecoder::DetectCompression() {
 std::string DbnDecoder::DecodeSymbol(
     std::size_t symbol_cstr_len,
     std::vector<std::uint8_t>::const_iterator& read_buffer_it) {
-  return std::string{
-      Consume(read_buffer_it, static_cast<std::ptrdiff_t>(symbol_cstr_len))};
+  return Consume(read_buffer_it, static_cast<std::ptrdiff_t>(symbol_cstr_len),
+                 "symbol");
 }
 
 std::vector<std::string> DbnDecoder::DecodeRepeatedSymbol(

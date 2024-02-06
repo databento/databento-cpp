@@ -10,6 +10,7 @@
 - Added missing `StatType::Vwap` variant used in the ICE datasets
 - Added missing `ToString` and `operator<<` handling for `StatType::ClosePrice` and
   `StatType::NetChange`
+- Fixed potential for invalid reads when decoding C strings in `DbnDecoder`
 
 ## 0.15.0 - 2024-01-16
 
