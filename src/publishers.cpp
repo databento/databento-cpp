@@ -134,6 +134,9 @@ const char* ToString(Venue venue) {
     case Venue::Sphr: {
       return "SPHR";
     }
+    case Venue::Ltse: {
+      return "LTSE";
+    }
     default: {
       return "Unknown";
     }
@@ -270,6 +273,9 @@ Venue FromString(const std::string& str) {
   if (str == "SPHR") {
     return Venue::Sphr;
   }
+  if (str == "LTSE") {
+    return Venue::Ltse;
+  }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -362,6 +368,9 @@ const char* ToString(Dataset dataset) {
     }
     case Dataset::NdexImpact: {
       return "NDEX.IMPACT";
+    }
+    case Dataset::DbeqMax: {
+      return "DBEQ.MAX";
     }
     default: {
       return "Unknown";
@@ -462,6 +471,9 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "NDEX.IMPACT") {
     return Dataset::NdexImpact;
+  }
+  if (str == "DBEQ.MAX") {
+    return Dataset::DbeqMax;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -651,6 +663,63 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::OpraPillarSphr: {
       return Venue::Sphr;
+    }
+    case Publisher::DbeqMaxXchi: {
+      return Venue::Xchi;
+    }
+    case Publisher::DbeqMaxXcis: {
+      return Venue::Xcis;
+    }
+    case Publisher::DbeqMaxIexg: {
+      return Venue::Iexg;
+    }
+    case Publisher::DbeqMaxEprl: {
+      return Venue::Eprl;
+    }
+    case Publisher::DbeqMaxXnas: {
+      return Venue::Xnas;
+    }
+    case Publisher::DbeqMaxXnys: {
+      return Venue::Xnys;
+    }
+    case Publisher::DbeqMaxFinn: {
+      return Venue::Finn;
+    }
+    case Publisher::DbeqMaxFiny: {
+      return Venue::Finy;
+    }
+    case Publisher::DbeqMaxFinc: {
+      return Venue::Finc;
+    }
+    case Publisher::DbeqMaxBats: {
+      return Venue::Bats;
+    }
+    case Publisher::DbeqMaxBaty: {
+      return Venue::Baty;
+    }
+    case Publisher::DbeqMaxEdga: {
+      return Venue::Edga;
+    }
+    case Publisher::DbeqMaxEdgx: {
+      return Venue::Edgx;
+    }
+    case Publisher::DbeqMaxXbos: {
+      return Venue::Xbos;
+    }
+    case Publisher::DbeqMaxXpsx: {
+      return Venue::Xpsx;
+    }
+    case Publisher::DbeqMaxMemx: {
+      return Venue::Memx;
+    }
+    case Publisher::DbeqMaxXase: {
+      return Venue::Xase;
+    }
+    case Publisher::DbeqMaxArcx: {
+      return Venue::Arcx;
+    }
+    case Publisher::DbeqMaxLtse: {
+      return Venue::Ltse;
     }
     default: {
       throw InvalidArgumentError{
@@ -845,6 +914,63 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::OpraPillarSphr: {
       return Dataset::OpraPillar;
     }
+    case Publisher::DbeqMaxXchi: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxXcis: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxIexg: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxEprl: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxXnas: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxXnys: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxFinn: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxFiny: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxFinc: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxBats: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxBaty: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxEdga: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxEdgx: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxXbos: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxXpsx: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxMemx: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxXase: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxArcx: {
+      return Dataset::DbeqMax;
+    }
+    case Publisher::DbeqMaxLtse: {
+      return Dataset::DbeqMax;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -1038,6 +1164,63 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::OpraPillarSphr: {
       return "OPRA.PILLAR.SPHR";
+    }
+    case Publisher::DbeqMaxXchi: {
+      return "DBEQ.MAX.XCHI";
+    }
+    case Publisher::DbeqMaxXcis: {
+      return "DBEQ.MAX.XCIS";
+    }
+    case Publisher::DbeqMaxIexg: {
+      return "DBEQ.MAX.IEXG";
+    }
+    case Publisher::DbeqMaxEprl: {
+      return "DBEQ.MAX.EPRL";
+    }
+    case Publisher::DbeqMaxXnas: {
+      return "DBEQ.MAX.XNAS";
+    }
+    case Publisher::DbeqMaxXnys: {
+      return "DBEQ.MAX.XNYS";
+    }
+    case Publisher::DbeqMaxFinn: {
+      return "DBEQ.MAX.FINN";
+    }
+    case Publisher::DbeqMaxFiny: {
+      return "DBEQ.MAX.FINY";
+    }
+    case Publisher::DbeqMaxFinc: {
+      return "DBEQ.MAX.FINC";
+    }
+    case Publisher::DbeqMaxBats: {
+      return "DBEQ.MAX.BATS";
+    }
+    case Publisher::DbeqMaxBaty: {
+      return "DBEQ.MAX.BATY";
+    }
+    case Publisher::DbeqMaxEdga: {
+      return "DBEQ.MAX.EDGA";
+    }
+    case Publisher::DbeqMaxEdgx: {
+      return "DBEQ.MAX.EDGX";
+    }
+    case Publisher::DbeqMaxXbos: {
+      return "DBEQ.MAX.XBOS";
+    }
+    case Publisher::DbeqMaxXpsx: {
+      return "DBEQ.MAX.XPSX";
+    }
+    case Publisher::DbeqMaxMemx: {
+      return "DBEQ.MAX.MEMX";
+    }
+    case Publisher::DbeqMaxXase: {
+      return "DBEQ.MAX.XASE";
+    }
+    case Publisher::DbeqMaxArcx: {
+      return "DBEQ.MAX.ARCX";
+    }
+    case Publisher::DbeqMaxLtse: {
+      return "DBEQ.MAX.LTSE";
     }
     default: {
       return "Unknown";
@@ -1234,6 +1417,63 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "OPRA.PILLAR.SPHR") {
     return Publisher::OpraPillarSphr;
+  }
+  if (str == "DBEQ.MAX.XCHI") {
+    return Publisher::DbeqMaxXchi;
+  }
+  if (str == "DBEQ.MAX.XCIS") {
+    return Publisher::DbeqMaxXcis;
+  }
+  if (str == "DBEQ.MAX.IEXG") {
+    return Publisher::DbeqMaxIexg;
+  }
+  if (str == "DBEQ.MAX.EPRL") {
+    return Publisher::DbeqMaxEprl;
+  }
+  if (str == "DBEQ.MAX.XNAS") {
+    return Publisher::DbeqMaxXnas;
+  }
+  if (str == "DBEQ.MAX.XNYS") {
+    return Publisher::DbeqMaxXnys;
+  }
+  if (str == "DBEQ.MAX.FINN") {
+    return Publisher::DbeqMaxFinn;
+  }
+  if (str == "DBEQ.MAX.FINY") {
+    return Publisher::DbeqMaxFiny;
+  }
+  if (str == "DBEQ.MAX.FINC") {
+    return Publisher::DbeqMaxFinc;
+  }
+  if (str == "DBEQ.MAX.BATS") {
+    return Publisher::DbeqMaxBats;
+  }
+  if (str == "DBEQ.MAX.BATY") {
+    return Publisher::DbeqMaxBaty;
+  }
+  if (str == "DBEQ.MAX.EDGA") {
+    return Publisher::DbeqMaxEdga;
+  }
+  if (str == "DBEQ.MAX.EDGX") {
+    return Publisher::DbeqMaxEdgx;
+  }
+  if (str == "DBEQ.MAX.XBOS") {
+    return Publisher::DbeqMaxXbos;
+  }
+  if (str == "DBEQ.MAX.XPSX") {
+    return Publisher::DbeqMaxXpsx;
+  }
+  if (str == "DBEQ.MAX.MEMX") {
+    return Publisher::DbeqMaxMemx;
+  }
+  if (str == "DBEQ.MAX.XASE") {
+    return Publisher::DbeqMaxXase;
+  }
+  if (str == "DBEQ.MAX.ARCX") {
+    return Publisher::DbeqMaxArcx;
+  }
+  if (str == "DBEQ.MAX.LTSE") {
+    return Publisher::DbeqMaxLtse;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
