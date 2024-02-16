@@ -2,11 +2,14 @@
 
 ## 0.16.0 - TBD
 
+### Enhancements
+- Added new publisher values for consolidated DBEQ.MAX
+
 ### Breaking changes
 - Changed default `upgrade_policy` to `Upgrade` so by default the primary record types
   can always be used
 
-##### Bug fixes
+### Bug fixes
 - Added missing `StatType::Vwap` variant used in the ICE datasets
 - Added missing `ToString` and `operator<<` handling for `StatType::ClosePrice` and
   `StatType::NetChange`
