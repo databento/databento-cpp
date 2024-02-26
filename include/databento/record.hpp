@@ -299,7 +299,7 @@ struct ImbalanceMsg {
   Side unpaired_side;
   char significant_imbalance;
   // padding for alignment
-  std::array<char, 1> dummy;
+  std::array<char, 1> reserved;
 };
 static_assert(sizeof(ImbalanceMsg) == 112, "ImbalanceMsg size must match Rust");
 static_assert(alignof(ImbalanceMsg) == 8, "Must have 8-byte alignment");
@@ -323,7 +323,7 @@ struct StatMsg {
   std::uint16_t channel_id;
   StatUpdateAction update_action;
   std::uint8_t stat_flags;
-  std::array<char, 6> dummy;
+  std::array<char, 6> reserved;
 };
 static_assert(sizeof(StatMsg) == 64, "StatMsg size must match Rust");
 static_assert(alignof(StatMsg) == 8, "Must have 8-byte alignment");

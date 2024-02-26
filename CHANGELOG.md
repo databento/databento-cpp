@@ -8,6 +8,7 @@
 ### Breaking changes
 - Changed default `upgrade_policy` to `Upgrade` so by default the primary record types
   can always be used
+- Renamed `dummy` field in `ImbalanceMsg` and `StatMsg` to `reserved`
 
 ### Bug fixes
 - Added missing `StatType::Vwap` variant used in the ICE datasets
