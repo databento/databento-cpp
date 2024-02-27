@@ -4,6 +4,8 @@
 
 ### Enhancements
 - Added new publisher values for consolidated DBEQ.MAX
+- Added constructor to `WithTsOut` that updates `length` to the correct value to account
+  for the extra 8 bytes
 
 ### Breaking changes
 - Changed default `upgrade_policy` to `Upgrade` so by default the primary record types
@@ -11,6 +13,9 @@
 - Renamed `dummy` field in `ImbalanceMsg` and `StatMsg` to `reserved`
 
 ### Bug fixes
+- Fixed handling of `ts_out` when decoding DBNv1 and upgrading to version 2
+- Fixed missing logic to upgrade `ErrorMsgV1` and `SystemMsgV1` when decoding DBN with
+  `VersionUpgradePolicy::Upgrade`
 - Added missing `StatType::Vwap` variant used in the ICE datasets
 - Added missing `ToString` and `operator<<` handling for `StatType::ClosePrice` and
   `StatType::NetChange`

@@ -267,7 +267,7 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
   constexpr auto kRecCount = 5;
   constexpr auto kTsOut = true;
   constexpr WithTsOut<TradeMsg> kRec{
-      {DummyHeader<WithTsOut<TradeMsg>>(RType::Mbp0),
+      {DummyHeader<TradeMsg>(RType::Mbp0),
        1,
        2,
        Action::Add,

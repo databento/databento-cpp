@@ -1,7 +1,8 @@
 #pragma once
 
-#include "databento/datetime.hpp"  // UnixNanos
-#include "databento/enums.hpp"
+#include "databento/constants.hpp"  // kRecordHeaderLengthMultiplier
+#include "databento/datetime.hpp"   // UnixNanos
+#include "databento/enums.hpp"      // RType
 
 namespace databento {
 // Record wrapper to read records with their live gateway send
@@ -9,6 +10,11 @@ namespace databento {
 template <typename R>
 struct WithTsOut {
   static bool HasRType(RType rtype) { return R::HasRType(rtype); }
+
+  constexpr WithTsOut(R r, UnixNanos ts) : rec{r}, ts_out{ts} {
+    // Adjust length for `ts_out`
+    this->rec.hd.length = sizeof(*this) / kRecordHeaderLengthMultiplier;
+  }
 
   // The base record.
   R rec;

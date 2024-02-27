@@ -13,11 +13,13 @@
 #include "databento/enums.hpp"
 #include "databento/flag_set.hpp"    // FlagSet
 #include "databento/publishers.hpp"  // Publisher
+#include "databento/with_ts_out.hpp"
 
 namespace databento {
 // Common data for all Databento Records.
 struct RecordHeader {
-  static constexpr std::size_t kLengthMultiplier = 4;
+  static constexpr std::size_t kLengthMultiplier =
+      kRecordHeaderLengthMultiplier;
 
   // The length of the message in 32-bit words.
   std::uint8_t length;
@@ -537,5 +539,6 @@ std::ostream& operator<<(std::ostream& stream,
                          const SymbolMappingMsg& symbol_mapping_msg);
 
 // The length in bytes of the largest record type.
-static constexpr std::size_t kMaxRecordLen = sizeof(InstrumentDefMsg);
+static constexpr std::size_t kMaxRecordLen =
+    sizeof(WithTsOut<InstrumentDefMsg>);
 }  // namespace databento
