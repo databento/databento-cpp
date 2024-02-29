@@ -1,11 +1,13 @@
 # Changelog
 
-## 0.16.0 - TBD
+## 0.16.0 - 2024-03-01
 
 ### Enhancements
 - Added new publisher values for consolidated DBEQ.MAX
 - Added constructor to `WithTsOut` that updates `length` to the correct value to account
   for the extra 8 bytes
+- Upgrade default cpp-httplib version to 0.14.3 (last to still support OpenSSL 1.1)
+- Upgrade default nlohmann_json version to 3.11.3
 
 ### Breaking changes
 - Changed default `upgrade_policy` to `Upgrade` so by default the primary record types
