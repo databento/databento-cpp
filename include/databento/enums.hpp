@@ -125,6 +125,7 @@ enum RType : std::uint8_t {
   Ohlcv1M = 0x21,
   Ohlcv1H = 0x22,
   Ohlcv1D = 0x23,
+  Status = 0x12,
   InstrumentDef = 0x13,
   Imbalance = 0x14,
   Error = 0x15,
@@ -274,6 +275,150 @@ enum class VersionUpgradePolicy : std::uint8_t {
   Upgrade = 1,
 };
 
+namespace status_action {
+enum StatusAction : std::uint16_t {
+  // No change.
+  None = 0,
+  // The instrument is in a pre-open period.
+  PreOpen = 1,
+  // The instrument is in a pre-cross period.
+  PreCross = 2,
+  // The instrument is quoting but not trading.
+  Quoting = 3,
+  // The instrument is in a cross/auction.
+  Cross = 4,
+  // The instrument is being opened through a trading rotation.
+  Rotation = 5,
+  // A new price indication is available for the instrument.
+  NewPriceIndication = 6,
+  // The instrument is trading.
+  Trading = 7,
+  // Trading in the instrument has been halted.
+  Halt = 8,
+  // Trading in the instrument has been paused.
+  Pause = 9,
+  // Trading in the instrument has been suspended.
+  Suspend = 10,
+  // The instrument is in a pre-close period.
+  PreClose = 11,
+  // Trading in the instrument has closed.
+  Close = 12,
+  // The instrument is in a post-close period.
+  PostClose = 13,
+  // A change in short-selling restrictions.
+  SsrChange = 14,
+  // The instrument is not available for trading, either trading has closed or
+  // been halted.
+  NotAvailableForTrading = 15,
+};
+}  // namespace status_action
+using status_action::StatusAction;
+
+namespace status_reason {
+enum StatusReason : std::uint16_t {
+  // No reason is given.
+  None = 0,
+  // The change in status occurred as scheduled.
+  Scheduled = 1,
+  // The instrument stopped due to a market surveillance intervention.
+  SurveillanceIntervention = 2,
+  // The status changed due to activity in the market.
+  MarketEvent = 3,
+  // The derivative instrument began trading.
+  InstrumentActivation = 4,
+  // The derivative instrument expired.
+  InstrumentExpiration = 5,
+  // Recovery in progress.
+  RecoveryInProcess = 6,
+  // The status change was caused by a regulatory action.
+  Regulatory = 10,
+  // The status change was caused by an administrative action.
+  Administrative = 11,
+  // The status change was caused by the issuer not being compliance with
+  // regulatory requirements.
+  NonCompliance = 12,
+  // Trading halted because the issuer's filings are not current.
+  FilingsNotCurrent = 13,
+  // Trading halted due to an SEC trading suspension.
+  SecTradingSuspension = 14,
+  // The status changed because a new issue is available.
+  NewIssue = 15,
+  // The status changed because an issue is available.
+  IssueAvailable = 16,
+  // The status changed because the issue was reviewed.
+  IssuesReviewed = 17,
+  // The status changed because the filing requirements were satisfied.
+  FilingReqsSatisfied = 18,
+  // Relevant news is pending.
+  NewsPending = 30,
+  // Relevant news was released.
+  NewsReleased = 31,
+  // The news has been fully disseminated and times are available for the
+  // resumption in quoting and trading.
+  NewsAndResumptionTimes = 32,
+  // The relevants news was not forthcoming.
+  NewsNotForthcoming = 33,
+  // Halted for order imbalance.
+  OrderImbalance = 40,
+  // The instrument hit limit up or limit down.
+  LuldPause = 50,
+  // An operational issue occurred with the venue.
+  Operational = 60,
+  // The status changed until the exchange receives additional information.
+  AdditionalInformationRequested = 70,
+  // Trading halted due to merger becoming effective.
+  MergerEffective = 80,
+  // Trading is halted in an ETF due to conditions with the component
+  // securities.
+  Etf = 90,
+  // Trading is halted for a corporate action.
+  CorporateAction = 100,
+  // Trading is halted because the instrument is a new offering.
+  NewSecurityOffering = 110,
+  // Halted due to the market-wide circuit breaker level 1.
+  MarketWideHaltLevel1 = 120,
+  // Halted due to the market-wide circuit breaker level 2.
+  MarketWideHaltLevel2 = 121,
+  // Halted due to the market-wide circuit breaker level 3.
+  MarketWideHaltLevel3 = 122,
+  // Halted due to the carryover of a market-wide circuit breaker from the
+  // previous trading day.
+  MarketWideHaltCarryover = 123,
+  // Resumption due to the end of the a market-wide circuit breaker halt.
+  MarketWideHaltResumption = 124,
+  // Halted because quotation is not available.
+  QuotationNotAvailable = 130,
+};
+}  // namespace status_reason
+using status_reason::StatusReason;
+
+namespace trading_event {
+enum TradingEvent : std::uint16_t {
+  // No additional information given.
+  None = 0,
+  // Order entry and modification are not allowed.
+  NoCancel = 1,
+  // A change of trading session occurred. Daily statistics are reset.
+  ChangeTradingSession = 2,
+  // Implied matching is available.
+  ImpliedMatchingOn = 3,
+  // Implied matching is not available.
+  ImpliedMatchingOff = 4,
+};
+}  // namespace trading_event
+using trading_event::TradingEvent;
+
+// An enum for representing unknown, true, or false values. Equivalent to a
+// std::optional<bool>.
+enum class TriState : char {
+  // The value is not applicable or not known.
+  NotAvailable = '~',
+  // False
+  No = 'N',
+  // True
+  Yes = 'Y',
+};
+
 // Convert a HistoricalGateway to a URL.
 const char* UrlFromGateway(HistoricalGateway gateway);
 
@@ -296,6 +441,10 @@ const char* ToString(SecurityUpdateAction update_action);
 const char* ToString(UserDefinedInstrument user_def_instr);
 const char* ToString(StatType stat_type);
 const char* ToString(StatUpdateAction stat_update_action);
+const char* ToString(StatusAction status_action);
+const char* ToString(StatusReason status_reason);
+const char* ToString(TradingEvent trading_event);
+const char* ToString(TriState tri_state);
 const char* ToString(VersionUpgradePolicy upgrade_policy);
 
 std::ostream& operator<<(std::ostream& out, Schema schema);
@@ -319,6 +468,10 @@ std::ostream& operator<<(std::ostream& out,
 std::ostream& operator<<(std::ostream& out, StatType stat_type);
 std::ostream& operator<<(std::ostream& out,
                          StatUpdateAction stat_update_action);
+std::ostream& operator<<(std::ostream& out, StatusAction status_action);
+std::ostream& operator<<(std::ostream& out, StatusReason status_reason);
+std::ostream& operator<<(std::ostream& out, TradingEvent trading_event);
+std::ostream& operator<<(std::ostream& out, TriState tri_state);
 std::ostream& operator<<(std::ostream& out,
                          VersionUpgradePolicy upgrade_policy);
 

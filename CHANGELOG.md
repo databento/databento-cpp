@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.17.0 - TBD
+
+### Enhancements
+- Add `StatusMsg` record, and `StatusAction`, `StatusReason`, `TradingEvent`, and
+  `TriState` enums
+- Format `unit_of_measure_qty` as a fixed-precision decimal
+
 ## 0.16.0 - 2024-03-01
 
 ### Enhancements

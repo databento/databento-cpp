@@ -186,6 +186,25 @@ struct OhlcvMsg {
 static_assert(sizeof(OhlcvMsg) == 56, "OhlcvMsg size must match Rust");
 static_assert(alignof(OhlcvMsg) == 8, "Must have 8-byte alignment");
 
+// A trading status update message.
+struct StatusMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::Status; }
+
+  UnixNanos IndexTs() const { return ts_recv; }
+
+  RecordHeader hd;
+  UnixNanos ts_recv;
+  StatusAction action;
+  StatusReason reason;
+  TradingEvent trading_event;
+  TriState is_trading;
+  TriState is_quoting;
+  TriState is_short_sell_restricted;
+  std::array<char, 7> reserved;
+};
+static_assert(sizeof(StatusMsg) == 40, "StatusMsg size must match Rust");
+static_assert(alignof(StatusMsg) == 8, "Must have 8-byte alignment");
+
 // Instrument definition.
 struct InstrumentDefMsg {
   static bool HasRType(RType rtype) { return rtype == RType::InstrumentDef; }
@@ -461,6 +480,18 @@ inline bool operator!=(const OhlcvMsg& lhs, const OhlcvMsg& rhs) {
   return !(lhs == rhs);
 }
 
+inline bool operator==(const StatusMsg& lhs, const StatusMsg& rhs) {
+  return std::tie(lhs.hd, lhs.ts_recv, lhs.action, lhs.reason,
+                  lhs.trading_event, lhs.is_trading, lhs.is_quoting,
+                  lhs.is_short_sell_restricted) ==
+         std::tie(rhs.hd, rhs.ts_recv, rhs.action, rhs.reason,
+                  rhs.trading_event, rhs.is_trading, rhs.is_quoting,
+                  rhs.is_short_sell_restricted);
+}
+inline bool operator!=(const StatusMsg& lhs, const StatusMsg& rhs) {
+  return !(lhs == rhs);
+}
+
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs);
 inline bool operator!=(const InstrumentDefMsg& lhs,
                        const InstrumentDefMsg& rhs) {
@@ -522,6 +553,8 @@ std::string ToString(const TradeMsg& trade_msg);
 std::ostream& operator<<(std::ostream& stream, const TradeMsg& trade_msg);
 std::string ToString(const OhlcvMsg& ohlcv_msg);
 std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg);
+std::string ToString(const StatusMsg& status_msg);
+std::ostream& operator<<(std::ostream& stream, const StatusMsg& status_msg);
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instr_def_msg);

@@ -327,6 +327,24 @@ std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg) {
       .AddField("volume", ohlcv_msg.volume)
       .Finish();
 }
+std::string ToString(const StatusMsg& status_msg) {
+  return MakeString(status_msg);
+}
+std::ostream& operator<<(std::ostream& stream, const StatusMsg& status_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("StatusMsg")
+      .Build()
+      .AddField("hd", status_msg.hd)
+      .AddField("ts_recv", status_msg.ts_recv)
+      .AddField("action", status_msg.action)
+      .AddField("reason", status_msg.reason)
+      .AddField("trading_event", status_msg.trading_event)
+      .AddField("is_trading", status_msg.is_trading)
+      .AddField("is_quoting", status_msg.is_quoting)
+      .AddField("is_short_sell_restricted", status_msg.is_short_sell_restricted)
+      .Finish();
+}
 std::string ToString(const InstrumentDefMsg& instr_def_msg) {
   return MakeString(instr_def_msg);
 }
@@ -347,7 +365,7 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("max_price_variation", FixPx{instr_def_msg.max_price_variation})
       .AddField("trading_reference_price",
                 FixPx{instr_def_msg.trading_reference_price})
-      .AddField("unit_of_measure_qty", instr_def_msg.unit_of_measure_qty)
+      .AddField("unit_of_measure_qty", FixPx{instr_def_msg.unit_of_measure_qty})
       .AddField("min_price_increment_amount",
                 FixPx{instr_def_msg.min_price_increment_amount})
       .AddField("price_ratio", instr_def_msg.price_ratio)
