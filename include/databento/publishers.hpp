@@ -89,6 +89,8 @@ enum class Venue : std::uint16_t {
   Dbeq = 40,
   // MIAX Sapphire
   Sphr = 41,
+  // Long-Term Stock Exchange, Inc.
+  Ltse = 42,
 };
 
 // A source of data.
@@ -151,6 +153,8 @@ enum class Dataset : std::uint16_t {
   IfeuImpact = 28,
   // ICE Endex iMpact
   NdexImpact = 29,
+  // Databento Equities Max
+  DbeqMax = 30,
 };
 
 // A specific Venue from a specific data source.
@@ -277,6 +281,44 @@ enum class Publisher : std::uint16_t {
   DbeqPlusDbeq = 60,
   // OPRA - MIAX Sapphire
   OpraPillarSphr = 61,
+  // DBEQ Max - NYSE Chicago
+  DbeqMaxXchi = 62,
+  // DBEQ Max - NYSE National
+  DbeqMaxXcis = 63,
+  // DBEQ Max - IEX
+  DbeqMaxIexg = 64,
+  // DBEQ Max - MIAX Pearl
+  DbeqMaxEprl = 65,
+  // DBEQ Max - Nasdaq
+  DbeqMaxXnas = 66,
+  // DBEQ Max - NYSE
+  DbeqMaxXnys = 67,
+  // DBEQ Max - FINRA/NYSE TRF
+  DbeqMaxFinn = 68,
+  // DBEQ Max - FINRA/Nasdaq TRF Carteret
+  DbeqMaxFiny = 69,
+  // DBEQ Max - FINRA/Nasdaq TRF Chicago
+  DbeqMaxFinc = 70,
+  // DBEQ Max - CBOE BZX
+  DbeqMaxBats = 71,
+  // DBEQ Max - CBOE BYX
+  DbeqMaxBaty = 72,
+  // DBEQ Max - CBOE EDGA
+  DbeqMaxEdga = 73,
+  // DBEQ Max - CBOE EDGX
+  DbeqMaxEdgx = 74,
+  // DBEQ Max - Nasdaq BX
+  DbeqMaxXbos = 75,
+  // DBEQ Max - Nasdaq PSX
+  DbeqMaxXpsx = 76,
+  // DBEQ Max - MEMX
+  DbeqMaxMemx = 77,
+  // DBEQ Max - NYSE American
+  DbeqMaxXase = 78,
+  // DBEQ Max - NYSE Arca
+  DbeqMaxArcx = 79,
+  // DBEQ Max - Long-Term Stock Exchange
+  DbeqMaxLtse = 80,
 };
 
 // Get a Publisher's Venue.

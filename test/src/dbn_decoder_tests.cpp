@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -9,6 +10,7 @@
 
 #include "databento/compat.hpp"
 #include "databento/constants.hpp"
+#include "databento/datetime.hpp"
 #include "databento/dbn.hpp"
 #include "databento/dbn_decoder.hpp"
 #include "databento/detail/file_stream.hpp"
@@ -18,6 +20,7 @@
 #include "databento/exceptions.hpp"
 #include "databento/ireadable.hpp"
 #include "databento/record.hpp"
+#include "databento/with_ts_out.hpp"
 
 namespace databento {
 namespace test {
@@ -136,6 +139,59 @@ TEST_F(DbnDecoderTests, TestDecodeDefinitionUpgrade) {
   ASSERT_NE(f_record2, nullptr);
   AssertDefEq<InstrumentDefMsgV2>(ch_record1, f_record1);
   AssertDefEq<InstrumentDefMsgV2>(ch_record2, f_record2);
+}
+
+TEST_F(DbnDecoderTests, TestUpgradeSymbolMappingWithTsOut) {
+  SymbolMappingMsgV1 sym_map{
+      {sizeof(SymbolMappingMsgV1) / RecordHeader::kLengthMultiplier,
+       RType::SymbolMapping, 0, 1, UnixNanos{std::chrono::nanoseconds{2}}},
+      {"ES.c.0"},
+      {"ESH4"},
+      {},
+      {},
+      {}};
+  WithTsOut<SymbolMappingMsgV1> orig{
+      sym_map, UnixNanos{std::chrono::system_clock::now()}};
+  std::array<std::uint8_t, kMaxRecordLen> compat_buffer{};
+  const auto res =
+      DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::Upgrade, true,
+                                     &compat_buffer, Record{&orig.rec.hd});
+  const auto& upgraded = res.Get<WithTsOut<SymbolMappingMsgV2>>();
+  ASSERT_EQ(orig.ts_out, upgraded.ts_out);
+  ASSERT_STREQ(orig.rec.STypeInSymbol(), upgraded.rec.STypeInSymbol());
+  ASSERT_STREQ(orig.rec.STypeOutSymbol(), upgraded.rec.STypeOutSymbol());
+  // `length` properly set
+  ASSERT_EQ(upgraded.rec.hd.Size(), sizeof(upgraded));
+  // used compat buffer
+  ASSERT_EQ(reinterpret_cast<const std::uint8_t*>(&upgraded),
+            compat_buffer.data());
+}
+
+TEST_F(DbnDecoderTests, TestUpgradeMbp1WithTsOut) {
+  WithTsOut<Mbp1Msg> orig{
+      Mbp1Msg{{sizeof(Mbp1Msg) / RecordHeader::kLengthMultiplier,
+               RType::Mbp1,
+               {},
+               {},
+               {}},
+              1'250'000'000,
+              {},
+              {},
+              Side::Ask,
+              {},
+              {},
+              {},
+              {},
+              {},
+              {}},
+      {std::chrono::system_clock::now()}};
+  std::array<std::uint8_t, kMaxRecordLen> compat_buffer{};
+  const auto res =
+      DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::Upgrade, true,
+                                     &compat_buffer, Record{&orig.rec.hd});
+  const auto& upgraded = res.Get<WithTsOut<Mbp1Msg>>();
+  // compat buffer unused and pointer unchanged
+  ASSERT_EQ(&orig, &upgraded);
 }
 
 class DbnDecoderSchemaTests

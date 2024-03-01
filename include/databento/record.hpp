@@ -13,11 +13,13 @@
 #include "databento/enums.hpp"
 #include "databento/flag_set.hpp"    // FlagSet
 #include "databento/publishers.hpp"  // Publisher
+#include "databento/with_ts_out.hpp"
 
 namespace databento {
 // Common data for all Databento Records.
 struct RecordHeader {
-  static constexpr std::size_t kLengthMultiplier = 4;
+  static constexpr std::size_t kLengthMultiplier =
+      kRecordHeaderLengthMultiplier;
 
   // The length of the message in 32-bit words.
   std::uint8_t length;
@@ -299,7 +301,7 @@ struct ImbalanceMsg {
   Side unpaired_side;
   char significant_imbalance;
   // padding for alignment
-  std::array<char, 1> dummy;
+  std::array<char, 1> reserved;
 };
 static_assert(sizeof(ImbalanceMsg) == 112, "ImbalanceMsg size must match Rust");
 static_assert(alignof(ImbalanceMsg) == 8, "Must have 8-byte alignment");
@@ -323,7 +325,7 @@ struct StatMsg {
   std::uint16_t channel_id;
   StatUpdateAction update_action;
   std::uint8_t stat_flags;
-  std::array<char, 6> dummy;
+  std::array<char, 6> reserved;
 };
 static_assert(sizeof(StatMsg) == 64, "StatMsg size must match Rust");
 static_assert(alignof(StatMsg) == 8, "Must have 8-byte alignment");
@@ -537,5 +539,6 @@ std::ostream& operator<<(std::ostream& stream,
                          const SymbolMappingMsg& symbol_mapping_msg);
 
 // The length in bytes of the largest record type.
-static constexpr std::size_t kMaxRecordLen = sizeof(InstrumentDefMsg);
+static constexpr std::size_t kMaxRecordLen =
+    sizeof(WithTsOut<InstrumentDefMsg>);
 }  // namespace databento

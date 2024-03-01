@@ -254,6 +254,10 @@ enum StatType : std::uint16_t {
   // The change in price from the close price of the previous trading session to
   // the most recent trading session. `price` will be set.
   NetChange = 12,
+  /// The volume-weighted average price (VWAP) during the trading session.
+  /// `price` will be set to the VWAP while `quantity` will be the traded
+  /// volume.
+  Vwap = 13,
 };
 }  // namespace stat_type
 using stat_type::StatType;

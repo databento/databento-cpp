@@ -14,8 +14,7 @@
 
 namespace databento {
 // DBN decoder. Set upgrade_policy to control how DBN version 1 data should be
-// handled. Currently it defaults to returning this data as-is, but this default
-// will change in a future version.
+// handled. Defaults to upgrading DBNv1 data to version 2 (the current version).
 class DbnDecoder {
  public:
   explicit DbnDecoder(detail::SharedChannel channel);
@@ -34,7 +33,7 @@ class DbnDecoder {
   // given version and upgrade policy. If an upgrade is applied,
   // compat_buffer is modified.
   static Record DecodeRecordCompat(
-      std::uint8_t version, VersionUpgradePolicy upgrade_policy,
+      std::uint8_t version, VersionUpgradePolicy upgrade_policy, bool ts_out,
       std::array<std::uint8_t, kMaxRecordLen>* compat_buffer, Record rec);
 
   // Should be called exactly once.
@@ -65,6 +64,7 @@ class DbnDecoder {
 
   std::uint8_t version_{};
   VersionUpgradePolicy upgrade_policy_;
+  bool ts_out_{};
   std::unique_ptr<IReadable> input_;
   std::vector<std::uint8_t> read_buffer_;
   std::size_t buffer_idx_{};

@@ -143,8 +143,9 @@ const databento::Record* LiveBlocking::NextRecord(
   }
   current_record_ = Record{BufferRecordHeader()};
   buffer_idx_ += current_record_.Size();
-  current_record_ = DbnDecoder::DecodeRecordCompat(
-      version_, upgrade_policy_, &compat_buffer_, current_record_);
+  current_record_ =
+      DbnDecoder::DecodeRecordCompat(version_, upgrade_policy_, send_ts_out_,
+                                     &compat_buffer_, current_record_);
   return &current_record_;
 }
 

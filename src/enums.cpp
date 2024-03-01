@@ -462,6 +462,15 @@ const char* ToString(StatType stat_type) {
     case StatType::FixingPrice: {
       return "FixingPrice";
     }
+    case StatType::ClosePrice: {
+      return "ClosePrice";
+    }
+    case StatType::NetChange: {
+      return "NetChange";
+    }
+    case StatType::Vwap: {
+      return "Vwap";
+    }
     default: {
       return "Unknown";
     }

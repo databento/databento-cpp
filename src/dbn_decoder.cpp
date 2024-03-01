@@ -13,6 +13,7 @@
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"
 #include "databento/record.hpp"
+#include "databento/with_ts_out.hpp"
 
 using databento::DbnDecoder;
 
@@ -46,6 +47,18 @@ const char* Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
   byte_it += num_bytes;
   return reinterpret_cast<const char*>(pos);
 }
+
+std::string Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
+                    const std::ptrdiff_t num_bytes, const char* context) {
+  const auto cstr = Consume(byte_it, num_bytes);
+  // strnlen isn't portable
+  const std::size_t str_len = std::find(cstr, cstr + num_bytes, '\0') - cstr;
+  if (str_len == num_bytes) {
+    throw databento::DbnResponseError{std::string{"Invalid "} + context +
+                                      " missing null terminator"};
+  }
+  return std::string{cstr, str_len};
+}
 }  // namespace
 
 DbnDecoder::DbnDecoder(detail::SharedChannel channel)
@@ -57,7 +70,7 @@ DbnDecoder::DbnDecoder(detail::FileStream file_stream)
           new detail::FileStream{std::move(file_stream)}}) {}
 
 DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input)
-    : DbnDecoder(std::move(input), VersionUpgradePolicy::AsIs) {}
+    : DbnDecoder(std::move(input), VersionUpgradePolicy::Upgrade) {}
 
 DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input,
                        VersionUpgradePolicy upgrade_policy)
@@ -106,7 +119,7 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
         std::to_string(res.version)};
   }
   auto read_buffer_it = buffer.cbegin();
-  res.dataset = std::string{Consume(read_buffer_it, kDatasetCstrLen)};
+  res.dataset = Consume(read_buffer_it, kDatasetCstrLen, "dataset");
   const auto raw_schema = Consume<std::uint16_t>(read_buffer_it);
   if (raw_schema == std::numeric_limits<std::uint16_t>::max()) {
     res.has_mixed_schema = true;
@@ -176,23 +189,47 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
   read_buffer_.resize(version_and_size.second);
   input_->ReadExact(read_buffer_.data(), read_buffer_.size());
   buffer_idx_ = read_buffer_.size();
-  return DbnDecoder::DecodeMetadataFields(version_, read_buffer_);
+  auto metadata = DbnDecoder::DecodeMetadataFields(version_, read_buffer_);
+  ts_out_ = metadata.ts_out;
+  return metadata;
 }
 
+namespace {
+template <typename T, typename U>
+databento::Record UpgradeRecord(
+    bool ts_out,
+    std::array<std::uint8_t, databento::kMaxRecordLen>* compat_buffer,
+    databento::Record rec) {
+  if (ts_out) {
+    const auto orig = rec.Get<databento::WithTsOut<T>>();
+    const databento::WithTsOut<U> v2{orig.rec.ToV2(), orig.ts_out};
+    const auto v2_ptr = reinterpret_cast<const std::uint8_t*>(&v2);
+    std::copy(v2_ptr, v2_ptr + v2.rec.hd.Size(), compat_buffer->data());
+  } else {
+    const auto v2 = rec.Get<T>().ToV2();
+    const auto v2_ptr = reinterpret_cast<const std::uint8_t*>(&v2);
+    std::copy(v2_ptr, v2_ptr + v2.hd.Size(), compat_buffer->data());
+  }
+  return databento::Record{
+      reinterpret_cast<databento::RecordHeader*>(compat_buffer->data())};
+}
+}  // namespace
+
 databento::Record DbnDecoder::DecodeRecordCompat(
-    std::uint8_t version, VersionUpgradePolicy upgrade_policy,
+    std::uint8_t version, VersionUpgradePolicy upgrade_policy, bool ts_out,
     std::array<std::uint8_t, kMaxRecordLen>* compat_buffer, Record rec) {
   if (version == 1 && upgrade_policy == VersionUpgradePolicy::Upgrade) {
     if (rec.RType() == RType::InstrumentDef) {
-      auto v2 = rec.Get<InstrumentDefMsgV1>().ToV2();
-      auto v2_ptr = reinterpret_cast<std::uint8_t*>(&v2);
-      std::copy(v2_ptr, v2_ptr + v2.hd.Size(), compat_buffer->data());
-      return Record{reinterpret_cast<RecordHeader*>(compat_buffer->data())};
+      return UpgradeRecord<InstrumentDefMsgV1, InstrumentDefMsgV2>(
+          ts_out, compat_buffer, rec);
     } else if (rec.RType() == RType::SymbolMapping) {
-      auto v2 = rec.Get<SymbolMappingMsgV1>().ToV2();
-      auto v2_ptr = reinterpret_cast<std::uint8_t*>(&v2);
-      std::copy(v2_ptr, v2_ptr + v2.hd.Size(), compat_buffer->data());
-      return Record{reinterpret_cast<RecordHeader*>(compat_buffer->data())};
+      return UpgradeRecord<SymbolMappingMsgV1, SymbolMappingMsgV2>(
+          ts_out, compat_buffer, rec);
+    } else if (rec.RType() == RType::Error) {
+      return UpgradeRecord<ErrorMsgV1, ErrorMsgV2>(ts_out, compat_buffer, rec);
+    } else if (rec.RType() == RType::System) {
+      return UpgradeRecord<SystemMsgV1, SystemMsgV2>(ts_out, compat_buffer,
+                                                     rec);
     }
   }
   return rec;
@@ -216,7 +253,7 @@ const databento::Record* DbnDecoder::DecodeRecord() {
   current_record_ = Record{BufferRecordHeader()};
   buffer_idx_ += current_record_.Size();
   current_record_ = DbnDecoder::DecodeRecordCompat(
-      version_, upgrade_policy_, &compat_buffer_, current_record_);
+      version_, upgrade_policy_, ts_out_, &compat_buffer_, current_record_);
   return &current_record_;
 }
 
@@ -266,8 +303,8 @@ bool DbnDecoder::DetectCompression() {
 std::string DbnDecoder::DecodeSymbol(
     std::size_t symbol_cstr_len,
     std::vector<std::uint8_t>::const_iterator& read_buffer_it) {
-  return std::string{
-      Consume(read_buffer_it, static_cast<std::ptrdiff_t>(symbol_cstr_len))};
+  return Consume(read_buffer_it, static_cast<std::ptrdiff_t>(symbol_cstr_len),
+                 "symbol");
 }
 
 std::vector<std::string> DbnDecoder::DecodeRepeatedSymbol(
