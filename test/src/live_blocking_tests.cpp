@@ -266,7 +266,7 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
 TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
   constexpr auto kRecCount = 5;
   constexpr auto kTsOut = true;
-  constexpr WithTsOut<TradeMsg> kRec{
+  const WithTsOut<TradeMsg> send_rec{
       {DummyHeader<TradeMsg>(RType::Mbp0),
        1,
        2,
@@ -279,11 +279,11 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
        2},
       UnixNanos{std::chrono::seconds{1678910279000000000}}};
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, kTsOut, [kRec](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut, [send_rec](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         for (size_t i = 0; i < kRecCount; ++i) {
-          self.SendRecord(kRec);
+          self.SendRecord(send_rec);
         }
       }};
 
@@ -293,16 +293,16 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
     ASSERT_TRUE(rec.Holds<WithTsOut<TradeMsg>>()) << "Failed on call " << i;
-    EXPECT_EQ(rec.Get<WithTsOut<TradeMsg>>(), kRec);
+    EXPECT_EQ(rec.Get<WithTsOut<TradeMsg>>(), send_rec);
     // Extracting the plain record (without ts_out) should also work
     ASSERT_TRUE(rec.Holds<TradeMsg>()) << "Failed on call " << i;
-    EXPECT_EQ(rec.Get<TradeMsg>(), kRec.rec);
+    EXPECT_EQ(rec.Get<TradeMsg>(), send_rec.rec);
   }
 }
 
 TEST_F(LiveBlockingTests, TestStop) {
   constexpr auto kTsOut = true;
-  constexpr WithTsOut<TradeMsg> kRec{
+  const WithTsOut<TradeMsg> send_rec{
       {DummyHeader<WithTsOut<TradeMsg>>(RType::Mbp0),
        1,
        2,
@@ -316,27 +316,27 @@ TEST_F(LiveBlockingTests, TestStop) {
       UnixNanos{std::chrono::seconds{1678910279000000000}}};
   std::atomic<bool> has_stopped{false};
   std::unique_ptr<mock::MockLsgServer> mock_server{
-      new mock::MockLsgServer{dataset::kXnasItch, kTsOut,
-                              [kRec, &has_stopped](mock::MockLsgServer& self) {
-                                self.Accept();
-                                self.Authenticate();
-                                self.SendRecord(kRec);
-                                while (!has_stopped) {
-                                  std::this_thread::yield();
-                                }
-                                const std::string rec_str{
-                                    reinterpret_cast<const char*>(&kRec),
-                                    sizeof(kRec)};
-                                while (self.UncheckedSend(rec_str) ==
-                                       static_cast<::ssize_t>(rec_str.size())) {
-                                }
-                              }}  // namespace test
-  };                              // namespace databento
+      new mock::MockLsgServer{
+          dataset::kXnasItch, kTsOut,
+          [send_rec, &has_stopped](mock::MockLsgServer& self) {
+            self.Accept();
+            self.Authenticate();
+            self.SendRecord(send_rec);
+            while (!has_stopped) {
+              std::this_thread::yield();
+            }
+            const std::string rec_str{reinterpret_cast<const char*>(&send_rec),
+                                      sizeof(send_rec)};
+            while (self.UncheckedSend(rec_str) ==
+                   static_cast<::ssize_t>(rec_str.size())) {
+            }
+          }}  // namespace test
+  };          // namespace databento
 
   LiveBlocking target{
       logger_.get(),       kKey,   dataset::kXnasItch,    kLocalhost,
       mock_server->Port(), kTsOut, VersionUpgradePolicy{}};
-  ASSERT_EQ(target.NextRecord().Get<WithTsOut<TradeMsg>>(), kRec);
+  ASSERT_EQ(target.NextRecord().Get<WithTsOut<TradeMsg>>(), send_rec);
   target.Stop();
   has_stopped = true;
   // kill mock server and join thread before client goes out of scope

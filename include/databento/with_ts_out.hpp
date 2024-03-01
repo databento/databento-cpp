@@ -11,7 +11,7 @@ template <typename R>
 struct WithTsOut {
   static bool HasRType(RType rtype) { return R::HasRType(rtype); }
 
-  constexpr WithTsOut(R r, UnixNanos ts) : rec{r}, ts_out{ts} {
+  WithTsOut(R r, UnixNanos ts) : rec{r}, ts_out{ts} {
     // Adjust length for `ts_out`
     this->rec.hd.length = sizeof(*this) / kRecordHeaderLengthMultiplier;
   }
