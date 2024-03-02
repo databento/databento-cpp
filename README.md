@@ -70,6 +70,13 @@ By default, cpp-httplib and nlohmann\_json are downloaded by CMake as part of th
 If you would like to use a local version of these libraries, enable the CMake flag
 `DATABENTO_ENABLE_EXTERNAL_HTTPLIB` or `DATABENTO_ENABLE_EXTERNAL_JSON`.
 
+To Install the dependencies on Ubuntu
+```
+$ sudo apt update
+$ sudo apt install libssl-dev
+$ sudo apt install libzstd-dev
+```
+
 ### Live
 
 Real-time and intraday replay is provided through the Live clients.
