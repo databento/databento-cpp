@@ -8,6 +8,7 @@
 - Format `unit_of_measure_qty` as a fixed-precision decimal
 - Added logic to skip `find_package` call if `nlohmann_json` and `httplib` targets
   already exist (credit: @akovachev)
+- Add specific instructions for installing dependencies on Ubuntu and macOS (credit: @camrongodbout)
 
 ## 0.16.0 - 2024-03-01
 
