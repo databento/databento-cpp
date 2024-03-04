@@ -6,6 +6,8 @@
 - Add `StatusMsg` record, and `StatusAction`, `StatusReason`, `TradingEvent`, and
   `TriState` enums
 - Format `unit_of_measure_qty` as a fixed-precision decimal
+- Added logic to skip `find_package` call if `nlohmann_json` and `httplib` targets
+  already exist (credit: @akovachev)
 
 ## 0.16.0 - 2024-03-01
 
