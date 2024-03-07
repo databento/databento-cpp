@@ -74,7 +74,7 @@ DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input)
 
 DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input,
                        VersionUpgradePolicy upgrade_policy)
-    : input_{std::move(input)}, upgrade_policy_{upgrade_policy} {
+    : upgrade_policy_{upgrade_policy}, input_{std::move(input)} {
   read_buffer_.reserve(kBufferCapacity);
   if (DetectCompression()) {
     input_ = std::unique_ptr<detail::ZstdStream>(
