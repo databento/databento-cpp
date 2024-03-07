@@ -10,6 +10,9 @@
   already exist (credit: @akovachev)
 - Add specific instructions for installing dependencies on Ubuntu and macOS (credit: @camrongodbout)
 
+### Bug fixes
+- Fix out-of-order initialization in `DbnDecoder` (credit: @Hailios)
+
 ## 0.16.0 - 2024-03-01
 
 ### Enhancements
