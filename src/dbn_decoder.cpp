@@ -14,18 +14,11 @@
 #include "databento/exceptions.hpp"
 #include "databento/record.hpp"
 #include "databento/with_ts_out.hpp"
+#include "encode_decode_constants.hpp"
 
 using databento::DbnDecoder;
 
 namespace {
-constexpr std::size_t kMagicSize = 4;
-constexpr std::uint32_t kZstdMagicNumber = 0xFD2FB528;
-constexpr auto kDbnPrefix = "DBN";
-constexpr std::size_t kFixedMetadataLen = 100;
-constexpr std::size_t kDatasetCstrLen = 16;
-constexpr std::size_t kReservedLen = 53;
-constexpr std::size_t kReservedLenV1 = 47;
-constexpr std::size_t kBufferCapacity = 8UL * 1024;
 
 template <typename T>
 T Consume(std::vector<std::uint8_t>::const_iterator& byte_it) {

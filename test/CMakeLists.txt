@@ -28,6 +28,7 @@ set(
   src/batch_tests.cpp
   src/datetime_tests.cpp
   src/dbn_decoder_tests.cpp
+  src/dbn_encoder_tests.cpp
   src/dbn_tests.cpp
   src/file_stream_tests.cpp
   src/flag_set_tests.cpp
