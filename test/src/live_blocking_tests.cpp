@@ -331,7 +331,7 @@ TEST_F(LiveBlockingTests, TestStop) {
                    static_cast<::ssize_t>(rec_str.size())) {
             }
           }}  // namespace test
-  };          // namespace databento
+  };  // namespace databento
 
   LiveBlocking target{
       logger_.get(),       kKey,   dataset::kXnasItch,    kLocalhost,
