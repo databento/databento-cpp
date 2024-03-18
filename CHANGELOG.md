@@ -3,15 +3,18 @@
 ## 0.17.0 - TBD
 
 ### Enhancements
-- Add `StatusMsg` record, and `StatusAction`, `StatusReason`, `TradingEvent`, and
+- Added `StatusMsg` record, and `StatusAction`, `StatusReason`, `TradingEvent`, and
   `TriState` enums
-- Format `unit_of_measure_qty` as a fixed-precision decimal
+- Added `Volatility` and `Delta` `StatType` variants
+- Added `Undefined` and `TimeProRata` `MatchAlgorithm` variants
+- Changed format of `unit_of_measure_qty` to a fixed-precision decimal
 - Added logic to skip `find_package` call if `nlohmann_json` and `httplib` targets
   already exist (credit: @akovachev)
-- Add specific instructions for installing dependencies on Ubuntu and macOS (credit: @camrongodbout)
+- Added specific instructions for installing dependencies on Ubuntu and macOS (credit: @camrongodbout)
 
 ### Bug fixes
-- Fix out-of-order initialization in `DbnDecoder` (credit: @Hailios)
+- Fixed out-of-order initialization in `DbnDecoder` (credit: @Hailios)
+- Renamed `MatchAlgorithm::EurodollarOptions` to `MatchAlgorithm::EurodollarFutures`
 
 ## 0.16.0 - 2024-03-01
 

@@ -188,6 +188,7 @@ using instrument_class::InstrumentClass;
 
 namespace match_algorithm {
 enum MatchAlgorithm : char {
+  Undefined = ' ',
   Fifo = 'F',
   Configurable = 'K',
   ProRata = 'C',
@@ -195,7 +196,8 @@ enum MatchAlgorithm : char {
   ThresholdProRata = 'O',
   FifoTopLmm = 'S',
   ThresholdProRataLmm = 'Q',
-  EurodollarOptions = 'Y',
+  EurodollarFutures = 'Y',
+  TimeProRata = 'P',
 };
 }  // namespace match_algorithm
 using match_algorithm::MatchAlgorithm;
@@ -259,6 +261,12 @@ enum StatType : std::uint16_t {
   /// `price` will be set to the VWAP while `quantity` will be the traded
   /// volume.
   Vwap = 13,
+  // The implied volatility associated with the settlement price. `price` will
+  // be set with the standard precision.
+  Volatility = 14,
+  // The option delta associated with the settlement price. `price` will be set
+  // with the standard precision.
+  Delta = 15,
 };
 }  // namespace stat_type
 using stat_type::StatType;

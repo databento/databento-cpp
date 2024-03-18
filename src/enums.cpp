@@ -372,6 +372,9 @@ const char* ToString(InstrumentClass instrument_class) {
 
 const char* ToString(MatchAlgorithm match_algorithm) {
   switch (match_algorithm) {
+    case match_algorithm::Undefined: {
+      return "Undefined";
+    }
     case match_algorithm::Fifo: {
       return "Fifo";
     }
@@ -393,8 +396,11 @@ const char* ToString(MatchAlgorithm match_algorithm) {
     case match_algorithm::ThresholdProRataLmm: {
       return "ThresholdProRataLmm";
     }
-    case match_algorithm::EurodollarOptions: {
-      return "EurodollarOptions";
+    case match_algorithm::EurodollarFutures: {
+      return "EurodollarFutures";
+    }
+    case match_algorithm::TimeProRata: {
+      return "TimeProRata";
     }
     default: {
       return "Unknown";
@@ -473,6 +479,12 @@ const char* ToString(StatType stat_type) {
     }
     case StatType::Vwap: {
       return "Vwap";
+    }
+    case StatType::Volatility: {
+      return "Volatility";
+    }
+    case StatType::Delta: {
+      return "Delta";
     }
     default: {
       return "Unknown";
