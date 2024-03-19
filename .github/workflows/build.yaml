@@ -3,6 +3,7 @@ name: build
 # Build and test databento-cpp
 
 on:
+  pull_request:
   push:
 
 jobs:
