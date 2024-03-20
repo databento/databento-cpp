@@ -34,6 +34,12 @@ enum class Schema : std::uint16_t {
   Statistics = 10,
   Status = 11,
   Imbalance = 12,
+  Cbbo = 14,
+  Cbbo1S = 15,
+  Cbbo1M = 16,
+  Tcbbo = 17,
+  Bbo1S = 18,
+  Bbo1M = 19,
 };
 
 // Represents a data output encoding.
@@ -133,6 +139,12 @@ enum RType : std::uint8_t {
   System = 0x17,
   Statistics = 0x18,
   Mbo = 0xA0,
+  Cbbo = 0xB1,
+  Cbbo1S = 0xC0,
+  Cbbo1M = 0xC1,
+  Tcbbo = 0xC2,
+  Bbo1S = 0xC3,
+  Bbo1M = 0xC4,
 };
 }  // namespace rtype
 using rtype::RType;

@@ -189,61 +189,6 @@ bool databento::operator==(const ImbalanceMsg& lhs, const ImbalanceMsg& rhs) {
 }
 
 namespace databento {
-namespace detail {
-template <>
-std::string ToString(const Mbp1Msg& mbp_msg) {
-  return MakeString(mbp_msg);
-}
-template <>
-std::string ToString(const Mbp10Msg& mbp_msg) {
-  return MakeString(mbp_msg);
-}
-template <>
-std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp_msg) {
-  return StreamOpBuilder{stream}
-      .SetTypeName("Mbp1Msg")
-      .SetSpacer("\n    ")
-      .Build()
-      .AddField("hd", mbp_msg.hd)
-      .AddField("price", FixPx{mbp_msg.price})
-      .AddField("size", mbp_msg.size)
-      .AddField("action", mbp_msg.action)
-      .AddField("side", mbp_msg.side)
-      .AddField("flags", mbp_msg.flags)
-      .AddField("depth", mbp_msg.depth)
-      .AddField("ts_recv", mbp_msg.ts_recv)
-      .AddField("ts_in_delta", mbp_msg.ts_in_delta)
-      .AddField("sequence", mbp_msg.sequence)
-      .AddField("levels", std::get<0>(mbp_msg.levels))
-      .Finish();
-}
-template <>
-std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp_msg) {
-  std::ostringstream levelss;
-  auto levels_helper =
-      StreamOpBuilder{levelss}.SetSpacer("\n    ").SetIndent("    ").Build();
-  for (const auto& levels : mbp_msg.levels) {
-    levels_helper.AddItem(levels);
-  }
-  return StreamOpBuilder{stream}
-      .SetTypeName("Mbp10Msg")
-      .SetSpacer("\n    ")
-      .Build()
-      .AddField("hd", mbp_msg.hd)
-      .AddField("price", FixPx{mbp_msg.price})
-      .AddField("size", mbp_msg.size)
-      .AddField("action", mbp_msg.action)
-      .AddField("side", mbp_msg.side)
-      .AddField("flags", mbp_msg.flags)
-      .AddField("depth", mbp_msg.depth)
-      .AddField("ts_recv", mbp_msg.ts_recv)
-      .AddField("ts_in_delta", mbp_msg.ts_in_delta)
-      .AddField("sequence", mbp_msg.sequence)
-      .AddField("levels",
-                static_cast<std::ostringstream&>(levels_helper.Finish()))
-      .Finish();
-}
-}  // namespace detail
 
 std::string ToString(const RecordHeader& header) { return MakeString(header); }
 std::ostream& operator<<(std::ostream& stream, const RecordHeader& header) {
@@ -289,6 +234,86 @@ std::ostream& operator<<(std::ostream& stream, const BidAskPair& ba_pair) {
       .AddField("ask_sz", ba_pair.ask_sz)
       .AddField("bid_ct", ba_pair.bid_ct)
       .AddField("ask_ct", ba_pair.ask_ct)
+      .Finish();
+}
+std::string ToString(const ConsolidatedBidAskPair& ba_pair) {
+  return MakeString(ba_pair);
+}
+std::ostream& operator<<(std::ostream& stream,
+                         const ConsolidatedBidAskPair& ba_pair) {
+  return StreamOpBuilder{stream}
+      .SetSpacer(" ")
+      .SetTypeName("ConsolidatedBidAskPair")
+      .Build()
+      .AddField("bid_px", FixPx{ba_pair.bid_px})
+      .AddField("ask_px", FixPx{ba_pair.ask_px})
+      .AddField("bid_sz", ba_pair.bid_sz)
+      .AddField("ask_sz", ba_pair.ask_sz)
+      .AddField("bid_pb", ba_pair.bid_pb)
+      .AddField("ask_pb", ba_pair.ask_pb)
+      .Finish();
+}
+std::string ToString(const Mbp1Msg& mbp_msg) { return MakeString(mbp_msg); }
+std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp_msg) {
+  return StreamOpBuilder{stream}
+      .SetTypeName("Mbp1Msg")
+      .SetSpacer("\n    ")
+      .Build()
+      .AddField("hd", mbp_msg.hd)
+      .AddField("price", FixPx{mbp_msg.price})
+      .AddField("size", mbp_msg.size)
+      .AddField("action", mbp_msg.action)
+      .AddField("side", mbp_msg.side)
+      .AddField("flags", mbp_msg.flags)
+      .AddField("depth", mbp_msg.depth)
+      .AddField("ts_recv", mbp_msg.ts_recv)
+      .AddField("ts_in_delta", mbp_msg.ts_in_delta)
+      .AddField("sequence", mbp_msg.sequence)
+      .AddField("levels", std::get<0>(mbp_msg.levels))
+      .Finish();
+}
+std::string ToString(const Mbp10Msg& mbp_msg) { return MakeString(mbp_msg); }
+std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp_msg) {
+  std::ostringstream levelss;
+  auto levels_helper =
+      StreamOpBuilder{levelss}.SetSpacer("\n    ").SetIndent("    ").Build();
+  for (const auto& levels : mbp_msg.levels) {
+    levels_helper.AddItem(levels);
+  }
+  return StreamOpBuilder{stream}
+      .SetTypeName("Mbp10Msg")
+      .SetSpacer("\n    ")
+      .Build()
+      .AddField("hd", mbp_msg.hd)
+      .AddField("price", FixPx{mbp_msg.price})
+      .AddField("size", mbp_msg.size)
+      .AddField("action", mbp_msg.action)
+      .AddField("side", mbp_msg.side)
+      .AddField("flags", mbp_msg.flags)
+      .AddField("depth", mbp_msg.depth)
+      .AddField("ts_recv", mbp_msg.ts_recv)
+      .AddField("ts_in_delta", mbp_msg.ts_in_delta)
+      .AddField("sequence", mbp_msg.sequence)
+      .AddField("levels",
+                static_cast<std::ostringstream&>(levels_helper.Finish()))
+      .Finish();
+}
+std::string ToString(const CbboMsg& cbbo_msg) { return MakeString(cbbo_msg); }
+std::ostream& operator<<(std::ostream& stream, const CbboMsg& cbbo_msg) {
+  return StreamOpBuilder{stream}
+      .SetTypeName("CbboMsg")
+      .SetSpacer("\n    ")
+      .Build()
+      .AddField("hd", cbbo_msg.hd)
+      .AddField("price", FixPx{cbbo_msg.price})
+      .AddField("size", cbbo_msg.size)
+      .AddField("action", cbbo_msg.action)
+      .AddField("side", cbbo_msg.side)
+      .AddField("flags", cbbo_msg.flags)
+      .AddField("ts_recv", cbbo_msg.ts_recv)
+      .AddField("ts_in_delta", cbbo_msg.ts_in_delta)
+      .AddField("sequence", cbbo_msg.sequence)
+      .AddField("levels", std::get<0>(cbbo_msg.levels))
       .Finish();
 }
 std::string ToString(const TradeMsg& trade_msg) {

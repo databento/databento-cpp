@@ -62,6 +62,24 @@ const char* ToString(Schema schema) {
     case Schema::Status: {
       return "status";
     }
+    case Schema::Cbbo: {
+      return "cbbo";
+    }
+    case Schema::Cbbo1S: {
+      return "cbbo-1s";
+    }
+    case Schema::Cbbo1M: {
+      return "cbbo-1m";
+    }
+    case Schema::Tcbbo: {
+      return "tcbbo";
+    }
+    case Schema::Bbo1S: {
+      return "bbo-1s";
+    }
+    case Schema::Bbo1M: {
+      return "bbo-1m";
+    }
     default: {
       return "unknown";
     }
@@ -285,6 +303,24 @@ const char* ToString(RType rtype) {
     }
     case RType::Mbo: {
       return "Mbo";
+    }
+    case RType::Cbbo: {
+      return "Cbbo";
+    }
+    case RType::Cbbo1S: {
+      return "Cbbo1S";
+    }
+    case RType::Cbbo1M: {
+      return "Cbbo1M";
+    }
+    case RType::Tcbbo: {
+      return "Tcbbo";
+    }
+    case RType::Bbo1S: {
+      return "Bbo1S";
+    }
+    case RType::Bbo1M: {
+      return "Bbo1M";
     }
     default: {
       return "Unknown";

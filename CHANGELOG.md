@@ -11,6 +11,9 @@
 - Added logic to skip `find_package` call if `nlohmann_json` and `httplib` targets
   already exist (credit: @akovachev)
 - Added specific instructions for installing dependencies on Ubuntu and macOS (credit: @camrongodbout)
+- Added `CbboMsg` record and corresponding `ConsolidatedBidAskPair` structure
+- Added new enum values for `Schema` and `RType` corresponding to new schemas
+`cbbo`, `cbbo-1s`, `cbbo-1m`, `tcbbo`, `bbo-1s`, `bbo-1m`
 
 ### Bug fixes
 - Fixed out-of-order initialization in `DbnDecoder` (credit: @Hailios)
