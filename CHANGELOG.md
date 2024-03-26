@@ -15,6 +15,13 @@
 - Added new enum values for `Schema` and `RType` corresponding to new schemas
 `cbbo`, `cbbo-1s`, `cbbo-1m`, `tcbbo`, `bbo-1s`, `bbo-1m`
 
+### Breaking changes
+- Renamed publishers from deprecated datasets to their respective sources (`XNAS.NLS`
+and `XNYS.TRADES` respectively)
+
+### Deprecations
+- Deprecated dataset values `FINN.NLS` and `FINY.TRADES`
+
 ### Bug fixes
 - Fixed out-of-order initialization in `DbnDecoder` (credit: @Hailios)
 - Renamed `MatchAlgorithm::EurodollarOptions` to `MatchAlgorithm::EurodollarFutures`
