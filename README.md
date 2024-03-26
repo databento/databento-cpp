@@ -152,7 +152,7 @@ int main() {
 
 To run this program, set the `DATABENTO_API_KEY` environment variable with an actual API key.
 
-Additional example standalone executables are provided in the [examples](./examples) directory.
+Additional example standalone executables are provided in the [`example`](./example) directory.
 These examples can be compiled by enabling the cmake option `DATABENTO_ENABLE_EXAMPLES` with `-DDATABENTO_ENABLE_EXAMPLES=1` during the configure step.
 
 ## Documentation
