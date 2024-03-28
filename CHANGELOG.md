@@ -1,23 +1,23 @@
 # Changelog
 
-## 0.17.0 - TBD
+## 0.17.0 - 2024-04-01
 
 ### Enhancements
 - Added `StatusMsg` record, and `StatusAction`, `StatusReason`, `TradingEvent`, and
   `TriState` enums
+- Added `CbboMsg` record and corresponding `ConsolidatedBidAskPair` structure
+- Added new enum values for `Schema` and `RType` corresponding to new schemas
+  `cbbo`, `cbbo-1s`, `cbbo-1m`, `tcbbo`, `bbo-1s`, `bbo-1m`
 - Added `Volatility` and `Delta` `StatType` variants
 - Added `Undefined` and `TimeProRata` `MatchAlgorithm` variants
 - Changed format of `unit_of_measure_qty` to a fixed-precision decimal
 - Added logic to skip `find_package` call if `nlohmann_json` and `httplib` targets
   already exist (credit: @akovachev)
 - Added specific instructions for installing dependencies on Ubuntu and macOS (credit: @camrongodbout)
-- Added `CbboMsg` record and corresponding `ConsolidatedBidAskPair` structure
-- Added new enum values for `Schema` and `RType` corresponding to new schemas
-`cbbo`, `cbbo-1s`, `cbbo-1m`, `tcbbo`, `bbo-1s`, `bbo-1m`
 
 ### Breaking changes
 - Renamed publishers from deprecated datasets to their respective sources (`XNAS.NLS`
-and `XNYS.TRADES` respectively)
+  and `XNYS.TRADES` respectively)
 
 ### Deprecations
 - Deprecated dataset values `FINN.NLS` and `FINY.TRADES`
