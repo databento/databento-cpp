@@ -127,9 +127,9 @@ enum class Dataset : std::uint16_t {
   MemxMemoir = 15,
   // MIAX Pearl Depth
   EprlDom = 16,
-  // FINRA/Nasdaq TRF
+  // FINRA/Nasdaq TRF (DEPRECATED)
   FinnNls = 17,
-  // FINRA/NYSE TRF
+  // FINRA/NYSE TRF (DEPRECATED)
   FinyTrades = 18,
   // OPRA Binary
   OpraPillar = 19,
@@ -192,11 +192,11 @@ enum class Publisher : std::uint16_t {
   // MIAX Pearl Depth
   EprlDomEprl = 16,
   // FINRA/Nasdaq TRF Carteret
-  FinnNlsFinn = 17,
+  XnasNlsFinn = 17,
   // FINRA/Nasdaq TRF Chicago
-  FinnNlsFinc = 18,
+  XnasNlsFinc = 18,
   // FINRA/NYSE TRF
-  FinyTradesFiny = 19,
+  XnysTradesFiny = 19,
   // OPRA - NYSE American
   OpraPillarAmxo = 20,
   // OPRA - Boston Options Exchange

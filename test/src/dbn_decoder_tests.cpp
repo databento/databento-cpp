@@ -469,6 +469,84 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_EQ(ch_mbp2.levels[2].ask_ct, 25);
 }
 
+TEST_P(DbnDecoderSchemaTests, TestDecodeCbbo) {
+  const auto extension = GetParam().first;
+  const auto version = GetParam().second;
+  ReadFromFile("cbbo", extension, version);
+
+  const Metadata ch_metadata = channel_target_->DecodeMetadata();
+  const Metadata f_metadata = file_target_->DecodeMetadata();
+  EXPECT_EQ(ch_metadata, f_metadata);
+  EXPECT_EQ(ch_metadata.version, version);
+  EXPECT_EQ(ch_metadata.dataset, dataset::kGlbxMdp3);
+  EXPECT_EQ(ch_metadata.schema, Schema::Cbbo);
+  EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1609160400000000000);
+  EXPECT_EQ(ch_metadata.end.time_since_epoch().count(), 1609200000000000000);
+  EXPECT_EQ(ch_metadata.limit, 2);
+  EXPECT_EQ(ch_metadata.stype_in, SType::RawSymbol);
+  EXPECT_EQ(ch_metadata.stype_out, SType::InstrumentId);
+  EXPECT_EQ(ch_metadata.symbols, std::vector<std::string>{"ESH1"});
+  EXPECT_TRUE(ch_metadata.partial.empty());
+  EXPECT_TRUE(ch_metadata.not_found.empty());
+  AssertMappings(ch_metadata.mappings);
+
+  const auto ch_record1 = channel_target_->DecodeRecord();
+  const auto f_record1 = file_target_->DecodeRecord();
+  ASSERT_NE(ch_record1, nullptr);
+  ASSERT_NE(f_record1, nullptr);
+  ASSERT_TRUE(ch_record1->Holds<CbboMsg>());
+  ASSERT_TRUE(f_record1->Holds<CbboMsg>());
+  const auto& ch_cbbo1 = ch_record1->Get<CbboMsg>();
+  const auto& f_mbp1 = f_record1->Get<CbboMsg>();
+  EXPECT_EQ(ch_cbbo1, f_mbp1);
+  EXPECT_EQ(ch_cbbo1.hd.publisher_id, 1);
+  EXPECT_EQ(ch_cbbo1.hd.instrument_id, 5482);
+  EXPECT_EQ(ch_cbbo1.hd.ts_event.time_since_epoch().count(),
+            1609160400006001487);
+  EXPECT_EQ(ch_cbbo1.price, 3720500000000);
+  EXPECT_EQ(ch_cbbo1.size, 1);
+  EXPECT_EQ(ch_cbbo1.action, Action::Add);
+  EXPECT_EQ(ch_cbbo1.side, Side::Ask);
+  EXPECT_EQ(ch_cbbo1.flags, 128);
+  EXPECT_EQ(ch_cbbo1.ts_recv.time_since_epoch().count(), 1609160400006136329);
+  EXPECT_EQ(ch_cbbo1.ts_in_delta.count(), 17214);
+  EXPECT_EQ(ch_cbbo1.sequence, 1170362);
+  EXPECT_EQ(ch_cbbo1.levels[0].bid_px, 3720250000000);
+  EXPECT_EQ(ch_cbbo1.levels[0].ask_px, 3720500000000);
+  EXPECT_EQ(ch_cbbo1.levels[0].bid_sz, 24);
+  EXPECT_EQ(ch_cbbo1.levels[0].ask_sz, 11);
+  EXPECT_EQ(ch_cbbo1.levels[0].bid_pb, 1);
+  EXPECT_EQ(ch_cbbo1.levels[0].ask_pb, 1);
+
+  const auto ch_record2 = channel_target_->DecodeRecord();
+  const auto f_record2 = file_target_->DecodeRecord();
+  ASSERT_NE(ch_record2, nullptr);
+  ASSERT_NE(f_record2, nullptr);
+  ASSERT_TRUE(ch_record2->Holds<CbboMsg>());
+  ASSERT_TRUE(f_record2->Holds<CbboMsg>());
+  const auto& ch_cbbo2 = ch_record2->Get<CbboMsg>();
+  const auto& f_mbp2 = f_record2->Get<CbboMsg>();
+  EXPECT_EQ(ch_cbbo2, f_mbp2);
+  EXPECT_EQ(ch_cbbo2.hd.publisher_id, 1);
+  EXPECT_EQ(ch_cbbo2.hd.instrument_id, 5482);
+  EXPECT_EQ(ch_cbbo2.hd.ts_event.time_since_epoch().count(),
+            1609160400006146661);
+  EXPECT_EQ(ch_cbbo2.price, 3720500000000);
+  EXPECT_EQ(ch_cbbo2.size, 1);
+  EXPECT_EQ(ch_cbbo2.action, Action::Add);
+  EXPECT_EQ(ch_cbbo2.side, Side::Ask);
+  EXPECT_EQ(ch_cbbo2.flags, 128);
+  EXPECT_EQ(ch_cbbo2.ts_recv.time_since_epoch().count(), 1609160400006246513);
+  EXPECT_EQ(ch_cbbo2.ts_in_delta.count(), 18858);
+  EXPECT_EQ(ch_cbbo2.sequence, 1170364);
+  EXPECT_EQ(ch_cbbo2.levels[0].bid_px, 3720250000000);
+  EXPECT_EQ(ch_cbbo2.levels[0].ask_px, 3720500000000);
+  EXPECT_EQ(ch_cbbo2.levels[0].bid_sz, 24);
+  EXPECT_EQ(ch_cbbo2.levels[0].ask_sz, 12);
+  EXPECT_EQ(ch_cbbo2.levels[0].bid_pb, 1);
+  EXPECT_EQ(ch_cbbo2.levels[0].ask_pb, 1);
+}
+
 TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   const auto extension = GetParam().first;
   const auto version = GetParam().second;

@@ -21,6 +21,7 @@ int main() {
 
   auto client = databento::LiveBuilder{}
                     .SetLogReceiver(log_receiver.get())
+                    .SetSendTsOut(true)
                     .SetKeyFromEnv()
                     .SetDataset(databento::dataset::kGlbxMdp3)
                     .BuildThreaded();

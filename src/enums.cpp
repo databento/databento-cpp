@@ -62,6 +62,24 @@ const char* ToString(Schema schema) {
     case Schema::Status: {
       return "status";
     }
+    case Schema::Cbbo: {
+      return "cbbo";
+    }
+    case Schema::Cbbo1S: {
+      return "cbbo-1s";
+    }
+    case Schema::Cbbo1M: {
+      return "cbbo-1m";
+    }
+    case Schema::Tcbbo: {
+      return "tcbbo";
+    }
+    case Schema::Bbo1S: {
+      return "bbo-1s";
+    }
+    case Schema::Bbo1M: {
+      return "bbo-1m";
+    }
     default: {
       return "unknown";
     }
@@ -262,6 +280,9 @@ const char* ToString(RType rtype) {
     case RType::Ohlcv1D: {
       return "Ohlcv1D";
     }
+    case RType::Status: {
+      return "Status";
+    }
     case RType::InstrumentDef: {
       return "InstrumentDef";
     }
@@ -282,6 +303,24 @@ const char* ToString(RType rtype) {
     }
     case RType::Mbo: {
       return "Mbo";
+    }
+    case RType::Cbbo: {
+      return "Cbbo";
+    }
+    case RType::Cbbo1S: {
+      return "Cbbo1S";
+    }
+    case RType::Cbbo1M: {
+      return "Cbbo1M";
+    }
+    case RType::Tcbbo: {
+      return "Tcbbo";
+    }
+    case RType::Bbo1S: {
+      return "Bbo1S";
+    }
+    case RType::Bbo1M: {
+      return "Bbo1M";
     }
     default: {
       return "Unknown";
@@ -369,6 +408,9 @@ const char* ToString(InstrumentClass instrument_class) {
 
 const char* ToString(MatchAlgorithm match_algorithm) {
   switch (match_algorithm) {
+    case match_algorithm::Undefined: {
+      return "Undefined";
+    }
     case match_algorithm::Fifo: {
       return "Fifo";
     }
@@ -390,8 +432,11 @@ const char* ToString(MatchAlgorithm match_algorithm) {
     case match_algorithm::ThresholdProRataLmm: {
       return "ThresholdProRataLmm";
     }
-    case match_algorithm::EurodollarOptions: {
-      return "EurodollarOptions";
+    case match_algorithm::EurodollarFutures: {
+      return "EurodollarFutures";
+    }
+    case match_algorithm::TimeProRata: {
+      return "TimeProRata";
     }
     default: {
       return "Unknown";
@@ -471,6 +516,12 @@ const char* ToString(StatType stat_type) {
     case StatType::Vwap: {
       return "Vwap";
     }
+    case StatType::Volatility: {
+      return "Volatility";
+    }
+    case StatType::Delta: {
+      return "Delta";
+    }
     default: {
       return "Unknown";
     }
@@ -484,6 +535,212 @@ const char* ToString(StatUpdateAction stat_update_action) {
     }
     case StatUpdateAction::Delete: {
       return "Delete";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(StatusAction status_action) {
+  switch (status_action) {
+    case status_action::None: {
+      return "None";
+    }
+    case status_action::PreOpen: {
+      return "PreOpen";
+    }
+    case status_action::PreCross: {
+      return "PreCross";
+    }
+    case status_action::Quoting: {
+      return "Quoting";
+    }
+    case status_action::Cross: {
+      return "Cross";
+    }
+    case status_action::Rotation: {
+      return "Rotation";
+    }
+    case status_action::NewPriceIndication: {
+      return "NewPriceIndication";
+    }
+    case status_action::Trading: {
+      return "Trading";
+    }
+    case status_action::Halt: {
+      return "Halt";
+    }
+    case status_action::Pause: {
+      return "Pause";
+    }
+    case status_action::Suspend: {
+      return "Suspend";
+    }
+    case status_action::PreClose: {
+      return "PreClose";
+    }
+    case status_action::Close: {
+      return "Close";
+    }
+    case status_action::PostClose: {
+      return "PostClose";
+    }
+    case status_action::SsrChange: {
+      return "SsrChange";
+    }
+    case status_action::NotAvailableForTrading: {
+      return "NotAvailableForTrading";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(StatusReason status_reason) {
+  switch (status_reason) {
+    case status_reason::None: {
+      return "None";
+    }
+    case status_reason::Scheduled: {
+      return "Scheduled";
+    }
+    case status_reason::SurveillanceIntervention: {
+      return "SurveillanceIntervention";
+    }
+    case status_reason::MarketEvent: {
+      return "MarketEvent";
+    }
+    case status_reason::InstrumentActivation: {
+      return "InstrumentActivation";
+    }
+    case status_reason::InstrumentExpiration: {
+      return "InstrumentExpiration";
+    }
+    case status_reason::RecoveryInProcess: {
+      return "RecoveryInProcess";
+    }
+    case status_reason::Regulatory: {
+      return "Regulatory";
+    }
+    case status_reason::Administrative: {
+      return "Administrative";
+    }
+    case status_reason::NonCompliance: {
+      return "NonCompliance";
+    }
+    case status_reason::FilingsNotCurrent: {
+      return "FilingsNotCurrent";
+    }
+    case status_reason::SecTradingSuspension: {
+      return "SecTradingSuspension";
+    }
+    case status_reason::NewIssue: {
+      return "NewIssue";
+    }
+    case status_reason::IssueAvailable: {
+      return "IssueAvailable";
+    }
+    case status_reason::IssuesReviewed: {
+      return "IssuesReviewed";
+    }
+    case status_reason::FilingReqsSatisfied: {
+      return "FilingReqsSatisfied";
+    }
+    case status_reason::NewsPending: {
+      return "NewsPending";
+    }
+    case status_reason::NewsReleased: {
+      return "NewsReleased";
+    }
+    case status_reason::NewsAndResumptionTimes: {
+      return "NewsAndResumptionTimes";
+    }
+    case status_reason::NewsNotForthcoming: {
+      return "NewsNotForthcoming";
+    }
+    case status_reason::OrderImbalance: {
+      return "OrderImbalance";
+    }
+    case status_reason::LuldPause: {
+      return "LuldPause";
+    }
+    case status_reason::Operational: {
+      return "Operational";
+    }
+    case status_reason::AdditionalInformationRequested: {
+      return "AdditionalInformationRequested";
+    }
+    case status_reason::MergerEffective: {
+      return "MergerEffective";
+    }
+    case status_reason::Etf: {
+      return "Etf";
+    }
+    case status_reason::CorporateAction: {
+      return "CorporateAction";
+    }
+    case status_reason::NewSecurityOffering: {
+      return "NewSecurityOffering";
+    }
+    case status_reason::MarketWideHaltLevel1: {
+      return "MarketWideHaltLevel1";
+    }
+    case status_reason::MarketWideHaltLevel2: {
+      return "MarketWideHaltLevel2";
+    }
+    case status_reason::MarketWideHaltLevel3: {
+      return "MarketWideHaltLevel3";
+    }
+    case status_reason::MarketWideHaltCarryover: {
+      return "MarketWideHaltCarryover";
+    }
+    case status_reason::MarketWideHaltResumption: {
+      return "MarketWideHaltResumption";
+    }
+    case status_reason::QuotationNotAvailable: {
+      return "QuotationNotAvailable";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(TradingEvent trading_event) {
+  switch (trading_event) {
+    case trading_event::None: {
+      return "None";
+    }
+    case trading_event::NoCancel: {
+      return "NoCancel";
+    }
+    case trading_event::ChangeTradingSession: {
+      return "ChangeTradingSession";
+    }
+    case trading_event::ImpliedMatchingOn: {
+      return "ImpliedMatchingOn";
+    }
+    case trading_event::ImpliedMatchingOff: {
+      return "ImpliedMatchingOff";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(TriState tri_state) {
+  switch (tri_state) {
+    case TriState::NotAvailable: {
+      return "NotAvailable";
+    }
+    case TriState::No: {
+      return "No";
+    }
+    case TriState::Yes: {
+      return "Yes";
     }
     default: {
       return "Unknown";
@@ -600,6 +857,23 @@ std::ostream& operator<<(std::ostream& out, StatType stat_type) {
 std::ostream& operator<<(std::ostream& out,
                          StatUpdateAction stat_update_action) {
   out << ToString(stat_update_action);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, StatusAction status_action) {
+  out << ToString(status_action);
+  return out;
+}
+std::ostream& operator<<(std::ostream& out, StatusReason status_reason) {
+  out << ToString(status_reason);
+  return out;
+}
+std::ostream& operator<<(std::ostream& out, TradingEvent trading_event) {
+  out << ToString(trading_event);
+  return out;
+}
+std::ostream& operator<<(std::ostream& out, TriState tri_state) {
+  out << ToString(tri_state);
   return out;
 }
 

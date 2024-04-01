@@ -30,9 +30,8 @@ class SharedChannelTests : public testing::Test {
 };
 
 TEST_F(SharedChannelTests, TestReadExact) {
-  write_thread_ = ScopedThread{[this] {
-    this->Write({"parse", "stream", "tests", "end"});
-  }};
+  write_thread_ = ScopedThread{
+      [this] { this->Write({"parse", "stream", "tests", "end"}); }};
   std::array<std::uint8_t, 16> buffer{};
   target_.ReadExact(buffer.data(), 3);
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "par");
@@ -70,9 +69,8 @@ TEST_F(SharedChannelTests, TestInterleavedReadsAndWrites) {
 }
 
 TEST_F(SharedChannelTests, TestReadSome) {
-  write_thread_ = ScopedThread{[this] {
-    this->Write({"parse", "stream", "tests", "some", "last"});
-  }};
+  write_thread_ = ScopedThread{
+      [this] { this->Write({"parse", "stream", "tests", "some", "last"}); }};
   std::array<std::uint8_t, 16> buffer{};
   std::string res;
   // -1 to keep last null byte

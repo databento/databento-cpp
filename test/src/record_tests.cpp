@@ -157,7 +157,7 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
     low_limit_price = 0.000000006,
     max_price_variation = 0.000000007,
     trading_reference_price = 0.000000008,
-    unit_of_measure_qty = 9,
+    unit_of_measure_qty = 0.000000009,
     min_price_increment_amount = 0.000000010,
     price_ratio = 11,
     strike_price = kUndefPrice,

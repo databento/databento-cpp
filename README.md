@@ -70,6 +70,21 @@ By default, cpp-httplib and nlohmann\_json are downloaded by CMake as part of th
 If you would like to use a local version of these libraries, enable the CMake flag
 `DATABENTO_ENABLE_EXTERNAL_HTTPLIB` or `DATABENTO_ENABLE_EXTERNAL_JSON`.
 
+#### Ubuntu
+
+Run the following commands to install the dependencies on Ubuntu:
+```sh
+$ sudo apt update
+$ sudo apt install libssl-dev libzstd-dev
+```
+
+#### macOS
+
+On macOS, you can install the dependencies with [Homebrew](https://brew.sh/) by running the following:
+```sh
+$ brew install openssl@3 zstd
+```
+
 ### Live
 
 Real-time and intraday replay is provided through the Live clients.
@@ -137,7 +152,7 @@ int main() {
 
 To run this program, set the `DATABENTO_API_KEY` environment variable with an actual API key.
 
-Additional example standalone executables are provided in the [examples](./examples) directory.
+Additional example standalone executables are provided in the [`example`](./example) directory.
 These examples can be compiled by enabling the cmake option `DATABENTO_ENABLE_EXAMPLES` with `-DDATABENTO_ENABLE_EXAMPLES=1` during the configure step.
 
 ## Documentation

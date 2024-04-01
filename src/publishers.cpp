@@ -529,13 +529,13 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::EprlDomEprl: {
       return Venue::Eprl;
     }
-    case Publisher::FinnNlsFinn: {
+    case Publisher::XnasNlsFinn: {
       return Venue::Finn;
     }
-    case Publisher::FinnNlsFinc: {
+    case Publisher::XnasNlsFinc: {
       return Venue::Finc;
     }
-    case Publisher::FinyTradesFiny: {
+    case Publisher::XnysTradesFiny: {
       return Venue::Finy;
     }
     case Publisher::OpraPillarAmxo: {
@@ -779,14 +779,14 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::EprlDomEprl: {
       return Dataset::EprlDom;
     }
-    case Publisher::FinnNlsFinn: {
-      return Dataset::FinnNls;
+    case Publisher::XnasNlsFinn: {
+      return Dataset::XnasNls;
     }
-    case Publisher::FinnNlsFinc: {
-      return Dataset::FinnNls;
+    case Publisher::XnasNlsFinc: {
+      return Dataset::XnasNls;
     }
-    case Publisher::FinyTradesFiny: {
-      return Dataset::FinyTrades;
+    case Publisher::XnysTradesFiny: {
+      return Dataset::XnysTrades;
     }
     case Publisher::OpraPillarAmxo: {
       return Dataset::OpraPillar;
@@ -1030,14 +1030,14 @@ const char* ToString(Publisher publisher) {
     case Publisher::EprlDomEprl: {
       return "EPRL.DOM.EPRL";
     }
-    case Publisher::FinnNlsFinn: {
-      return "FINN.NLS.FINN";
+    case Publisher::XnasNlsFinn: {
+      return "XNAS.NLS.FINN";
     }
-    case Publisher::FinnNlsFinc: {
-      return "FINN.NLS.FINC";
+    case Publisher::XnasNlsFinc: {
+      return "XNAS.NLS.FINC";
     }
-    case Publisher::FinyTradesFiny: {
-      return "FINY.TRADES.FINY";
+    case Publisher::XnysTradesFiny: {
+      return "XNYS.TRADES.FINY";
     }
     case Publisher::OpraPillarAmxo: {
       return "OPRA.PILLAR.AMXO";
@@ -1283,14 +1283,14 @@ Publisher FromString(const std::string& str) {
   if (str == "EPRL.DOM.EPRL") {
     return Publisher::EprlDomEprl;
   }
-  if (str == "FINN.NLS.FINN") {
-    return Publisher::FinnNlsFinn;
+  if (str == "XNAS.NLS.FINN") {
+    return Publisher::XnasNlsFinn;
   }
-  if (str == "FINN.NLS.FINC") {
-    return Publisher::FinnNlsFinc;
+  if (str == "XNAS.NLS.FINC") {
+    return Publisher::XnasNlsFinc;
   }
-  if (str == "FINY.TRADES.FINY") {
-    return Publisher::FinyTradesFiny;
+  if (str == "XNYS.TRADES.FINY") {
+    return Publisher::XnysTradesFiny;
   }
   if (str == "OPRA.PILLAR.AMXO") {
     return Publisher::OpraPillarAmxo;
