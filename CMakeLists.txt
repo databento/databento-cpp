@@ -211,7 +211,7 @@ target_link_libraries(
     OpenSSL::Crypto
     OpenSSL::SSL
     Threads::Threads
-    zstd::zstd
+    ${ZSTD_TARGET}
 )
 
 target_compile_definitions(
