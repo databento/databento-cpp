@@ -191,6 +191,18 @@ endif()
 find_package(Zstd REQUIRED)
 find_package(Threads REQUIRED)
 
+# Check if the Conan-provided target exists
+if(TARGET zstd::libzstd_static)
+  # If the Conan target exists, use it
+  set(ZSTD_TARGET zstd::libzstd_static)
+elseif(TARGET zstd::zstd)
+  # If the system-installed target exists, use it
+  set(ZSTD_TARGET zstd::zstd)
+else()
+  # Error out if neither target is found
+  message(FATAL_ERROR "Zstd target not found.")
+endif()
+
 #
 # Platform-specific dependencies
 #
@@ -211,7 +223,7 @@ target_link_libraries(
     OpenSSL::Crypto
     OpenSSL::SSL
     Threads::Threads
-    zstd::zstd
+    ${ZSTD_TARGET}
 )
 
 target_compile_definitions(
