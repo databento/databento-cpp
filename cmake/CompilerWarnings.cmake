@@ -1,10 +1,9 @@
 # from here:
 #
-# https://github.com/lefticus/cppbestpractices/blob/master/02-Use_the_Tools_Avai
-# lable.md
+# https://github.com/lefticus/cppbestpractices/blob/master/02-Use_the_Tools_Available.md
 # Courtesy of Jason Turner
 
-function(set_project_warnings project_name)
+function(set_target_warnings target)
   set(MSVC_WARNINGS
       /w14242 # 'identifier': conversion from 'type1' to 'type1', possible loss
               # of data
@@ -89,9 +88,5 @@ function(set_project_warnings project_name)
     message(AUTHOR_WARNING "No compiler warnings set for '${CMAKE_CXX_COMPILER_ID}' compiler.")
   endif()
 
-  add_compile_options(${PROJECT_WARNINGS})
-
-  if(NOT TARGET ${project_name})
-    message(AUTHOR_WARNING "${project_name} is not a target, thus no compiler warning were added.")
-  endif()
+  target_compile_options(${target} PRIVATE ${PROJECT_WARNINGS})
 endfunction()

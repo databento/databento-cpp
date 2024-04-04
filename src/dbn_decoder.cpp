@@ -52,12 +52,12 @@ std::string Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
                     const std::ptrdiff_t num_bytes, const char* context) {
   const auto cstr = Consume(byte_it, num_bytes);
   // strnlen isn't portable
-  const std::size_t str_len = std::find(cstr, cstr + num_bytes, '\0') - cstr;
+  const auto str_len = std::find(cstr, cstr + num_bytes, '\0') - cstr;
   if (str_len == num_bytes) {
     throw databento::DbnResponseError{std::string{"Invalid "} + context +
                                       " missing null terminator"};
   }
-  return std::string{cstr, str_len};
+  return std::string{cstr, static_cast<std::size_t>(str_len)};
 }
 }  // namespace
 
