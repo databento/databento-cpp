@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.17.1 - TBD
+## 0.17.1 - 2024-04-08
 
 ### Enhancements
 - Added support for Conan-installed zstd (credit: @Hailios)
