@@ -3,7 +3,6 @@
 #include <bitset>
 #include <cstdint>
 #include <ostream>
-#include <string>
 
 namespace databento {
 // Transparent wrapper around the bit flags used in several DBN record types.

@@ -110,8 +110,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(${PROJECT_NAME} PRIVATE -fstandalone-debug)
 endif()
 
-verbose_message("Applied compiler warnings.")
-
 #
 # Model project dependencies
 #

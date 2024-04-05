@@ -241,7 +241,6 @@ class Historical {
   DbnFileStore TimeseriesGetRangeToFile(const HttplibParams& params,
                                         const std::string& file_path);
 
-  ILogReceiver* log_receiver_;
   const std::string key_;
   const std::string gateway_;
   detail::HttpClient client_;

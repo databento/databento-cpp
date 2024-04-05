@@ -17,10 +17,9 @@ std::string ToIso8601(UnixNanos unix_nanos) {
     return "UNDEF_TIMESTAMP";
   }
   std::array<char, 80> buf{};
-  const auto time =
-      static_cast<std::time_t>(std::chrono::duration_cast<std::chrono::seconds>(
-                                   unix_nanos.time_since_epoch())
-                                   .count());
+  const std::time_t time = std::chrono::duration_cast<std::chrono::seconds>(
+                               unix_nanos.time_since_epoch())
+                               .count();
   std::tm tm = {};
 #ifdef _WIN32
   if (::gmtime_s(&tm, &time) != 0) {

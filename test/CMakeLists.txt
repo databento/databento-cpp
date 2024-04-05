@@ -51,6 +51,10 @@ set(
   src/zstd_stream_tests.cpp
 )
 add_executable(${PROJECT_NAME} ${test_headers} ${test_sources})
+if(WIN32)
+  # Disable warnings
+  target_compile_options(${PROJECT_NAME} PRIVATE /w)
+endif()
 find_package(Threads REQUIRED)
 
 target_link_libraries(

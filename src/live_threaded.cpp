@@ -17,8 +17,8 @@ using databento::LiveThreaded;
 
 struct LiveThreaded::Impl {
   template <typename... A>
-  explicit Impl(ILogReceiver* log_receiver, A&&... args)
-      : log_receiver{log_receiver},
+  explicit Impl(ILogReceiver* log_recv, A&&... args)
+      : log_receiver{log_recv},
         blocking{log_receiver, std::forward<A>(args)...} {}
 
   void NotifyOfStop() {

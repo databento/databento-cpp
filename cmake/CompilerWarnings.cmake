@@ -70,6 +70,7 @@ function(set_target_warnings target)
                      # probably wanted
       -Wuseless-cast # warn if you perform a cast to the same type
       -Wno-ignored-attributes
+      -Wno-dangling-reference # False positives with nlohmann_json
   )
 
   if (${PROJECT_NAME}_WARNINGS_AS_ERRORS)
@@ -79,14 +80,14 @@ function(set_target_warnings target)
   endif()
 
   if(MSVC)
-    set(PROJECT_WARNINGS ${MSVC_WARNINGS})
+    set(WARNINGS ${MSVC_WARNINGS})
   elseif(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
-    set(PROJECT_WARNINGS ${CLANG_WARNINGS})
+    set(WARNINGS ${CLANG_WARNINGS})
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(PROJECT_WARNINGS ${GCC_WARNINGS})
+    set(WARNINGS ${GCC_WARNINGS})
   else()
     message(AUTHOR_WARNING "No compiler warnings set for '${CMAKE_CXX_COMPILER_ID}' compiler.")
   endif()
 
-  target_compile_options(${target} PRIVATE ${PROJECT_WARNINGS})
+  target_compile_options(${target} PRIVATE ${WARNINGS})
 endfunction()

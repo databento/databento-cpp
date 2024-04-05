@@ -7,10 +7,8 @@
 #include <vector>
 
 #include "databento/datetime.hpp"              // UnixNanos
-#include "databento/dbn.hpp"                   // Metadata
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
 #include "databento/enums.hpp"                 // Schema, SType
-#include "databento/record.hpp"                // Record
 #include "databento/timeseries.hpp"  // MetadataCallback, RecordCallback
 
 namespace databento {

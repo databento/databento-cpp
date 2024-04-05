@@ -148,15 +148,13 @@ std::string PathJoin(const std::string& dir, const std::string& path) {
 
 Historical::Historical(ILogReceiver* log_receiver, std::string key,
                        HistoricalGateway gateway)
-    : log_receiver_{log_receiver},
-      key_{std::move(key)},
+    : key_{std::move(key)},
       gateway_{UrlFromGateway(gateway)},
       client_{log_receiver, key_, gateway_} {}
 
 Historical::Historical(ILogReceiver* log_receiver, std::string key,
                        std::string gateway, std::uint16_t port)
-    : log_receiver_{log_receiver},
-      key_{std::move(key)},
+    : key_{std::move(key)},
       gateway_{std::move(gateway)},
       client_{log_receiver, key_, gateway_, port} {}
 
@@ -908,7 +906,7 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
         break;
       }
     }
-  } catch (const std::exception& exc) {
+  } catch (const std::exception&) {
     should_continue = false;
     // wait for thread to finish before checking for exceptions
     stream.Join();

@@ -4,7 +4,6 @@
 #include <map>
 #include <ostream>
 #include <string>
-#include <vector>
 
 #include "databento/enums.hpp"  // FeedMode, DatasetCondition, Schema
 

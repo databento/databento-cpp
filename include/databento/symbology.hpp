@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <ostream>
 #include <string>
 #include <unordered_map>
