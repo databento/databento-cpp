@@ -71,11 +71,12 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
   constexpr auto kTsOut = false;
   constexpr auto kDataset = dataset::kXnasItch;
   const std::vector<std::string> kSymbols{"MSFT", "TSLA", "QQQ"};
-  constexpr auto kSchema = Schema::Ohlcv1M;
-  constexpr auto kSType = SType::RawSymbol;
+  const auto kSchema = Schema::Ohlcv1M;
+  const auto kSType = SType::RawSymbol;
 
   const mock::MockLsgServer mock_server{
-      kDataset, kTsOut, [&kSymbols](mock::MockLsgServer& self) {
+      kDataset, kTsOut,
+      [&kSymbols, kSchema, kSType](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Subscribe(kSymbols, kSchema, kSType);
@@ -94,13 +95,14 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
 TEST_F(LiveBlockingTests, TestSubscriptionChunking) {
   constexpr auto kTsOut = false;
   constexpr auto kDataset = dataset::kXnasItch;
-  constexpr auto kSymbol = "TEST";
-  constexpr std::size_t kSymbolCount = 1000;
-  constexpr auto kSchema = Schema::Ohlcv1M;
-  constexpr auto kSType = SType::RawSymbol;
+  const auto kSymbol = "TEST";
+  const std::size_t kSymbolCount = 1000;
+  const auto kSchema = Schema::Ohlcv1M;
+  const auto kSType = SType::RawSymbol;
 
   const mock::MockLsgServer mock_server{
-      kDataset, kTsOut, [](mock::MockLsgServer& self) {
+      kDataset, kTsOut,
+      [kSymbol, kSymbolCount, kSchema, kSType](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         std::size_t i{};
@@ -126,10 +128,10 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunking) {
 
 TEST_F(LiveBlockingTests, TestNextRecord) {
   constexpr auto kTsOut = false;
-  constexpr auto kRecCount = 12;
+  const auto kRecCount = 12;
   constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, kTsOut, [kRec](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut, [kRec, kRecCount](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         for (size_t i = 0; i < kRecCount; ++i) {
@@ -264,7 +266,7 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
 }
 
 TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
-  constexpr auto kRecCount = 5;
+  const auto kRecCount = 5;
   constexpr auto kTsOut = true;
   const WithTsOut<TradeMsg> send_rec{
       {DummyHeader<TradeMsg>(RType::Mbp0),
@@ -279,7 +281,8 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
        2},
       UnixNanos{std::chrono::seconds{1678910279000000000}}};
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, kTsOut, [send_rec](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut,
+      [send_rec, kRecCount](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         for (size_t i = 0; i < kRecCount; ++i) {

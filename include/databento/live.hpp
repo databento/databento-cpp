@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <string>
 
 #include "databento/enums.hpp"  // VersionUpgradePolicy

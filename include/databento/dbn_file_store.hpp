@@ -2,7 +2,6 @@
 
 #include <string>
 
-#include "databento/dbn.hpp"          // Metadata
 #include "databento/dbn_decoder.hpp"  // DbnDecoder
 #include "databento/enums.hpp"        // VersionUpgradePolicy
 #include "databento/timeseries.hpp"   // MetadataCallback, RecordCallback

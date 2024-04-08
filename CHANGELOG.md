@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.17.1 - 2024-04-08
+
+### Enhancements
+- Added support for Conan-installed zstd (credit: @Hailios)
+
+### Bug fixes
+- Added missing copying of `ts_event` when upgrading structs from DBNv1 to DBNv2
+- Fixed setting of compiler warnings and warnings that had accumulated
+
 ## 0.17.0 - 2024-04-01
 
 ### Enhancements

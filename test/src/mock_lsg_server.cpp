@@ -10,9 +10,7 @@
 
 #include <cstdint>
 #include <limits>
-#include <sstream>
 
-#include "databento/dbn.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"
 #include "databento/symbology.hpp"   // JoinSymbolStrings

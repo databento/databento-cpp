@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <atomic>
 #include <cstdint>
 #include <exception>
@@ -184,8 +183,8 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
   std::condition_variable should_close_cv;
   const mock::MockLsgServer mock_server{
       dataset::kXnasItch, kTsOut,
-      [&should_close, &should_close_mutex, &should_close_cv,
-       kRec](mock::MockLsgServer& self) {
+      [&should_close, &should_close_mutex, &should_close_cv, kRec, kSchema,
+       kSType](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Subscribe(kAllSymbols, kSchema, kSType);
@@ -222,8 +221,8 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
     return KeepGoing::Stop;
   };
   std::atomic<std::int32_t> exception_calls{};
-  const auto exception_cb = [&exception_calls,
-                             &target](const std::exception& exc) {
+  const auto exception_cb = [&exception_calls, &target, kSchema,
+                             kSType](const std::exception& exc) {
     ++exception_calls;
     if (exception_calls == 1) {
       EXPECT_NE(dynamic_cast<const databento::DbnResponseError*>(&exc), nullptr)
@@ -245,8 +244,8 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
 }
 
 TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
-  constexpr auto kSchema = Schema::Trades;
-  constexpr auto kSType = SType::Parent;
+  const auto kSchema = Schema::Trades;
+  const auto kSType = SType::Parent;
   const std::vector<std::string> kSymbols = {"LO.OPT", "6E.FUT"};
 
   bool should_close{};
@@ -255,8 +254,8 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
   testing::internal::CaptureStderr();
   const mock::MockLsgServer mock_server{
       dataset::kXnasItch, kTsOut,
-      [&kSymbols, &should_close, &should_close_mutex,
-       &should_close_cv](mock::MockLsgServer& self) {
+      [&kSymbols, &should_close, &should_close_mutex, &should_close_cv, kSchema,
+       kSType](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Start();
@@ -287,8 +286,8 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
     ++record_calls;
     return KeepGoing::Continue;
   };
-  const auto exception_cb = [&target, &metadata_cb, &record_cb,
-                             &kSymbols](const std::exception& exc) {
+  const auto exception_cb = [&target, &metadata_cb, &record_cb, &kSymbols,
+                             kSchema, kSType](const std::exception& exc) {
     EXPECT_NE(dynamic_cast<const databento::DbnResponseError*>(&exc), nullptr)
         << "Unexpected exception type";
     target.Reconnect();

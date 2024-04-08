@@ -11,7 +11,8 @@ namespace databento {
 InstrumentDefMsgV2 InstrumentDefMsgV1::ToV2() const {
   InstrumentDefMsgV2 ret{
       RecordHeader{sizeof(InstrumentDefMsgV2) / RecordHeader::kLengthMultiplier,
-                   RType::InstrumentDef, hd.publisher_id, hd.instrument_id},
+                   RType::InstrumentDef, hd.publisher_id, hd.instrument_id,
+                   hd.ts_event},
       ts_recv,
       min_price_increment,
       display_factor,
@@ -72,7 +73,7 @@ InstrumentDefMsgV2 InstrumentDefMsgV1::ToV2() const {
       contract_multiplier_unit,
       flow_schedule_type,
       tick_rule,
-  };
+      {}};
   std::copy(currency.begin(), currency.end(), ret.currency.begin());
   std::copy(settl_currency.begin(), settl_currency.end(),
             ret.settl_currency.begin());
@@ -95,7 +96,8 @@ InstrumentDefMsgV2 InstrumentDefMsgV1::ToV2() const {
 ErrorMsgV2 ErrorMsgV1::ToV2() const {
   ErrorMsgV2 ret{
       RecordHeader{sizeof(ErrorMsgV2) / RecordHeader::kLengthMultiplier,
-                   RType::Error, hd.publisher_id, hd.instrument_id},
+                   RType::Error, hd.publisher_id, hd.instrument_id,
+                   hd.ts_event},
       {},
       std::numeric_limits<std::uint8_t>::max(),
       std::numeric_limits<std::uint8_t>::max()};
@@ -106,7 +108,8 @@ ErrorMsgV2 ErrorMsgV1::ToV2() const {
 SymbolMappingMsgV2 SymbolMappingMsgV1::ToV2() const {
   SymbolMappingMsgV2 ret{
       RecordHeader{sizeof(SymbolMappingMsgV2) / RecordHeader::kLengthMultiplier,
-                   RType::SymbolMapping, hd.publisher_id, hd.instrument_id},
+                   RType::SymbolMapping, hd.publisher_id, hd.instrument_id,
+                   hd.ts_event},
       // invalid
       static_cast<SType>(std::numeric_limits<std::uint8_t>::max()),
       {},
@@ -125,7 +128,8 @@ SymbolMappingMsgV2 SymbolMappingMsgV1::ToV2() const {
 SystemMsgV2 SystemMsgV1::ToV2() const {
   SystemMsgV2 ret{
       RecordHeader{sizeof(SystemMsgV2) / RecordHeader::kLengthMultiplier,
-                   RType::System, hd.publisher_id, hd.instrument_id},
+                   RType::System, hd.publisher_id, hd.instrument_id,
+                   hd.ts_event},
       {},
       std::numeric_limits<std::uint8_t>::max()};
   std::copy(msg.begin(), msg.end(), ret.msg.begin());

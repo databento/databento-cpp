@@ -157,13 +157,17 @@ TEST_F(DbnDecoderTests, TestUpgradeSymbolMappingWithTsOut) {
       DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::Upgrade, true,
                                      &compat_buffer, Record{&orig.rec.hd});
   const auto& upgraded = res.Get<WithTsOut<SymbolMappingMsgV2>>();
-  ASSERT_EQ(orig.ts_out, upgraded.ts_out);
-  ASSERT_STREQ(orig.rec.STypeInSymbol(), upgraded.rec.STypeInSymbol());
-  ASSERT_STREQ(orig.rec.STypeOutSymbol(), upgraded.rec.STypeOutSymbol());
+  EXPECT_EQ(orig.rec.hd.rtype, upgraded.rec.hd.rtype);
+  EXPECT_EQ(orig.rec.hd.instrument_id, upgraded.rec.hd.instrument_id);
+  EXPECT_EQ(orig.rec.hd.publisher_id, upgraded.rec.hd.publisher_id);
+  EXPECT_EQ(orig.rec.hd.ts_event, upgraded.rec.hd.ts_event);
+  EXPECT_EQ(orig.ts_out, upgraded.ts_out);
+  EXPECT_STREQ(orig.rec.STypeInSymbol(), upgraded.rec.STypeInSymbol());
+  EXPECT_STREQ(orig.rec.STypeOutSymbol(), upgraded.rec.STypeOutSymbol());
   // `length` properly set
-  ASSERT_EQ(upgraded.rec.hd.Size(), sizeof(upgraded));
+  EXPECT_EQ(upgraded.rec.hd.Size(), sizeof(upgraded));
   // used compat buffer
-  ASSERT_EQ(reinterpret_cast<const std::uint8_t*>(&upgraded),
+  EXPECT_EQ(reinterpret_cast<const std::uint8_t*>(&upgraded),
             compat_buffer.data());
 }
 

@@ -1,12 +1,10 @@
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <ostream>
 #include <string>
 #include <vector>
 
-#include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"  // JobState, Delivery, Packaging, Schema, SType
 
 namespace databento {

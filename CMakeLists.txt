@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.17.0 LANGUAGES CXX)
+project("databento" VERSION 0.17.1 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
@@ -102,15 +102,13 @@ message(STATUS "Added all header and implementation files.")
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
 include(cmake/CompilerWarnings.cmake)
-set_project_warnings(${PROJECT_NAME})
+set_target_warnings(${PROJECT_NAME})
 include(cmake/Sanitizers.cmake)
 
 # Ensure std::string debug info is included
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(${PROJECT_NAME} PRIVATE -fstandalone-debug)
 endif()
-
-verbose_message("Applied compiler warnings.")
 
 #
 # Model project dependencies
@@ -211,7 +209,7 @@ target_link_libraries(
     OpenSSL::Crypto
     OpenSSL::SSL
     Threads::Threads
-    zstd::zstd
+    ${ZSTD_TARGET}
 )
 
 target_compile_definitions(

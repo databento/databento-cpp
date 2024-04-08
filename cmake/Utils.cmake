@@ -55,4 +55,5 @@ function(add_example_target name file)
       databento::databento
   )
   target_compile_features(${name} PUBLIC cxx_std_11)
+  set_target_warnings(${name})
 endfunction()
