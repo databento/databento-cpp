@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.18.0 - TBD
+
+### Breaking changes
+- Changed format of `display_factor` and `price_ratio` to a fixed-precision decimal for
+  `InstrumentDefMsg` and `InstrumentDefMsgV1` to match existing values and DBN crate
+- Changed format of `unit_of_measure_qty` to a fixed-precision decimal for
+  `InstrumentDefMsgV1` to match `InstrumentDefMsg`
+
 ## 0.17.1 - 2024-04-08
 
 ### Enhancements
