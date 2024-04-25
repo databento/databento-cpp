@@ -256,7 +256,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   EXPECT_EQ(ch_mbo1.order_id, 647784973705);
   EXPECT_EQ(ch_mbo1.price, 3722750000000);
   EXPECT_EQ(ch_mbo1.size, 1);
-  EXPECT_EQ(ch_mbo1.flags, 128);
+  EXPECT_EQ(ch_mbo1.flags.Raw(), 128);
   EXPECT_EQ(ch_mbo1.channel_id, 0);
   EXPECT_EQ(ch_mbo1.action, Action::Cancel);
   EXPECT_EQ(ch_mbo1.side, Side::Ask);
@@ -280,7 +280,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   EXPECT_EQ(ch_mbo2.order_id, 647784973631);
   EXPECT_EQ(ch_mbo2.price, 3723000000000);
   EXPECT_EQ(ch_mbo2.size, 1);
-  EXPECT_EQ(ch_mbo2.flags, 128);
+  EXPECT_EQ(ch_mbo2.flags.Raw(), 128);
   EXPECT_EQ(ch_mbo2.channel_id, 0);
   EXPECT_EQ(ch_mbo2.action, Action::Cancel);
   EXPECT_EQ(ch_mbo2.side, Side::Ask);
@@ -327,7 +327,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   EXPECT_EQ(ch_mbp1.size, 1);
   EXPECT_EQ(ch_mbp1.action, Action::Add);
   EXPECT_EQ(ch_mbp1.side, Side::Ask);
-  EXPECT_EQ(ch_mbp1.flags, 128);
+  EXPECT_EQ(ch_mbp1.flags.Raw(), 128);
   EXPECT_EQ(ch_mbp1.depth, 0);
   EXPECT_EQ(ch_mbp1.ts_recv.time_since_epoch().count(), 1609160400006136329);
   EXPECT_EQ(ch_mbp1.ts_in_delta.count(), 17214);
@@ -356,7 +356,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   EXPECT_EQ(ch_mbp2.size, 1);
   EXPECT_EQ(ch_mbp2.action, Action::Add);
   EXPECT_EQ(ch_mbp2.side, Side::Ask);
-  EXPECT_EQ(ch_mbp2.flags, 128);
+  EXPECT_EQ(ch_mbp2.flags.Raw(), 128);
   EXPECT_EQ(ch_mbp2.depth, 0);
   EXPECT_EQ(ch_mbp2.ts_recv.time_since_epoch().count(), 1609160400006246513);
   EXPECT_EQ(ch_mbp2.ts_in_delta.count(), 18858);
@@ -407,7 +407,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_EQ(ch_mbp1.size, 1);
   EXPECT_EQ(ch_mbp1.action, Action::Cancel);
   EXPECT_EQ(ch_mbp1.side, Side::Ask);
-  EXPECT_EQ(ch_mbp1.flags, 128);
+  EXPECT_EQ(ch_mbp1.flags.Raw(), 128);
   EXPECT_EQ(ch_mbp1.depth, 9);
   EXPECT_EQ(ch_mbp1.ts_recv.time_since_epoch().count(), 1609160400000704060);
   EXPECT_EQ(ch_mbp1.ts_in_delta.count(), 22993);
@@ -448,7 +448,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_EQ(ch_mbp2.size, 1);
   EXPECT_EQ(ch_mbp2.action, Action::Cancel);
   EXPECT_EQ(ch_mbp2.side, Side::Bid);
-  EXPECT_EQ(ch_mbp2.flags, 128);
+  EXPECT_EQ(ch_mbp2.flags.Raw(), 128);
   EXPECT_EQ(ch_mbp2.depth, 1);
   EXPECT_EQ(ch_mbp2.ts_recv.time_since_epoch().count(), 1609160400000750544);
   EXPECT_EQ(ch_mbp2.ts_in_delta.count(), 20625);
@@ -511,7 +511,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeCbbo) {
   EXPECT_EQ(ch_cbbo1.size, 1);
   EXPECT_EQ(ch_cbbo1.action, Action::Add);
   EXPECT_EQ(ch_cbbo1.side, Side::Ask);
-  EXPECT_EQ(ch_cbbo1.flags, 128);
+  EXPECT_EQ(ch_cbbo1.flags.Raw(), 128);
   EXPECT_EQ(ch_cbbo1.ts_recv.time_since_epoch().count(), 1609160400006136329);
   EXPECT_EQ(ch_cbbo1.ts_in_delta.count(), 17214);
   EXPECT_EQ(ch_cbbo1.sequence, 1170362);
@@ -539,7 +539,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeCbbo) {
   EXPECT_EQ(ch_cbbo2.size, 1);
   EXPECT_EQ(ch_cbbo2.action, Action::Add);
   EXPECT_EQ(ch_cbbo2.side, Side::Ask);
-  EXPECT_EQ(ch_cbbo2.flags, 128);
+  EXPECT_EQ(ch_cbbo2.flags.Raw(), 128);
   EXPECT_EQ(ch_cbbo2.ts_recv.time_since_epoch().count(), 1609160400006246513);
   EXPECT_EQ(ch_cbbo2.ts_in_delta.count(), 18858);
   EXPECT_EQ(ch_cbbo2.sequence, 1170364);
@@ -589,7 +589,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   EXPECT_EQ(ch_tbbo1.size, 5);
   EXPECT_EQ(ch_tbbo1.action, Action::Trade);
   EXPECT_EQ(ch_tbbo1.side, Side::Ask);
-  EXPECT_EQ(ch_tbbo1.flags, 129);
+  EXPECT_EQ(ch_tbbo1.flags.Raw(), 129);
   EXPECT_EQ(ch_tbbo1.depth, 0);
   EXPECT_EQ(ch_tbbo1.ts_recv.time_since_epoch().count(), 1609160400099150057);
   EXPECT_EQ(ch_tbbo1.ts_in_delta.count(), 19251);
@@ -618,7 +618,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   EXPECT_EQ(ch_tbbo2.size, 21);
   EXPECT_EQ(ch_tbbo2.action, Action::Trade);
   EXPECT_EQ(ch_tbbo2.side, Side::Ask);
-  EXPECT_EQ(ch_tbbo2.flags, 129);
+  EXPECT_EQ(ch_tbbo2.flags.Raw(), 129);
   EXPECT_EQ(ch_tbbo2.depth, 0);
   EXPECT_EQ(ch_tbbo2.ts_recv.time_since_epoch().count(), 1609160400108142648);
   EXPECT_EQ(ch_tbbo2.ts_in_delta.count(), 20728);
@@ -669,7 +669,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   EXPECT_EQ(ch_trade1.size, 5);
   EXPECT_EQ(ch_trade1.action, Action::Trade);
   EXPECT_EQ(ch_trade1.side, Side::Ask);
-  EXPECT_EQ(ch_trade1.flags, 129);
+  EXPECT_EQ(ch_trade1.flags.Raw(), 129);
   EXPECT_EQ(ch_trade1.depth, 0);
   EXPECT_EQ(ch_trade1.ts_recv.time_since_epoch().count(), 1609160400099150057);
   EXPECT_EQ(ch_trade1.ts_in_delta.count(), 19251);
@@ -692,7 +692,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   EXPECT_EQ(ch_trade2.size, 21);
   EXPECT_EQ(ch_trade2.action, Action::Trade);
   EXPECT_EQ(ch_trade2.side, Side::Ask);
-  EXPECT_EQ(ch_trade2.flags, 129);
+  EXPECT_EQ(ch_trade2.flags.Raw(), 129);
   EXPECT_EQ(ch_trade2.depth, 0);
   EXPECT_EQ(ch_trade2.ts_recv.time_since_epoch().count(), 1609160400108142648);
   EXPECT_EQ(ch_trade2.ts_in_delta.count(), 20728);

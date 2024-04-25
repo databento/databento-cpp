@@ -60,7 +60,7 @@ TEST(RecordTests, TestMbp10MsgToString) {
     size = 10,
     action = Add,
     side = Bid,
-    flags = 0b00000000,
+    flags = 0,
     depth = 0,
     ts_recv = 2023-10-10T16:57:52.000020500Z,
     ts_in_delta = 100,

@@ -1,70 +1,62 @@
 #include <gtest/gtest.h>
 
-#include <sstream>
-
 #include "databento/flag_set.hpp"
 
 namespace databento {
 namespace test {
-TEST(FlagSetTests, TestBitwiseNot) {
+TEST(FlagSetTests, TestBasic) {
   const FlagSet no_flags{};
-  ASSERT_FALSE(no_flags.Any());
-  const auto all_flags = ~no_flags;
-  ASSERT_TRUE(all_flags.Any());
-  ASSERT_TRUE((all_flags & FlagSet::kLast).Any());
-  ASSERT_TRUE((all_flags & FlagSet::kMbp).Any());
-  ASSERT_TRUE((all_flags & FlagSet::kBadTsRecv).Any());
-}
-
-TEST(FlagSetTests, TestBitwiseOr) {
-  const FlagSet flag = FlagSet::kMbp;
-  const FlagSet no_flags{};
-  ASSERT_NE(flag, no_flags);
-  ASSERT_EQ(flag, no_flags | FlagSet::kMbp);
-}
-
-TEST(FlagSetTests, TestBitwiseAnd) {
-  const auto flag = static_cast<FlagSet>(0b10011000);
-  ASSERT_TRUE(flag.Any());
-  ASSERT_TRUE((flag & FlagSet::kLast).Any());
-  ASSERT_TRUE((flag & FlagSet::kMbp).Any());
-  ASSERT_TRUE((flag & FlagSet::kBadTsRecv).Any());
-}
-
-TEST(FlagSetTests, TestBitwiseAndAssignment) {
-  FlagSet flag{};
-  flag &= FlagSet::kLast;
-  ASSERT_FALSE((flag & FlagSet::kLast).Any());
-  flag = ~flag & FlagSet::kLast;
-  ASSERT_TRUE((flag & FlagSet::kLast).Any());
-}
-
-TEST(FlagSetTests, TestBitwiseXor) {
-  FlagSet flag = ~FlagSet{};
-  flag ^= FlagSet::kLast;
-  ASSERT_FALSE((flag & FlagSet::kLast).Any());
-  ASSERT_TRUE((flag & FlagSet::kMbp).Any());
-  ASSERT_TRUE((flag & FlagSet::kBadTsRecv).Any());
+  EXPECT_FALSE(no_flags.Any());
+  EXPECT_TRUE(no_flags.IsEmpty());
+  const FlagSet all_flags{255};
+  EXPECT_TRUE(all_flags.Any());
+  EXPECT_FALSE(all_flags.IsEmpty());
+  EXPECT_TRUE((all_flags.IsLast()));
+  EXPECT_TRUE((all_flags.IsMbp()));
+  EXPECT_TRUE((all_flags.IsBadTsRecv()));
 }
 
 TEST(FlagSetTests, TestAny) {
   FlagSet flag{};
   ASSERT_FALSE(flag.Any());
-  flag = FlagSet::kBadTsRecv;
+  flag.SetBadTsRecv();
   ASSERT_TRUE(flag.Any());
 }
 
-TEST(FlagSetTests, TestToString) {
-  constexpr FlagSet kFlagSet = FlagSet::kMbp;
-  std::ostringstream ss;
-  ss << kFlagSet;
-  ASSERT_EQ(ss.str(), "0b00010000");
-}
-
 TEST(FlagSetTests, TestConversionOperator) {
-  constexpr FlagSet kFlagSet = FlagSet::kMbp | FlagSet::kTob;
+  constexpr FlagSet kFlagSet{FlagSet::kMbp | FlagSet::kTob};
   const auto raw = std::uint8_t{kFlagSet};
   ASSERT_EQ(raw, 0b01010000);
+}
+
+TEST(FlagSetTests, ToStringEmpty) {
+  constexpr FlagSet kTarget{};
+  ASSERT_EQ(ToString(kTarget), "0");
+}
+
+TEST(FlagSetTests, ToStringOneSet) {
+  const auto target = FlagSet{}.SetMbp();
+  ASSERT_EQ(ToString(target), "MBP (16)");
+}
+
+TEST(FlagSetTests, ToStringThreeSet) {
+  const auto target = FlagSet{}.SetTob().SetSnapshot().SetMaybeBadBook();
+  ASSERT_EQ(ToString(target), "TOB | SNAPSHOT | MAYBE_BAD_BOOK (100)");
+}
+
+TEST(FlagSetTests, ToStringReservedSet) {
+  constexpr FlagSet kTarget{255};
+  ASSERT_EQ(ToString(kTarget),
+            "LAST | TOB | SNAPSHOT | MBP | BAD_TS_RECV | MAYBE_BAD_BOOK (255)");
+}
+
+TEST(FlagSetTests, ConstantBitFieldEquivalence) {
+  EXPECT_EQ(FlagSet::kLast, FlagSet{}.SetLast().Raw());
+  EXPECT_EQ(FlagSet::kTob, FlagSet{}.SetTob().Raw());
+  EXPECT_EQ(FlagSet::kSnapshot, FlagSet{}.SetSnapshot().Raw());
+  EXPECT_EQ(FlagSet::kMbp, FlagSet{}.SetMbp().Raw());
+  EXPECT_EQ(FlagSet::kBadTsRecv, FlagSet{}.SetBadTsRecv().Raw());
+  EXPECT_EQ(FlagSet::kMaybeBadBook, FlagSet{}.SetMaybeBadBook().Raw());
 }
 }  // namespace test
 }  // namespace databento
