@@ -11,19 +11,19 @@ class FlagSet {
   using Repr = std::uint8_t;
   // Indicates it's the last message in the packet from the venue for a given
   // `instrument_id`.
-  static inline constexpr Repr kLast = 1 << 7;
+  static constexpr Repr kLast = 1 << 7;
   // Indicates a top-of-book message, not an individual order.
-  static inline constexpr Repr kTob = 1 << 6;
+  static constexpr Repr kTob = 1 << 6;
   // Indicates the message was sourced from a replay, such as a snapshot
   // server.
-  static inline constexpr Repr kSnapshot = 1 << 5;
+  static constexpr Repr kSnapshot = 1 << 5;
   // Indicates an aggregated price level message, not an individual order.
-  static inline constexpr Repr kMbp = 1 << 4;
+  static constexpr Repr kMbp = 1 << 4;
   // Indicates the `ts_recv` value is inaccurate due to clock issues or packet
   // reordering.
-  static inline constexpr Repr kBadTsRecv = 1 << 3;
+  static constexpr Repr kBadTsRecv = 1 << 3;
   // Indicates an unrecoverable gap was detected in the channel.
-  static inline constexpr Repr kMaybeBadBook = 1 << 2;
+  static constexpr Repr kMaybeBadBook = 1 << 2;
 
   friend std::ostream& operator<<(std::ostream&, FlagSet);
 

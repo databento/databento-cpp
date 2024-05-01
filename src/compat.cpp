@@ -110,10 +110,12 @@ SymbolMappingMsgV2 SymbolMappingMsgV1::ToV2() const {
       RecordHeader{sizeof(SymbolMappingMsgV2) / RecordHeader::kLengthMultiplier,
                    RType::SymbolMapping, hd.publisher_id, hd.instrument_id,
                    hd.ts_event},
-      // invalid
+      // Intentionally invalid
+      // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
       static_cast<SType>(std::numeric_limits<std::uint8_t>::max()),
       {},
-      // invalid
+      // Intentionally invalid
+      // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
       static_cast<SType>(std::numeric_limits<std::uint8_t>::max()),
       {},
       start_ts,

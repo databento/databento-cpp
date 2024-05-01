@@ -6,6 +6,7 @@
 #include <cstring>
 #include <fstream>  // ifstream
 #include <ios>      // streamsize, ios::binary, ios::ate
+#include <limits>
 #include <memory>
 
 #include "databento/compat.hpp"
@@ -164,6 +165,10 @@ TEST_F(DbnDecoderTests, TestUpgradeSymbolMappingWithTsOut) {
   EXPECT_EQ(orig.ts_out, upgraded.ts_out);
   EXPECT_STREQ(orig.rec.STypeInSymbol(), upgraded.rec.STypeInSymbol());
   EXPECT_STREQ(orig.rec.STypeOutSymbol(), upgraded.rec.STypeOutSymbol());
+  EXPECT_EQ(static_cast<std::uint8_t>(upgraded.rec.stype_in),
+            std::numeric_limits<std::uint8_t>::max());
+  EXPECT_EQ(static_cast<std::uint8_t>(upgraded.rec.stype_out),
+            std::numeric_limits<std::uint8_t>::max());
   // `length` properly set
   EXPECT_EQ(upgraded.rec.hd.Size(), sizeof(upgraded));
   // used compat buffer
