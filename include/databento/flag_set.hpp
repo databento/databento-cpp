@@ -9,7 +9,7 @@ namespace databento {
 class FlagSet {
  public:
   using Repr = std::uint8_t;
-  // Indicates it's the last message in the packet from the venue for a given
+  // Indicates it's the last message in the event from the venue for a given
   // `instrument_id`.
   static constexpr Repr kLast = 1 << 7;
   // Indicates a top-of-book message, not an individual order.
