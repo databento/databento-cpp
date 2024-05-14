@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.18.0 - TBD
+## 0.18.0 - 2024-05-14
 
 ### Breaking changes
 - Changed `FlagSet` to be more class-like:
