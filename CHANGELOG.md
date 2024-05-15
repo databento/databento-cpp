@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.18.0 - 2024-05-14
+
+### Breaking changes
+- Changed `FlagSet` to be more class-like:
+  - Added predicate methods and setters for each bit flag
+  - Improved string formatting
+  - Removed bitwise operators. Bitwise operations can be performed by first casting to a
+    `std::uint8_t` or calling the `Raw()` method
+- Changed format of `display_factor` and `price_ratio` to a fixed-precision decimal for
+  `InstrumentDefMsg` and `InstrumentDefMsgV1` to match existing values and DBN crate
+- Changed format of `unit_of_measure_qty` to a fixed-precision decimal for
+  `InstrumentDefMsgV1` to match `InstrumentDefMsg`
+
 ## 0.17.1 - 2024-04-08
 
 ### Enhancements

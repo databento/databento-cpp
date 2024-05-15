@@ -28,6 +28,7 @@ struct LiveThreaded::Impl {
   }
 
   ILogReceiver* log_receiver;
+  std::atomic<std::thread::id> thread_id_{};
   // Set to false when destructor is called
   std::atomic<bool> keep_going{true};
   KeepGoing last_cb_ret{KeepGoing::Continue};
@@ -114,7 +115,7 @@ void LiveThreaded::Start(MetadataCallback metadata_callback,
                          RecordCallback record_callback,
                          ExceptionCallback exception_callback) {
   // Deadlock check
-  if (std::this_thread::get_id() == thread_.Id()) {
+  if (std::this_thread::get_id() == impl_->thread_id_) {
     std::ostringstream log_ss;
     log_ss << "[LiveThreaded::Start] Called Start from callback thread, which "
               "would cause a deadlock. Ignoring.";
@@ -161,6 +162,7 @@ void LiveThreaded::ProcessingThread(Impl* impl,
   static constexpr auto kMethodName = "LiveThreaded::ProcessingThread";
   constexpr std::chrono::milliseconds kTimeout{50};
 
+  impl->thread_id_ = std::this_thread::get_id();
   const auto metadata_cb{std::move(metadata_callback)};
   const auto record_cb{std::move(record_callback)};
   const auto exception_cb{std::move(exception_callback)};
