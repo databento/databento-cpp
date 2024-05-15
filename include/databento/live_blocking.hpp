@@ -78,6 +78,8 @@ class LiveBlocking {
   std::string GenerateCramReply(const std::string& challenge_key);
   std::string EncodeAuthReq(const std::string& auth);
   std::uint64_t DecodeAuthResp();
+  void Subscribe(const std::string& sub_msg,
+                 const std::vector<std::string>& symbols);
   detail::TcpClient::Result FillBuffer(std::chrono::milliseconds timeout);
   RecordHeader* BufferRecordHeader();
 

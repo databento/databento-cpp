@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.1 - TBD
+
+### Bug fixes
+- Added missing symbol chunking for live `Subscribe` overloads with `const std::string&`
+  `start` parameter
+
 ## 0.18.0 - 2024-05-14
 
 ### Breaking changes
