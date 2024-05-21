@@ -1,9 +1,13 @@
 # Changelog
 
-## 0.18.1 - TBD
+## 0.18.1 - 2024-05-22
 
 ### Enhancements
 - Added live `Subscribe` function overload with `use_snapshot` parameter
+- Added `GetIf` method to `Record` that allows `if` chaining for handling multiple
+  record types
+- Added record type checking to `Record::Get` method to catch programming errors
+  and prevent reading invalid data
 
 ### Bug fixes
 - Added missing symbol chunking for live `Subscribe` overloads with `const std::string&`

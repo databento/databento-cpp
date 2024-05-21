@@ -11,6 +11,28 @@
 
 namespace databento {
 namespace test {
+TEST(RecordTests, TestRecordToString) {
+  TradeMsg target{
+      RecordHeader{sizeof(TradeMsg) / RecordHeader::kLengthMultiplier,
+                   RType::Mbp0,
+                   static_cast<std::uint16_t>(Publisher::OpraPillarEdgo),
+                   1,
+                   {}},
+      55000000000,
+      500,
+      Action::Add,
+      Side::Bid,
+      {},
+      0,
+      {},
+      {},
+      126239};
+  const Record rec{&target.hd};
+  EXPECT_EQ(
+      ToString(rec),
+      "Record { ptr = RecordHeader { length = 12, rtype = Mbp0, publisher_id = "
+      "24, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z } }");
+}
 TEST(RecordTests, TestPublisher) {
   const TradeMsg target{
       RecordHeader{sizeof(TradeMsg) / RecordHeader::kLengthMultiplier,

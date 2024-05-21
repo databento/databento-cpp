@@ -18,10 +18,9 @@ int main() {
 
   auto handler = [&symbol_mappings](const Record& rec) {
     symbol_mappings.OnRecord(rec);
-    if (rec.Holds<TradeMsg>()) {
-      auto trade = rec.Get<TradeMsg>();
+    if (const auto* trade = rec.GetIf<TradeMsg>()) {
       std::cout << "Received trade for "
-                << symbol_mappings[trade.hd.instrument_id] << ':' << trade
+                << symbol_mappings[trade->hd.instrument_id] << ':' << *trade
                 << '\n';
     }
     return KeepGoing::Continue;

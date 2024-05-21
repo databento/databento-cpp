@@ -10,6 +10,7 @@
 #include "databento/constants.hpp"  // kSymbolCstrLen
 #include "databento/datetime.hpp"   // UnixNanos
 #include "databento/enums.hpp"
+#include "databento/exceptions.hpp"  // InvalidArgumentError
 #include "databento/flag_set.hpp"    // FlagSet
 #include "databento/publishers.hpp"  // Publisher
 #include "databento/with_ts_out.hpp"
@@ -54,11 +55,33 @@ class Record {
 
   template <typename T>
   const T& Get() const {
-    return *reinterpret_cast<const T*>(record_);
+    if (const auto* r = GetIf<T>()) {
+      return *r;
+    }
+    throw InvalidArgumentError{
+        "Get", "T", std::string{"rtype mismatch, found "} + ToString(RType())};
   }
   template <typename T>
   T& Get() {
-    return *reinterpret_cast<T*>(record_);
+    if (auto* r = GetIf<T>()) {
+      return *r;
+    }
+    throw InvalidArgumentError{
+        "Get", "T", std::string{"rtype mismatch, found "} + ToString(RType())};
+  }
+  template <typename T>
+  const T* GetIf() const {
+    if (!Holds<T>()) {
+      return nullptr;
+    }
+    return reinterpret_cast<const T*>(record_);
+  }
+  template <typename T>
+  T* GetIf() {
+    if (!Holds<T>()) {
+      return nullptr;
+    }
+    return reinterpret_cast<T*>(record_);
   }
 
   std::size_t Size() const;
@@ -629,6 +652,8 @@ inline bool operator!=(const SymbolMappingMsg& lhs,
 
 std::string ToString(const RecordHeader& header);
 std::ostream& operator<<(std::ostream& stream, const RecordHeader& header);
+std::string ToString(const Record& header);
+std::ostream& operator<<(std::ostream& stream, const Record& header);
 std::string ToString(const MboMsg& mbo_msg);
 std::ostream& operator<<(std::ostream& stream, const MboMsg& mbo_msg);
 std::string ToString(const BidAskPair& ba_pair);

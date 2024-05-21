@@ -178,17 +178,17 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
                           {},
                           2};
 
-  const auto use_snapshot = true;
+  const auto kUseSnapshot = true;
   bool should_close{};
   std::mutex should_close_mutex;
   std::condition_variable should_close_cv;
   const mock::MockLsgServer mock_server{
       dataset::kXnasItch, kTsOut,
       [&should_close, &should_close_mutex, &should_close_cv, kRec, kSchema,
-       kSType](mock::MockLsgServer& self) {
+       kSType, kUseSnapshot](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kAllSymbols, kSchema, kSType, use_snapshot);
+        self.Subscribe(kAllSymbols, kSchema, kSType, kUseSnapshot);
         self.Start();
         {
           std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
@@ -237,7 +237,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
     }
   };
 
-  target.Subscribe(kAllSymbols, kSchema, kSType, use_snapshot);
+  target.Subscribe(kAllSymbols, kSchema, kSType, kUseSnapshot);
   target.Start(metadata_cb, record_cb, exception_cb);
   target.BlockForStop();
   EXPECT_EQ(metadata_calls, 2);

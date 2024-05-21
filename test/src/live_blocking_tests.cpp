@@ -169,11 +169,12 @@ TEST_F(LiveBlockingTests, TestSubscribeSnapshot) {
   const std::size_t kSymbolCount = 1000;
   const auto kSchema = Schema::Ohlcv1M;
   const auto kSType = SType::RawSymbol;
-  const auto use_snapshot = true;
+  const auto kUseSnapshot = true;
 
   const mock::MockLsgServer mock_server{
       kDataset, kTsOut,
-      [kSymbol, kSymbolCount, kSchema, kSType](mock::MockLsgServer& self) {
+      [kSymbol, kSymbolCount, kSchema, kSType,
+       kUseSnapshot](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         std::size_t i{};
@@ -181,7 +182,7 @@ TEST_F(LiveBlockingTests, TestSubscribeSnapshot) {
           const auto chunk_size =
               std::min(static_cast<std::size_t>(128), kSymbolCount - i);
           const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
-          self.Subscribe(symbols_chunk, kSchema, kSType, use_snapshot);
+          self.Subscribe(symbols_chunk, kSchema, kSType, kUseSnapshot);
           i += chunk_size;
         }
       }};
@@ -194,7 +195,7 @@ TEST_F(LiveBlockingTests, TestSubscribeSnapshot) {
                       kTsOut,
                       VersionUpgradePolicy{}};
   const std::vector<std::string> kSymbols(kSymbolCount, kSymbol);
-  target.Subscribe(kSymbols, kSchema, kSType, use_snapshot);
+  target.Subscribe(kSymbols, kSchema, kSType, kUseSnapshot);
 }
 
 TEST_F(LiveBlockingTests, TestInvalidSubscription) {
