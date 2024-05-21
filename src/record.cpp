@@ -189,7 +189,15 @@ bool databento::operator==(const ImbalanceMsg& lhs, const ImbalanceMsg& rhs) {
 }
 
 namespace databento {
-
+std::string ToString(const Record& record) { return MakeString(record); }
+std::ostream& operator<<(std::ostream& stream, const Record& record) {
+  return StreamOpBuilder{stream}
+      .SetSpacer(" ")
+      .SetTypeName("Record")
+      .Build()
+      .AddField("ptr", record.Header())
+      .Finish();
+}
 std::string ToString(const RecordHeader& header) { return MakeString(header); }
 std::ostream& operator<<(std::ostream& stream, const RecordHeader& header) {
   return StreamOpBuilder{stream}
