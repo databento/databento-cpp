@@ -178,6 +178,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
                           {},
                           2};
 
+  const auto use_snapshot = true;
   bool should_close{};
   std::mutex should_close_mutex;
   std::condition_variable should_close_cv;
@@ -187,7 +188,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
        kSType](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kAllSymbols, kSchema, kSType);
+        self.Subscribe(kAllSymbols, kSchema, kSType, use_snapshot);
         self.Start();
         {
           std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
@@ -235,7 +236,8 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
       return LiveThreaded::ExceptionAction::Stop;
     }
   };
-  target.Subscribe(kAllSymbols, kSchema, kSType);
+
+  target.Subscribe(kAllSymbols, kSchema, kSType, use_snapshot);
   target.Start(metadata_cb, record_cb, exception_cb);
   target.BlockForStop();
   EXPECT_EQ(metadata_calls, 2);

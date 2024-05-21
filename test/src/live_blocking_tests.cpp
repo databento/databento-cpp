@@ -162,6 +162,66 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunkingStringStart) {
   target.Subscribe(kSymbols, kSchema, kSType, kStart);
 }
 
+TEST_F(LiveBlockingTests, TestSubscribeSnapshot) {
+  constexpr auto kTsOut = false;
+  constexpr auto kDataset = dataset::kXnasItch;
+  const auto kSymbol = "TEST";
+  const std::size_t kSymbolCount = 1000;
+  const auto kSchema = Schema::Ohlcv1M;
+  const auto kSType = SType::RawSymbol;
+  const auto use_snapshot = true;
+
+  const mock::MockLsgServer mock_server{
+      kDataset, kTsOut,
+      [kSymbol, kSymbolCount, kSchema, kSType](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        std::size_t i{};
+        while (i < 1000) {
+          const auto chunk_size =
+              std::min(static_cast<std::size_t>(128), kSymbolCount - i);
+          const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
+          self.Subscribe(symbols_chunk, kSchema, kSType, use_snapshot);
+          i += chunk_size;
+        }
+      }};
+
+  LiveBlocking target{logger_.get(),
+                      kKey,
+                      kDataset,
+                      kLocalhost,
+                      mock_server.Port(),
+                      kTsOut,
+                      VersionUpgradePolicy{}};
+  const std::vector<std::string> kSymbols(kSymbolCount, kSymbol);
+  target.Subscribe(kSymbols, kSchema, kSType, use_snapshot);
+}
+
+TEST_F(LiveBlockingTests, TestInvalidSubscription) {
+  constexpr auto kTsOut = false;
+  constexpr auto kDataset = dataset::kXnasItch;
+  const std::vector<std::string> noSymbols{};
+  const auto kSchema = Schema::Ohlcv1M;
+  const auto kSType = SType::RawSymbol;
+
+  const mock::MockLsgServer mock_server{kDataset, kTsOut,
+                                        [](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                        }};
+
+  LiveBlocking target{logger_.get(),
+                      kKey,
+                      kDataset,
+                      kLocalhost,
+                      mock_server.Port(),
+                      kTsOut,
+                      VersionUpgradePolicy{}};
+
+  ASSERT_THROW(target.Subscribe(noSymbols, kSchema, kSType),
+               databento::InvalidArgumentError);
+}
+
 TEST_F(LiveBlockingTests, TestNextRecord) {
   constexpr auto kTsOut = false;
   const auto kRecCount = 12;

@@ -2,6 +2,9 @@
 
 ## 0.18.1 - TBD
 
+### Enhancements
+- Added live `Subscribe` function overload with `use_snapshot` parameter
+
 ### Bug fixes
 - Added missing symbol chunking for live `Subscribe` overloads with `const std::string&`
   `start` parameter

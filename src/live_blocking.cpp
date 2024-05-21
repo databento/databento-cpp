@@ -65,7 +65,7 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
   if (start.time_since_epoch().count()) {
     sub_msg << "|start=" << start.time_since_epoch().count();
   }
-  Subscribe(sub_msg.str(), symbols);
+  Subscribe(sub_msg.str(), symbols, false);
 }
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
@@ -77,11 +77,21 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
   if (!start.empty()) {
     sub_msg << "|start=" << start;
   }
-  Subscribe(sub_msg.str(), symbols);
+  Subscribe(sub_msg.str(), symbols, false);
+}
+
+void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
+                             Schema schema, SType stype_in, bool use_snapshot) {
+  std::ostringstream sub_msg;
+  sub_msg << "schema=" << ToString(schema)
+          << "|stype_in=" << ToString(stype_in);
+
+  Subscribe(sub_msg.str(), symbols, use_snapshot);
 }
 
 void LiveBlocking::Subscribe(const std::string& sub_msg,
-                             const std::vector<std::string>& symbols) {
+                             const std::vector<std::string>& symbols,
+                             bool use_snapshot) {
   static constexpr auto kMethodName = "Live::Subscribe";
   constexpr std::ptrdiff_t kSymbolMaxChunkSize = 128;
 
@@ -98,7 +108,7 @@ void LiveBlocking::Subscribe(const std::string& sub_msg,
     chunked_sub_msg << sub_msg << "|symbols="
                     << JoinSymbolStrings(kMethodName, symbols_it,
                                          symbols_it + chunk_size)
-                    << '\n';
+                    << "|snapshot=" << use_snapshot << '\n';
     client_.WriteAll(chunked_sub_msg.str());
 
     symbols_it += chunk_size;
