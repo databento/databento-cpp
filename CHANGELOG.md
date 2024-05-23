@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.19.0 - TBD
+
+### Enhancements
+- Added new `UncrossingPrice` `StatType` variant
+
 ## 0.18.1 - 2024-05-22
 
 ### Enhancements

@@ -232,6 +232,7 @@ namespace stat_type {
 // The type of statistic contained in a StatMsg.
 enum StatType : std::uint16_t {
   // The price of the first trade of an instrument. `price` will be set.
+  // `quantity` will be set when provided by the venue.
   OpeningPrice = 1,
   // The probable price of the first trade of an instrument published during
   // pre-open. Both `price` and `quantity` will be set.
@@ -265,6 +266,7 @@ enum StatType : std::uint16_t {
   // be set.
   FixingPrice = 10,
   // The last trade price during a trading session. `price` will be set.
+  // `quantity` will be set when provided by the venue.
   ClosePrice = 11,
   // The change in price from the close price of the previous trading session to
   // the most recent trading session. `price` will be set.
@@ -279,6 +281,12 @@ enum StatType : std::uint16_t {
   // The option delta associated with the settlement price. `price` will be set
   // with the standard precision.
   Delta = 15,
+  // The auction uncrossing price. This is used for auctions that are neither
+  // the
+  // official opening auction nor the official closing auction. `price` will be
+  // set. `quantity` will be set when provided by the venue.
+  UncrossingPrice = 16,
+
 };
 }  // namespace stat_type
 using stat_type::StatType;
