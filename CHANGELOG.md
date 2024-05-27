@@ -4,6 +4,10 @@
 
 ### Enhancements
 - Added new `UncrossingPrice` `StatType` variant
+- Added new publisher values for `XNAS.BASIC`
+
+### Bug fixes
+- Fix descriptions for `FINN` and `FINY` publishers.
 
 ## 0.18.1 - 2024-05-22
 

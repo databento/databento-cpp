@@ -155,6 +155,8 @@ enum class Dataset : std::uint16_t {
   NdexImpact = 29,
   // Databento Equities Max
   DbeqMax = 30,
+  // Nasdaq Basic (NLS+QBBO)
+  XnasBasic = 31,
 };
 
 // A specific Venue from a specific data source.
@@ -265,9 +267,9 @@ enum class Publisher : std::uint16_t {
   DbeqPlusXnas = 52,
   // DBEQ Plus - NYSE
   DbeqPlusXnys = 53,
-  // DBEQ Plus - FINRA/NYSE TRF
-  DbeqPlusFinn = 54,
   // DBEQ Plus - FINRA/Nasdaq TRF Carteret
+  DbeqPlusFinn = 54,
+  // DBEQ Plus - FINRA/NYSE TRF
   DbeqPlusFiny = 55,
   // DBEQ Plus - FINRA/Nasdaq TRF Chicago
   DbeqPlusFinc = 56,
@@ -293,9 +295,9 @@ enum class Publisher : std::uint16_t {
   DbeqMaxXnas = 66,
   // DBEQ Max - NYSE
   DbeqMaxXnys = 67,
-  // DBEQ Max - FINRA/NYSE TRF
-  DbeqMaxFinn = 68,
   // DBEQ Max - FINRA/Nasdaq TRF Carteret
+  DbeqMaxFinn = 68,
+  // DBEQ Max - FINRA/NYSE TRF
   DbeqMaxFiny = 69,
   // DBEQ Max - FINRA/Nasdaq TRF Chicago
   DbeqMaxFinc = 70,
@@ -319,6 +321,12 @@ enum class Publisher : std::uint16_t {
   DbeqMaxArcx = 79,
   // DBEQ Max - Long-Term Stock Exchange
   DbeqMaxLtse = 80,
+  // Nasdaq Basic - Nasdaq
+  XnasBasicXnas = 81,
+  // Nasdaq Basic - FINRA/Nasdaq TRF Carteret
+  XnasBasicFinn = 82,
+  // Nasdaq Basic - FINRA/Nasdaq TRF Chicago
+  XnasBasicFinc = 83,
 };
 
 // Get a Publisher's Venue.
