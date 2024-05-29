@@ -24,13 +24,13 @@ jobs:
           sudo apt-get install libpcre3 libpcre3-dev libzstd-dev ninja-build
       - name: Install cppcheck
         run: |
-          git clone https://github.com/danmar/cppcheck.git
+          git clone https://github.com/danmar/cppcheck.git --branch 2.14.1
           cd cppcheck
           cmake -S. -B build \
             -DCMAKE_BUILD_TYPE=Release \
-            -DUSE_MATCHCOMPILER=On \
+            -DUSE_MATCHCOMPILER=ON \
             -DHAVE_RULES=ON
-          cmake --build build --config Release
+          cmake --build build --config Release --parallel
           sudo cmake --install build --prefix /usr
       - name: Install gtest
         uses: MarkusJx/googletest-installer@v1.1
@@ -94,6 +94,6 @@ jobs:
             -DVCPKG_BUILD_TYPE=debug `
             -DDATABENTO_USE_EXTERNAL_GTEST=0
       - name: CMake build
-        run: cmake --build build --parallel 10
+        run: cmake --build build --parallel
       - name: Unit tests
         run: cd build && ctest --verbose --exclude-regex cmake
