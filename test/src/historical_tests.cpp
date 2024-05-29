@@ -447,8 +447,8 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices) {
 }
 
 TEST_F(HistoricalTests, TestMetadataGetDatasetRange) {
-  const nlohmann::json kResp = {{"start_date", "2017-05-21"},
-                                {"end_date", "2022-12-01"}};
+  const nlohmann::json kResp = {{"start", "2017-05-21T00:00:00.000000000Z"},
+                                {"end", "2022-12-01T00:00:00.000000000Z"}};
   mock_server_.MockGetJson("/v0/metadata.get_dataset_range",
                            {{"dataset", dataset::kXnasItch}}, kResp);
   const auto port = mock_server_.ListenOnThread();
@@ -456,8 +456,8 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetRange) {
   databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   const auto res = target.MetadataGetDatasetRange(dataset::kXnasItch);
-  EXPECT_EQ(res.start_date, "2017-05-21");
-  EXPECT_EQ(res.end_date, "2022-12-01");
+  EXPECT_EQ(res.start, "2017-05-21T00:00:00.000000000Z");
+  EXPECT_EQ(res.end, "2022-12-01T00:00:00.000000000Z");
 }
 
 TEST_F(HistoricalTests, TestMetadataGetRecordCount) {

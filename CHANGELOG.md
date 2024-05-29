@@ -1,10 +1,16 @@
 # Changelog
 
-## 0.18.2 - TBD
+## 0.19.0 - TBD
 
 ### Enhancements
 - Added new `UncrossingPrice` `StatType` variant
 - Added new publisher values for `XNAS.BASIC`
+
+### Breaking changes
+- Removed `start_date` and `end_date` fields from `DatasetRange` struct
+  in favor of `start` and `end`
+- Removed live `Subscribe` method overloads with `use_snapshot`
+  parameter in favor of separate `SubscribeWithSnapshot` method
 
 ### Bug fixes
 - Fixed overloading of live `Subscribe` methods

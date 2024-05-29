@@ -32,8 +32,8 @@ struct DatasetConditionDetail {
 };
 
 struct DatasetRange {
-  std::string start_date;
-  std::string end_date;
+  std::string start;
+  std::string end;
 };
 
 inline bool operator==(const PublisherDetail& lhs, const PublisherDetail& rhs) {
@@ -71,7 +71,7 @@ inline bool operator!=(const DatasetConditionDetail& lhs,
 }
 
 inline bool operator==(const DatasetRange& lhs, const DatasetRange& rhs) {
-  return lhs.start_date == rhs.start_date && lhs.end_date == rhs.end_date;
+  return lhs.start == rhs.start && lhs.end == rhs.end;
 }
 inline bool operator!=(const DatasetRange& lhs, const DatasetRange& rhs) {
   return !(lhs == rhs);

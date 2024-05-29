@@ -14,10 +14,11 @@ TEST(MetadataTests, TestDatasetConditionDetailToString) {
 }
 
 TEST(MetadataTests, TestDatasetRangeToString) {
-  const DatasetRange target{"2022-05-17", "2023-01-07"};
+  const DatasetRange target{"2022-05-17T00:00:00.000000000Z",
+                            "2023-01-07T00:00:00.000000000Z"};
   ASSERT_EQ(
       ToString(target),
-      R"(DatasetRange { start_date = "2022-05-17", end_date = "2023-01-07" })");
+      R"(DatasetRange { start = "2022-05-17T00:00:00.000000000Z", end = "2023-01-07T00:00:00.000000000Z" })");
 }
 }  // namespace test
 }  // namespace databento
