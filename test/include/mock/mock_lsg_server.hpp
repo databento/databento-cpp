@@ -34,10 +34,11 @@ class MockLsgServer {
   void Accept();
   void Authenticate();
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
-                 SType stype, bool use_snapshot = false);
+                 SType stype);
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
-                 SType stype, const std::string& start,
-                 bool use_snapshot = false);
+                 SType stype, const std::string& start);
+  void SubscribeWithSnapshot(const std::vector<std::string>& symbols,
+                             Schema schema, SType stype);
   void Start();
   std::size_t Send(const std::string& msg);
   ::ssize_t UncheckedSend(const std::string& msg);

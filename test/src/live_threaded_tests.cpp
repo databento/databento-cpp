@@ -188,7 +188,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
        kSType, kUseSnapshot](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kAllSymbols, kSchema, kSType, kUseSnapshot);
+        self.SubscribeWithSnapshot(kAllSymbols, kSchema, kSType);
         self.Start();
         {
           std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
@@ -237,7 +237,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
     }
   };
 
-  target.Subscribe(kAllSymbols, kSchema, kSType, kUseSnapshot);
+  target.SubscribeWithSnapshot(kAllSymbols, kSchema, kSType);
   target.Start(metadata_cb, record_cb, exception_cb);
   target.BlockForStop();
   EXPECT_EQ(metadata_calls, 2);

@@ -54,17 +54,14 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in) {
-  Subscribe(symbols, schema, stype_in, UnixNanos{});
+  Subscribe(symbols, schema, stype_in, std::string{""});
 }
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in, UnixNanos start) {
   std::ostringstream sub_msg;
-  sub_msg << "schema=" << ToString(schema)
-          << "|stype_in=" << ToString(stype_in);
-  if (start.time_since_epoch().count()) {
-    sub_msg << "|start=" << start.time_since_epoch().count();
-  }
+  sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
+          << "|start=" << start.time_since_epoch().count();
   Subscribe(sub_msg.str(), symbols, false);
 }
 
@@ -80,13 +77,13 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
   Subscribe(sub_msg.str(), symbols, false);
 }
 
-void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in, bool use_snapshot) {
+void LiveBlocking::SubscribeWithSnapshot(
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in) {
   std::ostringstream sub_msg;
   sub_msg << "schema=" << ToString(schema)
           << "|stype_in=" << ToString(stype_in);
 
-  Subscribe(sub_msg.str(), symbols, use_snapshot);
+  Subscribe(sub_msg.str(), symbols, true);
 }
 
 void LiveBlocking::Subscribe(const std::string& sub_msg,

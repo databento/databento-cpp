@@ -126,6 +126,33 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunkingUnixNanos) {
   target.Subscribe(kSymbols, kSchema, kSType);
 }
 
+TEST_F(LiveBlockingTests, TestSubscriptionUnixNanos0) {
+  constexpr auto kTsOut = false;
+  constexpr auto kDataset = dataset::kXnasItch;
+  const std::vector<std::string> kSymbols = {"TEST1", "TEST2"};
+  const auto kSchema = Schema::Ohlcv1M;
+  const auto kSType = SType::RawSymbol;
+  const auto kStart = UnixNanos{};
+
+  const mock::MockLsgServer mock_server{
+      kDataset, kTsOut,
+      [&kSymbols, kSchema, kSType, kStart](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        std::size_t i{};
+        self.Subscribe(kSymbols, kSchema, kSType, "0");
+      }};
+
+  LiveBlocking target{logger_.get(),
+                      kKey,
+                      kDataset,
+                      kLocalhost,
+                      mock_server.Port(),
+                      kTsOut,
+                      VersionUpgradePolicy{}};
+  target.Subscribe(kSymbols, kSchema, kSType, kStart);
+}
+
 TEST_F(LiveBlockingTests, TestSubscriptionChunkingStringStart) {
   constexpr auto kTsOut = false;
   constexpr auto kDataset = dataset::kXnasItch;
@@ -182,7 +209,7 @@ TEST_F(LiveBlockingTests, TestSubscribeSnapshot) {
           const auto chunk_size =
               std::min(static_cast<std::size_t>(128), kSymbolCount - i);
           const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
-          self.Subscribe(symbols_chunk, kSchema, kSType, kUseSnapshot);
+          self.SubscribeWithSnapshot(symbols_chunk, kSchema, kSType);
           i += chunk_size;
         }
       }};
@@ -195,13 +222,13 @@ TEST_F(LiveBlockingTests, TestSubscribeSnapshot) {
                       kTsOut,
                       VersionUpgradePolicy{}};
   const std::vector<std::string> kSymbols(kSymbolCount, kSymbol);
-  target.Subscribe(kSymbols, kSchema, kSType, kUseSnapshot);
+  target.SubscribeWithSnapshot(kSymbols, kSchema, kSType);
 }
 
 TEST_F(LiveBlockingTests, TestInvalidSubscription) {
   constexpr auto kTsOut = false;
   constexpr auto kDataset = dataset::kXnasItch;
-  const std::vector<std::string> noSymbols{};
+  const std::vector<std::string> kNoSymbols{};
   const auto kSchema = Schema::Ohlcv1M;
   const auto kSType = SType::RawSymbol;
 
@@ -219,7 +246,7 @@ TEST_F(LiveBlockingTests, TestInvalidSubscription) {
                       kTsOut,
                       VersionUpgradePolicy{}};
 
-  ASSERT_THROW(target.Subscribe(noSymbols, kSchema, kSType),
+  ASSERT_THROW(target.Subscribe(kNoSymbols, kSchema, kSType),
                databento::InvalidArgumentError);
 }
 

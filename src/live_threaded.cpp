@@ -102,9 +102,9 @@ void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
   impl_->blocking.Subscribe(symbols, schema, stype_in, start);
 }
 
-void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in, bool use_snapshot) {
-  impl_->blocking.Subscribe(symbols, schema, stype_in, use_snapshot);
+void LiveThreaded::SubscribeWithSnapshot(
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in) {
+  impl_->blocking.SubscribeWithSnapshot(symbols, schema, stype_in);
 }
 
 void LiveThreaded::Start(RecordCallback callback) {

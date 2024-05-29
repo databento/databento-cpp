@@ -50,8 +50,8 @@ class LiveBlocking {
                  SType stype_in, UnixNanos start);
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype_in, const std::string& start);
-  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
-                 SType stype_in, bool use_snapshot);
+  void SubscribeWithSnapshot(const std::vector<std::string>& symbols,
+                             Schema schema, SType stype_in);
   // Notifies the gateway to start sending messages for all subscriptions.
   //
   // This method should only be called once per instance.

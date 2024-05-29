@@ -1,13 +1,15 @@
 # Changelog
 
-## 0.19.0 - TBD
+## 0.18.2 - TBD
 
 ### Enhancements
 - Added new `UncrossingPrice` `StatType` variant
 - Added new publisher values for `XNAS.BASIC`
 
 ### Bug fixes
-- Fix descriptions for `FINN` and `FINY` publishers.
+- Fixed overloading of live `Subscribe` methods
+- Fixed live subscribing with default-constructed `UnixNanos`
+- Fixed descriptions for `FINN` and `FINY` publishers.
 
 ## 0.18.1 - 2024-05-22
 

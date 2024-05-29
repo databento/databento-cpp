@@ -91,13 +91,28 @@ void MockLsgServer::Authenticate() {
 }
 
 void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
-                              Schema schema, SType stype, bool use_snapshot) {
-  Subscribe(symbols, schema, stype, {}, use_snapshot);
+                              Schema schema, SType stype) {
+  Subscribe(symbols, schema, stype, "");
+}
+
+void MockLsgServer::SubscribeWithSnapshot(
+    const std::vector<std::string>& symbols, Schema schema, SType stype) {
+  const auto received = Receive();
+  EXPECT_NE(
+      received.find("symbols=" +
+                    JoinSymbolStrings("MockLsgServer::Subscribe", symbols)),
+      std::string::npos);
+  EXPECT_NE(received.find(std::string{"schema="} + ToString(schema)),
+            std::string::npos);
+  EXPECT_NE(received.find(std::string{"stype_in="} + ToString(stype)),
+            std::string::npos);
+  EXPECT_EQ(received.find("start="), std::string::npos);
+  EXPECT_NE(received.find("snapshot=1"), std::string::npos);
 }
 
 void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
                               Schema schema, SType stype,
-                              const std::string& start, bool use_snapshot) {
+                              const std::string& start) {
   const auto received = Receive();
   EXPECT_NE(
       received.find("symbols=" +
@@ -108,14 +123,11 @@ void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
   EXPECT_NE(received.find(std::string{"stype_in="} + ToString(stype)),
             std::string::npos);
   if (start.empty()) {
-    EXPECT_EQ(received.find(std::string{"start="}), std::string::npos);
+    EXPECT_EQ(received.find("start="), std::string::npos);
   } else {
     EXPECT_NE(received.find(std::string{"start="} + start), std::string::npos);
   }
-
-  EXPECT_NE(
-      received.find(std::string{"snapshot="} + std::to_string(use_snapshot)),
-      std::string::npos);
+  EXPECT_NE(received.find("snapshot=0"), std::string::npos);
 }
 
 void MockLsgServer::Start() {
