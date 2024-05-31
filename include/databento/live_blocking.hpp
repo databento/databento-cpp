@@ -4,6 +4,7 @@
 #include <chrono>  // milliseconds
 #include <cstdint>
 #include <string>
+#include <utility>  // pair
 #include <vector>
 
 #include "databento/datetime.hpp"           // UnixNanos
@@ -22,10 +23,12 @@ class ILogReceiver;
 class LiveBlocking {
  public:
   LiveBlocking(ILogReceiver* log_receiver, std::string key, std::string dataset,
-               bool send_ts_out, VersionUpgradePolicy upgrade_policy);
+               bool send_ts_out, VersionUpgradePolicy upgrade_policy,
+               std::chrono::seconds heartbeat_interval);
   LiveBlocking(ILogReceiver* log_receiver, std::string key, std::string dataset,
                std::string gateway, std::uint16_t port, bool send_ts_out,
-               VersionUpgradePolicy upgrade_policy);
+               VersionUpgradePolicy upgrade_policy,
+               std::chrono::seconds heartbeat_interval);
   /*
    * Getters
    */
@@ -36,6 +39,11 @@ class LiveBlocking {
   std::uint16_t Port() const { return port_; }
   bool SendTsOut() const { return send_ts_out_; }
   VersionUpgradePolicy UpgradePolicy() const { return upgrade_policy_; }
+  // The the first member of the pair will be true, when the heartbeat interval
+  // was overridden.
+  std::pair<bool, std::chrono::seconds> HeartbeatInterval() const {
+    return {heartbeat_interval_.count() > 0, heartbeat_interval_};
+  }
 
   /*
    * Methods
@@ -95,6 +103,7 @@ class LiveBlocking {
   bool send_ts_out_;
   std::uint8_t version_{};
   VersionUpgradePolicy upgrade_policy_;
+  std::chrono::seconds heartbeat_interval_;
   detail::TcpClient client_;
   // Must be 8-byte aligned for records
   alignas(RecordHeader) std::array<char, kMaxStrLen> read_buffer_{};

@@ -3,10 +3,16 @@
 ## 0.19.0 - TBD
 
 ### Enhancements
+- Added configurable `heartbeat_interval` parameter for live clients that determines the
+  timeout before heartbeat `SystemMsg` records will be sent. It can be configured via
+  the `SetHeartbeatInterval` method of the `LiveBuilder`
+- Added `SetAddress` method to `LiveBuilder` for configuring a custom gateway address
+  without using the constructor directly
 - Added new `UncrossingPrice` `StatType` variant
 - Added new publisher values for `XNAS.BASIC`
 
 ### Breaking changes
+- Added `heartbeat_interval` parameter to the `Live` constructors
 - Removed `start_date` and `end_date` fields from `DatasetRange` struct
   in favor of `start` and `end`
 - Removed live `Subscribe` method overloads with `use_snapshot`

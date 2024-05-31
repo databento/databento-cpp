@@ -1,5 +1,6 @@
 #include "databento/live.hpp"
 
+#include <chrono>
 #include <utility>  // move
 
 #include "databento/constants.hpp"      // kApiKeyLength
@@ -51,16 +52,40 @@ LiveBuilder& LiveBuilder::SetLogReceiver(
   return *this;
 }
 
+LiveBuilder& LiveBuilder::SetHeartbeatInterval(
+    std::chrono::seconds heartbeat_interval) {
+  heartbeat_interval_ = heartbeat_interval;
+  return *this;
+}
+
+LiveBuilder& LiveBuilder::SetAddress(std::string gateway, std::uint16_t port) {
+  gateway_ = std::move(gateway);
+  port_ = port;
+  return *this;
+}
+
 databento::LiveBlocking LiveBuilder::BuildBlocking() {
   Validate();
-  return databento::LiveBlocking{log_receiver_, key_, dataset_, send_ts_out_,
-                                 upgrade_policy_};
+  if (gateway_.empty()) {
+    return databento::LiveBlocking{log_receiver_,   key_,
+                                   dataset_,        send_ts_out_,
+                                   upgrade_policy_, heartbeat_interval_};
+  }
+  return databento::LiveBlocking{
+      log_receiver_, key_,         dataset_,        gateway_,
+      port_,         send_ts_out_, upgrade_policy_, heartbeat_interval_};
 }
 
 databento::LiveThreaded LiveBuilder::BuildThreaded() {
   Validate();
-  return databento::LiveThreaded{log_receiver_, key_, dataset_, send_ts_out_,
-                                 upgrade_policy_};
+  if (gateway_.empty()) {
+    return databento::LiveThreaded{log_receiver_,   key_,
+                                   dataset_,        send_ts_out_,
+                                   upgrade_policy_, heartbeat_interval_};
+  }
+  return databento::LiveThreaded{
+      log_receiver_, key_,         dataset_,        gateway_,
+      port_,         send_ts_out_, upgrade_policy_, heartbeat_interval_};
 }
 
 void LiveBuilder::Validate() {

@@ -10,6 +10,7 @@ using ssize_t = SSIZE_T;
 #include <sys/socket.h>  // send
 #endif
 
+#include <chrono>
 #include <condition_variable>
 #include <functional>  // function
 #include <mutex>
@@ -27,6 +28,9 @@ namespace mock {
 class MockLsgServer {
  public:
   MockLsgServer(std::string dataset, bool ts_out,
+                std::function<void(MockLsgServer&)> serve_fn);
+  MockLsgServer(std::string dataset, bool ts_out,
+                std::chrono::seconds heartbeat_interval,
                 std::function<void(MockLsgServer&)> serve_fn);
 
   std::uint16_t Port() const { return port_; }
@@ -83,6 +87,7 @@ class MockLsgServer {
 
   std::string dataset_;
   bool ts_out_;
+  std::chrono::seconds heartbeat_interval_;
   std::uint16_t port_{};
   detail::ScopedFd socket_{};
   detail::ScopedFd conn_fd_{};

@@ -20,8 +20,14 @@ using databento::test::mock::MockLsgServer;
 
 MockLsgServer::MockLsgServer(std::string dataset, bool ts_out,
                              std::function<void(MockLsgServer&)> serve_fn)
+    : MockLsgServer{std::move(dataset), ts_out, {}, std::move(serve_fn)} {}
+
+MockLsgServer::MockLsgServer(std::string dataset, bool ts_out,
+                             std::chrono::seconds heartbeat_interval,
+                             std::function<void(MockLsgServer&)> serve_fn)
     : dataset_{std::move(dataset)},
       ts_out_{ts_out},
+      heartbeat_interval_{heartbeat_interval},
       socket_{InitSocketAndSetPort()},
       thread_{std::move(serve_fn), std::ref(*this)} {}
 
@@ -87,6 +93,13 @@ void MockLsgServer::Authenticate() {
   EXPECT_NE(received.find("encoding=dbn"), std::string::npos);
   EXPECT_NE(received.find("ts_out=" + std::to_string(ts_out_)),
             std::string::npos);
+  if (heartbeat_interval_.count() > 0) {
+    EXPECT_NE(received.find("heartbeat_interval_s=" +
+                            std::to_string(heartbeat_interval_.count())),
+              std::string::npos);
+  } else {
+    EXPECT_EQ(received.find("heartbeat_interval_s="), std::string::npos);
+  }
   Send("success=1|session_id=5|\n");
 }
 

@@ -4,7 +4,8 @@
 
 #include <algorithm>  // copy
 #include <cctype>     // tolower
-#include <cstddef>    // ptrdiff_t
+#include <chrono>
+#include <cstddef>  // ptrdiff_t
 #include <cstdlib>
 #include <ios>  //hex, setfill, setw
 #include <sstream>
@@ -26,7 +27,8 @@ constexpr std::size_t kBucketIdLength = 5;
 
 LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy)
+                           VersionUpgradePolicy upgrade_policy,
+                           std::chrono::seconds heartbeat_interval)
 
     : log_receiver_{log_receiver},
       key_{std::move(key)},
@@ -35,13 +37,15 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       port_{13000},
       send_ts_out_{send_ts_out},
       upgrade_policy_{upgrade_policy},
+      heartbeat_interval_{heartbeat_interval},
       client_{gateway_, port_},
       session_id_{this->Authenticate()} {}
 
 LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, std::string gateway,
                            std::uint16_t port, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy)
+                           VersionUpgradePolicy upgrade_policy,
+                           std::chrono::seconds heartbeat_interval)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
@@ -49,6 +53,7 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       port_{port},
       send_ts_out_{send_ts_out},
       upgrade_policy_{upgrade_policy},
+      heartbeat_interval_{heartbeat_interval},
       client_{gateway_, port_},
       session_id_{this->Authenticate()} {}
 
@@ -261,11 +266,14 @@ std::string LiveBlocking::GenerateCramReply(const std::string& challenge_key) {
 }
 
 std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
-  std::ostringstream reply_stream;
-  reply_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
-               << "ts_out=" << send_ts_out_
-               << "|client=C++ " DATABENTO_VERSION "\n";
-  return reply_stream.str();
+  std::ostringstream req_stream;
+  req_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
+             << "ts_out=" << send_ts_out_ << "|client=C++ " DATABENTO_VERSION;
+  if (heartbeat_interval_.count() > 0) {
+    req_stream << "|heartbeat_interval_s=" << heartbeat_interval_.count();
+  }
+  req_stream << '\n';
+  return req_stream.str();
 }
 
 std::uint64_t LiveBlocking::DecodeAuthResp() {

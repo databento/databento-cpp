@@ -4,6 +4,7 @@
 #include <functional>  // function
 #include <memory>      // unique_ptr
 #include <string>
+#include <utility>  // pair
 #include <vector>
 
 #include "databento/datetime.hpp"              // UnixNanos
@@ -31,10 +32,12 @@ class LiveThreaded {
       std::function<ExceptionAction(const std::exception&)>;
 
   LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
-               bool send_ts_out, VersionUpgradePolicy upgrade_policy);
+               bool send_ts_out, VersionUpgradePolicy upgrade_policy,
+               std::chrono::seconds heartbeat_interval);
   LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
                std::string gateway, std::uint16_t port, bool send_ts_out,
-               VersionUpgradePolicy upgrade_policy);
+               VersionUpgradePolicy upgrade_policy,
+               std::chrono::seconds heartbeat_interval);
   LiveThreaded(const LiveThreaded&) = delete;
   LiveThreaded& operator=(const LiveThreaded&) = delete;
   LiveThreaded(LiveThreaded&& other) noexcept;
@@ -51,6 +54,9 @@ class LiveThreaded {
   std::uint16_t Port() const;
   bool SendTsOut() const;
   VersionUpgradePolicy UpgradePolicy() const;
+  // The the first member of the pair will be true, when the heartbeat interval
+  // was overridden.
+  std::pair<bool, std::chrono::seconds> HeartbeatInterval() const;
 
   /*
    * Methods
