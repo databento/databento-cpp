@@ -91,6 +91,8 @@ enum class Venue : std::uint16_t {
   Sphr = 41,
   // Long-Term Stock Exchange, Inc.
   Ltse = 42,
+  // Off-Exchange Transactions - Listed Instruments
+  Xoff = 43,
 };
 
 // A source of data.
@@ -327,6 +329,10 @@ enum class Publisher : std::uint16_t {
   XnasBasicFinn = 82,
   // Nasdaq Basic - FINRA/Nasdaq TRF Chicago
   XnasBasicFinc = 83,
+  // ICE Futures Europe - Off-Market Trades
+  IfeuImpactXoff = 84,
+  // ICE Endex - Off-Market Trades
+  NdexImpactXoff = 85,
 };
 
 // Get a Publisher's Venue.

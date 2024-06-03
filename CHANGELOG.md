@@ -11,6 +11,7 @@
 - Added new `UncrossingPrice` `StatType` variant
 - Added new publisher values for `XNAS.BASIC`
 - Added `SetDataset(Dataset)` overload to `LiveBuilder`
+- Added new off-market publisher values for `IFEU.IMPACT` and `NDEX.IMPACT`
 
 ### Breaking changes
 - Added `heartbeat_interval` parameter to the `Live` constructors
