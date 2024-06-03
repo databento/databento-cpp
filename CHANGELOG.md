@@ -10,6 +10,7 @@
   without using the constructor directly
 - Added new `UncrossingPrice` `StatType` variant
 - Added new publisher values for `XNAS.BASIC`
+- Added `SetDataset(Dataset)` overload to `LiveBuilder`
 
 ### Breaking changes
 - Added `heartbeat_interval` parameter to the `Live` constructors

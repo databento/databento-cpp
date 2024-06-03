@@ -35,6 +35,11 @@ LiveBuilder& LiveBuilder::SetDataset(std::string dataset) {
   return *this;
 }
 
+LiveBuilder& LiveBuilder::SetDataset(Dataset dataset) {
+  dataset_ = ToString(dataset);
+  return *this;
+}
+
 LiveBuilder& LiveBuilder::SetSendTsOut(bool send_ts_out) {
   send_ts_out_ = send_ts_out;
   return *this;

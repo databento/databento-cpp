@@ -6,6 +6,7 @@
 #include "databento/enums.hpp"  // VersionUpgradePolicy
 #include "databento/live_blocking.hpp"
 #include "databento/live_threaded.hpp"
+#include "databento/publishers.hpp"
 
 namespace databento {
 class ILogReceiver;
@@ -23,6 +24,7 @@ class LiveBuilder {
   LiveBuilder& SetKeyFromEnv();
   LiveBuilder& SetKey(std::string key);
   LiveBuilder& SetDataset(std::string dataset);
+  LiveBuilder& SetDataset(Dataset dataset);
   // Whether to append the gateway send timestamp after each DBN message.
   LiveBuilder& SetSendTsOut(bool send_ts_out);
   // Set the version upgrade policy for when receiving DBN data from a prior
