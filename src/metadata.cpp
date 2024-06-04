@@ -59,8 +59,8 @@ std::ostream& operator<<(std::ostream& stream,
       .SetSpacer(" ")
       .SetTypeName("DatasetRange")
       .Build()
-      .AddField("start_date", dataset_range.start_date)
-      .AddField("end_date", dataset_range.end_date)
+      .AddField("start", dataset_range.start)
+      .AddField("end", dataset_range.end)
       .Finish();
 }
 }  // namespace databento

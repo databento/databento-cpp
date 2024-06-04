@@ -57,16 +57,19 @@ LiveThreaded::~LiveThreaded() {
 
 LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy)
+                           VersionUpgradePolicy upgrade_policy,
+                           std::chrono::seconds heartbeat_interval)
     : impl_{new Impl{log_receiver, std::move(key), std::move(dataset),
-                     send_ts_out, upgrade_policy}} {}
+                     send_ts_out, upgrade_policy, heartbeat_interval}} {}
 
 LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, std::string gateway,
                            std::uint16_t port, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy)
+                           VersionUpgradePolicy upgrade_policy,
+                           std::chrono::seconds heartbeat_interval)
     : impl_{new Impl{log_receiver, std::move(key), std::move(dataset),
-                     std::move(gateway), port, send_ts_out, upgrade_policy}} {}
+                     std::move(gateway), port, send_ts_out, upgrade_policy,
+                     heartbeat_interval}} {}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 
@@ -86,6 +89,10 @@ databento::VersionUpgradePolicy LiveThreaded::UpgradePolicy() const {
   return impl_->blocking.UpgradePolicy();
 }
 
+std::pair<bool, std::chrono::seconds> LiveThreaded::HeartbeatInterval() const {
+  return impl_->blocking.HeartbeatInterval();
+}
+
 void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in) {
   impl_->blocking.Subscribe(symbols, schema, stype_in);
@@ -102,9 +109,9 @@ void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
   impl_->blocking.Subscribe(symbols, schema, stype_in, start);
 }
 
-void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in, bool use_snapshot) {
-  impl_->blocking.Subscribe(symbols, schema, stype_in, use_snapshot);
+void LiveThreaded::SubscribeWithSnapshot(
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in) {
+  impl_->blocking.SubscribeWithSnapshot(symbols, schema, stype_in);
 }
 
 void LiveThreaded::Start(RecordCallback callback) {

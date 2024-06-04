@@ -137,6 +137,9 @@ const char* ToString(Venue venue) {
     case Venue::Ltse: {
       return "LTSE";
     }
+    case Venue::Xoff: {
+      return "XOFF";
+    }
     default: {
       return "Unknown";
     }
@@ -276,6 +279,9 @@ Venue FromString(const std::string& str) {
   if (str == "LTSE") {
     return Venue::Ltse;
   }
+  if (str == "XOFF") {
+    return Venue::Xoff;
+  }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -371,6 +377,9 @@ const char* ToString(Dataset dataset) {
     }
     case Dataset::DbeqMax: {
       return "DBEQ.MAX";
+    }
+    case Dataset::XnasBasic: {
+      return "XNAS.BASIC";
     }
     default: {
       return "Unknown";
@@ -474,6 +483,9 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "DBEQ.MAX") {
     return Dataset::DbeqMax;
+  }
+  if (str == "XNAS.BASIC") {
+    return Dataset::XnasBasic;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -720,6 +732,21 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::DbeqMaxLtse: {
       return Venue::Ltse;
+    }
+    case Publisher::XnasBasicXnas: {
+      return Venue::Xnas;
+    }
+    case Publisher::XnasBasicFinn: {
+      return Venue::Finn;
+    }
+    case Publisher::XnasBasicFinc: {
+      return Venue::Finc;
+    }
+    case Publisher::IfeuImpactXoff: {
+      return Venue::Xoff;
+    }
+    case Publisher::NdexImpactXoff: {
+      return Venue::Xoff;
     }
     default: {
       throw InvalidArgumentError{
@@ -971,6 +998,21 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::DbeqMaxLtse: {
       return Dataset::DbeqMax;
     }
+    case Publisher::XnasBasicXnas: {
+      return Dataset::XnasBasic;
+    }
+    case Publisher::XnasBasicFinn: {
+      return Dataset::XnasBasic;
+    }
+    case Publisher::XnasBasicFinc: {
+      return Dataset::XnasBasic;
+    }
+    case Publisher::IfeuImpactXoff: {
+      return Dataset::IfeuImpact;
+    }
+    case Publisher::NdexImpactXoff: {
+      return Dataset::NdexImpact;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -1221,6 +1263,21 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::DbeqMaxLtse: {
       return "DBEQ.MAX.LTSE";
+    }
+    case Publisher::XnasBasicXnas: {
+      return "XNAS.BASIC.XNAS";
+    }
+    case Publisher::XnasBasicFinn: {
+      return "XNAS.BASIC.FINN";
+    }
+    case Publisher::XnasBasicFinc: {
+      return "XNAS.BASIC.FINC";
+    }
+    case Publisher::IfeuImpactXoff: {
+      return "IFEU.IMPACT.XOFF";
+    }
+    case Publisher::NdexImpactXoff: {
+      return "NDEX.IMPACT.XOFF";
     }
     default: {
       return "Unknown";
@@ -1474,6 +1531,21 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "DBEQ.MAX.LTSE") {
     return Publisher::DbeqMaxLtse;
+  }
+  if (str == "XNAS.BASIC.XNAS") {
+    return Publisher::XnasBasicXnas;
+  }
+  if (str == "XNAS.BASIC.FINN") {
+    return Publisher::XnasBasicFinn;
+  }
+  if (str == "XNAS.BASIC.FINC") {
+    return Publisher::XnasBasicFinc;
+  }
+  if (str == "IFEU.IMPACT.XOFF") {
+    return Publisher::IfeuImpactXoff;
+  }
+  if (str == "NDEX.IMPACT.XOFF") {
+    return Publisher::NdexImpactXoff;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

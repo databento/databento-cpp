@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <exception>
 #include <iostream>
@@ -12,6 +13,7 @@
 #include "databento/dbn.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"
+#include "databento/live.hpp"
 #include "databento/live_threaded.hpp"
 #include "databento/log.hpp"
 #include "databento/record.hpp"
@@ -35,6 +37,8 @@ class LiveThreadedTests : public testing::Test {
   static constexpr auto kLocalhost = "127.0.0.1";
 
   std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
+  LiveBuilder builder_{
+      LiveBuilder{}.SetLogReceiver(logger_.get()).SetKey(kKey)};
 };
 
 TEST_F(LiveThreadedTests, TestBasic) {
@@ -49,7 +53,9 @@ TEST_F(LiveThreadedTests, TestBasic) {
                     UnixNanos{},
                     TimeDeltaNanos{},
                     100};
+  constexpr auto kHeartbeatInterval = std::chrono::seconds{5};
   const mock::MockLsgServer mock_server{dataset::kGlbxMdp3, kTsOut,
+                                        kHeartbeatInterval,
                                         [&kRec](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
@@ -58,9 +64,11 @@ TEST_F(LiveThreadedTests, TestBasic) {
                                           self.SendRecord(kRec);
                                         }};
 
-  LiveThreaded target{
-      logger_.get(),      kKey,   dataset::kGlbxMdp3,    kLocalhost,
-      mock_server.Port(), kTsOut, VersionUpgradePolicy{}};
+  LiveThreaded target = builder_.SetDataset(dataset::kGlbxMdp3)
+                            .SetSendTsOut(kTsOut)
+                            .SetHeartbeatInterval(kHeartbeatInterval)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildThreaded();
   std::uint32_t call_count{};
   target.Start([&call_count, &kRec](const Record& rec) {
     ++call_count;
@@ -99,9 +107,10 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
         self.SendRecord(kRec);
       }};
 
-  LiveThreaded target{
-      logger_.get(),      kKey,  dataset::kXnasItch,    kLocalhost,
-      mock_server.Port(), false, VersionUpgradePolicy{}};
+  LiveThreaded target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildThreaded();
   target.Start(
       [](Metadata&& metadata) { EXPECT_TRUE(metadata.has_mixed_schema); },
       [&call_count, &kRec](const Record& rec) {
@@ -147,9 +156,10 @@ TEST_F(LiveThreadedTests, TestStop) {
         }
       }}};
 
-  LiveThreaded target{
-      logger_.get(),       kKey,   dataset::kXnasItch,    kLocalhost,
-      mock_server->Port(), kTsOut, VersionUpgradePolicy{}};
+  LiveThreaded target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server->Port())
+                            .BuildThreaded();
   target.Start(
       [](Metadata&& metadata) { EXPECT_TRUE(metadata.has_mixed_schema); },
       [&call_count, &kRec](const Record& rec) {
@@ -188,7 +198,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
        kSType, kUseSnapshot](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kAllSymbols, kSchema, kSType, kUseSnapshot);
+        self.SubscribeWithSnapshot(kAllSymbols, kSchema, kSType);
         self.Start();
         {
           std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
@@ -202,9 +212,10 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
         self.Start();
         self.SendRecord(kRec);
       }};
-  LiveThreaded target{
-      logger_.get(),      kKey,   dataset::kXnasItch,    kLocalhost,
-      mock_server.Port(), kTsOut, VersionUpgradePolicy{}};
+  LiveThreaded target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildThreaded();
   std::atomic<std::int32_t> metadata_calls{};
   const auto metadata_cb = [&metadata_calls, &should_close, &should_close_cv,
                             &should_close_mutex](Metadata&& metadata) {
@@ -237,7 +248,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
     }
   };
 
-  target.Subscribe(kAllSymbols, kSchema, kSType, kUseSnapshot);
+  target.SubscribeWithSnapshot(kAllSymbols, kSchema, kSType);
   target.Start(metadata_cb, record_cb, exception_cb);
   target.BlockForStop();
   EXPECT_EQ(metadata_calls, 2);
@@ -271,9 +282,11 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
         self.Authenticate();
         self.Subscribe(kSymbols, kSchema, kSType);
       }};
-  LiveThreaded target{
-      ILogReceiver::Default(), kKey,   dataset::kXnasItch,    kLocalhost,
-      mock_server.Port(),      kTsOut, VersionUpgradePolicy{}};
+  LiveThreaded target = builder_.SetLogReceiver(ILogReceiver::Default())
+                            .SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildThreaded();
   std::atomic<std::int32_t> metadata_calls{};
   const auto metadata_cb = [&metadata_calls, &should_close, &should_close_cv,
                             &should_close_mutex](Metadata&&) {
@@ -318,9 +331,10 @@ TEST_F(LiveThreadedTests, TestBlockForStopTimeout) {
                                           self.Start();
                                           self.SendRecord(kRec);
                                         }};
-  LiveThreaded target{
-      ILogReceiver::Default(), kKey,   dataset::kXnasItch,    kLocalhost,
-      mock_server.Port(),      kTsOut, VersionUpgradePolicy{}};
+  LiveThreaded target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildThreaded();
   target.Start([](const Record&) { return KeepGoing::Continue; });
   ASSERT_EQ(target.BlockForStop(std::chrono::milliseconds{100}),
             KeepGoing::Continue);

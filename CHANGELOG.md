@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.19.0 - 2024-06-04
+
+### Enhancements
+- Added configurable `heartbeat_interval` parameter for live clients that determines the
+  timeout before heartbeat `SystemMsg` records will be sent. It can be configured via
+  the `SetHeartbeatInterval` method of the `LiveBuilder`
+- Added `SetAddress` method to `LiveBuilder` for configuring a custom gateway address
+  without using the constructor directly
+- Added new `UncrossingPrice` `StatType` variant
+- Added new publisher values for `XNAS.BASIC`
+- Added `SetDataset(Dataset)` overload to `LiveBuilder`
+- Added new off-market publisher values for `IFEU.IMPACT` and `NDEX.IMPACT`
+
+### Breaking changes
+- Added `heartbeat_interval` parameter to the `Live` constructors
+- Removed `start_date` and `end_date` fields from `DatasetRange` struct
+  in favor of `start` and `end`
+- Removed live `Subscribe` method overloads with `use_snapshot`
+  parameter in favor of separate `SubscribeWithSnapshot` method
+
+### Bug fixes
+- Fixed overloading of live `Subscribe` methods
+- Fixed live subscribing with default-constructed `UnixNanos`
+- Fixed descriptions for `FINN` and `FINY` publishers.
+
 ## 0.18.1 - 2024-05-22
 
 ### Enhancements

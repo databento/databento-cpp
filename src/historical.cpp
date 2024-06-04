@@ -559,9 +559,8 @@ databento::DatasetRange Historical::MetadataGetDatasetRange(
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
   }
-  return DatasetRange{
-      detail::ParseAt<std::string>(kEndpoint, json, "start_date"),
-      detail::ParseAt<std::string>(kEndpoint, json, "end_date")};
+  return DatasetRange{detail::ParseAt<std::string>(kEndpoint, json, "start"),
+                      detail::ParseAt<std::string>(kEndpoint, json, "end")};
 }
 
 static const std::string kMetadataGetRecordCountEndpoint =

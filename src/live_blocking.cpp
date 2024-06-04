@@ -4,7 +4,8 @@
 
 #include <algorithm>  // copy
 #include <cctype>     // tolower
-#include <cstddef>    // ptrdiff_t
+#include <chrono>
+#include <cstddef>  // ptrdiff_t
 #include <cstdlib>
 #include <ios>  //hex, setfill, setw
 #include <sstream>
@@ -26,7 +27,8 @@ constexpr std::size_t kBucketIdLength = 5;
 
 LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy)
+                           VersionUpgradePolicy upgrade_policy,
+                           std::chrono::seconds heartbeat_interval)
 
     : log_receiver_{log_receiver},
       key_{std::move(key)},
@@ -35,13 +37,15 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       port_{13000},
       send_ts_out_{send_ts_out},
       upgrade_policy_{upgrade_policy},
+      heartbeat_interval_{heartbeat_interval},
       client_{gateway_, port_},
       session_id_{this->Authenticate()} {}
 
 LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, std::string gateway,
                            std::uint16_t port, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy)
+                           VersionUpgradePolicy upgrade_policy,
+                           std::chrono::seconds heartbeat_interval)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
@@ -49,22 +53,20 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       port_{port},
       send_ts_out_{send_ts_out},
       upgrade_policy_{upgrade_policy},
+      heartbeat_interval_{heartbeat_interval},
       client_{gateway_, port_},
       session_id_{this->Authenticate()} {}
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in) {
-  Subscribe(symbols, schema, stype_in, UnixNanos{});
+  Subscribe(symbols, schema, stype_in, std::string{""});
 }
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in, UnixNanos start) {
   std::ostringstream sub_msg;
-  sub_msg << "schema=" << ToString(schema)
-          << "|stype_in=" << ToString(stype_in);
-  if (start.time_since_epoch().count()) {
-    sub_msg << "|start=" << start.time_since_epoch().count();
-  }
+  sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
+          << "|start=" << start.time_since_epoch().count();
   Subscribe(sub_msg.str(), symbols, false);
 }
 
@@ -80,13 +82,13 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
   Subscribe(sub_msg.str(), symbols, false);
 }
 
-void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in, bool use_snapshot) {
+void LiveBlocking::SubscribeWithSnapshot(
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in) {
   std::ostringstream sub_msg;
   sub_msg << "schema=" << ToString(schema)
           << "|stype_in=" << ToString(stype_in);
 
-  Subscribe(sub_msg.str(), symbols, use_snapshot);
+  Subscribe(sub_msg.str(), symbols, true);
 }
 
 void LiveBlocking::Subscribe(const std::string& sub_msg,
@@ -264,11 +266,14 @@ std::string LiveBlocking::GenerateCramReply(const std::string& challenge_key) {
 }
 
 std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
-  std::ostringstream reply_stream;
-  reply_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
-               << "ts_out=" << send_ts_out_
-               << "|client=C++ " DATABENTO_VERSION "\n";
-  return reply_stream.str();
+  std::ostringstream req_stream;
+  req_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
+             << "ts_out=" << send_ts_out_ << "|client=C++ " DATABENTO_VERSION;
+  if (heartbeat_interval_.count() > 0) {
+    req_stream << "|heartbeat_interval_s=" << heartbeat_interval_.count();
+  }
+  req_stream << '\n';
+  return req_stream.str();
 }
 
 std::uint64_t LiveBlocking::DecodeAuthResp() {
