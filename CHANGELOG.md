@@ -23,7 +23,7 @@
 ### Bug fixes
 - Fixed overloading of live `Subscribe` methods
 - Fixed live subscribing with default-constructed `UnixNanos`
-- Fixed descriptions for `FINN` and `FINY` publishers.
+- Fixed descriptions for `FINN` and `FINY` publishers
 
 ## 0.18.1 - 2024-05-22
 
