@@ -333,6 +333,14 @@ enum class Publisher : std::uint16_t {
   IfeuImpactXoff = 84,
   // ICE Endex - Off-Market Trades
   NdexImpactXoff = 85,
+  // Nasdaq NLS - Nasdaq BX
+  XnasNlsXbos = 86,
+  // Nasdaq NLS - Nasdaq PSX
+  XnasNlsXpsx = 87,
+  // Nasdaq Basic - Nasdaq BX
+  XnasBasicXbos = 88,
+  // Nasdaq Basic - Nasdaq PSX
+  XnasBasicXpsx = 89,
 };
 
 // Get a Publisher's Venue.

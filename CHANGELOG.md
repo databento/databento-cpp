@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.19.1 - TBD
+
+### Enhancements
+- Added new publisher values for `XNAS.BASIC` and `XNAS.NLS`
+
 ## 0.19.0 - 2024-06-04
 
 ### Enhancements
