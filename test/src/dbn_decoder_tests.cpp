@@ -109,7 +109,7 @@ TEST_F(DbnDecoderTests, TestDecodeDefinitionUpgrade) {
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
   EXPECT_EQ(ch_metadata, f_metadata);
-  EXPECT_EQ(ch_metadata.version, 1);
+  EXPECT_EQ(ch_metadata.version, 2);
   EXPECT_EQ(ch_metadata.dataset, dataset::kXnasItch);
   EXPECT_EQ(ch_metadata.schema, Schema::Definition);
   EXPECT_EQ(ch_metadata.start.time_since_epoch().count(), 1633305600000000000);

@@ -3,7 +3,13 @@
 ## 0.19.1 - TBD
 
 ### Enhancements
+- Added `Upgrade()` method to `Metadata` to update the metadata fields according to a
+  `VersionUpgradePolicy`
 - Added new publisher values for `XNAS.BASIC` and `XNAS.NLS`
+
+### Bug fixes
+- Fixed issue where `Metadata` wasn't upgraded when passing
+  `VersionUpgradePolicy::Upgrade`
 
 ## 0.19.0 - 2024-06-04
 

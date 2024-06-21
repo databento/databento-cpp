@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>   // lock_guard, mutex, unique_lock
 #include <thread>  // this_thread
+#include <utility>
 #include <vector>
 
 #include "databento/constants.hpp"  // dataset
@@ -55,23 +56,28 @@ TEST_F(LiveBlockingTests, TestAuthentication) {
                                   .BuildBlocking();
 }
 
-TEST_F(LiveBlockingTests, TestStart) {
+TEST_F(LiveBlockingTests, TestStartAndUpgrade) {
   constexpr auto kTsOut = true;
-  const mock::MockLsgServer mock_server{dataset::kGlbxMdp3, kTsOut,
-                                        [](mock::MockLsgServer& self) {
-                                          self.Accept();
-                                          self.Authenticate();
-                                          self.Start();
-                                        }};
+  for (const auto policy_and_version :
+       {std::make_pair(VersionUpgradePolicy::AsIs, 1),
+        std::make_pair(VersionUpgradePolicy::Upgrade, 2)}) {
+    const mock::MockLsgServer mock_server{dataset::kGlbxMdp3, kTsOut,
+                                          [](mock::MockLsgServer& self) {
+                                            self.Accept();
+                                            self.Authenticate();
+                                            self.Start();
+                                          }};
 
-  LiveBlocking target = builder_.SetAddress(kLocalhost, mock_server.Port())
-                            .SetSendTsOut(kTsOut)
-                            .SetDataset(dataset::kGlbxMdp3)
-                            .BuildBlocking();
-  const auto metadata = target.Start();
-  EXPECT_EQ(metadata.version, 1);
-  EXPECT_TRUE(metadata.has_mixed_schema);
-  EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
+    LiveBlocking target = builder_.SetAddress(kLocalhost, mock_server.Port())
+                              .SetSendTsOut(kTsOut)
+                              .SetDataset(dataset::kGlbxMdp3)
+                              .SetUpgradePolicy(policy_and_version.first)
+                              .BuildBlocking();
+    const auto metadata = target.Start();
+    EXPECT_EQ(metadata.version, policy_and_version.second);
+    EXPECT_TRUE(metadata.has_mixed_schema);
+    EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
+  }
 }
 
 TEST_F(LiveBlockingTests, TestSubscribe) {

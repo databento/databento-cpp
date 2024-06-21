@@ -130,6 +130,7 @@ databento::Metadata LiveBlocking::Start() {
   auto metadata =
       DbnDecoder::DecodeMetadataFields(version_and_size.first, meta_buffer);
   version_ = metadata.version;
+  metadata.Upgrade(upgrade_policy_);
   return metadata;
 }
 
