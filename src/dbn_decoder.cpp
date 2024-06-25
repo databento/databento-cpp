@@ -191,6 +191,7 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
   buffer_idx_ = read_buffer_.size();
   auto metadata = DbnDecoder::DecodeMetadataFields(version_, read_buffer_);
   ts_out_ = metadata.ts_out;
+  metadata.Upgrade(upgrade_policy_);
   return metadata;
 }
 

@@ -748,6 +748,18 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::NdexImpactXoff: {
       return Venue::Xoff;
     }
+    case Publisher::XnasNlsXbos: {
+      return Venue::Xbos;
+    }
+    case Publisher::XnasNlsXpsx: {
+      return Venue::Xpsx;
+    }
+    case Publisher::XnasBasicXbos: {
+      return Venue::Xbos;
+    }
+    case Publisher::XnasBasicXpsx: {
+      return Venue::Xpsx;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherVenue", "publisher",
@@ -1012,6 +1024,18 @@ Dataset PublisherDataset(Publisher publisher) {
     }
     case Publisher::NdexImpactXoff: {
       return Dataset::NdexImpact;
+    }
+    case Publisher::XnasNlsXbos: {
+      return Dataset::XnasNls;
+    }
+    case Publisher::XnasNlsXpsx: {
+      return Dataset::XnasNls;
+    }
+    case Publisher::XnasBasicXbos: {
+      return Dataset::XnasBasic;
+    }
+    case Publisher::XnasBasicXpsx: {
+      return Dataset::XnasBasic;
     }
     default: {
       throw InvalidArgumentError{
@@ -1278,6 +1302,18 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::NdexImpactXoff: {
       return "NDEX.IMPACT.XOFF";
+    }
+    case Publisher::XnasNlsXbos: {
+      return "XNAS.NLS.XBOS";
+    }
+    case Publisher::XnasNlsXpsx: {
+      return "XNAS.NLS.XPSX";
+    }
+    case Publisher::XnasBasicXbos: {
+      return "XNAS.BASIC.XBOS";
+    }
+    case Publisher::XnasBasicXpsx: {
+      return "XNAS.BASIC.XPSX";
     }
     default: {
       return "Unknown";
@@ -1546,6 +1582,18 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "NDEX.IMPACT.XOFF") {
     return Publisher::NdexImpactXoff;
+  }
+  if (str == "XNAS.NLS.XBOS") {
+    return Publisher::XnasNlsXbos;
+  }
+  if (str == "XNAS.NLS.XPSX") {
+    return Publisher::XnasNlsXpsx;
+  }
+  if (str == "XNAS.BASIC.XBOS") {
+    return Publisher::XnasBasicXbos;
+  }
+  if (str == "XNAS.BASIC.XPSX") {
+    return Publisher::XnasBasicXpsx;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

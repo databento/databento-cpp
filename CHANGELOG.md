@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.19.1 - 2024-06-25
+
+### Enhancements
+- Added `Upgrade()` method to `Metadata` to update the metadata fields according to a
+  `VersionUpgradePolicy`
+- Added new publisher values for `XNAS.BASIC` and `XNAS.NLS`
+
+### Bug fixes
+- Fixed issue where `Metadata` wasn't upgraded when passing
+  `VersionUpgradePolicy::Upgrade`
+
 ## 0.19.0 - 2024-06-04
 
 ### Enhancements
@@ -23,7 +34,7 @@
 ### Bug fixes
 - Fixed overloading of live `Subscribe` methods
 - Fixed live subscribing with default-constructed `UnixNanos`
-- Fixed descriptions for `FINN` and `FINY` publishers.
+- Fixed descriptions for `FINN` and `FINY` publishers
 
 ## 0.18.1 - 2024-05-22
 

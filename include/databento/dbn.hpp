@@ -68,6 +68,9 @@ struct Metadata {
   std::vector<std::string> not_found;
   // Symbol mappings containing a native symbol and its mapping intervals.
   std::vector<SymbolMapping> mappings;
+
+  // Upgrades the metadata according to `upgrade_policy` if necessary.
+  void Upgrade(VersionUpgradePolicy upgrade_policy);
 };
 
 inline bool operator==(const MappingInterval& lhs, const MappingInterval& rhs) {

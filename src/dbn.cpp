@@ -2,11 +2,20 @@
 
 #include <array>
 #include <sstream>  // ostringstream
-#include <utility>  // pair
 
+#include "databento/constants.hpp"
 #include "stream_op_helper.hpp"
 
 namespace databento {
+
+void Metadata::Upgrade(VersionUpgradePolicy upgrade_policy) {
+  if (version < kDbnVersion &&
+      upgrade_policy == VersionUpgradePolicy::Upgrade) {
+    version = kDbnVersion;
+    symbol_cstr_len = kSymbolCstrLen;
+  }
+}
+
 std::string ToString(const Metadata& metadata) { return MakeString(metadata); }
 std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
   auto helper = StreamOpBuilder{stream}
