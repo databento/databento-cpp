@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.19.1 - TBD
+## 0.19.1 - 2024-06-25
 
 ### Enhancements
 - Added `Upgrade()` method to `Metadata` to update the metadata fields according to a
