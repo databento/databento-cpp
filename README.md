@@ -156,7 +156,7 @@ These examples can be compiled by enabling the cmake option `DATABENTO_ENABLE_EX
 
 ## Documentation
 
-You can find more detailed examples and the full API documentation on the [Databento doc site](https://databento.com/docs/getting-started?historical=cpp&live=cpp).
+You can find more detailed examples and the full API documentation on the [Databento doc site](https://databento.com/docs/quickstart?historical=cpp&live=cpp).
 
 ## License
 
