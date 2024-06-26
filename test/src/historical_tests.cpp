@@ -1,3 +1,4 @@
+#include <date/date.h>
 #include <gtest/gtest.h>
 #include <httplib.h>
 #include <nlohmann/json_fwd.hpp>
@@ -602,8 +603,8 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
   const auto& esm2_mappings = res.mappings.at("ESM2");
   ASSERT_EQ(esm2_mappings.size(), 1);
   const auto& esm2_mapping = esm2_mappings.at(0);
-  EXPECT_EQ(esm2_mapping.start_date, "2022-06-06");
-  EXPECT_EQ(esm2_mapping.end_date, "2022-06-10");
+  EXPECT_EQ(esm2_mapping.start_date, date::year{2022} / 6 / 6);
+  EXPECT_EQ(esm2_mapping.end_date, date::year{2022} / 6 / 10);
   EXPECT_EQ(esm2_mapping.symbol, "3403");
 }
 

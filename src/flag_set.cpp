@@ -5,13 +5,6 @@
 #include "stream_op_helper.hpp"
 
 namespace databento {
-constexpr FlagSet::Repr FlagSet::kLast;
-constexpr FlagSet::Repr FlagSet::kTob;
-constexpr FlagSet::Repr FlagSet::kSnapshot;
-constexpr FlagSet::Repr FlagSet::kMbp;
-constexpr FlagSet::Repr FlagSet::kBadTsRecv;
-constexpr FlagSet::Repr FlagSet::kMaybeBadBook;
-
 std::ostream& operator<<(std::ostream& stream, FlagSet flag_set) {
   const std::array<std::pair<bool (FlagSet::*)() const, const char*>, 6>
       kFlagsAndNames = {{

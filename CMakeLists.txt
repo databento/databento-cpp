@@ -181,6 +181,38 @@ else()
   # Ignore compiler warnings in headers
   add_system_include_property(httplib)
 endif()
+# date
+if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_DATE)
+  # Check if date target already exists
+  if(TARGET date::date)
+    get_target_property(DATE_SOURCE_DIR date::date SOURCE_DIR)
+    message(STATUS "date::date already available as a target at ${DATE_SOURCE_DIR}")
+    get_target_property(DATE_INCLUDE_DIRS date::date INTERFACE_INCLUDE_DIRECTORIES)
+    if(DATE_INCLUDE_DIRS)
+      message(STATUS "date::date include directories: ${DATE_INCLUDE_DIRS}")
+    endif()
+  else()
+    find_package(date REQUIRED)
+  endif()
+else()
+  set(date_version 3.0.1)
+  if(CMAKE_VERSION VERSION_LESS 3.24)
+    FetchContent_Declare(
+      date_src
+      URL https://github.com/HowardHinnant/date/archive/refs/tags/v${date_version}.tar.gz
+    )
+  else()
+    # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
+    FetchContent_Declare(
+      date_src
+      URL https://github.com/HowardHinnant/date/archive/refs/tags/v${date_version}.tar.gz
+      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+  endif()
+  FetchContent_MakeAvailable(date_src)
+  # Ignore compiler warnings in headers
+  add_system_include_property(date)
+endif()
 # openSSL
 find_package(OpenSSL REQUIRED)
 if(OPENSSL_FOUND)
@@ -204,6 +236,7 @@ endif()
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC
+    date::date
     httplib::httplib
     nlohmann_json::nlohmann_json
     OpenSSL::Crypto

@@ -1,6 +1,7 @@
 #include "databento/detail/json_helpers.hpp"
 
 #include <numeric>  // accumulate
+#include <sstream>  // istringstream
 
 namespace databento {
 namespace detail {
@@ -113,5 +114,19 @@ std::vector<std::string> ParseAt(const std::string& endpoint,
   return {symbols_json.begin(), symbols_json.end()};
 }
 
+template <>
+date::year_month_day ParseAt(const std::string& endpoint,
+                             const nlohmann::json& json,
+                             const std::string& key) {
+  std::string raw_start = detail::CheckedAt(endpoint, json, key);
+  std::istringstream start_stream{raw_start};
+  date::year_month_day start;
+  start_stream >> date::parse("%F", start);
+  if (start_stream.fail()) {
+    throw JsonResponseError::TypeMismatch(endpoint, "YYYY-MM-DD date string",
+                                          raw_start);
+  }
+  return start;
+}
 }  // namespace detail
 }  // namespace databento

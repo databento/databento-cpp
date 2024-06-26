@@ -64,11 +64,12 @@ You'll need to ensure the following dependencies are installed:
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
 - [nlohmann\_json (header-only)](https://github.com/nlohmann/json)
 - [cpp-httplib (header-only)](https://github.com/yhirose/cpp-httplib)
+- [date (header-only)](https://github.com/HowardHinnant/date)
 - [dirent (Windows-only, header-only)](https://github.com/tronkko/dirent)
 
-By default, cpp-httplib and nlohmann\_json are downloaded by CMake as part of the build process.
+By default, date, cpp-httplib and nlohmann\_json are downloaded by CMake as part of the build process.
 If you would like to use a local version of these libraries, enable the CMake flag
-`DATABENTO_ENABLE_EXTERNAL_HTTPLIB` or `DATABENTO_ENABLE_EXTERNAL_JSON`.
+`DATABENTO_ENABLE_EXTERNAL_DATE`, `DATABENTO_ENABLE_EXTERNAL_HTTPLIB`, or `DATABENTO_ENABLE_EXTERNAL_JSON` respectively.
 
 #### Ubuntu
 
@@ -126,26 +127,32 @@ To run this program, set the `DATABENTO_API_KEY` environment variable with an ac
 
 ### Historical
 
-Here is a simple program that fetches 10 minutes worth of historical trades for the entire CME Globex market:
+Here is a simple program that fetches 10 minutes worth of historical trades for two CME futures:
 
 ```cpp
-#include <databento/constants.hpp>
+#include <databento/dbn.hpp>
 #include <databento/historical.hpp>
+#include <databento/symbol_map.hpp>
 #include <iostream>
 
 using namespace databento;
 
 int main() {
-  auto client = HistoricalBuilder{}.SetKeyFromEnv().Build();
-  auto print_trades = [](const Record& record) {
+  auto client = HistoricalBuilder{}.SetKey("$YOUR_API_KEY").Build();
+  TsSymbolMap symbol_map;
+  auto decode_symbols = [&symbol_map](const Metadata& metadata) {
+    symbol_map = metadata.CreateSymbolMap();
+  };
+  auto print_trades = [&symbol_map](const Record& record) {
     const auto& trade_msg = record.Get<TradeMsg>();
-    std::cout << trade_msg << '\n';
+    std::cout << "Received trade for " << symbol_map.At(trade_msg) << ": "
+              << trade_msg << '\n';
     return KeepGoing::Continue;
   };
-  client.TimeseriesGetRange("GLBX.MDP3",
-                            {"2022-06-10T14:30", "2022-06-10T14:40"},
-                            kAllSymbols, Schema::Trades, SType::RawSymbol,
-                            SType::InstrumentId, {}, {}, print_trades);
+  client.TimeseriesGetRange(
+      "GLBX.MDP3", {"2022-06-10T14:30", "2022-06-10T14:40"}, kAllSymbols,
+      Schema::Trades, SType::RawSymbol, SType::InstrumentId, {}, decode_symbols,
+      print_trades);
 }
 ```
 

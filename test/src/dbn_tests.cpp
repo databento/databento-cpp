@@ -9,23 +9,24 @@
 namespace databento {
 namespace test {
 TEST(DbnTests, TestMetadataToString) {
-  const Metadata target{kDbnVersion,
-                        dataset::kGlbxMdp3,
-                        false,
-                        Schema::Ohlcv1D,
-                        UnixNanos{std::chrono::seconds{1696959347}},
-                        UnixNanos{std::chrono::seconds{1696950000}},
-                        {},
-                        false,
-                        SType::RawSymbol,
-                        SType::InstrumentId,
-                        false,
-                        kSymbolCstrLen,
-                        {"NGG3", "NGQ4"},
-                        {"ng"},
-                        {"nf"},
-                        {{"NGG3", {{20220601, 20220701, "3"}}},
-                         {"NGQ4", {{20220601, 20220701, "4"}}}}};
+  const Metadata target{
+      kDbnVersion,
+      dataset::kGlbxMdp3,
+      false,
+      Schema::Ohlcv1D,
+      UnixNanos{std::chrono::seconds{1696959347}},
+      UnixNanos{std::chrono::seconds{1696950000}},
+      {},
+      false,
+      SType::RawSymbol,
+      SType::InstrumentId,
+      false,
+      kSymbolCstrLen,
+      {"NGG3", "NGQ4"},
+      {"ng"},
+      {"nf"},
+      {{"NGG3", {{date::year{2022} / 6 / 1, date::year{2022} / 7 / 1, "3"}}},
+       {"NGQ4", {{date::year{2022} / 6 / 1, date::year{2022} / 7 / 1, "4"}}}}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(Metadata {
     version = 2,
@@ -44,8 +45,8 @@ TEST(DbnTests, TestMetadataToString) {
     partial = { "ng" },
     not_found = { "nf" },
     mappings = {
-        SymbolMapping { raw_symbol = "NGG3", intervals = { MappingInterval { start_date = 20220601, end_date = 20220701, symbol = "3" } } },
-        SymbolMapping { raw_symbol = "NGQ4", intervals = { MappingInterval { start_date = 20220601, end_date = 20220701, symbol = "4" } } }
+        SymbolMapping { raw_symbol = "NGG3", intervals = { MappingInterval { start_date = 2022-06-01, end_date = 2022-07-01, symbol = "3" } } },
+        SymbolMapping { raw_symbol = "NGQ4", intervals = { MappingInterval { start_date = 2022-06-01, end_date = 2022-07-01, symbol = "4" } } }
     }
 })");
 }

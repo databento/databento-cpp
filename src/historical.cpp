@@ -755,7 +755,7 @@ databento::SymbologyResolution Historical::SymbologyResolve(
   const auto& mappings_json = detail::CheckedAt(kEndpoint, json, "result");
   const auto& partial_json = detail::CheckedAt(kEndpoint, json, "partial");
   const auto& not_found_json = detail::CheckedAt(kEndpoint, json, "not_found");
-  SymbologyResolution res{};
+  SymbologyResolution res{{}, {}, {}, stype_in, stype_out};
   if (!mappings_json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "mappings object",
                                           mappings_json);
@@ -767,13 +767,15 @@ databento::SymbologyResolution Historical::SymbologyResolve(
       throw JsonResponseError::TypeMismatch(kEndpoint, "array", mapping.key(),
                                             mapping_json);
     }
-    std::vector<StrMappingInterval> mapping_intervals;
+    std::vector<MappingInterval> mapping_intervals;
     std::transform(mapping_json.begin(), mapping_json.end(),
                    std::back_inserter(mapping_intervals),
                    [](const nlohmann::json& interval_json) {
-                     return StrMappingInterval{
-                         detail::CheckedAt(kEndpoint, interval_json, "d0"),
-                         detail::CheckedAt(kEndpoint, interval_json, "d1"),
+                     return MappingInterval{
+                         detail::ParseAt<date::year_month_day>(
+                             kEndpoint, interval_json, "d0"),
+                         detail::ParseAt<date::year_month_day>(
+                             kEndpoint, interval_json, "d1"),
                          detail::CheckedAt(kEndpoint, interval_json, "s"),
                      };
                    });

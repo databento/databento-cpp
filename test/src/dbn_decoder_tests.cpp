@@ -1,3 +1,4 @@
+#include <date/date.h>
 #include <gtest/gtest.h>
 
 #include <chrono>
@@ -71,8 +72,8 @@ class DbnDecoderTests : public testing::Test {
     ASSERT_EQ(mapping.intervals.size(), 1);
     const auto& interval = mapping.intervals.at(0);
     EXPECT_EQ(interval.symbol, "5482");
-    EXPECT_EQ(interval.start_date, 20201228);
-    EXPECT_EQ(interval.end_date, 20201229);
+    EXPECT_EQ(interval.start_date, date::year{2020} / 12 / 28);
+    EXPECT_EQ(interval.end_date, date::year{2020} / 12 / 29);
   }
 };
 
@@ -126,8 +127,8 @@ TEST_F(DbnDecoderTests, TestDecodeDefinitionUpgrade) {
   ASSERT_EQ(mapping.intervals.size(), 62);
   const auto& interval = mapping.intervals.at(0);
   EXPECT_EQ(interval.symbol, "6819");
-  EXPECT_EQ(interval.start_date, 20211004);
-  EXPECT_EQ(interval.end_date, 20211005);
+  EXPECT_EQ(interval.start_date, date::year{2021} / 10 / 4);
+  EXPECT_EQ(interval.end_date, date::year{2021} / 10 / 5);
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();
@@ -931,8 +932,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   ASSERT_EQ(mapping.intervals.size(), 62);
   const auto& interval = mapping.intervals.at(0);
   EXPECT_EQ(interval.symbol, "6819");
-  EXPECT_EQ(interval.start_date, 20211004);
-  EXPECT_EQ(interval.end_date, 20211005);
+  EXPECT_EQ(interval.start_date, date::year{2021} / 10 / 4);
+  EXPECT_EQ(interval.end_date, date::year{2021} / 10 / 5);
 
   const auto ch_record1 = channel_target_->DecodeRecord();
   const auto f_record1 = file_target_->DecodeRecord();

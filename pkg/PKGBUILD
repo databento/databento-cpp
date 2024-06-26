@@ -7,7 +7,7 @@ pkgdesc="Official C++ client for Databento"
 arch=('any')
 url="https://github.com/databento/databento-cpp"
 license=('Apache-2.0')
-depends=('cpp-httplib' 'openssl' 'nlohmann-json' 'zstd')
+depends=('cpp-httplib' 'chrono-date' 'openssl' 'nlohmann-json' 'zstd')
 makedepends=('cmake' 'gtest')
 source=("${_pkgname}::git+${url}.git")
 sha256sums=('SKIP')
@@ -20,13 +20,14 @@ prepare() {
   cmake -S "${_pkgname}" -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX='/usr' \
-    -DDATABENTO_USE_EXTERNAL_JSON=ON \
+    -DDATABENTO_USE_EXTERNAL_DATE=ON \
     -DDATABENTO_USE_EXTERNAL_HTTPLIB=ON \
+    -DDATABENTO_USE_EXTERNAL_JSON=ON \
     -Wno-dev
 }
 
 build() {
-  cmake --build build
+  cmake --build build --parallel
 }
 
 check() {

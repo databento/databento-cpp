@@ -6,6 +6,7 @@
 #include <cstring>  // strncmp
 #include <string>
 #include <tuple>  // tie
+#include <type_traits>
 
 #include "databento/constants.hpp"  // kSymbolCstrLen
 #include "databento/datetime.hpp"   // UnixNanos
@@ -39,6 +40,15 @@ struct RecordHeader {
     return static_cast<enum Publisher>(publisher_id);
   }
 };
+
+// Type trait helper for templated functions accepting DBN records.
+template <typename, typename = std::void_t<>>
+struct has_header : std::false_type {};
+template <typename T>
+struct has_header<T, std::void_t<decltype(std::declval<T>().hd)>>
+    : std::is_same<decltype(std::declval<T>().hd), RecordHeader> {};
+template <typename T>
+constexpr bool has_header_v = has_header<T>::value;
 
 class Record {
  public:

@@ -1,5 +1,7 @@
 #include "databento/dbn_decoder.hpp"
 
+#include <date/date.h>
+
 #include <algorithm>  // copy
 #include <cstddef>
 #include <cstring>  // strncmp
@@ -58,6 +60,15 @@ std::string Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
                                       " missing null terminator"};
   }
   return std::string{cstr, static_cast<std::size_t>(str_len)};
+}
+
+date::year_month_day DecodeIso8601Date(std::uint32_t yyyymmdd_int) {
+  const auto year = yyyymmdd_int / 10000;
+  const auto remaining = yyyymmdd_int % 10000;
+  const auto month = remaining / 100;
+  const auto day = remaining % 100;
+  return {date::year{static_cast<std::int32_t>(year)}, date::month{month},
+          date::day{day}};
 }
 }  // namespace
 
@@ -374,8 +385,10 @@ databento::SymbolMapping DbnDecoder::DecodeSymbolMapping(
   res.intervals.reserve(interval_count);
   for (std::size_t i = 0; i < interval_count; ++i) {
     MappingInterval interval;
-    interval.start_date = Consume<std::uint32_t>(read_buffer_it);
-    interval.end_date = Consume<std::uint32_t>(read_buffer_it);
+    auto raw_start_date = Consume<std::uint32_t>(read_buffer_it);
+    interval.start_date = DecodeIso8601Date(raw_start_date);
+    auto raw_end_date = Consume<std::uint32_t>(read_buffer_it);
+    interval.end_date = DecodeIso8601Date(raw_end_date);
     interval.symbol = DecodeSymbol(symbol_cstr_len, read_buffer_it);
     res.intervals.emplace_back(std::move(interval));
   }
