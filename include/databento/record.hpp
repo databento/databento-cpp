@@ -42,7 +42,12 @@ struct RecordHeader {
 };
 
 // Type trait helper for templated functions accepting DBN records.
-template <typename, typename = std::void_t<>>
+namespace detail {
+// std::void_t added in C++17
+template <typename... Ts>
+using void_t = void;
+}  // namespace detail
+template <typename, typename = detail::void_t<>>
 struct has_header : std::false_type {};
 template <typename T>
 struct has_header<T, std::void_t<decltype(std::declval<T>().hd)>>
