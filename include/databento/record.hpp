@@ -177,9 +177,7 @@ static_assert(alignof(TradeMsg) == 8, "Must have 8-byte alignment");
 struct Mbp1Msg {
   static bool HasRType(RType rtype) {
     switch (rtype) {
-      case RType::Mbp1:   // fallthrough
-      case RType::Bbo1M:  // fallthrough
-      case RType::Bbo1S:
+      case RType::Mbp1:
         return true;
       default:
         return false;
@@ -202,8 +200,9 @@ struct Mbp1Msg {
   std::array<BidAskPair, 1> levels;
 };
 using TbboMsg = Mbp1Msg;
-using Bbo1SMsg = Mbp1Msg;
-using Bbo1MMsg = Mbp1Msg;
+static_assert(alignof(Mbp1Msg) == 8, "Must have 8-byte alignment");
+static_assert(sizeof(Mbp1Msg) == sizeof(TradeMsg) + sizeof(BidAskPair),
+              "Mbp1Msg size must match Rust");
 
 struct Mbp10Msg {
   static bool HasRType(RType rtype) { return rtype == rtype::Mbp10; }
@@ -223,13 +222,39 @@ struct Mbp10Msg {
   std::uint32_t sequence;
   std::array<BidAskPair, 10> levels;
 };
-
-static_assert(alignof(Mbp1Msg) == 8, "Must have 8-byte alignment");
 static_assert(alignof(Mbp10Msg) == 8, "Must have 8-byte alignment");
-static_assert(sizeof(Mbp1Msg) == sizeof(TradeMsg) + sizeof(BidAskPair),
-              "Mbp1Msg size must match Rust");
 static_assert(sizeof(Mbp10Msg) == sizeof(TradeMsg) + sizeof(BidAskPair) * 10,
               "Mbp10Msg size must match Rust");
+
+struct BboMsg {
+  static bool HasRType(RType rtype) {
+    switch (rtype) {
+      case RType::Bbo1S:  // fallthrough
+      case RType::Bbo1M:
+        return true;
+      default:
+        return false;
+    };
+  }
+
+  UnixNanos IndexTs() const { return ts_recv; }
+
+  RecordHeader hd;
+  std::int64_t price;
+  std::uint32_t size;
+  char reserved1;
+  Side side;
+  FlagSet flags;
+  char reserved2;
+  UnixNanos ts_recv;
+  std::array<char, 4> reserved3;
+  std::uint32_t sequence;
+  std::array<BidAskPair, 1> levels;
+};
+using Bbo1SMsg = BboMsg;
+using Bbo1MMsg = BboMsg;
+static_assert(alignof(BboMsg) == 8, "Must have 8-byte alignment");
+static_assert(sizeof(BboMsg) == sizeof(Mbp1Msg), "BboMsg size must match Rust");
 
 struct CbboMsg {
   static bool HasRType(RType rtype) {
@@ -252,7 +277,7 @@ struct CbboMsg {
   Action action;
   Side side;
   FlagSet flags;
-  std::array<char, 1> reserved;
+  char reserved;
   UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
   std::uint32_t sequence;
@@ -571,6 +596,16 @@ inline bool operator!=(const Mbp10Msg& lhs, const Mbp10Msg& rhs) {
   return !(lhs == rhs);
 }
 
+inline bool operator==(const BboMsg& lhs, const BboMsg& rhs) {
+  return std::tie(lhs.hd, lhs.price, lhs.size, lhs.side, lhs.flags, lhs.ts_recv,
+                  lhs.sequence, lhs.levels) ==
+         std::tie(rhs.hd, rhs.price, rhs.size, rhs.side, rhs.flags, rhs.ts_recv,
+                  rhs.sequence, rhs.levels);
+}
+inline bool operator!=(const BboMsg& lhs, const BboMsg& rhs) {
+  return !(lhs == rhs);
+}
+
 inline bool operator==(const CbboMsg& lhs, const CbboMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.price == rhs.price && lhs.size == rhs.size &&
          lhs.action == rhs.action && lhs.side == rhs.side &&
@@ -680,8 +715,10 @@ std::string ToString(const Mbp1Msg& mbp_msg);
 std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp_msg);
 std::string ToString(const Mbp10Msg& mbp_msg);
 std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp_msg);
-std::string ToString(const CbboMsg& mbp_msg);
-std::ostream& operator<<(std::ostream& stream, const CbboMsg& mbp_msg);
+std::string ToString(const BboMsg& bbo_msg);
+std::ostream& operator<<(std::ostream& stream, const BboMsg& bbo_msg);
+std::string ToString(const CbboMsg& cbbo_msg);
+std::ostream& operator<<(std::ostream& stream, const CbboMsg& cbbo_msg);
 std::string ToString(const TradeMsg& trade_msg);
 std::ostream& operator<<(std::ostream& stream, const TradeMsg& trade_msg);
 std::string ToString(const OhlcvMsg& ohlcv_msg);

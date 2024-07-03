@@ -12,6 +12,7 @@ for date fields were changed from strings or ints to `date::year_month_day`.
 - Added `DbnEncoder` class for encoding DBN data
 - Added blocking API similar to `LiveBlocking` to `DbnFileStore` with new `GetMetadata`
   and `NextRecord` methods
+- Added `BboMsg` record struct for future `bbo-1m` and `bbo-1s` schemas
 - Added `PitSymbol` map constructor from `Metadata` and a `date::year_month_day`
 - Added `Metadata::CreateSymbolMap` and `Metadata::CreateSymbolMapForDate` methods for
   creating symbology maps from historical metadata
@@ -25,6 +26,7 @@ for date fields were changed from strings or ints to `date::year_month_day`.
 - Added new dependency on [Howard Hinnant's date library](https://howardhinnant.github.io/date/date.html)
 - Added `ILogReceiver*` parameter to all `DbnDecoder` constructors and one `DbnFileStore` constructor
 - Removed type `StrMappingInterval`. `MappingInterval` is now also used in `SymbologyResolution`.
+- Changed `Bbo1sMsg` and `Bbo1mMsg` to be aliases for `BboMsg`
 - Changed type of `start_date` and `end_date` in `MappingInterval` to `date::year_month_day`
 - Added `stype_in` and `stype_out` fields to `SymbologyResolution` to support creating
   a `TsSymbolMap`

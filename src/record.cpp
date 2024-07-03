@@ -306,6 +306,22 @@ std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp_msg) {
                 static_cast<std::ostringstream&>(levels_helper.Finish()))
       .Finish();
 }
+std::string ToString(const BboMsg& bbo_msg) { return MakeString(bbo_msg); }
+std::ostream& operator<<(std::ostream& stream, const BboMsg& bbo_msg) {
+  return StreamOpBuilder{stream}
+      .SetTypeName("BboMsg")
+      .SetSpacer("\n    ")
+      .Build()
+      .AddField("hd", bbo_msg.hd)
+      .AddField("price", FixPx{bbo_msg.price})
+      .AddField("size", bbo_msg.size)
+      .AddField("side", bbo_msg.side)
+      .AddField("flags", bbo_msg.flags)
+      .AddField("ts_recv", bbo_msg.ts_recv)
+      .AddField("sequence", bbo_msg.sequence)
+      .AddField("levels", std::get<0>(bbo_msg.levels))
+      .Finish();
+}
 std::string ToString(const CbboMsg& cbbo_msg) { return MakeString(cbbo_msg); }
 std::ostream& operator<<(std::ostream& stream, const CbboMsg& cbbo_msg) {
   return StreamOpBuilder{stream}
