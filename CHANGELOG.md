@@ -2,20 +2,28 @@
 
 ## 0.20.0 - TBD
 
-This release improves historical symbology support with the new `TsSymbolMap` class that
+This release adds support for encoding DBN within the C++ client.
+It also improves historical symbology support with the new `TsSymbolMap` class that
 handles mapping historical records to a text symbol. To support this class, several types
 for date fields were changed from strings or ints to `date::year_month_day`.
 
 ### Enhancements
 - Added `TsSymbolMap` to support historical symbology where mappings change between days
+- Added `DbnEncoder` class for encoding DBN data
+- Added blocking API similar to `LiveBlocking` to `DbnFileStore` with new `GetMetadata`
+  and `NextRecord` methods
 - Added `PitSymbol` map constructor from `Metadata` and a `date::year_month_day`
 - Added `Metadata::CreateSymbolMap` and `Metadata::CreateSymbolMapForDate` methods for
   creating symbology maps from historical metadata
+- Added blocking API similar to `LiveBlocking` to `DbnFileStore`
 - Added `SymbologyResolution::CreateSymbolMap` method for creating a symbology map from
   a symbology resolution response
+- Added `InFileStream` and `OutFileStream` helper classes for reading and writing binary
+  output respectively
 
 ### Breaking changes
 - Added new dependency on [Howard Hinnant's date library](https://howardhinnant.github.io/date/date.html)
+- Added `ILogReceiver*` parameter to all `DbnDecoder` constructors and one `DbnFileStore` constructor
 - Removed type `StrMappingInterval`. `MappingInterval` is now also used in `SymbologyResolution`.
 - Changed type of `start_date` and `end_date` in `MappingInterval` to `date::year_month_day`
 - Added `stype_in` and `stype_out` fields to `SymbologyResolution` to support creating

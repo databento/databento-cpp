@@ -9,20 +9,27 @@
 #include <ios>      // streamsize, ios::binary, ios::ate
 #include <limits>
 #include <memory>
+#include <tuple>
+#include <vector>
 
 #include "databento/compat.hpp"
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/dbn.hpp"
 #include "databento/dbn_decoder.hpp"
-#include "databento/detail/file_stream.hpp"
+#include "databento/dbn_encoder.hpp"
 #include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/shared_channel.hpp"
+#include "databento/detail/zstd_stream.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"
+#include "databento/file_stream.hpp"
 #include "databento/ireadable.hpp"
+#include "databento/iwritable.hpp"
+#include "databento/log.hpp"
 #include "databento/record.hpp"
 #include "databento/with_ts_out.hpp"
+#include "mock/mock_io.hpp"
 
 namespace databento {
 namespace test {
@@ -32,6 +39,7 @@ class DbnDecoderTests : public testing::Test {
   std::unique_ptr<DbnDecoder> file_target_;
   std::unique_ptr<DbnDecoder> channel_target_;
   detail::ScopedThread write_thread_;
+  std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
 
   void ReadFromFile(const std::string& schema_str, const std::string& extension,
                     std::uint8_t version) {
@@ -57,11 +65,12 @@ class DbnDecoderTests : public testing::Test {
       channel_.Finish();
     }};
     channel_target_.reset(new DbnDecoder{
+        logger_.get(),
         std::unique_ptr<IReadable>{new detail::SharedChannel{channel_}},
         upgrade_policy});
     // File setup
     file_target_.reset(new DbnDecoder{
-        std::unique_ptr<IReadable>{new detail::FileStream{file_path}},
+        logger_.get(), std::unique_ptr<IReadable>{new InFileStream{file_path}},
         upgrade_policy});
   }
 
@@ -1042,5 +1051,145 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeStatistics) {
   EXPECT_EQ(ch_stat2.stat_type, StatType::TradingSessionHighPrice);
   EXPECT_EQ(ch_stat2.price, 100 * kFixedPriceScale);
 }
+
+class DbnIdentityTests : public testing::TestWithParam<
+                             std::tuple<std::uint8_t, Schema, Compression>> {
+ protected:
+  std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
+};
+
+INSTANTIATE_TEST_SUITE_P(
+    TestFiles, DbnIdentityTests,
+    testing::Values(std::make_tuple(1, Schema::Mbo, Compression::None),
+                    std::make_tuple(1, Schema::Trades, Compression::None),
+                    std::make_tuple(1, Schema::Mbp1, Compression::None),
+                    std::make_tuple(1, Schema::Tbbo, Compression::None),
+                    std::make_tuple(1, Schema::Mbp10, Compression::None),
+                    std::make_tuple(1, Schema::Ohlcv1D, Compression::None),
+                    std::make_tuple(1, Schema::Ohlcv1H, Compression::None),
+                    std::make_tuple(1, Schema::Ohlcv1M, Compression::None),
+                    std::make_tuple(1, Schema::Ohlcv1S, Compression::None),
+                    std::make_tuple(1, Schema::Definition, Compression::None),
+                    std::make_tuple(1, Schema::Imbalance, Compression::None),
+                    std::make_tuple(1, Schema::Statistics, Compression::None),
+                    std::make_tuple(1, Schema::Mbo, Compression::Zstd),
+                    std::make_tuple(1, Schema::Trades, Compression::Zstd),
+                    std::make_tuple(1, Schema::Mbp1, Compression::Zstd),
+                    std::make_tuple(1, Schema::Tbbo, Compression::Zstd),
+                    std::make_tuple(1, Schema::Mbp10, Compression::Zstd),
+                    std::make_tuple(1, Schema::Ohlcv1D, Compression::Zstd),
+                    std::make_tuple(1, Schema::Ohlcv1H, Compression::Zstd),
+                    std::make_tuple(1, Schema::Ohlcv1M, Compression::Zstd),
+                    std::make_tuple(1, Schema::Ohlcv1S, Compression::Zstd),
+                    std::make_tuple(1, Schema::Definition, Compression::Zstd),
+                    std::make_tuple(1, Schema::Imbalance, Compression::Zstd),
+                    std::make_tuple(1, Schema::Statistics, Compression::Zstd),
+                    std::make_tuple(2, Schema::Mbo, Compression::None),
+                    std::make_tuple(2, Schema::Trades, Compression::None),
+                    std::make_tuple(2, Schema::Tbbo, Compression::None),
+                    std::make_tuple(2, Schema::Mbp1, Compression::None),
+                    std::make_tuple(2, Schema::Mbp10, Compression::None),
+                    std::make_tuple(2, Schema::Ohlcv1D, Compression::None),
+                    std::make_tuple(2, Schema::Ohlcv1H, Compression::None),
+                    std::make_tuple(2, Schema::Ohlcv1M, Compression::None),
+                    std::make_tuple(2, Schema::Ohlcv1S, Compression::None),
+                    std::make_tuple(2, Schema::Definition, Compression::None),
+                    std::make_tuple(2, Schema::Imbalance, Compression::None),
+                    std::make_tuple(2, Schema::Statistics, Compression::None),
+                    std::make_tuple(2, Schema::Mbo, Compression::Zstd),
+                    std::make_tuple(2, Schema::Trades, Compression::Zstd),
+                    std::make_tuple(2, Schema::Tbbo, Compression::Zstd),
+                    std::make_tuple(2, Schema::Mbp1, Compression::Zstd),
+                    std::make_tuple(2, Schema::Mbp10, Compression::Zstd),
+                    std::make_tuple(2, Schema::Ohlcv1D, Compression::Zstd),
+                    std::make_tuple(2, Schema::Ohlcv1H, Compression::Zstd),
+                    std::make_tuple(2, Schema::Ohlcv1M, Compression::Zstd),
+                    std::make_tuple(2, Schema::Ohlcv1S, Compression::Zstd),
+                    std::make_tuple(2, Schema::Definition, Compression::Zstd),
+                    std::make_tuple(2, Schema::Imbalance, Compression::Zstd),
+                    std::make_tuple(2, Schema::Statistics, Compression::Zstd)),
+    [](const testing::TestParamInfo<
+        std::tuple<std::uint8_t, Schema, Compression>>& test_info) {
+      const auto version = std::get<0>(test_info.param);
+      const auto schema = std::get<1>(test_info.param);
+      const auto compression = std::get<2>(test_info.param);
+      std::string schema_str = ToString(schema);
+      for (auto& c : schema_str) {
+        if (c == '-') {
+          c = '_';
+        }
+      }
+      return schema_str + "_" + ToString(compression) + "_DBNv" +
+             std::to_string(version);
+    });
+
+TEST_P(DbnIdentityTests, TestIdentity) {
+  const auto version = std::get<0>(GetParam());
+  const auto schema = std::get<1>(GetParam());
+  const auto compression = std::get<2>(GetParam());
+  const auto file_name =
+      std::string{TEST_BUILD_DIR "/data/test_data."} + ToString(schema) +
+      (version == 1 ? ".v1" : "") +
+      (compression == Compression::Zstd ? ".dbn.zst" : ".dbn");
+  DbnDecoder file_decoder{
+      logger_.get(), std::unique_ptr<IReadable>{new InFileStream{file_name}},
+      VersionUpgradePolicy::AsIs};
+  const Metadata file_metadata = file_decoder.DecodeMetadata();
+
+  mock::MockIo buf_io;
+  {
+    std::unique_ptr<detail::ZstdCompressStream> zstd_io;
+    if (compression == Compression::Zstd) {
+      zstd_io.reset(new detail::ZstdCompressStream{&buf_io});
+    }
+    DbnEncoder encoder{
+        file_metadata,
+        zstd_io ? static_cast<IWritable*>(zstd_io.get()) : &buf_io};
+    while (auto* record = file_decoder.DecodeRecord()) {
+      encoder.EncodeRecord(*record);
+    }
+    // Free zstd_io and flush
+  }
+
+  file_decoder = {logger_.get(),
+                  std::unique_ptr<IReadable>{new InFileStream{file_name}},
+                  VersionUpgradePolicy::AsIs};
+  file_decoder.DecodeMetadata();
+
+  std::unique_ptr<IReadable> input{new mock::MockIo{std::move(buf_io)}};
+  DbnDecoder buf_decoder{logger_.get(), std::move(input),
+                         VersionUpgradePolicy::AsIs};
+  const auto buf_metadata = buf_decoder.DecodeMetadata();
+  EXPECT_EQ(file_metadata, buf_metadata);
+  while (auto* buf_record = buf_decoder.DecodeRecord()) {
+    auto* file_record = file_decoder.DecodeRecord();
+    ASSERT_NE(file_record, nullptr);
+    if (auto* mbo = buf_record->GetIf<MboMsg>()) {
+      EXPECT_EQ(*mbo, file_record->Get<MboMsg>());
+    } else if (auto* trade = buf_record->GetIf<TradeMsg>()) {
+      EXPECT_EQ(*trade, file_record->Get<TradeMsg>());
+    } else if (auto* mbp1 = buf_record->GetIf<Mbp1Msg>()) {
+      EXPECT_EQ(*mbp1, file_record->Get<Mbp1Msg>());
+    } else if (auto* mbp10 = buf_record->GetIf<Mbp10Msg>()) {
+      EXPECT_EQ(*mbp10, file_record->Get<Mbp10Msg>());
+    } else if (auto* ohlcv = buf_record->GetIf<OhlcvMsg>()) {
+      EXPECT_EQ(*ohlcv, file_record->Get<OhlcvMsg>());
+    } else if (auto* trade = buf_record->GetIf<TradeMsg>()) {
+      EXPECT_EQ(*trade, file_record->Get<TradeMsg>());
+    } else if (auto* imbalance = buf_record->GetIf<ImbalanceMsg>()) {
+      EXPECT_EQ(*imbalance, file_record->Get<ImbalanceMsg>());
+    } else if (auto* def = buf_record->GetIf<InstrumentDefMsg>()) {
+      EXPECT_EQ(*def, file_record->Get<InstrumentDefMsg>());
+    } else if (auto* stats = buf_record->GetIf<StatMsg>()) {
+      EXPECT_EQ(*stats, file_record->Get<StatMsg>());
+    } else {
+      FAIL() << "Unexpected rtype "
+             << static_cast<std::uint16_t>(file_record->Header().rtype);
+    }
+  }
+  ASSERT_EQ(file_decoder.DecodeRecord(), nullptr);
+}
+
+TEST_F(DbnDecoderTests, TestDbnIdentityWithTsOut) {}
 }  // namespace test
 }  // namespace databento

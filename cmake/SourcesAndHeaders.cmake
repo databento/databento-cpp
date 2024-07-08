@@ -5,8 +5,8 @@ set(headers
   include/databento/datetime.hpp
   include/databento/dbn.hpp
   include/databento/dbn_decoder.hpp
+  include/databento/dbn_encoder.hpp
   include/databento/dbn_file_store.hpp
-  include/databento/detail/file_stream.hpp
   include/databento/detail/http_client.hpp
   include/databento/detail/json_helpers.hpp
   include/databento/detail/scoped_fd.hpp
@@ -16,6 +16,7 @@ set(headers
   include/databento/detail/zstd_stream.hpp
   include/databento/enums.hpp
   include/databento/exceptions.hpp
+  include/databento/file_stream.hpp
   include/databento/fixed_price.hpp
   include/databento/flag_set.hpp
   include/databento/historical.hpp
@@ -39,9 +40,10 @@ set(sources
   src/compat.cpp
   src/datetime.cpp
   src/dbn.cpp
+  src/dbn_constants.hpp
   src/dbn_decoder.cpp
+  src/dbn_encoder.cpp
   src/dbn_file_store.cpp
-  src/detail/file_stream.cpp
   src/detail/http_client.cpp
   src/detail/json_helpers.cpp
   src/detail/scoped_fd.cpp
@@ -50,6 +52,7 @@ set(sources
   src/detail/zstd_stream.cpp
   src/enums.cpp
   src/exceptions.cpp
+  src/file_stream.cpp
   src/fixed_price.cpp
   src/flag_set.cpp
   src/historical.cpp

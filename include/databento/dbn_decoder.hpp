@@ -6,10 +6,11 @@
 #include <string>
 
 #include "databento/dbn.hpp"
-#include "databento/detail/file_stream.hpp"
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"  // Upgrade Policy
+#include "databento/file_stream.hpp"
 #include "databento/ireadable.hpp"
+#include "databento/log.hpp"
 #include "databento/record.hpp"  // Record, RecordHeader
 
 namespace databento {
@@ -17,14 +18,12 @@ namespace databento {
 // handled. Defaults to upgrading DBNv1 data to version 2 (the current version).
 class DbnDecoder {
  public:
-  explicit DbnDecoder(detail::SharedChannel channel);
-  explicit DbnDecoder(detail::FileStream file_stream);
-  explicit DbnDecoder(std::unique_ptr<IReadable> input);
-  DbnDecoder(std::unique_ptr<IReadable> input,
+  DbnDecoder(ILogReceiver* log_receiver, detail::SharedChannel channel);
+  DbnDecoder(ILogReceiver* log_receiver, InFileStream file_stream);
+  DbnDecoder(ILogReceiver* log_receiver, std::unique_ptr<IReadable> input);
+  DbnDecoder(ILogReceiver* log_receiver, std::unique_ptr<IReadable> input,
              VersionUpgradePolicy upgrade_policy);
 
-  // Decode metadata from the given buffer.
-  static Metadata DecodeMetadata(const std::vector<std::uint8_t>& buffer);
   static std::pair<std::uint8_t, std::size_t> DecodeMetadataVersionAndSize(
       const std::uint8_t* buffer, std::size_t size);
   static Metadata DecodeMetadataFields(std::uint8_t version,
@@ -60,8 +59,10 @@ class DbnDecoder {
       std::vector<std::uint8_t>::const_iterator buffer_end_it);
   bool DetectCompression();
   std::size_t FillBuffer();
+  std::size_t GetReadBufferSize() const;
   RecordHeader* BufferRecordHeader();
 
+  ILogReceiver* log_receiver_;
   std::uint8_t version_{};
   VersionUpgradePolicy upgrade_policy_;
   bool ts_out_{};

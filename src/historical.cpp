@@ -15,6 +15,8 @@
 #include <memory>     // unique_ptr
 #include <string>
 #include <utility>  // move
+
+#include "databento/file_stream.hpp"
 #ifdef _WIN32
 #include <direct.h>  // _mkdir
 #endif
@@ -148,13 +150,15 @@ std::string PathJoin(const std::string& dir, const std::string& path) {
 
 Historical::Historical(ILogReceiver* log_receiver, std::string key,
                        HistoricalGateway gateway)
-    : key_{std::move(key)},
+    : log_receiver_{log_receiver},
+      key_{std::move(key)},
       gateway_{UrlFromGateway(gateway)},
       client_{log_receiver, key_, gateway_} {}
 
 Historical::Historical(ILogReceiver* log_receiver, std::string key,
                        std::string gateway, std::uint16_t port)
-    : key_{std::move(key)},
+    : log_receiver_{log_receiver},
+      key_{std::move(key)},
       gateway_{std::move(gateway)},
       client_{log_receiver, key_, gateway_, port} {}
 
@@ -344,14 +348,10 @@ std::string Historical::BatchDownload(const std::string& output_dir,
 void Historical::StreamToFile(const std::string& url_path,
                               const HttplibParams& params,
                               const std::string& file_path) {
-  std::ofstream out_file{file_path, std::ios::binary};
-  if (out_file.fail()) {
-    throw InvalidArgumentError{"Historical::StreamToFile", "file_path",
-                               "Failed to open file"};
-  }
+  OutFileStream out_file{file_path};
   this->client_.GetRawStream(
       url_path, params, [&out_file](const char* data, std::size_t length) {
-        out_file.write(data, static_cast<std::streamsize>(length));
+        out_file.WriteAll(reinterpret_cast<const std::uint8_t*>(data), length);
         return true;
       });
 }
@@ -895,7 +895,7 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
     }
   }};
   try {
-    DbnDecoder dbn_decoder{channel};
+    DbnDecoder dbn_decoder{log_receiver_, channel};
     Metadata metadata = dbn_decoder.DecodeMetadata();
     if (metadata_callback) {
       metadata_callback(std::move(metadata));
@@ -981,7 +981,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
     const HttplibParams& params, const std::string& file_path) {
   StreamToFile(kTimeseriesGetRangePath, params, file_path);
-  return DbnFileStore{file_path};
+  return DbnFileStore{log_receiver_, file_path, VersionUpgradePolicy::Upgrade};
 }
 
 using databento::HistoricalBuilder;

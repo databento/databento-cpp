@@ -3,9 +3,7 @@
 #include <date/date.h>
 
 #include <algorithm>  // copy
-#include <cstddef>
-#include <cstring>  // strncmp
-#include <limits>
+#include <cstring>    // strncmp
 #include <vector>
 
 #include "databento/compat.hpp"
@@ -16,19 +14,11 @@
 #include "databento/exceptions.hpp"
 #include "databento/record.hpp"
 #include "databento/with_ts_out.hpp"
+#include "dbn_constants.hpp"
 
 using databento::DbnDecoder;
 
 namespace {
-constexpr std::size_t kMagicSize = 4;
-constexpr std::uint32_t kZstdMagicNumber = 0xFD2FB528;
-constexpr auto kDbnPrefix = "DBN";
-constexpr std::size_t kFixedMetadataLen = 100;
-constexpr std::size_t kDatasetCstrLen = 16;
-constexpr std::size_t kReservedLen = 53;
-constexpr std::size_t kReservedLenV1 = 47;
-constexpr std::size_t kBufferCapacity = 8UL * 1024;
-
 template <typename T>
 T Consume(std::vector<std::uint8_t>::const_iterator& byte_it) {
   const auto res = *reinterpret_cast<const T*>(&*byte_it);
@@ -72,24 +62,32 @@ date::year_month_day DecodeIso8601Date(std::uint32_t yyyymmdd_int) {
 }
 }  // namespace
 
-DbnDecoder::DbnDecoder(detail::SharedChannel channel)
-    : DbnDecoder(std::unique_ptr<IReadable>{
-          new detail::SharedChannel{std::move(channel)}}) {}
+DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
+                       detail::SharedChannel channel)
+    : DbnDecoder(log_receiver,
+                 std::unique_ptr<IReadable>{
+                     new detail::SharedChannel{std::move(channel)}}) {}
 
-DbnDecoder::DbnDecoder(detail::FileStream file_stream)
-    : DbnDecoder(std::unique_ptr<IReadable>{
-          new detail::FileStream{std::move(file_stream)}}) {}
+DbnDecoder::DbnDecoder(ILogReceiver* log_receiver, InFileStream file_stream)
+    : DbnDecoder(log_receiver, std::unique_ptr<IReadable>{
+                                   new InFileStream{std::move(file_stream)}}) {}
 
-DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input)
-    : DbnDecoder(std::move(input), VersionUpgradePolicy::Upgrade) {}
+DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
+                       std::unique_ptr<IReadable> input)
+    : DbnDecoder(log_receiver, std::move(input),
+                 VersionUpgradePolicy::Upgrade) {}
 
-DbnDecoder::DbnDecoder(std::unique_ptr<IReadable> input,
+DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
+                       std::unique_ptr<IReadable> input,
                        VersionUpgradePolicy upgrade_policy)
-    : upgrade_policy_{upgrade_policy}, input_{std::move(input)} {
+    : log_receiver_{log_receiver},
+      upgrade_policy_{upgrade_policy},
+      input_{std::move(input)} {
   read_buffer_.reserve(kBufferCapacity);
   if (DetectCompression()) {
-    input_ = std::unique_ptr<detail::ZstdStream>(
-        new detail::ZstdStream(std::move(input_), std::move(read_buffer_)));
+    input_ =
+        std::unique_ptr<detail::ZstdDecodeStream>(new detail::ZstdDecodeStream(
+            std::move(input_), std::move(read_buffer_)));
     // Reinitialize buffer and get it into the same state as uncompressed input
     read_buffer_ = std::vector<std::uint8_t>();
     read_buffer_.reserve(kBufferCapacity);
@@ -112,7 +110,7 @@ std::pair<std::uint8_t, std::size_t> DbnDecoder::DecodeMetadataVersionAndSize(
   }
   const auto version = buffer[3];
   const auto frame_size = *reinterpret_cast<const std::uint32_t*>(&buffer[4]);
-  if (frame_size < ::kFixedMetadataLen) {
+  if (frame_size < kFixedMetadataLen) {
     throw DbnResponseError{
         "Frame length cannot be shorter than the fixed metadata size"};
   }
@@ -132,7 +130,7 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   auto read_buffer_it = buffer.cbegin();
   res.dataset = Consume(read_buffer_it, kDatasetCstrLen, "dataset");
   const auto raw_schema = Consume<std::uint16_t>(read_buffer_it);
-  if (raw_schema == std::numeric_limits<std::uint16_t>::max()) {
+  if (raw_schema == kNullSchema) {
     res.has_mixed_schema = true;
     // must initialize
     res.schema = Schema::Mbo;
@@ -150,7 +148,7 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
     read_buffer_it += 8;
   }
   const auto raw_stype_in = Consume<std::uint8_t>(read_buffer_it);
-  if (raw_stype_in == std::numeric_limits<std::uint8_t>::max()) {
+  if (raw_stype_in == kNullSType) {
     res.has_mixed_stype_in = true;
     // must initialize
     res.stype_in = SType::InstrumentId;
@@ -168,9 +166,9 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   }
   // skip reserved
   if (version == 1) {
-    read_buffer_it += ::kReservedLenV1;
+    read_buffer_it += kMetadataReservedLenV1;
   } else {
-    read_buffer_it += ::kReservedLen;
+    read_buffer_it += kMetadataReservedLen;
   }
 
   const auto schema_definition_length = Consume<std::uint32_t>(read_buffer_it);
@@ -192,10 +190,10 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
 
 databento::Metadata DbnDecoder::DecodeMetadata() {
   // already read first 4 bytes detecting compression
-  read_buffer_.resize(8);
+  read_buffer_.resize(kMetadataPreludeSize);
   input_->ReadExact(&read_buffer_[4], 4);
-  const auto version_and_size =
-      DbnDecoder::DecodeMetadataVersionAndSize(read_buffer_.data(), 8);
+  const auto version_and_size = DbnDecoder::DecodeMetadataVersionAndSize(
+      read_buffer_.data(), kMetadataPreludeSize);
   version_ = version_and_size.first;
   read_buffer_.resize(version_and_size.second);
   input_->ReadExact(read_buffer_.data(), read_buffer_.size());
@@ -247,18 +245,23 @@ databento::Record DbnDecoder::DecodeRecordCompat(
   return rec;
 }
 
-// assumes ParseMetadata has been called
+// assumes DecodeMetadata has been called
 const databento::Record* DbnDecoder::DecodeRecord() {
   // need some unread unread_bytes
-  const auto unread_bytes = read_buffer_.size() - buffer_idx_;
-  if (unread_bytes == 0) {
+  if (GetReadBufferSize() == 0) {
     if (FillBuffer() == 0) {
       return nullptr;
     }
   }
   // check length
-  while (read_buffer_.size() - buffer_idx_ < BufferRecordHeader()->Size()) {
+  while (GetReadBufferSize() < BufferRecordHeader()->Size()) {
     if (FillBuffer() == 0) {
+      if (GetReadBufferSize() > 0) {
+        log_receiver_->Receive(
+            LogLevel::Warning,
+            "Unexpected partial record remaining in stream: " +
+                std::to_string(GetReadBufferSize()) + " bytes");
+      }
       return nullptr;
     }
   }
@@ -280,6 +283,10 @@ size_t DbnDecoder::FillBuffer() {
                                           kBufferCapacity - unread_size);
   read_buffer_.resize(unread_size + fill_size);
   return fill_size;
+}
+
+std::size_t DbnDecoder::GetReadBufferSize() const {
+  return read_buffer_.size() - buffer_idx_;
 }
 
 databento::RecordHeader* DbnDecoder::BufferRecordHeader() {

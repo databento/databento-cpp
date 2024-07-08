@@ -8,13 +8,28 @@
 #endif
 #include <openssl/sha.h>  // SHA256_DIGEST_LENGTH
 
+#include <chrono>
 #include <cstdint>
-#include <limits>
 
+#include "databento/compat.hpp"
+#include "databento/constants.hpp"
+#include "databento/datetime.hpp"
+#include "databento/dbn_encoder.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"
 #include "databento/symbology.hpp"   // JoinSymbolStrings
 #include "mock/mock_tcp_server.hpp"  // InitSocket
+
+using databento::test::mock::SocketStream;
+
+void SocketStream::WriteAll(const std::uint8_t* buffer, std::size_t length) {
+// MSG_NOSIGNAL doesn't exist on Windows, but also isn't necessary
+#ifdef _WIN32
+  constexpr int MSG_NOSIGNAL = {};
+#endif
+  // Don't send a SIGPIPE if the connection is closed
+  last_write_size_ = ::send(socket_, buffer, length, MSG_NOSIGNAL);
+}
 
 using databento::test::mock::MockLsgServer;
 
@@ -146,33 +161,17 @@ void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
 void MockLsgServer::Start() {
   const auto received = Receive();
   EXPECT_EQ(received, "start_session\n");
-  Send("DBN\1");
-  // frame length: fixed size + length of schema definition, symbols, partial,
-  // not_found, and mappings
-  constexpr std::uint32_t kFrameLen = 100 + sizeof(std::uint32_t) * 5;
-  SendBytes(kFrameLen);
-  std::size_t bytes_written{};
-  // dataset
-  bytes_written += Send(dataset_);
-  bytes_written += Send(std::string(16 - dataset_.length(), '\0'));
-  // mixed schema
-  bytes_written += SendBytes(std::numeric_limits<std::uint16_t>::max());
-  // start
-  bytes_written += SendBytes(std::uint64_t{0});
-  // end
-  bytes_written += SendBytes(std::numeric_limits<std::uint64_t>::max());
-  // limit
-  bytes_written += SendBytes(std::uint64_t{0});
-  // record_count
-  bytes_written += SendBytes(std::numeric_limits<std::uint64_t>::max());
-  // stype_in
-  bytes_written += SendBytes(SType::RawSymbol);
-  // stype_out
-  bytes_written += SendBytes(SType::InstrumentId);
-  // padding
-  bytes_written += Send(std::string(48 + sizeof(std::uint32_t) * 5, '\0'));
 
-  ASSERT_EQ(bytes_written, kFrameLen);
+  SocketStream writable{conn_fd_.Get()};
+  Metadata metadata{1,     dataset_,
+                    true,  {},
+                    {},    UnixNanos{std::chrono::nanoseconds{kUndefTimestamp}},
+                    0,     true,
+                    {},    SType::InstrumentId,
+                    false, kSymbolCstrLenV1,
+                    {},    {},
+                    {},    {}};
+  DbnEncoder::EncodeMetadata(metadata, &writable);
 }
 
 void MockLsgServer::Close() { conn_fd_.Close(); }
