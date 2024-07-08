@@ -28,7 +28,8 @@ void SocketStream::WriteAll(const std::uint8_t* buffer, std::size_t length) {
   constexpr int MSG_NOSIGNAL = {};
 #endif
   // Don't send a SIGPIPE if the connection is closed
-  last_write_size_ = ::send(socket_, buffer, length, MSG_NOSIGNAL);
+  last_write_size_ = ::send(socket_, reinterpret_cast<const char*>(buffer),
+                            length, MSG_NOSIGNAL);
 }
 
 using databento::test::mock::MockLsgServer;
