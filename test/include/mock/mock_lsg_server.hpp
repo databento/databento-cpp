@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gtest/gtest.h>  // EXPECT_EQ
+
 #ifdef _WIN32
 #include <basetsd.h>   // SSIZE_T
 #include <winsock2.h>  // send
@@ -20,11 +21,24 @@ using ssize_t = SSIZE_T;
 #include "databento/detail/scoped_fd.hpp"      // ScopedFd
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
 #include "databento/enums.hpp"                 // Schema, SType
-#include "databento/record.hpp"                // RecordHeader
+#include "databento/iwritable.hpp"
+#include "databento/record.hpp"  // RecordHeader
 
 namespace databento {
 namespace test {
 namespace mock {
+class SocketStream : public databento::IWritable {
+ public:
+  explicit SocketStream(detail::Socket socket) : socket_{socket} {}
+
+  void WriteAll(const std::uint8_t* buffer, std::size_t length) override;
+  ::ssize_t LastWriteSize() const { return last_write_size_; }
+
+ private:
+  detail::Socket socket_;
+  ::ssize_t last_write_size_{};
+};
+
 class MockLsgServer {
  public:
   MockLsgServer(std::string dataset, bool ts_out,
@@ -47,7 +61,7 @@ class MockLsgServer {
   std::size_t Send(const std::string& msg);
   ::ssize_t UncheckedSend(const std::string& msg);
   template <typename Rec>
-  void SendRecord(Rec rec) {
+  void SendRecord(const Rec& rec) {
     const std::string rec_str{reinterpret_cast<const char*>(&rec), sizeof(rec)};
     Send(rec_str);
   }

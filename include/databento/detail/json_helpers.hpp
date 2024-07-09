@@ -1,5 +1,6 @@
 #pragma once
 
+#include <date/date.h>
 #include <nlohmann/json.hpp>
 
 #include <map>  // multimap
@@ -89,6 +90,10 @@ template <>
 std::vector<std::string> ParseAt(const std::string& endpoint,
                                  const nlohmann::json& json,
                                  const std::string& key);
+template <>
+date::year_month_day ParseAt(const std::string& endpoint,
+                             const nlohmann::json& json,
+                             const std::string& key);
 
 }  // namespace detail
 }  // namespace databento

@@ -18,6 +18,7 @@
 #include "databento/record.hpp"      // Record
 #include "databento/symbology.hpp"   // JoinSymbolStrings
 #include "databento/version.hpp"     // DATABENTO_VERSION
+#include "dbn_constants.hpp"         // kMetadataPreludeSize
 
 using databento::LiveBlocking;
 
@@ -118,7 +119,6 @@ void LiveBlocking::Subscribe(const std::string& sub_msg,
 }
 
 databento::Metadata LiveBlocking::Start() {
-  constexpr auto kMetadataPreludeSize = 8;
   client_.WriteAll("start_session\n");
   client_.ReadExact(read_buffer_.data(), kMetadataPreludeSize);
   const auto version_and_size = DbnDecoder::DecodeMetadataVersionAndSize(

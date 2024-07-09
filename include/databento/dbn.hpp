@@ -1,5 +1,7 @@
 #pragma once
 
+#include <date/date.h>
+
 #include <cstdint>
 #include <ostream>
 #include <string>
@@ -9,13 +11,15 @@
 #include "databento/enums.hpp"
 
 namespace databento {
+// Forward declare
+class PitSymbolMap;
+class TsSymbolMap;
+
 struct MappingInterval {
-  // The start date of the interval (inclusive) as
-  // YYYYMMDD e.g. 2022-10-08 is represented as 20221008
-  std::uint32_t start_date;
-  // The end date of the interval (exclusive) as
-  // YYYYMMDD e.g. 2022-10-08 is represented as 20221008
-  std::uint32_t end_date;
+  // The start date of the interval (inclusive).
+  date::year_month_day start_date;
+  // The end date of the interval (exclusive).
+  date::year_month_day end_date;
   std::string symbol;
 };
 
@@ -69,6 +73,16 @@ struct Metadata {
   // Symbol mappings containing a native symbol and its mapping intervals.
   std::vector<SymbolMapping> mappings;
 
+  // Creates a symbology mapping from instrument ID to text symbol for the given
+  // date.
+  //
+  // This method is useful when working with a historical request over a single
+  // day or in other situations where you're sure the mappings don't change
+  // during the time range of the request. Otherwise, `SymbolMap()` is
+  // recommmended.
+  PitSymbolMap CreateSymbolMapForDate(date::year_month_day date) const;
+  // Creates a symbology mapping from instrument ID and date to text symbol.
+  TsSymbolMap CreateSymbolMap() const;
   // Upgrades the metadata according to `upgrade_policy` if necessary.
   void Upgrade(VersionUpgradePolicy upgrade_policy);
 };

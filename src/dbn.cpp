@@ -4,9 +4,16 @@
 #include <sstream>  // ostringstream
 
 #include "databento/constants.hpp"
+#include "databento/symbol_map.hpp"
 #include "stream_op_helper.hpp"
 
 namespace databento {
+
+PitSymbolMap Metadata::CreateSymbolMapForDate(date::year_month_day date) const {
+  return PitSymbolMap{*this, date};
+}
+
+TsSymbolMap Metadata::CreateSymbolMap() const { return TsSymbolMap{*this}; }
 
 void Metadata::Upgrade(VersionUpgradePolicy upgrade_policy) {
   if (version < kDbnVersion &&

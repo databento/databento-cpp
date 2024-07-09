@@ -4,7 +4,6 @@
 #include <memory>
 #include <mutex>
 #include <sstream>  // stringstream
-#include <vector>
 
 #include "databento/exceptions.hpp"  // DbnResponseError
 

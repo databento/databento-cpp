@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
   const auto stype_out = databento::FromString<databento::SType>(argv[3]);
 
   std::vector<std::string> symbols;
-  for (int i = 6; i < argc; ++i) {
+  for (int i = 5; i < argc; ++i) {
     symbols.emplace_back(argv[i]);
   }
 

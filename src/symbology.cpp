@@ -1,12 +1,38 @@
 #include "databento/symbology.hpp"
 
+#include <cstdint>
+#include <memory>
 #include <numeric>  // accumulate
 #include <sstream>
+#include <string>
 
 #include "databento/exceptions.hpp"  // InvalidArgumentError
 #include "stream_op_helper.hpp"      // StreamOpBuilder
 
 namespace databento {
+TsSymbolMap SymbologyResolution::CreateSymbolMap() const {
+  TsSymbolMap res;
+  if (stype_in == SType::InstrumentId) {
+    for (const auto& mapping : mappings) {
+      const auto iid = static_cast<std::uint32_t>(std::stoul(mapping.first));
+      for (const auto& interval : mapping.second) {
+        res.Insert(iid, interval.start_date, interval.end_date,
+                   std::make_shared<std::string>(interval.symbol));
+      }
+    }
+  } else {
+    for (const auto& mapping : mappings) {
+      auto symbol = std::make_shared<std::string>(mapping.first);
+      for (const auto& interval : mapping.second) {
+        const auto iid =
+            static_cast<std::uint32_t>(std::stoul(interval.symbol));
+        res.Insert(iid, interval.start_date, interval.end_date, symbol);
+      }
+    }
+  }
+  return res;
+}
+
 std::string JoinSymbolStrings(
     const std::string& method_name,
     std::vector<std::string>::const_iterator symbols_begin,
@@ -29,24 +55,8 @@ std::string JoinSymbolStrings(const std::string& method_name,
   return JoinSymbolStrings(method_name, symbols.begin(), symbols.end());
 }
 
-std::string ToString(const StrMappingInterval& mapping_interval) {
-  return MakeString(mapping_interval);
-}
-
 std::string ToString(const SymbologyResolution& sym_res) {
   return MakeString(sym_res);
-}
-
-std::ostream& operator<<(std::ostream& stream,
-                         const StrMappingInterval& mapping_interval) {
-  return StreamOpBuilder{stream}
-      .SetSpacer(" ")
-      .SetTypeName("StrMappingInterval")
-      .Build()
-      .AddField("start_date", mapping_interval.start_date)
-      .AddField("end_date", mapping_interval.end_date)
-      .AddField("symbol", mapping_interval.symbol)
-      .Finish();
 }
 
 std::ostream& operator<<(std::ostream& stream,
@@ -92,9 +102,11 @@ std::ostream& operator<<(std::ostream& stream,
   for (const auto& symbol : sym_res.not_found) {
     not_found_helper.AddItem(symbol);
   }
-  stream_helper.AddField(
-      "not_found", static_cast<std::ostringstream&>(not_found_helper.Finish()));
-
-  return stream_helper.Finish();
+  return stream_helper
+      .AddField("not_found",
+                static_cast<std::ostringstream&>(not_found_helper.Finish()))
+      .AddField("stype_in", sym_res.stype_in)
+      .AddField("stype_out", sym_res.stype_out)
+      .Finish();
 }
 }  // namespace databento

@@ -8,20 +8,22 @@
 #include <vector>
 
 #include "databento/ireadable.hpp"
+#include "databento/iwritable.hpp"
+#include "databento/log.hpp"
 
 namespace databento {
 namespace detail {
-class ZstdStream : public IReadable {
+class ZstdDecodeStream : public IReadable {
  public:
-  explicit ZstdStream(std::unique_ptr<IReadable> input);
-  ZstdStream(std::unique_ptr<IReadable> input,
-             std::vector<std::uint8_t>&& in_buffer);
+  explicit ZstdDecodeStream(std::unique_ptr<IReadable> input);
+  ZstdDecodeStream(std::unique_ptr<IReadable> input,
+                   std::vector<std::uint8_t>&& in_buffer);
 
   // Read exactly `length` bytes into `buffer`.
   void ReadExact(std::uint8_t* buffer, std::size_t length) override;
   // Read at most `length` bytes. Returns the number of bytes read. Will only
   // return 0 if the end of the stream is reached.
-  size_t ReadSome(std::uint8_t* buffer, std::size_t max_length) override;
+  std::size_t ReadSome(std::uint8_t* buffer, std::size_t max_length) override;
 
  private:
   std::unique_ptr<IReadable> input_;
@@ -29,6 +31,28 @@ class ZstdStream : public IReadable {
   std::size_t read_suggestion_;
   std::vector<std::uint8_t> in_buffer_;
   ZSTD_inBuffer z_in_buffer_;
+};
+
+class ZstdCompressStream : public IWritable {
+ public:
+  explicit ZstdCompressStream(IWritable* output);
+  ZstdCompressStream(ILogReceiver* log_receiver, IWritable* output);
+  ZstdCompressStream(const ZstdCompressStream&) = delete;
+  ZstdCompressStream& operator=(const ZstdCompressStream&) = delete;
+  ZstdCompressStream(ZstdCompressStream&&) = delete;
+  ZstdCompressStream& operator=(ZstdCompressStream&&) = delete;
+  ~ZstdCompressStream() override;
+
+  void WriteAll(const std::uint8_t* buffer, std::size_t length) override;
+
+ private:
+  ILogReceiver* log_receiver_;
+  IWritable* output_;
+  std::unique_ptr<ZSTD_CStream, std::size_t (*)(ZSTD_CStream*)> z_cstream_;
+  std::vector<std::uint8_t> in_buffer_;
+  ZSTD_inBuffer z_in_buffer_;
+  std::size_t in_size_;
+  std::vector<std::uint8_t> out_buffer_;
 };
 }  // namespace detail
 }  // namespace databento
