@@ -163,3 +163,4 @@ add_compile_definitions(TEST_BUILD_DIR="${CMAKE_CURRENT_BINARY_DIR}")
 verbose_message("Finished adding unit tests for ${CMAKE_PROJECT_NAME}.")
 
 add_subdirectory(cmake_fetch_content)
+add_subdirectory(cmake_import)
