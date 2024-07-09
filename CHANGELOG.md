@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.20.0 - TBD
+## 0.20.0 - 2024-07-09
 
 This release adds support for encoding DBN within the C++ client.
 It also improves historical symbology support with the new `TsSymbolMap` class that
