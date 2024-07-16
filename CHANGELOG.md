@@ -2,7 +2,7 @@
 
 ## 0.20.1 - 2024-07-16
 
-#### Enhancements
+### Enhancements
 - Improved installation with `CMake`: license is now installed, transitive dependencies are configured
   when importing package
 
