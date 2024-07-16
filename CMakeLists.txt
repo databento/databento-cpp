@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.20.0 LANGUAGES CXX)
+project("databento" VERSION 0.20.1 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
@@ -291,6 +291,9 @@ set(targets ${PROJECT_NAME})
 if(NOT ${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_JSON)
   list(APPEND targets nlohmann_json)
 endif()
+if(NOT ${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
+  list(APPEND targets httplib)
+endif()
 
 include(GNUInstallDirs)
 install(
@@ -303,16 +306,9 @@ install(
   ARCHIVE DESTINATION
     ${CMAKE_INSTALL_LIBDIR}
   INCLUDES DESTINATION
-    include
+    ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION
-    include
-)
-
-install(
-  FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/version.hpp
-  DESTINATION
-    include/${PROJECT_NAME}
+    ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 install(
@@ -330,17 +326,33 @@ install(
 # Install the `include` directory
 #
 
+set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
 install(
   DIRECTORY
     include/${PROJECT_NAME}
   DESTINATION
-    include
+    ${CMAKE_INSTALL_INCLUDEDIR}
+)
+install(
+  FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/version.hpp
+  DESTINATION
+    ${INCLUDE_INSTALL_DIR}
 )
 
-verbose_message("Install targets successfully built. Install with `cmake --build <build_directory> --target install --config <build_config>`.")
+#
+# Install license
+#
+
+install(
+  FILES
+    "LICENSE"
+  DESTINATION
+    ${CMAKE_INSTALL_DATADIR}/licenses/${PROJECT_NAME}
+)
 
 #
-# Quick `ConfigVersion.cmake` creation
+# `ConfigVersion.cmake` creation
 #
 
 include(CMakePackageConfigHelpers)
@@ -349,23 +361,30 @@ write_basic_package_version_file(
   VERSION
     ${PROJECT_VERSION}
   COMPATIBILITY
-    SameMajorVersion
+    SameMinorVersion
 )
+
+#
+# Generate package configuration and install it
+#
 
 configure_package_config_file(
   ${CMAKE_CURRENT_LIST_DIR}/cmake/${PROJECT_NAME}Config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-  INSTALL_DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+  PATH_VARS INCLUDE_INSTALL_DIR
 )
-
 install(
   FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+    # Install so it can be used in databentoConfig.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindZstd.cmake
   DESTINATION
     ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
+
+verbose_message("Install targets successfully built. Install with `cmake --build <build_directory> --target install --config <build_config>`.")
 
 #
 # Generate export header if specified
@@ -378,7 +397,7 @@ if(${PROJECT_NAME_UPPERCASE}_GENERATE_EXPORT_HEADER)
     FILES
       ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_export.h
     DESTINATION
-      include
+      ${CMAKE_INSTALL_INCLUDEDIR}
   )
 
   message(STATUS "Generated the export header `${PROJECT_NAME}_export.h` and installed it.")
