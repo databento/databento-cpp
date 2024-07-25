@@ -4,7 +4,7 @@
 #include <iosfwd>
 #include <string>
 
-#include "databento/publishers.hpp"  // Dataset, Publisher, Venue, FromString
+#include "databento/publishers.hpp"  // FromString
 
 namespace databento {
 // Represents a historical data center gateway location.
