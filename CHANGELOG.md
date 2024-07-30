@@ -1,10 +1,24 @@
 # Changelog
 
+## 0.21.0 - 2024-07-30
+
+### Enhancements
+- Added new publisher value for `DBEQ.SUMMARY`
+
+### Breaking changes
+- Renamed `SType::Nasdaq` variant to `SType::NasdaqSymbol`
+- Renamed `SType::Cms` variant to `SType::CmsSymbol`
+
+### Bug fixes
+- Added missing `ToString` and `FromString` branches for `SType::NasdaqSymbol` and
+  `SType::CmsSymbol`
+- Removed `has_header_v` variable template that broke C++11 compatibility
+
 ## 0.20.1 - 2024-07-16
 
 ### Enhancements
-- Improved installation with `CMake`: license is now installed, transitive dependencies are configured
-  when importing package
+- Improved installation with `CMake`: license is now installed, transitive dependencies
+  are configured when importing package
 
 ## 0.20.0 - 2024-07-09
 

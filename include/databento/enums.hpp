@@ -4,7 +4,7 @@
 #include <iosfwd>
 #include <string>
 
-#include "databento/publishers.hpp"  // Dataset, Publisher, Venue, FromString
+#include "databento/publishers.hpp"  // FromString
 
 namespace databento {
 // Represents a historical data center gateway location.
@@ -70,9 +70,9 @@ enum SType : std::uint8_t {
   // "parent" symbol, e.g. ES.FUT to refer to all ES futures.
   Parent = 4,
   // Symbology for US equities using NASDAQ Integrated suffix conventions.
-  Nasdaq = 5,
+  NasdaqSymbol = 5,
   // Symbology for US equities using CMS suffix conventions.
-  Cms = 6,
+  CmsSymbol = 6,
 };
 }  // namespace stype
 using SType = stype::SType;

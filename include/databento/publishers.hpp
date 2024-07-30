@@ -159,6 +159,8 @@ enum class Dataset : std::uint16_t {
   DbeqMax = 30,
   // Nasdaq Basic (NLS+QBBO)
   XnasBasic = 31,
+  // Databento Equities Summary
+  DbeqSummary = 32,
 };
 
 // A specific Venue from a specific data source.
@@ -341,6 +343,8 @@ enum class Publisher : std::uint16_t {
   XnasBasicXbos = 88,
   // Nasdaq Basic - Nasdaq PSX
   XnasBasicXpsx = 89,
+  // Databento Equities Summary
+  DbeqSummaryDbeq = 90,
 };
 
 // Get a Publisher's Venue.

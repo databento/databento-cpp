@@ -53,14 +53,14 @@ const char* ToString(Schema schema) {
     case Schema::Definition: {
       return "definition";
     }
-    case Schema::Imbalance: {
-      return "imbalance";
-    }
     case Schema::Statistics: {
       return "statistics";
     }
     case Schema::Status: {
       return "status";
+    }
+    case Schema::Imbalance: {
+      return "imbalance";
     }
     case Schema::Cbbo: {
       return "cbbo";
@@ -147,6 +147,12 @@ const char* ToString(SType stype) {
     }
     case SType::Parent: {
       return "parent";
+    }
+    case SType::NasdaqSymbol: {
+      return "nasdaq_symbol";
+    }
+    case SType::CmsSymbol: {
+      return "cms_symbol";
     }
     default: {
       return "unknown";
@@ -521,6 +527,9 @@ const char* ToString(StatType stat_type) {
     }
     case StatType::Delta: {
       return "Delta";
+    }
+    case StatType::UncrossingPrice: {
+      return "UncrossingPrice";
     }
     default: {
       return "Unknown";
@@ -915,14 +924,32 @@ Schema FromString(const std::string& str) {
   if (str == "definition") {
     return Schema::Definition;
   }
-  if (str == "imbalance") {
-    return Schema::Imbalance;
-  }
   if (str == "statistics") {
     return Schema::Statistics;
   }
   if (str == "status") {
     return Schema::Status;
+  }
+  if (str == "imbalance") {
+    return Schema::Imbalance;
+  }
+  if (str == "cbbo") {
+    return Schema::Cbbo;
+  }
+  if (str == "cbbo-1s") {
+    return Schema::Cbbo1S;
+  }
+  if (str == "cbbo-1m") {
+    return Schema::Cbbo1M;
+  }
+  if (str == "tcbbo") {
+    return Schema::Tcbbo;
+  }
+  if (str == "bbo-1s") {
+    return Schema::Bbo1S;
+  }
+  if (str == "bbo-1m") {
+    return Schema::Bbo1M;
   }
   throw InvalidArgumentError{"FromString<Schema>", "str",
                              "unknown value '" + str + '\''};
@@ -983,6 +1010,12 @@ SType FromString(const std::string& str) {
   }
   if (str == "parent") {
     return SType::Parent;
+  }
+  if (str == "nasdaq_symbol" || str == "nasdaq") {
+    return SType::NasdaqSymbol;
+  }
+  if (str == "cms_symbol" || str == "cms") {
+    return SType::CmsSymbol;
   }
   throw InvalidArgumentError{"FromString<SType>", "str",
                              "unknown value '" + str + '\''};

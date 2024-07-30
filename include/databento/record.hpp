@@ -52,8 +52,6 @@ struct has_header : std::false_type {};
 template <typename T>
 struct has_header<T, detail::void_t<decltype(std::declval<T>().hd)>>
     : std::is_same<decltype(std::declval<T>().hd), RecordHeader> {};
-template <typename T>
-constexpr bool has_header_v = has_header<T>::value;
 
 class Record {
  public:

@@ -18,14 +18,14 @@ class DbnEncoder {
   template <typename R>
   void EncodeRecord(const R& record) {
     static_assert(
-        has_header_v<R>,
+        has_header<R>::value,
         "must be a DBN record struct with an `hd` RecordHeader field");
     EncodeRecord(Record{&record.hd});
   }
   template <typename R>
   void EncodeRecord(const WithTsOut<R> record) {
     static_assert(
-        has_header_v<R>,
+        has_header<R>::value,
         "must be a DBN record struct with an `hd` RecordHeader field");
     EncodeRecord(Record{&record.rec.hd});
   }
