@@ -381,6 +381,9 @@ const char* ToString(Dataset dataset) {
     case Dataset::XnasBasic: {
       return "XNAS.BASIC";
     }
+    case Dataset::DbeqSummary: {
+      return "DBEQ.SUMMARY";
+    }
     default: {
       return "Unknown";
     }
@@ -486,6 +489,9 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "XNAS.BASIC") {
     return Dataset::XnasBasic;
+  }
+  if (str == "DBEQ.SUMMARY") {
+    return Dataset::DbeqSummary;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -759,6 +765,9 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::XnasBasicXpsx: {
       return Venue::Xpsx;
+    }
+    case Publisher::DbeqSummaryDbeq: {
+      return Venue::Dbeq;
     }
     default: {
       throw InvalidArgumentError{
@@ -1037,6 +1046,9 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::XnasBasicXpsx: {
       return Dataset::XnasBasic;
     }
+    case Publisher::DbeqSummaryDbeq: {
+      return Dataset::DbeqSummary;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -1314,6 +1326,9 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::XnasBasicXpsx: {
       return "XNAS.BASIC.XPSX";
+    }
+    case Publisher::DbeqSummaryDbeq: {
+      return "DBEQ.SUMMARY.DBEQ";
     }
     default: {
       return "Unknown";
@@ -1594,6 +1609,9 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "XNAS.BASIC.XPSX") {
     return Publisher::XnasBasicXpsx;
+  }
+  if (str == "DBEQ.SUMMARY.DBEQ") {
+    return Publisher::DbeqSummaryDbeq;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

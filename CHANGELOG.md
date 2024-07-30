@@ -2,6 +2,9 @@
 
 ## 0.21.0 - TBD
 
+### Enhancements
+- Added new publisher value for `DBEQ.SUMMARY`
+
 ### Breaking changes
 - Renamed `SType::Nasdaq` variant to `SType::NasdaqSymbol`
 - Renamed `SType::Cms` variant to `SType::CmsSymbol`
