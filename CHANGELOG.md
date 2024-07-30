@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.21.0 - TBD
+## 0.21.0 - 2024-07-30
 
 ### Enhancements
 - Added new publisher value for `DBEQ.SUMMARY`
