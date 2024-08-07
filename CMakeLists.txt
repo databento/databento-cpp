@@ -421,12 +421,12 @@ if(${PROJECT_NAME_UPPERCASE}_ENABLE_UNIT_TESTING)
   unset(CMAKE_CXX_CLANG_TIDY) # disable clang-tidy for tests
   enable_testing()
   message(STATUS "Build unit tests for the project.")
-  add_subdirectory(test)
+  add_subdirectory(tests)
 endif()
 
 if(${PROJECT_NAME_UPPERCASE}_ENABLE_EXAMPLES)
   unset(CMAKE_CXX_CPPCHECK) # disable cppcheck for examples
   unset(CMAKE_CXX_CLANG_TIDY) # disable clang-tidy for examples
   message(STATUS "Build examples for the project.")
-  add_subdirectory(example)
+  add_subdirectory(examples)
 endif()

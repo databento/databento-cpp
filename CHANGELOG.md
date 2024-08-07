@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.21.1 - TBD
+
+### Enhancements
+- Renamed example directory to examples
+- Renamed test directory to tests
+
 ## 0.21.0 - 2024-07-30
 
 ### Enhancements
