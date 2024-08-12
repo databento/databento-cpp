@@ -7,6 +7,7 @@
   available from the historical API
 - Renamed `example` directory to `examples`
 - Renamed `test` directory to `tests`
+- Added new publisher values for `XCIS.BBOTRADES` and `XNYS.BBOTRADES`
 
 ### Breaking changes
 - Removed previously deprecated `DatasetCondition::Bad` variant
