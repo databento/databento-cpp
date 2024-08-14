@@ -251,8 +251,8 @@ const char* ToString(DatasetCondition condition) {
     case DatasetCondition::Missing: {
       return "missing";
     }
-    case DatasetCondition::Bad: {  // Deprecated
-      return "bad";
+    case DatasetCondition::Intraday: {
+      return "intraday";
     }
     default: {
       return "unknown";
@@ -1104,8 +1104,8 @@ DatasetCondition FromString(const std::string& str) {
   if (str == "missing") {
     return DatasetCondition::Missing;
   }
-  if (str == "bad") {
-    return DatasetCondition::Bad;  // Deprecated
+  if (str == "intraday") {
+    return DatasetCondition::Intraday;
   }
   throw InvalidArgumentError{"FromString<DatasetCondition>", "str",
                              "unknown value '" + str + '\''};

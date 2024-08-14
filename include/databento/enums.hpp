@@ -114,7 +114,7 @@ enum class DatasetCondition : std::uint8_t {
   Degraded,
   Pending,
   Missing,
-  Bad,  // Deprecated
+  Intraday,
 };
 
 // Sentinel values for different DBN record types.

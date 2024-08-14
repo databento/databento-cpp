@@ -1,10 +1,15 @@
 # Changelog
 
-## 0.21.1 - TBD
+## 0.22.0 - TBD
 
 ### Enhancements
-- Renamed example directory to examples
-- Renamed test directory to tests
+- Added `Intraday` variant to `DatasetCondition` in preparation for intraday data being
+  available from the historical API
+- Renamed `example` directory to `examples`
+- Renamed `test` directory to `tests`
+
+### Breaking changes
+- Removed previously deprecated `DatasetCondition::Bad` variant
 
 ## 0.21.0 - 2024-07-30
 
