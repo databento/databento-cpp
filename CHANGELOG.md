@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.22.0 - 2024-08-27
+
+### Enhancements
+- Added `Intraday` variant to `DatasetCondition` in preparation for intraday data being
+  available from the historical API
+- Renamed `example` directory to `examples`
+- Renamed `test` directory to `tests`
+- Added new publisher values for `XCIS.BBOTRADES` and `XNYS.BBOTRADES`
+
+### Breaking changes
+- Removed previously deprecated `DatasetCondition::Bad` variant
+
 ## 0.21.0 - 2024-07-30
 
 ### Enhancements

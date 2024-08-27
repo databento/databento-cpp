@@ -384,6 +384,12 @@ const char* ToString(Dataset dataset) {
     case Dataset::DbeqSummary: {
       return "DBEQ.SUMMARY";
     }
+    case Dataset::XcisBbotrades: {
+      return "XCIS.BBOTRADES";
+    }
+    case Dataset::XnysBbotrades: {
+      return "XNYS.BBOTRADES";
+    }
     default: {
       return "Unknown";
     }
@@ -492,6 +498,12 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "DBEQ.SUMMARY") {
     return Dataset::DbeqSummary;
+  }
+  if (str == "XCIS.BBOTRADES") {
+    return Dataset::XcisBbotrades;
+  }
+  if (str == "XNYS.BBOTRADES") {
+    return Dataset::XnysBbotrades;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -768,6 +780,12 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::DbeqSummaryDbeq: {
       return Venue::Dbeq;
+    }
+    case Publisher::XcisBbotradesXcis: {
+      return Venue::Xcis;
+    }
+    case Publisher::XnysBbotradesXnys: {
+      return Venue::Xnys;
     }
     default: {
       throw InvalidArgumentError{
@@ -1049,6 +1067,12 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::DbeqSummaryDbeq: {
       return Dataset::DbeqSummary;
     }
+    case Publisher::XcisBbotradesXcis: {
+      return Dataset::XcisBbotrades;
+    }
+    case Publisher::XnysBbotradesXnys: {
+      return Dataset::XnysBbotrades;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -1329,6 +1353,12 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::DbeqSummaryDbeq: {
       return "DBEQ.SUMMARY.DBEQ";
+    }
+    case Publisher::XcisBbotradesXcis: {
+      return "XCIS.BBOTRADES.XCIS";
+    }
+    case Publisher::XnysBbotradesXnys: {
+      return "XNYS.BBOTRADES.XNYS";
     }
     default: {
       return "Unknown";
@@ -1612,6 +1642,12 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "DBEQ.SUMMARY.DBEQ") {
     return Publisher::DbeqSummaryDbeq;
+  }
+  if (str == "XCIS.BBOTRADES.XCIS") {
+    return Publisher::XcisBbotradesXcis;
+  }
+  if (str == "XNYS.BBOTRADES.XNYS") {
+    return Publisher::XnysBbotradesXnys;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
