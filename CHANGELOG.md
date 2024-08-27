@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.22.0 - TBD
+## 0.22.0 - 2024-08-27
 
 ### Enhancements
 - Added `Intraday` variant to `DatasetCondition` in preparation for intraday data being
