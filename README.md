@@ -2,7 +2,7 @@
 
 [![test](https://github.com/databento/databento-cpp/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/databento/databento-cpp/actions/workflows/build.yaml)
 [![license](https://img.shields.io/github/license/databento/databento-cpp?color=blue)](./LICENSE)
-[![Slack](https://img.shields.io/badge/join_Slack-community-darkblue.svg?logo=slack)](https://join.slack.com/t/databento-hq/shared_invite/zt-1ryj8bb50-aASfjMVzoFbABHauQ335zg)
+[![Slack](https://img.shields.io/badge/join_Slack-community-darkblue.svg?logo=slack)](https://to.dbn.to/slack)
 
 The official C++ client library for [Databento](https://databento.com).
 The client supports both streaming real-time and historical market data through similar interfaces.
