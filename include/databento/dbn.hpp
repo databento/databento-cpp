@@ -20,13 +20,14 @@ struct MappingInterval {
   date::year_month_day start_date;
   // The end date of the interval (exclusive).
   date::year_month_day end_date;
+  // The resolved symbol for this interval (in `stype_out`).
   std::string symbol;
 };
 
 struct SymbolMapping {
-  // The raw symbol from the publisher.
+  // The `stype_in` symbol.
   std::string raw_symbol;
-  // The mappings of `native` for different date ranges.
+  // The mappings of `raw_symbol` to `stype_out` for different date ranges.
   std::vector<MappingInterval> intervals;
 };
 
