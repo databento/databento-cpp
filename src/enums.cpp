@@ -62,8 +62,8 @@ const char* ToString(Schema schema) {
     case Schema::Imbalance: {
       return "imbalance";
     }
-    case Schema::Cbbo: {
-      return "cbbo";
+    case Schema::Cmbp1: {
+      return "cmbp-1";
     }
     case Schema::Cbbo1S: {
       return "cbbo-1s";
@@ -310,8 +310,8 @@ const char* ToString(RType rtype) {
     case RType::Mbo: {
       return "Mbo";
     }
-    case RType::Cbbo: {
-      return "Cbbo";
+    case RType::Cmbp1: {
+      return "Cmbp1";
     }
     case RType::Cbbo1S: {
       return "Cbbo1S";
@@ -933,8 +933,8 @@ Schema FromString(const std::string& str) {
   if (str == "imbalance") {
     return Schema::Imbalance;
   }
-  if (str == "cbbo") {
-    return Schema::Cbbo;
+  if (str == "cmbp-1") {
+    return Schema::Cmbp1;
   }
   if (str == "cbbo-1s") {
     return Schema::Cbbo1S;

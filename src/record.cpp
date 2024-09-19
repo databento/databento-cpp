@@ -322,6 +322,23 @@ std::ostream& operator<<(std::ostream& stream, const BboMsg& bbo_msg) {
       .AddField("levels", std::get<0>(bbo_msg.levels))
       .Finish();
 }
+std::string ToString(const Cmbp1Msg& cbbo_msg) { return MakeString(cbbo_msg); }
+std::ostream& operator<<(std::ostream& stream, const Cmbp1Msg& cmbp1_msg) {
+  return StreamOpBuilder{stream}
+      .SetTypeName("Cmbp1Msg")
+      .SetSpacer("\n    ")
+      .Build()
+      .AddField("hd", cmbp1_msg.hd)
+      .AddField("price", FixPx{cmbp1_msg.price})
+      .AddField("size", cmbp1_msg.size)
+      .AddField("action", cmbp1_msg.action)
+      .AddField("side", cmbp1_msg.side)
+      .AddField("flags", cmbp1_msg.flags)
+      .AddField("ts_recv", cmbp1_msg.ts_recv)
+      .AddField("ts_in_delta", cmbp1_msg.ts_in_delta)
+      .AddField("levels", std::get<0>(cmbp1_msg.levels))
+      .Finish();
+}
 std::string ToString(const CbboMsg& cbbo_msg) { return MakeString(cbbo_msg); }
 std::ostream& operator<<(std::ostream& stream, const CbboMsg& cbbo_msg) {
   return StreamOpBuilder{stream}
@@ -331,12 +348,9 @@ std::ostream& operator<<(std::ostream& stream, const CbboMsg& cbbo_msg) {
       .AddField("hd", cbbo_msg.hd)
       .AddField("price", FixPx{cbbo_msg.price})
       .AddField("size", cbbo_msg.size)
-      .AddField("action", cbbo_msg.action)
       .AddField("side", cbbo_msg.side)
       .AddField("flags", cbbo_msg.flags)
       .AddField("ts_recv", cbbo_msg.ts_recv)
-      .AddField("ts_in_delta", cbbo_msg.ts_in_delta)
-      .AddField("sequence", cbbo_msg.sequence)
       .AddField("levels", std::get<0>(cbbo_msg.levels))
       .Finish();
 }

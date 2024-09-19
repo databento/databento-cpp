@@ -353,6 +353,10 @@ enum class Publisher : std::uint16_t {
   XcisBbotradesXcis = 91,
   // NYSE BBO and Trades
   XnysBbotradesXnys = 92,
+  // Nasdaq Basic - Consolidated
+  XnasBasicDbeq = 93,
+  // DBEQ Max - Consolidated
+  DbeqMaxDbeq = 94,
 };
 
 // Get a Publisher's Venue.

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.23.0 - TBD
+
+### Enhancements
+- Added new `Cmbp1Msg`
+- Added new consolidated publisher values for `XNAS.BASIC` and `DBEQ.MAX`
+
+### Breaking changes
+- Changed the layout of `CbboMsg` to better match `BboMsg`
+- Renamed `Schema::Cbbo` to `Schema::Cmbp1`
+
 ## 0.22.0 - 2024-08-27
 
 ### Enhancements

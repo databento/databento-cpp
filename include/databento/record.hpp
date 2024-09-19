@@ -254,12 +254,10 @@ using Bbo1MMsg = BboMsg;
 static_assert(alignof(BboMsg) == 8, "Must have 8-byte alignment");
 static_assert(sizeof(BboMsg) == sizeof(Mbp1Msg), "BboMsg size must match Rust");
 
-struct CbboMsg {
+struct Cmbp1Msg {
   static bool HasRType(RType rtype) {
     switch (rtype) {
-      case RType::Cbbo:    // fallthrough
-      case RType::Cbbo1S:  // fallthrough
-      case RType::Cbbo1M:  // fallthrough
+      case RType::Cmbp1:  // fallthrough
       case RType::Tcbbo:
         return true;
       default:
@@ -272,18 +270,52 @@ struct CbboMsg {
   RecordHeader hd;
   std::int64_t price;
   std::uint32_t size;
-  Action action;
+  char action;
   Side side;
   FlagSet flags;
-  char reserved;
+  char reserved1;
   UnixNanos ts_recv;
   TimeDeltaNanos ts_in_delta;
-  std::uint32_t sequence;
+  std::array<char, 4> reserved2;
+  std::array<ConsolidatedBidAskPair, 1> levels;
+};
+using TcbboMsg = Cmbp1Msg;
+static_assert(alignof(Cmbp1Msg) == 8, "Must have 8-byte alignment");
+static_assert(sizeof(Cmbp1Msg) ==
+                  sizeof(TradeMsg) + sizeof(ConsolidatedBidAskPair),
+              "Cmbp1Msg size must match Rust");
+
+struct CbboMsg {
+  static bool HasRType(RType rtype) {
+    switch (rtype) {
+      case RType::Cbbo1S:  // fallthrough
+      case RType::Cbbo1M:  // fallthrough
+        return true;
+      default:
+        return false;
+    };
+  }
+  static_assert(alignof(Cmbp1Msg) == 8, "Must have 8-byte alignment");
+  static_assert(sizeof(Cmbp1Msg) ==
+                    sizeof(TradeMsg) + sizeof(ConsolidatedBidAskPair),
+                "Cmbp1Msg size must match Rust");
+
+  UnixNanos IndexTs() const { return ts_recv; }
+
+  RecordHeader hd;
+  std::int64_t price;
+  std::uint32_t size;
+  char reserved1;
+  Side side;
+  FlagSet flags;
+  char reserved2;
+  UnixNanos ts_recv;
+  std::array<char, 4> reserved3;
+  std::array<char, 4> reserved4;
   std::array<ConsolidatedBidAskPair, 1> levels;
 };
 using Cbbo1SMsg = CbboMsg;
 using Cbbo1MMsg = CbboMsg;
-using TcbboMsg = CbboMsg;
 static_assert(alignof(CbboMsg) == 8, "Must have 8-byte alignment");
 static_assert(sizeof(CbboMsg) ==
                   sizeof(TradeMsg) + sizeof(ConsolidatedBidAskPair),
@@ -604,12 +636,20 @@ inline bool operator!=(const BboMsg& lhs, const BboMsg& rhs) {
   return !(lhs == rhs);
 }
 
-inline bool operator==(const CbboMsg& lhs, const CbboMsg& rhs) {
+inline bool operator==(const Cmbp1Msg& lhs, const Cmbp1Msg& rhs) {
   return lhs.hd == rhs.hd && lhs.price == rhs.price && lhs.size == rhs.size &&
          lhs.action == rhs.action && lhs.side == rhs.side &&
          lhs.flags == rhs.flags && lhs.ts_recv == rhs.ts_recv &&
-         lhs.ts_in_delta == rhs.ts_in_delta && lhs.sequence == rhs.sequence &&
-         lhs.levels == rhs.levels;
+         lhs.ts_in_delta == rhs.ts_in_delta && lhs.levels == rhs.levels;
+}
+inline bool operator!=(const Cmbp1Msg& lhs, const Cmbp1Msg& rhs) {
+  return !(lhs == rhs);
+}
+
+inline bool operator==(const CbboMsg& lhs, const CbboMsg& rhs) {
+  return lhs.hd == rhs.hd && lhs.price == rhs.price && lhs.size == rhs.size &&
+         lhs.side == rhs.side && lhs.flags == rhs.flags &&
+         lhs.ts_recv == rhs.ts_recv && lhs.levels == rhs.levels;
 }
 inline bool operator!=(const CbboMsg& lhs, const CbboMsg& rhs) {
   return !(lhs == rhs);
