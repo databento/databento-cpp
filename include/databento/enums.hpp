@@ -89,7 +89,7 @@ enum class SplitDuration : std::uint8_t {
 enum class Packaging : std::uint8_t {
   None = 0,
   Zip,
-  Tar,
+  TarDeprecated,
 };
 
 // Represents how a batch job will be delivered.

@@ -188,7 +188,7 @@ const char* ToString(Packaging packaging) {
     case Packaging::Zip: {
       return "zip";
     }
-    case Packaging::Tar: {
+    case Packaging::TarDeprecated: {
       return "tar";
     }
     default: {
@@ -1048,7 +1048,7 @@ Packaging FromString(const std::string& str) {
     return Packaging::Zip;
   }
   if (str == "tar") {
-    return Packaging::Tar;
+    return Packaging::TarDeprecated;
   }
   throw InvalidArgumentError{"FromString<Packaging>", "str",
                              "unknown value '" + str + '\''};
