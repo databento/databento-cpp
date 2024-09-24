@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.23.0 - TBD
+## 0.23.0 - 2024-09-24
 
 ### Enhancements
 - Added new `Cmbp1Msg`
