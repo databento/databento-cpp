@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.23.0 - 2024-09-24
+
+### Enhancements
+- Added new `Cmbp1Msg`
+- Added new consolidated publisher values for `XNAS.BASIC` and `DBEQ.MAX`
+
+### Breaking changes
+- Changed the layout of `CbboMsg` to better match `BboMsg`
+- Renamed `Schema::Cbbo` to `Schema::Cmbp1`
+
+### Deprecations
+- Deprecated `Packing::Tar` and renamed it to `TarDeprecated`. This variant will be
+  removed in a future version when it is no longer supported by the API
+
 ## 0.22.0 - 2024-08-27
 
 ### Enhancements

@@ -787,6 +787,12 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::XnysBbotradesXnys: {
       return Venue::Xnys;
     }
+    case Publisher::XnasBasicDbeq: {
+      return Venue::Dbeq;
+    }
+    case Publisher::DbeqMaxDbeq: {
+      return Venue::Dbeq;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherVenue", "publisher",
@@ -1072,6 +1078,12 @@ Dataset PublisherDataset(Publisher publisher) {
     }
     case Publisher::XnysBbotradesXnys: {
       return Dataset::XnysBbotrades;
+    }
+    case Publisher::XnasBasicDbeq: {
+      return Dataset::XnasBasic;
+    }
+    case Publisher::DbeqMaxDbeq: {
+      return Dataset::DbeqMax;
     }
     default: {
       throw InvalidArgumentError{
@@ -1359,6 +1371,12 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::XnysBbotradesXnys: {
       return "XNYS.BBOTRADES.XNYS";
+    }
+    case Publisher::XnasBasicDbeq: {
+      return "XNAS.BASIC.DBEQ";
+    }
+    case Publisher::DbeqMaxDbeq: {
+      return "DBEQ.MAX.DBEQ";
     }
     default: {
       return "Unknown";
@@ -1648,6 +1666,12 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "XNYS.BBOTRADES.XNYS") {
     return Publisher::XnysBbotradesXnys;
+  }
+  if (str == "XNAS.BASIC.DBEQ") {
+    return Publisher::XnasBasicDbeq;
+  }
+  if (str == "DBEQ.MAX.DBEQ") {
+    return Publisher::DbeqMaxDbeq;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

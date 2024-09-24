@@ -34,7 +34,7 @@ enum class Schema : std::uint16_t {
   Statistics = 10,
   Status = 11,
   Imbalance = 12,
-  Cbbo = 14,
+  Cmbp1 = 14,
   Cbbo1S = 15,
   Cbbo1M = 16,
   Tcbbo = 17,
@@ -89,7 +89,7 @@ enum class SplitDuration : std::uint8_t {
 enum class Packaging : std::uint8_t {
   None = 0,
   Zip,
-  Tar,
+  TarDeprecated,
 };
 
 // Represents how a batch job will be delivered.
@@ -139,7 +139,7 @@ enum RType : std::uint8_t {
   System = 0x17,
   Statistics = 0x18,
   Mbo = 0xA0,
-  Cbbo = 0xB1,
+  Cmbp1 = 0xB1,
   Cbbo1S = 0xC0,
   Cbbo1M = 0xC1,
   Tcbbo = 0xC2,
