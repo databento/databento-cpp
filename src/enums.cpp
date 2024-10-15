@@ -354,6 +354,9 @@ const char* ToString(Action action) {
     case Action::Clear: {
       return "Clear";
     }
+    case Action::None: {
+      return "None";
+    }
     default: {
       return "Unknown";
     }
