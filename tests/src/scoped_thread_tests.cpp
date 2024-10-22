@@ -26,7 +26,9 @@ TEST(ScopedThreadTests, DefaultCtor) { const ScopedThread target{}; }
 TEST(ScopedThreadTests, MoveCtor) {
   auto res = 0;
   const auto initThread = [&res] { return ScopedThread{[&res] { res = 9; }}; };
-  { const ScopedThread target{initThread()}; }  // joins
+  {
+    const ScopedThread target{initThread()};
+  }  // joins
   ASSERT_EQ(res, 9);
 }
 

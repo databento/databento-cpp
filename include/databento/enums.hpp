@@ -149,9 +149,11 @@ enum RType : std::uint8_t {
 }  // namespace rtype
 using rtype::RType;
 
-// A tick action.
+// An order event or order book operation.
 //
-// Additional actions may be added in the future.
+// For example usage see:
+// - https://databento.com/docs/examples/order-book/order-actions
+// - https://databento.com/docs/examples/order-book/order-tracking
 namespace action {
 // enum because future variants may be added in the future.
 enum Action : char {
@@ -167,6 +169,8 @@ enum Action : char {
   Add = 'A',
   // Reset the book; clear all orders for an instrument.
   Clear = 'R',
+  // Has no effect on the book, but may carry `flags` or other information.
+  None = 'N',
 };
 }  // namespace action
 using action::Action;

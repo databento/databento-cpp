@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.24.0 - 2024-10-22
+
+### Enhancements
+- Added new `None` `Action` variant that will be gradually rolled out
+  to historical and live `GLBX.MDP3` data
+
 ## 0.23.0 - 2024-09-25
 
 ### Enhancements
