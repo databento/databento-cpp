@@ -31,6 +31,7 @@ struct BatchJob {
   SplitDuration split_duration;
   std::uint64_t split_size;
   bool split_symbols;
+  // NOTE: deprecated and will be removed in a future version
   Packaging packaging;
   Delivery delivery;
   std::uint64_t record_count;
