@@ -93,6 +93,12 @@ enum class Venue : std::uint16_t {
   Ltse = 42,
   // Off-Exchange Transactions - Listed Instruments
   Xoff = 43,
+  // IntelligentCross ASPEN Intelligent Bid/Offer
+  Aspn = 44,
+  // IntelligentCross ASPEN Maker/Taker
+  Asmt = 45,
+  // IntelligentCross ASPEN Inverted
+  Aspi = 46,
 };
 
 // A source of data.

@@ -2,6 +2,9 @@
 
 ## 0.25.0 - TBD
 
+### Enhancements
+- Added new IntelligentCross venues `ASPN`, `ASMT`, and `ASPI`
+
 ### Deprecations
 - Deprecated `Packaging` enum and `packaging` field on `BatchJob`. These will be
   removed in a future version. All files from a batch job can be downloaded with the
