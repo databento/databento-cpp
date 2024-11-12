@@ -86,6 +86,8 @@ enum class SplitDuration : std::uint8_t {
 };
 
 // Represents how a batch job will be packaged.
+//
+// NOTE: Deprecated now that all batch jobs can be downloaded as a ZIP file.
 enum class Packaging : std::uint8_t {
   None = 0,
   Zip,

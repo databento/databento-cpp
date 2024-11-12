@@ -140,6 +140,15 @@ const char* ToString(Venue venue) {
     case Venue::Xoff: {
       return "XOFF";
     }
+    case Venue::Aspn: {
+      return "ASPN";
+    }
+    case Venue::Asmt: {
+      return "ASMT";
+    }
+    case Venue::Aspi: {
+      return "ASPI";
+    }
     default: {
       return "Unknown";
     }
@@ -281,6 +290,15 @@ Venue FromString(const std::string& str) {
   }
   if (str == "XOFF") {
     return Venue::Xoff;
+  }
+  if (str == "ASPN") {
+    return Venue::Aspn;
+  }
+  if (str == "ASMT") {
+    return Venue::Asmt;
+  }
+  if (str == "ASPI") {
+    return Venue::Aspi;
   }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
