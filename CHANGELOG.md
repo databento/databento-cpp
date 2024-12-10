@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.25.0 - TBD
+## 0.25.0 - 2024-11-12
 
 ### Enhancements
 - Added new IntelligentCross venues `ASPN`, `ASMT`, and `ASPI`
