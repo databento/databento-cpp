@@ -40,7 +40,6 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .AddField("split_duration", batch_job.split_duration)
       .AddField("split_size", batch_job.split_size)
       .AddField("split_symbols", batch_job.split_symbols)
-      .AddField("packaging", batch_job.packaging)
       .AddField("delivery", batch_job.delivery)
       .AddField("record_count", batch_job.record_count)
       .AddField("billed_size", batch_job.billed_size)

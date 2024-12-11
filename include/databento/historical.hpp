@@ -9,7 +9,7 @@
 #include "databento/datetime.hpp"  // DateRange, DateTimeRange, UnixNanos
 #include "databento/dbn_file_store.hpp"
 #include "databento/detail/http_client.hpp"  // HttpClient
-#include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Packaging, Schema, SType
+#include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Schema, SType
 #include "databento/metadata.hpp"  // DatasetConditionDetail, DatasetRange, FieldDetail, PublisherDetail, UnitPricesForMode
 #include "databento/symbology.hpp"  // SymbologyResolution
 #include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
@@ -52,9 +52,8 @@ class Historical {
                           Encoding encoding, Compression compression,
                           bool pretty_px, bool pretty_ts, bool map_symbols,
                           bool split_symbols, SplitDuration split_duration,
-                          std::uint64_t split_size, Packaging packaging,
-                          Delivery delivery, SType stype_in, SType stype_out,
-                          std::uint64_t limit);
+                          std::uint64_t split_size, Delivery delivery,
+                          SType stype_in, SType stype_out, std::uint64_t limit);
   BatchJob BatchSubmitJob(const std::string& dataset,
                           const std::vector<std::string>& symbols,
                           Schema schema,
@@ -62,9 +61,8 @@ class Historical {
                           Encoding encoding, Compression compression,
                           bool pretty_px, bool pretty_ts, bool map_symbols,
                           bool split_symbols, SplitDuration split_duration,
-                          std::uint64_t split_size, Packaging packaging,
-                          Delivery delivery, SType stype_in, SType stype_out,
-                          std::uint64_t limit);
+                          std::uint64_t split_size, Delivery delivery,
+                          SType stype_in, SType stype_out, std::uint64_t limit);
   std::vector<BatchJob> BatchListJobs();
   std::vector<BatchJob> BatchListJobs(const std::vector<JobState>& states,
                                       UnixNanos since);
