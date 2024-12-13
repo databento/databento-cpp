@@ -17,7 +17,7 @@ TsSymbolMap Metadata::CreateSymbolMap() const { return TsSymbolMap{*this}; }
 
 void Metadata::Upgrade(VersionUpgradePolicy upgrade_policy) {
   if (version < kDbnVersion &&
-      upgrade_policy == VersionUpgradePolicy::Upgrade) {
+      upgrade_policy == VersionUpgradePolicy::UpgradeToV2) {
     version = kDbnVersion;
     symbol_cstr_len = kSymbolCstrLen;
   }

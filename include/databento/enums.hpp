@@ -297,7 +297,7 @@ enum class StatUpdateAction : std::uint8_t {
 // How to handle decoding DBN data from a prior version.
 enum class VersionUpgradePolicy : std::uint8_t {
   AsIs = 0,
-  Upgrade = 1,
+  UpgradeToV2 = 1,
 };
 
 namespace status_action {

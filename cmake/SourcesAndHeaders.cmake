@@ -31,13 +31,14 @@ set(headers
   include/databento/symbol_map.hpp
   include/databento/symbology.hpp
   include/databento/timeseries.hpp
+  include/databento/v1.hpp
+  include/databento/v2.hpp
   include/databento/with_ts_out.hpp
   src/stream_op_helper.hpp
 )
 
 set(sources
   src/batch.cpp
-  src/compat.cpp
   src/datetime.cpp
   src/dbn.cpp
   src/dbn_constants.hpp
@@ -65,4 +66,5 @@ set(sources
   src/record.cpp
   src/symbol_map.cpp
   src/symbology.cpp
+  src/v1.cpp
 )

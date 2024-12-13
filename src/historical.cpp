@@ -974,7 +974,8 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
     const HttplibParams& params, const std::string& file_path) {
   StreamToFile(kTimeseriesGetRangePath, params, file_path);
-  return DbnFileStore{log_receiver_, file_path, VersionUpgradePolicy::Upgrade};
+  return DbnFileStore{log_receiver_, file_path,
+                      VersionUpgradePolicy::UpgradeToV2};
 }
 
 using databento::HistoricalBuilder;

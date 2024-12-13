@@ -5,6 +5,13 @@
 ### Breaking changes
 - Removed deprecated `Packaging` enum and `packaging` field that's no longer supported
   by the API
+- Renamed `VersionUpgradePolicy::Upgrade` to `UpgradeToV2` in preparation for a future
+  DBN version 3
+
+### Enhancements
+- Created separate namespaces for each DBN version to create a consistent way to refer
+  to record types from a particular DBN version regardless of whether the record changed
+  between versions
 
 ## 0.25.0 - 2024-11-12
 
