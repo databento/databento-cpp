@@ -180,23 +180,6 @@ const char* ToString(SplitDuration duration_interval) {
   }
 }
 
-const char* ToString(Packaging packaging) {
-  switch (packaging) {
-    case Packaging::None: {
-      return "none";
-    }
-    case Packaging::Zip: {
-      return "zip";
-    }
-    case Packaging::TarDeprecated: {
-      return "tar";
-    }
-    default: {
-      return "unknown";
-    }
-  }
-}
-
 const char* ToString(Delivery delivery) {
   switch (delivery) {
     case Delivery::Download: {
@@ -765,7 +748,7 @@ const char* ToString(VersionUpgradePolicy upgrade_policy) {
     case VersionUpgradePolicy::AsIs: {
       return "AsIs";
     }
-    case VersionUpgradePolicy::Upgrade: {
+    case VersionUpgradePolicy::UpgradeToV2: {
       return "Upgrade";
     }
     default: {
@@ -801,11 +784,6 @@ std::ostream& operator<<(std::ostream& out, SType stype) {
 
 std::ostream& operator<<(std::ostream& out, SplitDuration duration_interval) {
   out << ToString(duration_interval);
-  return out;
-}
-
-std::ostream& operator<<(std::ostream& out, Packaging packaging) {
-  out << ToString(packaging);
   return out;
 }
 
@@ -1039,21 +1017,6 @@ SplitDuration FromString(const std::string& str) {
     return SplitDuration::None;
   }
   throw InvalidArgumentError{"FromString<SplitInterval>", "str",
-                             "unknown value '" + str + '\''};
-}
-
-template <>
-Packaging FromString(const std::string& str) {
-  if (str == "none") {
-    return Packaging::None;
-  }
-  if (str == "zip") {
-    return Packaging::Zip;
-  }
-  if (str == "tar") {
-    return Packaging::TarDeprecated;
-  }
-  throw InvalidArgumentError{"FromString<Packaging>", "str",
                              "unknown value '" + str + '\''};
 }
 

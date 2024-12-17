@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "databento/enums.hpp"  // JobState, Delivery, Packaging, Schema, SType
+#include "databento/enums.hpp"  // JobState, Delivery, Schema, SType
 
 namespace databento {
 // Description of a batch job.
@@ -31,8 +31,6 @@ struct BatchJob {
   SplitDuration split_duration;
   std::uint64_t split_size;
   bool split_symbols;
-  // NOTE: deprecated and will be removed in a future version
-  Packaging packaging;
   Delivery delivery;
   std::uint64_t record_count;
   // Size in bytes.

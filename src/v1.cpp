@@ -1,4 +1,4 @@
-#include "databento/compat.hpp"
+#include "databento/v1.hpp"
 
 #include <algorithm>  // copy
 #include <cstdint>
@@ -8,11 +8,12 @@
 #include "stream_op_helper.hpp"       // MakeString, StreamOpBuilder
 
 namespace databento {
-InstrumentDefMsgV2 InstrumentDefMsgV1::ToV2() const {
-  InstrumentDefMsgV2 ret{
-      RecordHeader{sizeof(InstrumentDefMsgV2) / RecordHeader::kLengthMultiplier,
-                   RType::InstrumentDef, hd.publisher_id, hd.instrument_id,
-                   hd.ts_event},
+namespace v1 {
+v2::InstrumentDefMsg InstrumentDefMsg::ToV2() const {
+  v2::InstrumentDefMsg ret{
+      RecordHeader{
+          sizeof(v2::InstrumentDefMsg) / RecordHeader::kLengthMultiplier,
+          RType::InstrumentDef, hd.publisher_id, hd.instrument_id, hd.ts_event},
       ts_recv,
       min_price_increment,
       display_factor,
@@ -93,9 +94,9 @@ InstrumentDefMsgV2 InstrumentDefMsgV1::ToV2() const {
   return ret;
 }
 
-ErrorMsgV2 ErrorMsgV1::ToV2() const {
-  ErrorMsgV2 ret{
-      RecordHeader{sizeof(ErrorMsgV2) / RecordHeader::kLengthMultiplier,
+v2::ErrorMsg ErrorMsg::ToV2() const {
+  v2::ErrorMsg ret{
+      RecordHeader{sizeof(v2::ErrorMsg) / RecordHeader::kLengthMultiplier,
                    RType::Error, hd.publisher_id, hd.instrument_id,
                    hd.ts_event},
       {},
@@ -105,11 +106,11 @@ ErrorMsgV2 ErrorMsgV1::ToV2() const {
   return ret;
 }
 
-SymbolMappingMsgV2 SymbolMappingMsgV1::ToV2() const {
-  SymbolMappingMsgV2 ret{
-      RecordHeader{sizeof(SymbolMappingMsgV2) / RecordHeader::kLengthMultiplier,
-                   RType::SymbolMapping, hd.publisher_id, hd.instrument_id,
-                   hd.ts_event},
+v2::SymbolMappingMsg SymbolMappingMsg::ToV2() const {
+  v2::SymbolMappingMsg ret{
+      RecordHeader{
+          sizeof(v2::SymbolMappingMsg) / RecordHeader::kLengthMultiplier,
+          RType::SymbolMapping, hd.publisher_id, hd.instrument_id, hd.ts_event},
       // Intentionally invalid
       // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
       static_cast<SType>(std::numeric_limits<std::uint8_t>::max()),
@@ -127,9 +128,9 @@ SymbolMappingMsgV2 SymbolMappingMsgV1::ToV2() const {
   return ret;
 }
 
-SystemMsgV2 SystemMsgV1::ToV2() const {
-  SystemMsgV2 ret{
-      RecordHeader{sizeof(SystemMsgV2) / RecordHeader::kLengthMultiplier,
+v2::SystemMsg SystemMsg::ToV2() const {
+  v2::SystemMsg ret{
+      RecordHeader{sizeof(v2::SystemMsg) / RecordHeader::kLengthMultiplier,
                    RType::System, hd.publisher_id, hd.instrument_id,
                    hd.ts_event},
       {},
@@ -138,7 +139,7 @@ SystemMsgV2 SystemMsgV1::ToV2() const {
   return ret;
 }
 
-bool operator==(const InstrumentDefMsgV1& lhs, const InstrumentDefMsgV1& rhs) {
+bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.ts_recv == rhs.ts_recv &&
          lhs.min_price_increment == rhs.min_price_increment &&
          lhs.display_factor == rhs.display_factor &&
@@ -195,14 +196,14 @@ bool operator==(const InstrumentDefMsgV1& lhs, const InstrumentDefMsgV1& rhs) {
          lhs.tick_rule == rhs.tick_rule;
 }
 
-std::string ToString(const InstrumentDefMsgV1& instr_def_msg) {
+std::string ToString(const InstrumentDefMsg& instr_def_msg) {
   return MakeString(instr_def_msg);
 }
 std::ostream& operator<<(std::ostream& stream,
-                         const InstrumentDefMsgV1& instr_def_msg) {
+                         const InstrumentDefMsg& instr_def_msg) {
   return StreamOpBuilder{stream}
       .SetSpacer("\n    ")
-      .SetTypeName("InstrumentDefMsg")
+      .SetTypeName("v1::InstrumentDefMsg")
       .Build()
       .AddField("hd", instr_def_msg.hd)
       .AddField("ts_recv", instr_def_msg.ts_recv)
@@ -272,24 +273,24 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("tick_rule", instr_def_msg.tick_rule)
       .Finish();
 }
-std::string ToString(const ErrorMsgV1& err_msg) { return MakeString(err_msg); }
-std::ostream& operator<<(std::ostream& stream, const ErrorMsgV1& err_msg) {
+std::string ToString(const ErrorMsg& err_msg) { return MakeString(err_msg); }
+std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg) {
   return StreamOpBuilder{stream}
       .SetSpacer("\n    ")
-      .SetTypeName("ErrorMsgV1")
+      .SetTypeName("v1::ErrorMsg")
       .Build()
       .AddField("hd", err_msg.hd)
       .AddField("err", err_msg.err)
       .Finish();
 }
-std::string ToString(const SymbolMappingMsgV1& symbol_mapping_msg) {
+std::string ToString(const SymbolMappingMsg& symbol_mapping_msg) {
   return MakeString(symbol_mapping_msg);
 }
 std::ostream& operator<<(std::ostream& stream,
-                         const SymbolMappingMsgV1& symbol_mapping_msg) {
+                         const SymbolMappingMsg& symbol_mapping_msg) {
   return StreamOpBuilder{stream}
       .SetSpacer("\n    ")
-      .SetTypeName("SymbolMappingMsgV1")
+      .SetTypeName("v1::SymbolMappingMsg")
       .Build()
       .AddField("hd", symbol_mapping_msg.hd)
       .AddField("stype_in_symbol", symbol_mapping_msg.stype_in_symbol)
@@ -298,16 +299,17 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("end_ts", symbol_mapping_msg.end_ts)
       .Finish();
 }
-std::string ToString(const SystemMsgV1& system_msg) {
+std::string ToString(const SystemMsg& system_msg) {
   return MakeString(system_msg);
 }
-std::ostream& operator<<(std::ostream& stream, const SystemMsgV1& system_msg) {
+std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg) {
   return StreamOpBuilder{stream}
       .SetSpacer("\n    ")
-      .SetTypeName("SystemMsgV1")
+      .SetTypeName("v1::SystemMsg")
       .Build()
       .AddField("hd", system_msg.hd)
       .AddField("msg", system_msg.msg)
       .Finish();
 }
+}  // namespace v1
 }  // namespace databento

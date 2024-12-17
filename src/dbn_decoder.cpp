@@ -75,7 +75,7 @@ DbnDecoder::DbnDecoder(ILogReceiver* log_receiver, InFileStream file_stream)
 DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
                        std::unique_ptr<IReadable> input)
     : DbnDecoder(log_receiver, std::move(input),
-                 VersionUpgradePolicy::Upgrade) {}
+                 VersionUpgradePolicy::UpgradeToV2) {}
 
 DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
                        std::unique_ptr<IReadable> input,
@@ -228,7 +228,7 @@ databento::Record UpgradeRecord(
 databento::Record DbnDecoder::DecodeRecordCompat(
     std::uint8_t version, VersionUpgradePolicy upgrade_policy, bool ts_out,
     std::array<std::uint8_t, kMaxRecordLen>* compat_buffer, Record rec) {
-  if (version == 1 && upgrade_policy == VersionUpgradePolicy::Upgrade) {
+  if (version == 1 && upgrade_policy == VersionUpgradePolicy::UpgradeToV2) {
     if (rec.RType() == RType::InstrumentDef) {
       return UpgradeRecord<InstrumentDefMsgV1, InstrumentDefMsgV2>(
           ts_out, compat_buffer, rec);

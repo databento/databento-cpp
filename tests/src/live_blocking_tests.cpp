@@ -60,7 +60,7 @@ TEST_F(LiveBlockingTests, TestStartAndUpgrade) {
   constexpr auto kTsOut = true;
   for (const auto policy_and_version :
        {std::make_pair(VersionUpgradePolicy::AsIs, 1),
-        std::make_pair(VersionUpgradePolicy::Upgrade, 2)}) {
+        std::make_pair(VersionUpgradePolicy::UpgradeToV2, 2)}) {
     const mock::MockLsgServer mock_server{dataset::kGlbxMdp3, kTsOut,
                                           [](mock::MockLsgServer& self) {
                                             self.Accept();

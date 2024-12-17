@@ -114,7 +114,7 @@ TEST_F(DbnDecoderTests, TestDecodeDbz) {
 }
 
 TEST_F(DbnDecoderTests, TestDecodeDefinitionUpgrade) {
-  ReadFromFile("definition", ".dbn", 1, VersionUpgradePolicy::Upgrade);
+  ReadFromFile("definition", ".dbn", 1, VersionUpgradePolicy::UpgradeToV2);
 
   const Metadata ch_metadata = channel_target_->DecodeMetadata();
   const Metadata f_metadata = file_target_->DecodeMetadata();
@@ -165,7 +165,7 @@ TEST_F(DbnDecoderTests, TestUpgradeSymbolMappingWithTsOut) {
       sym_map, UnixNanos{std::chrono::system_clock::now()}};
   std::array<std::uint8_t, kMaxRecordLen> compat_buffer{};
   const auto res =
-      DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::Upgrade, true,
+      DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::UpgradeToV2, true,
                                      &compat_buffer, Record{&orig.rec.hd});
   const auto& upgraded = res.Get<WithTsOut<SymbolMappingMsgV2>>();
   EXPECT_EQ(orig.rec.hd.rtype, upgraded.rec.hd.rtype);
@@ -206,7 +206,7 @@ TEST_F(DbnDecoderTests, TestUpgradeMbp1WithTsOut) {
       {std::chrono::system_clock::now()}};
   std::array<std::uint8_t, kMaxRecordLen> compat_buffer{};
   const auto res =
-      DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::Upgrade, true,
+      DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::UpgradeToV2, true,
                                      &compat_buffer, Record{&orig.rec.hd});
   const auto& upgraded = res.Get<WithTsOut<Mbp1Msg>>();
   // compat buffer unused and pointer unchanged

@@ -85,15 +85,6 @@ enum class SplitDuration : std::uint8_t {
   None,
 };
 
-// Represents how a batch job will be packaged.
-//
-// NOTE: Deprecated now that all batch jobs can be downloaded as a ZIP file.
-enum class Packaging : std::uint8_t {
-  None = 0,
-  Zip,
-  TarDeprecated,
-};
-
 // Represents how a batch job will be delivered.
 enum class Delivery : std::uint8_t {
   Download,
@@ -306,7 +297,7 @@ enum class StatUpdateAction : std::uint8_t {
 // How to handle decoding DBN data from a prior version.
 enum class VersionUpgradePolicy : std::uint8_t {
   AsIs = 0,
-  Upgrade = 1,
+  UpgradeToV2 = 1,
 };
 
 namespace status_action {
@@ -462,7 +453,6 @@ const char* ToString(FeedMode mode);
 const char* ToString(Compression compression);
 const char* ToString(SType stype);
 const char* ToString(SplitDuration duration_interval);
-const char* ToString(Packaging packaging);
 const char* ToString(Delivery delivery);
 const char* ToString(JobState state);
 const char* ToString(DatasetCondition condition);
@@ -487,7 +477,6 @@ std::ostream& operator<<(std::ostream& out, FeedMode mode);
 std::ostream& operator<<(std::ostream& out, Compression compression);
 std::ostream& operator<<(std::ostream& out, SType stype);
 std::ostream& operator<<(std::ostream& out, SplitDuration duration_interval);
-std::ostream& operator<<(std::ostream& out, Packaging packaging);
 std::ostream& operator<<(std::ostream& out, Delivery delivery);
 std::ostream& operator<<(std::ostream& out, JobState state);
 std::ostream& operator<<(std::ostream& out, DatasetCondition condition);
@@ -521,8 +510,6 @@ template <>
 SType FromString(const std::string& str);
 template <>
 SplitDuration FromString(const std::string& str);
-template <>
-Packaging FromString(const std::string& str);
 template <>
 Delivery FromString(const std::string& str);
 template <>
