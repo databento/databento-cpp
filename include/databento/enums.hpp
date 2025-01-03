@@ -220,10 +220,13 @@ enum SecurityUpdateAction : char {
 }
 using security_update_action::SecurityUpdateAction;
 
-enum class UserDefinedInstrument : char {
+namespace user_defined_instrument {
+enum UserDefinedInstrument : char {
   No = 'N',
   Yes = 'Y',
 };
+}
+using user_defined_instrument::UserDefinedInstrument;
 
 namespace stat_type {
 // The type of statistic contained in a StatMsg.

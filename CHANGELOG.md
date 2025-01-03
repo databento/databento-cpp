@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.27.0 - TBD
+
+### Breaking changes
+- Converted the `UserDefinedInstrument` enum class to an enum to safely allow handling
+  invalid data and adding future variants
+- Updated the value of the `kMaxRecordLen` constant for the changes to
+  `InstrumentDefMsg` in version 3
+
+### Enhancements
+- Added `v3` namespace in preparation for future DBN version 3 release. DBN version 2
+  remains the current and default version
+- Added `v3::InstrumentDefMsg` record with new fields to support normalizing multi-leg
+  strategy definitions
+  - Removal of statistics-schema related fields `trading_reference_price`,
+    `trading_reference_date`, and `settl_price_type`
+  - Removal of the status-schema related field `md_security_trading_status`
+
 ## 0.26.0 - 2024-12-17
 
 ### Breaking changes
@@ -261,7 +278,8 @@ fields for `SymbolMappingMsg`, and extends the symbol field length for `SymbolMa
 Users who wish to convert DBN v1 files to v2 can use the `dbn-cli` tool available in the [databento-dbn](https://github.com/databento/dbn/) crate.
 On a future date, the Databento live and historical APIs will stop serving DBN v1.
 
-This release is fully compatible with both DBN v1 and v2, and so should be seamless for most users.
+This release is fully compatible with both DBN v1 and v2, and so the change should be
+seamless for most users.
 
 ### Enhancements
 
@@ -288,7 +306,7 @@ This release is fully compatible with both DBN v1 and v2, and so should be seaml
 
 - The old `InstrumentDefMsg` is now `InstrumentDefMsgV1` in `compat.hpp`
 - The old `SymbolMappingMsg` is now `SymbolMappingMsgV1` in `compat.hpp`
-- Converted the following enums to enum classes to allow safely adding new variants:
+- Converted the following enum classes to enums to allow safely adding new variants:
   `SecurityUpdateAction` and `SType`
 - Renamed `dummy` to `reserved` in `InstrumentDefMsg`
 - Removed `reserved2`, `reserved3`, `reserved4`, and `reserved5` from `InstrumentDefMsg`
