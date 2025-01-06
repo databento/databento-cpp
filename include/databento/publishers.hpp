@@ -85,7 +85,7 @@ enum class Venue : std::uint16_t {
   Ifeu = 38,
   // ICE Endex
   Ndex = 39,
-  // Databento Equities - Consolidated
+  // Databento US Equities - Consolidated
   Dbeq = 40,
   // MIAX Sapphire
   Sphr = 41,
@@ -99,6 +99,8 @@ enum class Venue : std::uint16_t {
   Asmt = 45,
   // IntelligentCross ASPEN Inverted
   Aspi = 46,
+  // Databento US Equities - Consolidated
+  Equs = 47,
 };
 
 // A source of data.
@@ -141,14 +143,14 @@ enum class Dataset : std::uint16_t {
   FinyTrades = 18,
   // OPRA Binary
   OpraPillar = 19,
-  // Databento Equities Basic
+  // Databento US Equities Basic
   DbeqBasic = 20,
   // NYSE Arca Integrated
   ArcxPillar = 21,
   // IEX TOPS
   IexgTops = 22,
-  // Databento Equities Plus
-  DbeqPlus = 23,
+  // Databento US Equities Plus
+  EqusPlus = 23,
   // NYSE BBO
   XnysBbo = 24,
   // NYSE Trades
@@ -161,16 +163,16 @@ enum class Dataset : std::uint16_t {
   IfeuImpact = 28,
   // ICE Endex iMpact
   NdexImpact = 29,
-  // Databento Equities Max
-  DbeqMax = 30,
+  // Databento US Equities (All Feeds)
+  EqusAll = 30,
   // Nasdaq Basic (NLS and QBBO)
   XnasBasic = 31,
-  // Databento Equities Summary
-  DbeqSummary = 32,
-  // NYSE National BBO and Trades
-  XcisBbotrades = 33,
-  // NYSE BBO and Trades
-  XnysBbotrades = 34,
+  // Databento US Equities Summary
+  EqusSummary = 32,
+  // NYSE National Trades and BBO
+  XcisTradesbbo = 33,
+  // NYSE Trades and BBO
+  XnysTradesbbo = 34,
 };
 
 // A specific Venue from a specific data source.
@@ -269,72 +271,72 @@ enum class Publisher : std::uint16_t {
   XnasQbboXnas = 46,
   // Nasdaq Trades
   XnasNlsXnas = 47,
-  // DBEQ Plus - NYSE Chicago
-  DbeqPlusXchi = 48,
-  // DBEQ Plus - NYSE National
-  DbeqPlusXcis = 49,
-  // DBEQ Plus - IEX
-  DbeqPlusIexg = 50,
-  // DBEQ Plus - MIAX Pearl
-  DbeqPlusEprl = 51,
-  // DBEQ Plus - Nasdaq
-  DbeqPlusXnas = 52,
-  // DBEQ Plus - NYSE
-  DbeqPlusXnys = 53,
-  // DBEQ Plus - FINRA/Nasdaq TRF Carteret
-  DbeqPlusFinn = 54,
-  // DBEQ Plus - FINRA/NYSE TRF
-  DbeqPlusFiny = 55,
-  // DBEQ Plus - FINRA/Nasdaq TRF Chicago
-  DbeqPlusFinc = 56,
+  // Databento US Equities Plus - NYSE Chicago
+  EqusPlusXchi = 48,
+  // Databento US Equities Plus - NYSE National
+  EqusPlusXcis = 49,
+  // Databento US Equities Plus - IEX
+  EqusPlusIexg = 50,
+  // Databento US Equities Plus - MIAX Pearl
+  EqusPlusEprl = 51,
+  // Databento US Equities Plus - Nasdaq
+  EqusPlusXnas = 52,
+  // Databento US Equities Plus - NYSE
+  EqusPlusXnys = 53,
+  // Databento US Equities Plus - FINRA/Nasdaq TRF Carteret
+  EqusPlusFinn = 54,
+  // Databento US Equities Plus - FINRA/NYSE TRF
+  EqusPlusFiny = 55,
+  // Databento US Equities Plus - FINRA/Nasdaq TRF Chicago
+  EqusPlusFinc = 56,
   // ICE Futures Europe (Commodities)
   IfeuImpactIfeu = 57,
   // ICE Endex
   NdexImpactNdex = 58,
-  // DBEQ Basic - Consolidated
+  // Databento US Equities Basic - Consolidated
   DbeqBasicDbeq = 59,
-  // DBEQ Plus - Consolidated
-  DbeqPlusDbeq = 60,
+  // EQUS Plus - Consolidated
+  EqusPlusEqus = 60,
   // OPRA - MIAX Sapphire
   OpraPillarSphr = 61,
-  // DBEQ Max - NYSE Chicago
-  DbeqMaxXchi = 62,
-  // DBEQ Max - NYSE National
-  DbeqMaxXcis = 63,
-  // DBEQ Max - IEX
-  DbeqMaxIexg = 64,
-  // DBEQ Max - MIAX Pearl
-  DbeqMaxEprl = 65,
-  // DBEQ Max - Nasdaq
-  DbeqMaxXnas = 66,
-  // DBEQ Max - NYSE
-  DbeqMaxXnys = 67,
-  // DBEQ Max - FINRA/Nasdaq TRF Carteret
-  DbeqMaxFinn = 68,
-  // DBEQ Max - FINRA/NYSE TRF
-  DbeqMaxFiny = 69,
-  // DBEQ Max - FINRA/Nasdaq TRF Chicago
-  DbeqMaxFinc = 70,
-  // DBEQ Max - CBOE BZX
-  DbeqMaxBats = 71,
-  // DBEQ Max - CBOE BYX
-  DbeqMaxBaty = 72,
-  // DBEQ Max - CBOE EDGA
-  DbeqMaxEdga = 73,
-  // DBEQ Max - CBOE EDGX
-  DbeqMaxEdgx = 74,
-  // DBEQ Max - Nasdaq BX
-  DbeqMaxXbos = 75,
-  // DBEQ Max - Nasdaq PSX
-  DbeqMaxXpsx = 76,
-  // DBEQ Max - MEMX
-  DbeqMaxMemx = 77,
-  // DBEQ Max - NYSE American
-  DbeqMaxXase = 78,
-  // DBEQ Max - NYSE Arca
-  DbeqMaxArcx = 79,
-  // DBEQ Max - Long-Term Stock Exchange
-  DbeqMaxLtse = 80,
+  // Databento US Equities (All Feeds) - NYSE Chicago
+  EqusAllXchi = 62,
+  // Databento US Equities (All Feeds) - NYSE National
+  EqusAllXcis = 63,
+  // Databento US Equities (All Feeds) - IEX
+  EqusAllIexg = 64,
+  // Databento US Equities (All Feeds) - MIAX Pearl
+  EqusAllEprl = 65,
+  // Databento US Equities (All Feeds) - Nasdaq
+  EqusAllXnas = 66,
+  // Databento US Equities (All Feeds) - NYSE
+  EqusAllXnys = 67,
+  // Databento US Equities (All Feeds) - FINRA/Nasdaq TRF Carteret
+  EqusAllFinn = 68,
+  // Databento US Equities (All Feeds) - FINRA/NYSE TRF
+  EqusAllFiny = 69,
+  // Databento US Equities (All Feeds) - FINRA/Nasdaq TRF Chicago
+  EqusAllFinc = 70,
+  // Databento US Equities (All Feeds) - CBOE BZX
+  EqusAllBats = 71,
+  // Databento US Equities (All Feeds) - CBOE BYX
+  EqusAllBaty = 72,
+  // Databento US Equities (All Feeds) - CBOE EDGA
+  EqusAllEdga = 73,
+  // Databento US Equities (All Feeds) - CBOE EDGX
+  EqusAllEdgx = 74,
+  // Databento US Equities (All Feeds) - Nasdaq BX
+  EqusAllXbos = 75,
+  // Databento US Equities (All Feeds) - Nasdaq PSX
+  EqusAllXpsx = 76,
+  // Databento US Equities (All Feeds) - MEMX
+  EqusAllMemx = 77,
+  // Databento US Equities (All Feeds) - NYSE American
+  EqusAllXase = 78,
+  // Databento US Equities (All Feeds) - NYSE Arca
+  EqusAllArcx = 79,
+  // Databento US Equities (All Feeds) - Long-Term Stock Exchange
+  EqusAllLtse = 80,
   // Nasdaq Basic - Nasdaq
   XnasBasicXnas = 81,
   // Nasdaq Basic - FINRA/Nasdaq TRF Carteret
@@ -354,15 +356,15 @@ enum class Publisher : std::uint16_t {
   // Nasdaq Basic - Nasdaq PSX
   XnasBasicXpsx = 89,
   // Databento Equities Summary
-  DbeqSummaryDbeq = 90,
-  // NYSE National BBO and Trades
-  XcisBbotradesXcis = 91,
-  // NYSE BBO and Trades
-  XnysBbotradesXnys = 92,
+  EqusSummaryEqus = 90,
+  // NYSE National Trades and BBO
+  XcisTradesbboXcis = 91,
+  // NYSE Trades and BBO
+  XnysTradesbboXnys = 92,
   // Nasdaq Basic - Consolidated
-  XnasBasicDbeq = 93,
-  // DBEQ Max - Consolidated
-  DbeqMaxDbeq = 94,
+  XnasBasicEqus = 93,
+  // Databento US Equities (All Feeds) - Consolidated
+  EqusAllEqus = 94,
 };
 
 // Get a Publisher's Venue.
