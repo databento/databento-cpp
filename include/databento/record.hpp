@@ -14,9 +14,13 @@
 #include "databento/exceptions.hpp"  // InvalidArgumentError
 #include "databento/flag_set.hpp"    // FlagSet
 #include "databento/publishers.hpp"  // Publisher
-#include "databento/with_ts_out.hpp"
 
 namespace databento {
+// Forward declare
+namespace v3 {
+struct InstrumentDefMsg;
+}
+
 // Common data for all Databento Records.
 struct RecordHeader {
   static constexpr std::size_t kLengthMultiplier =
@@ -371,6 +375,7 @@ static_assert(alignof(StatusMsg) == 8, "Must have 8-byte alignment");
 struct InstrumentDefMsg {
   static bool HasRType(RType rtype) { return rtype == RType::InstrumentDef; }
 
+  v3::InstrumentDefMsg ToV3() const;
   UnixNanos IndexTs() const { return ts_recv; }
   const char* Currency() const { return currency.data(); }
   const char* SettlCurrency() const { return settl_currency.data(); }
@@ -780,6 +785,5 @@ std::ostream& operator<<(std::ostream& stream,
                          const SymbolMappingMsg& symbol_mapping_msg);
 
 // The length in bytes of the largest record type.
-static constexpr std::size_t kMaxRecordLen =
-    sizeof(WithTsOut<InstrumentDefMsg>);
+static constexpr std::size_t kMaxRecordLen = 520 + 8;
 }  // namespace databento

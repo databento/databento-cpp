@@ -1,18 +1,16 @@
 #pragma once
 
-#include "databento/datetime.hpp"  // UnixNanos
-#include "databento/enums.hpp"
-#include "databento/record.hpp"
-#include "databento/v2.hpp"
+#include <cstddef>
+#include <cstdint>
+
+#include "databento/constants.hpp"  // kSymbolCstrLen
+#include "databento/datetime.hpp"   // UnixNanos
+#include "databento/enums.hpp"  // InstrumentClass, MatchingAlgorithm, RType, SecurityUpdateAction, Side, UserDefinedInstrument
+#include "databento/record.hpp"  // RecordHeader
 
 namespace databento {
-// Forward declare
 namespace v3 {
-struct InstrumentDefMsg;
-}
-
-namespace v1 {
-static constexpr std::size_t kSymbolCstrLen = 22;
+static constexpr std::size_t kSymbolCstrLen = databento::kSymbolCstrLen;
 
 using MboMsg = databento::MboMsg;
 using TradeMsg = databento::TradeMsg;
@@ -31,12 +29,15 @@ using OhlcvMsg = databento::OhlcvMsg;
 using StatusMsg = databento::StatusMsg;
 using ImbalanceMsg = databento::ImbalanceMsg;
 using StatMsg = databento::StatMsg;
+using ErrorMsg = databento::ErrorMsg;
+using SymbolMappingMsg = databento::SymbolMappingMsg;
+using SystemMsg = databento::SystemMsg;
 
+// An instrument definition in DBN version 3.
 struct InstrumentDefMsg {
   static bool HasRType(RType rtype) { return rtype == RType::InstrumentDef; }
 
-  v2::InstrumentDefMsg ToV2() const;
-  v3::InstrumentDefMsg ToV3() const;
+  UnixNanos IndexTs() const { return ts_recv; }
   const char* Currency() const { return currency.data(); }
   const char* SettlCurrency() const { return settl_currency.data(); }
   const char* SecSubType() const { return secsubtype.data(); }
@@ -51,6 +52,7 @@ struct InstrumentDefMsg {
   const char* StrikePriceCurrency() const {
     return strike_price_currency.data();
   }
+  const char* LegRawSymbol() const { return leg_raw_symbol.data(); }
 
   RecordHeader hd;
   UnixNanos ts_recv;
@@ -61,13 +63,15 @@ struct InstrumentDefMsg {
   std::int64_t high_limit_price;
   std::int64_t low_limit_price;
   std::int64_t max_price_variation;
-  std::int64_t trading_reference_price;
   std::int64_t unit_of_measure_qty;
   std::int64_t min_price_increment_amount;
   std::int64_t price_ratio;
+  std::int64_t strike_price;
+  std::uint64_t raw_instrument_id;
+  std::int64_t leg_price;
+  std::int64_t leg_delta;
   std::int32_t inst_attrib_value;
   std::uint32_t underlying_id;
-  std::uint32_t raw_instrument_id;
   std::int32_t market_depth_implied;
   std::int32_t market_depth;
   std::uint32_t market_segment_id;
@@ -76,16 +80,21 @@ struct InstrumentDefMsg {
   std::int32_t min_lot_size_block;
   std::int32_t min_lot_size_round_lot;
   std::uint32_t min_trade_vol;
-  std::array<char, 4> _reserved2;
   std::int32_t contract_multiplier;
   std::int32_t decay_quantity;
   std::int32_t original_contract_size;
-  std::array<char, 4> _reserved3;
-  std::uint16_t trading_reference_date;
+  std::uint32_t leg_instrument_id;
+  std::int32_t leg_ratio_price_numerator;
+  std::int32_t leg_ratio_price_denominator;
+  std::int32_t leg_ratio_qty_numerator;
+  std::int32_t leg_ratio_qty_denominator;
+  std::uint32_t leg_underlying_id;
   std::int16_t appl_id;
   std::uint16_t maturity_year;
   std::uint16_t decay_start_date;
   std::uint16_t channel_id;
+  std::uint16_t leg_count;
+  std::uint16_t leg_index;
   std::array<char, 4> currency;
   std::array<char, 4> settl_currency;
   std::array<char, 6> secsubtype;
@@ -98,15 +107,11 @@ struct InstrumentDefMsg {
   std::array<char, 31> unit_of_measure;
   std::array<char, 21> underlying;
   std::array<char, 4> strike_price_currency;
+  std::array<char, kSymbolCstrLen> leg_raw_symbol;
   InstrumentClass instrument_class;
-  std::array<char, 2> _reserved4;
-  std::int64_t strike_price;
-  std::array<char, 6> _reserved5;
   MatchAlgorithm match_algorithm;
-  std::uint8_t md_security_trading_status;
   std::uint8_t main_fraction;
   std::uint8_t price_display_format;
-  std::uint8_t settl_price_type;
   std::uint8_t sub_fraction;
   std::uint8_t underlying_product;
   SecurityUpdateAction security_update_action;
@@ -117,99 +122,25 @@ struct InstrumentDefMsg {
   std::int8_t contract_multiplier_unit;
   std::int8_t flow_schedule_type;
   std::uint8_t tick_rule;
+  InstrumentClass leg_instrument_class;
+  Side leg_side;
   // padding for alignment
-  std::array<char, 3> dummy;
+  std::array<char, 21> reserved;
 };
-static_assert(sizeof(InstrumentDefMsg) == 360, "Size must match Rust");
+static_assert(sizeof(InstrumentDefMsg) == 520,
+              "InstrumentDefMsg size must match Rust");
 static_assert(alignof(InstrumentDefMsg) == 8, "Must have 8-byte alignment");
-
-// An error message from the Live Subscription Gateway (LSG). This will never
-// be present in historical data.
-struct ErrorMsg {
-  static bool HasRType(RType rtype) { return rtype == RType::Error; }
-
-  v2::ErrorMsg ToV2() const;
-  UnixNanos IndexTs() const { return hd.ts_event; }
-  const char* Err() const { return err.data(); }
-
-  RecordHeader hd;
-  std::array<char, 64> err;
-};
-static_assert(sizeof(ErrorMsg) == 80, "ErrorMsg size must match Rust");
-static_assert(alignof(ErrorMsg) == 8, "Must have 8-byte alignment");
-
-/// A symbol mapping message.
-struct SymbolMappingMsg {
-  static bool HasRType(RType rtype) { return rtype == RType::SymbolMapping; }
-
-  v2::SymbolMappingMsg ToV2() const;
-  const char* STypeInSymbol() const { return stype_in_symbol.data(); }
-  const char* STypeOutSymbol() const { return stype_out_symbol.data(); }
-
-  RecordHeader hd;
-  std::array<char, kSymbolCstrLen> stype_in_symbol;
-  std::array<char, kSymbolCstrLen> stype_out_symbol;
-  // padding for alignment
-  std::array<char, 4> dummy;
-  UnixNanos start_ts;
-  UnixNanos end_ts;
-};
-static_assert(sizeof(SymbolMappingMsg) == 80, "Size must match Rust");
-static_assert(alignof(SymbolMappingMsg) == 8, "Must have 8-byte alignment");
-
-struct SystemMsg {
-  static bool HasRType(RType rtype) { return rtype == RType::System; }
-
-  v2::SystemMsg ToV2() const;
-  UnixNanos IndexTs() const { return hd.ts_event; }
-  const char* Msg() const { return msg.data(); }
-  bool IsHeartbeat() const {
-    return std::strncmp(msg.data(), "Heartbeat", 9) == 0;
-  }
-
-  RecordHeader hd;
-  std::array<char, 64> msg;
-};
-static_assert(sizeof(SystemMsg) == 80, "SystemMsg size must match Rust");
-static_assert(alignof(SystemMsg) == 8, "Must have 8-byte alignment");
+static_assert(kMaxRecordLen == sizeof(InstrumentDefMsg) + sizeof(UnixNanos),
+              "v3 definition with ts_out should be the largest record");
 
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs);
 inline bool operator!=(const InstrumentDefMsg& lhs,
                        const InstrumentDefMsg& rhs) {
   return !(lhs == rhs);
 }
-inline bool operator==(const ErrorMsg& lhs, const ErrorMsg& rhs) {
-  return std::tie(lhs.hd, lhs.err) == std::tie(rhs.hd, rhs.err);
-}
-inline bool operator!=(const ErrorMsg& lhs, const ErrorMsg& rhs) {
-  return !(lhs == rhs);
-}
-inline bool operator==(const SymbolMappingMsg& lhs,
-                       const SymbolMappingMsg& rhs) {
-  return std::tie(lhs.hd, lhs.stype_in_symbol, lhs.stype_out_symbol,
-                  lhs.start_ts, lhs.end_ts) ==
-         std::tie(rhs.hd, rhs.stype_in_symbol, rhs.stype_out_symbol,
-                  rhs.start_ts, rhs.end_ts);
-}
-inline bool operator!=(const SymbolMappingMsg& lhs,
-                       const SymbolMappingMsg& rhs) {
-  return !(lhs == rhs);
-}
-inline bool operator==(const SystemMsg& lhs, const SystemMsg& rhs) {
-  return std::tie(lhs.hd, lhs.msg) == std::tie(rhs.hd, rhs.msg);
-}
-inline bool operator!=(const SystemMsg& lhs, const SystemMsg& rhs) {
-  return !(lhs == rhs);
-}
+
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instr_def_msg);
-std::string ToString(const ErrorMsg& err_msg);
-std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg);
-std::string ToString(const SymbolMappingMsg& symbol_mapping_msg);
-std::ostream& operator<<(std::ostream& stream,
-                         const SymbolMappingMsg& symbol_mapping_msg);
-std::string ToString(const SystemMsg& sys_msg);
-std::ostream& operator<<(std::ostream& stream, const SystemMsg& sys_msg);
-}  // namespace v1
+}  // namespace v3
 }  // namespace databento
