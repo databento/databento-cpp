@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.27.0 - TBD
+## 0.27.0 - 2025-01-07
 
 ### Breaking changes
 - Converted the `UserDefinedInstrument` enum class to an enum to safely allow handling
