@@ -414,6 +414,9 @@ const char* ToString(Dataset dataset) {
     case Dataset::XnysTradesbbo: {
       return "XNYS.TRADESBBO";
     }
+    case Dataset::EqusMini: {
+      return "EQUS.MINI";
+    }
     default: {
       return "Unknown";
     }
@@ -528,6 +531,9 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "XNYS.TRADESBBO") {
     return Dataset::XnysTradesbbo;
+  }
+  if (str == "EQUS.MINI") {
+    return Dataset::EqusMini;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -815,6 +821,9 @@ Venue PublisherVenue(Publisher publisher) {
       return Venue::Equs;
     }
     case Publisher::EqusAllEqus: {
+      return Venue::Equs;
+    }
+    case Publisher::EqusMiniEqus: {
       return Venue::Equs;
     }
     default: {
@@ -1109,6 +1118,9 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::EqusAllEqus: {
       return Dataset::EqusAll;
     }
+    case Publisher::EqusMiniEqus: {
+      return Dataset::EqusMini;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -1401,6 +1413,9 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::EqusAllEqus: {
       return "EQUS.ALL.EQUS";
+    }
+    case Publisher::EqusMiniEqus: {
+      return "EQUS.MINI.EQUS";
     }
     default: {
       return "Unknown";
@@ -1696,6 +1711,9 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "EQUS.ALL.EQUS") {
     return Publisher::EqusAllEqus;
+  }
+  if (str == "EQUS.MINI.EQUS") {
+    return Publisher::EqusMiniEqus;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

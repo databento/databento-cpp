@@ -173,6 +173,8 @@ enum class Dataset : std::uint16_t {
   XcisTradesbbo = 33,
   // NYSE Trades and BBO
   XnysTradesbbo = 34,
+  // Databento US Equities Mini
+  EqusMini = 35,
 };
 
 // A specific Venue from a specific data source.
@@ -365,6 +367,8 @@ enum class Publisher : std::uint16_t {
   XnasBasicEqus = 93,
   // Databento US Equities (All Feeds) - Consolidated
   EqusAllEqus = 94,
+  // Databento US Equities Mini
+  EqusMiniEqus = 95,
 };
 
 // Get a Publisher's Venue.

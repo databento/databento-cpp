@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.28.0 - TBD (coming soon)
+
+### Breaking changes
+- Updated enumerations for unreleased datasets and publishers.
+
+### Enhancements
+- Added new dataset `EQUS.MINI` and new publisher `EQUS.MINI.EQUS`
+
 ## 0.27.0 - 2025-01-07
 
 ### Breaking changes
