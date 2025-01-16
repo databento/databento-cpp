@@ -9,8 +9,6 @@
 #include <cstddef>    // size_t
 #include <cstdlib>    // get_env
 #include <exception>  // exception, exception_ptr
-#include <fstream>    // ofstream
-#include <ios>        // ios::binary
 #include <iterator>   // back_inserter
 #include <memory>     // unique_ptr
 #include <string>
@@ -604,7 +602,7 @@ std::uint64_t Historical::MetadataGetRecordCount(
 std::uint64_t Historical::MetadataGetRecordCount(
     const httplib::Params& params) {
   static const std::string kPath = ::BuildMetadataPath(".get_record_count");
-  const nlohmann::json json = client_.GetJson(kPath, params);
+  const nlohmann::json json = client_.PostJson(kPath, params);
   if (!json.is_number_unsigned()) {
     throw JsonResponseError::TypeMismatch("Historical::MetadataGetRecordCount",
                                           "unsigned number", json);
@@ -661,7 +659,7 @@ std::uint64_t Historical::MetadataGetBillableSize(
 std::uint64_t Historical::MetadataGetBillableSize(
     const httplib::Params& params) {
   static const std::string kPath = ::BuildMetadataPath(".get_billable_size");
-  const nlohmann::json json = client_.GetJson(kPath, params);
+  const nlohmann::json json = client_.PostJson(kPath, params);
   if (!json.is_number_unsigned()) {
     throw JsonResponseError::TypeMismatch("Historical::MetadataGetBillableSize",
                                           "unsigned number", json);
@@ -722,7 +720,7 @@ double Historical::MetadataGetCost(
 }
 double Historical::MetadataGetCost(const HttplibParams& params) {
   static const std::string kPath = ::BuildMetadataPath(".get_cost");
-  const nlohmann::json json = client_.GetJson(kPath, params);
+  const nlohmann::json json = client_.PostJson(kPath, params);
   if (!json.is_number()) {
     throw JsonResponseError::TypeMismatch("Historical::MetadataGetCost",
                                           "number", json);

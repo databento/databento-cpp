@@ -8,6 +8,10 @@
 ### Enhancements
 - Added new dataset `EQUS.MINI` and new publishers `EQUS.MINI.EQUS`, `XNYS.TRADES.EQUS`
 
+### Bug fixes
+- Changed historical metadata methods with `symbols` parameter to use a `POST` request
+  to allow for requesting supported maximum of 2000 symbols
+
 ## 0.27.0 - 2025-01-07
 
 ### Breaking changes

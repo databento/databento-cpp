@@ -463,13 +463,13 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetRange) {
 
 TEST_F(HistoricalTests, TestMetadataGetRecordCount) {
   const nlohmann::json kResp = 42;
-  mock_server_.MockGetJson("/v0/metadata.get_record_count",
-                           {{"dataset", dataset::kGlbxMdp3},
-                            {"symbols", "ESZ3,ESH4"},
-                            {"start", "2020-06-06T00:00"},
-                            {"end", "2021-03-02T00:00"},
-                            {"schema", "trades"}},
-                           kResp);
+  mock_server_.MockPostJson("/v0/metadata.get_record_count",
+                            {{"dataset", dataset::kGlbxMdp3},
+                             {"symbols", "ESZ3,ESH4"},
+                             {"start", "2020-06-06T00:00"},
+                             {"end", "2021-03-02T00:00"},
+                             {"schema", "trades"}},
+                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
@@ -482,13 +482,13 @@ TEST_F(HistoricalTests, TestMetadataGetRecordCount) {
 
 TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
   const nlohmann::json kResp = 44688;
-  mock_server_.MockGetJson("/v0/metadata.get_billable_size",
-                           {{"dataset", dataset::kGlbxMdp3},
-                            {"start", "2020-06-06T00:00"},
-                            {"symbols", "ALL_SYMBOLS"},
-                            {"end", "2021-03-02T00:00"},
-                            {"schema", "trades"}},
-                           kResp);
+  mock_server_.MockPostJson("/v0/metadata.get_billable_size",
+                            {{"dataset", dataset::kGlbxMdp3},
+                             {"start", "2020-06-06T00:00"},
+                             {"symbols", "ALL_SYMBOLS"},
+                             {"end", "2021-03-02T00:00"},
+                             {"schema", "trades"}},
+                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
@@ -501,14 +501,14 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Simple) {
 
 TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
   const nlohmann::json kResp = 55238;
-  mock_server_.MockGetJson("/v0/metadata.get_billable_size",
-                           {{"dataset", dataset::kGlbxMdp3},
-                            {"start", "2020-06-06T00:00"},
-                            {"end", "2021-03-02T00:00"},
-                            {"symbols", "NG.FUT,LNG.FUT"},
-                            {"schema", "tbbo"},
-                            {"stype_in", "parent"}},
-                           kResp);
+  mock_server_.MockPostJson("/v0/metadata.get_billable_size",
+                            {{"dataset", dataset::kGlbxMdp3},
+                             {"start", "2020-06-06T00:00"},
+                             {"end", "2021-03-02T00:00"},
+                             {"symbols", "NG.FUT,LNG.FUT"},
+                             {"schema", "tbbo"},
+                             {"stype_in", "parent"}},
+                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
@@ -521,13 +521,13 @@ TEST_F(HistoricalTests, TestMetadataGetBillableSize_Full) {
 
 TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
   const nlohmann::json kResp = 0.65783;
-  mock_server_.MockGetJson("/v0/metadata.get_cost",
-                           {{"dataset", dataset::kGlbxMdp3},
-                            {"start", "2020-06-06T00:00"},
-                            {"end", "2021-03-02T00:00"},
-                            {"symbols", "MESN1,MESQ1"},
-                            {"schema", "trades"}},
-                           kResp);
+  mock_server_.MockPostJson("/v0/metadata.get_cost",
+                            {{"dataset", dataset::kGlbxMdp3},
+                             {"start", "2020-06-06T00:00"},
+                             {"end", "2021-03-02T00:00"},
+                             {"symbols", "MESN1,MESQ1"},
+                             {"schema", "trades"}},
+                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
@@ -540,15 +540,15 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Simple) {
 
 TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
   const nlohmann::json kResp = 0.714;
-  mock_server_.MockGetJson("/v0/metadata.get_cost",
-                           {{"dataset", dataset::kGlbxMdp3},
-                            {"start", "2020-06-06T00:00"},
-                            {"end", "2021-03-02T00:00"},
-                            {"mode", "historical-streaming"},
-                            {"symbols", "MES.OPT,EW.OPT"},
-                            {"schema", "tbbo"},
-                            {"stype_in", "parent"}},
-                           kResp);
+  mock_server_.MockPostJson("/v0/metadata.get_cost",
+                            {{"dataset", dataset::kGlbxMdp3},
+                             {"start", "2020-06-06T00:00"},
+                             {"end", "2021-03-02T00:00"},
+                             {"mode", "historical-streaming"},
+                             {"symbols", "MES.OPT,EW.OPT"},
+                             {"schema", "tbbo"},
+                             {"stype_in", "parent"}},
+                            kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
