@@ -369,6 +369,8 @@ enum class Publisher : std::uint16_t {
   EqusAllEqus = 94,
   // Databento US Equities Mini
   EqusMiniEqus = 95,
+  // NYSE Trades - Consolidated
+  XnysTradesEqus = 96,
 };
 
 // Get a Publisher's Venue.

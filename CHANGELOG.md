@@ -6,7 +6,7 @@
 - Updated enumerations for unreleased datasets and publishers.
 
 ### Enhancements
-- Added new dataset `EQUS.MINI` and new publisher `EQUS.MINI.EQUS`
+- Added new dataset `EQUS.MINI` and new publishers `EQUS.MINI.EQUS`, `XNYS.TRADES.EQUS`
 
 ## 0.27.0 - 2025-01-07
 
