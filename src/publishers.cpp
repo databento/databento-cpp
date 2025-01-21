@@ -149,6 +149,9 @@ const char* ToString(Venue venue) {
     case Venue::Aspi: {
       return "ASPI";
     }
+    case Venue::Equs: {
+      return "EQUS";
+    }
     default: {
       return "Unknown";
     }
@@ -300,6 +303,9 @@ Venue FromString(const std::string& str) {
   if (str == "ASPI") {
     return Venue::Aspi;
   }
+  if (str == "EQUS") {
+    return Venue::Equs;
+  }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -372,8 +378,8 @@ const char* ToString(Dataset dataset) {
     case Dataset::IexgTops: {
       return "IEXG.TOPS";
     }
-    case Dataset::DbeqPlus: {
-      return "DBEQ.PLUS";
+    case Dataset::EqusPlus: {
+      return "EQUS.PLUS";
     }
     case Dataset::XnysBbo: {
       return "XNYS.BBO";
@@ -393,20 +399,23 @@ const char* ToString(Dataset dataset) {
     case Dataset::NdexImpact: {
       return "NDEX.IMPACT";
     }
-    case Dataset::DbeqMax: {
-      return "DBEQ.MAX";
+    case Dataset::EqusAll: {
+      return "EQUS.ALL";
     }
     case Dataset::XnasBasic: {
       return "XNAS.BASIC";
     }
-    case Dataset::DbeqSummary: {
-      return "DBEQ.SUMMARY";
+    case Dataset::EqusSummary: {
+      return "EQUS.SUMMARY";
     }
-    case Dataset::XcisBbotrades: {
-      return "XCIS.BBOTRADES";
+    case Dataset::XcisTradesbbo: {
+      return "XCIS.TRADESBBO";
     }
-    case Dataset::XnysBbotrades: {
-      return "XNYS.BBOTRADES";
+    case Dataset::XnysTradesbbo: {
+      return "XNYS.TRADESBBO";
+    }
+    case Dataset::EqusMini: {
+      return "EQUS.MINI";
     }
     default: {
       return "Unknown";
@@ -487,8 +496,8 @@ Dataset FromString(const std::string& str) {
   if (str == "IEXG.TOPS") {
     return Dataset::IexgTops;
   }
-  if (str == "DBEQ.PLUS") {
-    return Dataset::DbeqPlus;
+  if (str == "EQUS.PLUS") {
+    return Dataset::EqusPlus;
   }
   if (str == "XNYS.BBO") {
     return Dataset::XnysBbo;
@@ -508,20 +517,23 @@ Dataset FromString(const std::string& str) {
   if (str == "NDEX.IMPACT") {
     return Dataset::NdexImpact;
   }
-  if (str == "DBEQ.MAX") {
-    return Dataset::DbeqMax;
+  if (str == "EQUS.ALL") {
+    return Dataset::EqusAll;
   }
   if (str == "XNAS.BASIC") {
     return Dataset::XnasBasic;
   }
-  if (str == "DBEQ.SUMMARY") {
-    return Dataset::DbeqSummary;
+  if (str == "EQUS.SUMMARY") {
+    return Dataset::EqusSummary;
   }
-  if (str == "XCIS.BBOTRADES") {
-    return Dataset::XcisBbotrades;
+  if (str == "XCIS.TRADESBBO") {
+    return Dataset::XcisTradesbbo;
   }
-  if (str == "XNYS.BBOTRADES") {
-    return Dataset::XnysBbotrades;
+  if (str == "XNYS.TRADESBBO") {
+    return Dataset::XnysTradesbbo;
+  }
+  if (str == "EQUS.MINI") {
+    return Dataset::EqusMini;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -670,31 +682,31 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::XnasNlsXnas: {
       return Venue::Xnas;
     }
-    case Publisher::DbeqPlusXchi: {
+    case Publisher::EqusPlusXchi: {
       return Venue::Xchi;
     }
-    case Publisher::DbeqPlusXcis: {
+    case Publisher::EqusPlusXcis: {
       return Venue::Xcis;
     }
-    case Publisher::DbeqPlusIexg: {
+    case Publisher::EqusPlusIexg: {
       return Venue::Iexg;
     }
-    case Publisher::DbeqPlusEprl: {
+    case Publisher::EqusPlusEprl: {
       return Venue::Eprl;
     }
-    case Publisher::DbeqPlusXnas: {
+    case Publisher::EqusPlusXnas: {
       return Venue::Xnas;
     }
-    case Publisher::DbeqPlusXnys: {
+    case Publisher::EqusPlusXnys: {
       return Venue::Xnys;
     }
-    case Publisher::DbeqPlusFinn: {
+    case Publisher::EqusPlusFinn: {
       return Venue::Finn;
     }
-    case Publisher::DbeqPlusFiny: {
+    case Publisher::EqusPlusFiny: {
       return Venue::Finy;
     }
-    case Publisher::DbeqPlusFinc: {
+    case Publisher::EqusPlusFinc: {
       return Venue::Finc;
     }
     case Publisher::IfeuImpactIfeu: {
@@ -706,67 +718,67 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::DbeqBasicDbeq: {
       return Venue::Dbeq;
     }
-    case Publisher::DbeqPlusDbeq: {
-      return Venue::Dbeq;
+    case Publisher::EqusPlusEqus: {
+      return Venue::Equs;
     }
     case Publisher::OpraPillarSphr: {
       return Venue::Sphr;
     }
-    case Publisher::DbeqMaxXchi: {
+    case Publisher::EqusAllXchi: {
       return Venue::Xchi;
     }
-    case Publisher::DbeqMaxXcis: {
+    case Publisher::EqusAllXcis: {
       return Venue::Xcis;
     }
-    case Publisher::DbeqMaxIexg: {
+    case Publisher::EqusAllIexg: {
       return Venue::Iexg;
     }
-    case Publisher::DbeqMaxEprl: {
+    case Publisher::EqusAllEprl: {
       return Venue::Eprl;
     }
-    case Publisher::DbeqMaxXnas: {
+    case Publisher::EqusAllXnas: {
       return Venue::Xnas;
     }
-    case Publisher::DbeqMaxXnys: {
+    case Publisher::EqusAllXnys: {
       return Venue::Xnys;
     }
-    case Publisher::DbeqMaxFinn: {
+    case Publisher::EqusAllFinn: {
       return Venue::Finn;
     }
-    case Publisher::DbeqMaxFiny: {
+    case Publisher::EqusAllFiny: {
       return Venue::Finy;
     }
-    case Publisher::DbeqMaxFinc: {
+    case Publisher::EqusAllFinc: {
       return Venue::Finc;
     }
-    case Publisher::DbeqMaxBats: {
+    case Publisher::EqusAllBats: {
       return Venue::Bats;
     }
-    case Publisher::DbeqMaxBaty: {
+    case Publisher::EqusAllBaty: {
       return Venue::Baty;
     }
-    case Publisher::DbeqMaxEdga: {
+    case Publisher::EqusAllEdga: {
       return Venue::Edga;
     }
-    case Publisher::DbeqMaxEdgx: {
+    case Publisher::EqusAllEdgx: {
       return Venue::Edgx;
     }
-    case Publisher::DbeqMaxXbos: {
+    case Publisher::EqusAllXbos: {
       return Venue::Xbos;
     }
-    case Publisher::DbeqMaxXpsx: {
+    case Publisher::EqusAllXpsx: {
       return Venue::Xpsx;
     }
-    case Publisher::DbeqMaxMemx: {
+    case Publisher::EqusAllMemx: {
       return Venue::Memx;
     }
-    case Publisher::DbeqMaxXase: {
+    case Publisher::EqusAllXase: {
       return Venue::Xase;
     }
-    case Publisher::DbeqMaxArcx: {
+    case Publisher::EqusAllArcx: {
       return Venue::Arcx;
     }
-    case Publisher::DbeqMaxLtse: {
+    case Publisher::EqusAllLtse: {
       return Venue::Ltse;
     }
     case Publisher::XnasBasicXnas: {
@@ -796,20 +808,26 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::XnasBasicXpsx: {
       return Venue::Xpsx;
     }
-    case Publisher::DbeqSummaryDbeq: {
-      return Venue::Dbeq;
+    case Publisher::EqusSummaryEqus: {
+      return Venue::Equs;
     }
-    case Publisher::XcisBbotradesXcis: {
+    case Publisher::XcisTradesbboXcis: {
       return Venue::Xcis;
     }
-    case Publisher::XnysBbotradesXnys: {
+    case Publisher::XnysTradesbboXnys: {
       return Venue::Xnys;
     }
-    case Publisher::XnasBasicDbeq: {
-      return Venue::Dbeq;
+    case Publisher::XnasBasicEqus: {
+      return Venue::Equs;
     }
-    case Publisher::DbeqMaxDbeq: {
-      return Venue::Dbeq;
+    case Publisher::EqusAllEqus: {
+      return Venue::Equs;
+    }
+    case Publisher::EqusMiniEqus: {
+      return Venue::Equs;
+    }
+    case Publisher::XnysTradesEqus: {
+      return Venue::Equs;
     }
     default: {
       throw InvalidArgumentError{
@@ -962,32 +980,32 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::XnasNlsXnas: {
       return Dataset::XnasNls;
     }
-    case Publisher::DbeqPlusXchi: {
-      return Dataset::DbeqPlus;
+    case Publisher::EqusPlusXchi: {
+      return Dataset::EqusPlus;
     }
-    case Publisher::DbeqPlusXcis: {
-      return Dataset::DbeqPlus;
+    case Publisher::EqusPlusXcis: {
+      return Dataset::EqusPlus;
     }
-    case Publisher::DbeqPlusIexg: {
-      return Dataset::DbeqPlus;
+    case Publisher::EqusPlusIexg: {
+      return Dataset::EqusPlus;
     }
-    case Publisher::DbeqPlusEprl: {
-      return Dataset::DbeqPlus;
+    case Publisher::EqusPlusEprl: {
+      return Dataset::EqusPlus;
     }
-    case Publisher::DbeqPlusXnas: {
-      return Dataset::DbeqPlus;
+    case Publisher::EqusPlusXnas: {
+      return Dataset::EqusPlus;
     }
-    case Publisher::DbeqPlusXnys: {
-      return Dataset::DbeqPlus;
+    case Publisher::EqusPlusXnys: {
+      return Dataset::EqusPlus;
     }
-    case Publisher::DbeqPlusFinn: {
-      return Dataset::DbeqPlus;
+    case Publisher::EqusPlusFinn: {
+      return Dataset::EqusPlus;
     }
-    case Publisher::DbeqPlusFiny: {
-      return Dataset::DbeqPlus;
+    case Publisher::EqusPlusFiny: {
+      return Dataset::EqusPlus;
     }
-    case Publisher::DbeqPlusFinc: {
-      return Dataset::DbeqPlus;
+    case Publisher::EqusPlusFinc: {
+      return Dataset::EqusPlus;
     }
     case Publisher::IfeuImpactIfeu: {
       return Dataset::IfeuImpact;
@@ -998,68 +1016,68 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::DbeqBasicDbeq: {
       return Dataset::DbeqBasic;
     }
-    case Publisher::DbeqPlusDbeq: {
-      return Dataset::DbeqPlus;
+    case Publisher::EqusPlusEqus: {
+      return Dataset::EqusPlus;
     }
     case Publisher::OpraPillarSphr: {
       return Dataset::OpraPillar;
     }
-    case Publisher::DbeqMaxXchi: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllXchi: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxXcis: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllXcis: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxIexg: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllIexg: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxEprl: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllEprl: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxXnas: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllXnas: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxXnys: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllXnys: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxFinn: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllFinn: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxFiny: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllFiny: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxFinc: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllFinc: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxBats: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllBats: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxBaty: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllBaty: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxEdga: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllEdga: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxEdgx: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllEdgx: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxXbos: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllXbos: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxXpsx: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllXpsx: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxMemx: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllMemx: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxXase: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllXase: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxArcx: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllArcx: {
+      return Dataset::EqusAll;
     }
-    case Publisher::DbeqMaxLtse: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllLtse: {
+      return Dataset::EqusAll;
     }
     case Publisher::XnasBasicXnas: {
       return Dataset::XnasBasic;
@@ -1088,20 +1106,26 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::XnasBasicXpsx: {
       return Dataset::XnasBasic;
     }
-    case Publisher::DbeqSummaryDbeq: {
-      return Dataset::DbeqSummary;
+    case Publisher::EqusSummaryEqus: {
+      return Dataset::EqusSummary;
     }
-    case Publisher::XcisBbotradesXcis: {
-      return Dataset::XcisBbotrades;
+    case Publisher::XcisTradesbboXcis: {
+      return Dataset::XcisTradesbbo;
     }
-    case Publisher::XnysBbotradesXnys: {
-      return Dataset::XnysBbotrades;
+    case Publisher::XnysTradesbboXnys: {
+      return Dataset::XnysTradesbbo;
     }
-    case Publisher::XnasBasicDbeq: {
+    case Publisher::XnasBasicEqus: {
       return Dataset::XnasBasic;
     }
-    case Publisher::DbeqMaxDbeq: {
-      return Dataset::DbeqMax;
+    case Publisher::EqusAllEqus: {
+      return Dataset::EqusAll;
+    }
+    case Publisher::EqusMiniEqus: {
+      return Dataset::EqusMini;
+    }
+    case Publisher::XnysTradesEqus: {
+      return Dataset::XnysTrades;
     }
     default: {
       throw InvalidArgumentError{
@@ -1255,32 +1279,32 @@ const char* ToString(Publisher publisher) {
     case Publisher::XnasNlsXnas: {
       return "XNAS.NLS.XNAS";
     }
-    case Publisher::DbeqPlusXchi: {
-      return "DBEQ.PLUS.XCHI";
+    case Publisher::EqusPlusXchi: {
+      return "EQUS.PLUS.XCHI";
     }
-    case Publisher::DbeqPlusXcis: {
-      return "DBEQ.PLUS.XCIS";
+    case Publisher::EqusPlusXcis: {
+      return "EQUS.PLUS.XCIS";
     }
-    case Publisher::DbeqPlusIexg: {
-      return "DBEQ.PLUS.IEXG";
+    case Publisher::EqusPlusIexg: {
+      return "EQUS.PLUS.IEXG";
     }
-    case Publisher::DbeqPlusEprl: {
-      return "DBEQ.PLUS.EPRL";
+    case Publisher::EqusPlusEprl: {
+      return "EQUS.PLUS.EPRL";
     }
-    case Publisher::DbeqPlusXnas: {
-      return "DBEQ.PLUS.XNAS";
+    case Publisher::EqusPlusXnas: {
+      return "EQUS.PLUS.XNAS";
     }
-    case Publisher::DbeqPlusXnys: {
-      return "DBEQ.PLUS.XNYS";
+    case Publisher::EqusPlusXnys: {
+      return "EQUS.PLUS.XNYS";
     }
-    case Publisher::DbeqPlusFinn: {
-      return "DBEQ.PLUS.FINN";
+    case Publisher::EqusPlusFinn: {
+      return "EQUS.PLUS.FINN";
     }
-    case Publisher::DbeqPlusFiny: {
-      return "DBEQ.PLUS.FINY";
+    case Publisher::EqusPlusFiny: {
+      return "EQUS.PLUS.FINY";
     }
-    case Publisher::DbeqPlusFinc: {
-      return "DBEQ.PLUS.FINC";
+    case Publisher::EqusPlusFinc: {
+      return "EQUS.PLUS.FINC";
     }
     case Publisher::IfeuImpactIfeu: {
       return "IFEU.IMPACT.IFEU";
@@ -1291,68 +1315,68 @@ const char* ToString(Publisher publisher) {
     case Publisher::DbeqBasicDbeq: {
       return "DBEQ.BASIC.DBEQ";
     }
-    case Publisher::DbeqPlusDbeq: {
-      return "DBEQ.PLUS.DBEQ";
+    case Publisher::EqusPlusEqus: {
+      return "EQUS.PLUS.EQUS";
     }
     case Publisher::OpraPillarSphr: {
       return "OPRA.PILLAR.SPHR";
     }
-    case Publisher::DbeqMaxXchi: {
-      return "DBEQ.MAX.XCHI";
+    case Publisher::EqusAllXchi: {
+      return "EQUS.ALL.XCHI";
     }
-    case Publisher::DbeqMaxXcis: {
-      return "DBEQ.MAX.XCIS";
+    case Publisher::EqusAllXcis: {
+      return "EQUS.ALL.XCIS";
     }
-    case Publisher::DbeqMaxIexg: {
-      return "DBEQ.MAX.IEXG";
+    case Publisher::EqusAllIexg: {
+      return "EQUS.ALL.IEXG";
     }
-    case Publisher::DbeqMaxEprl: {
-      return "DBEQ.MAX.EPRL";
+    case Publisher::EqusAllEprl: {
+      return "EQUS.ALL.EPRL";
     }
-    case Publisher::DbeqMaxXnas: {
-      return "DBEQ.MAX.XNAS";
+    case Publisher::EqusAllXnas: {
+      return "EQUS.ALL.XNAS";
     }
-    case Publisher::DbeqMaxXnys: {
-      return "DBEQ.MAX.XNYS";
+    case Publisher::EqusAllXnys: {
+      return "EQUS.ALL.XNYS";
     }
-    case Publisher::DbeqMaxFinn: {
-      return "DBEQ.MAX.FINN";
+    case Publisher::EqusAllFinn: {
+      return "EQUS.ALL.FINN";
     }
-    case Publisher::DbeqMaxFiny: {
-      return "DBEQ.MAX.FINY";
+    case Publisher::EqusAllFiny: {
+      return "EQUS.ALL.FINY";
     }
-    case Publisher::DbeqMaxFinc: {
-      return "DBEQ.MAX.FINC";
+    case Publisher::EqusAllFinc: {
+      return "EQUS.ALL.FINC";
     }
-    case Publisher::DbeqMaxBats: {
-      return "DBEQ.MAX.BATS";
+    case Publisher::EqusAllBats: {
+      return "EQUS.ALL.BATS";
     }
-    case Publisher::DbeqMaxBaty: {
-      return "DBEQ.MAX.BATY";
+    case Publisher::EqusAllBaty: {
+      return "EQUS.ALL.BATY";
     }
-    case Publisher::DbeqMaxEdga: {
-      return "DBEQ.MAX.EDGA";
+    case Publisher::EqusAllEdga: {
+      return "EQUS.ALL.EDGA";
     }
-    case Publisher::DbeqMaxEdgx: {
-      return "DBEQ.MAX.EDGX";
+    case Publisher::EqusAllEdgx: {
+      return "EQUS.ALL.EDGX";
     }
-    case Publisher::DbeqMaxXbos: {
-      return "DBEQ.MAX.XBOS";
+    case Publisher::EqusAllXbos: {
+      return "EQUS.ALL.XBOS";
     }
-    case Publisher::DbeqMaxXpsx: {
-      return "DBEQ.MAX.XPSX";
+    case Publisher::EqusAllXpsx: {
+      return "EQUS.ALL.XPSX";
     }
-    case Publisher::DbeqMaxMemx: {
-      return "DBEQ.MAX.MEMX";
+    case Publisher::EqusAllMemx: {
+      return "EQUS.ALL.MEMX";
     }
-    case Publisher::DbeqMaxXase: {
-      return "DBEQ.MAX.XASE";
+    case Publisher::EqusAllXase: {
+      return "EQUS.ALL.XASE";
     }
-    case Publisher::DbeqMaxArcx: {
-      return "DBEQ.MAX.ARCX";
+    case Publisher::EqusAllArcx: {
+      return "EQUS.ALL.ARCX";
     }
-    case Publisher::DbeqMaxLtse: {
-      return "DBEQ.MAX.LTSE";
+    case Publisher::EqusAllLtse: {
+      return "EQUS.ALL.LTSE";
     }
     case Publisher::XnasBasicXnas: {
       return "XNAS.BASIC.XNAS";
@@ -1381,20 +1405,26 @@ const char* ToString(Publisher publisher) {
     case Publisher::XnasBasicXpsx: {
       return "XNAS.BASIC.XPSX";
     }
-    case Publisher::DbeqSummaryDbeq: {
-      return "DBEQ.SUMMARY.DBEQ";
+    case Publisher::EqusSummaryEqus: {
+      return "EQUS.SUMMARY.EQUS";
     }
-    case Publisher::XcisBbotradesXcis: {
-      return "XCIS.BBOTRADES.XCIS";
+    case Publisher::XcisTradesbboXcis: {
+      return "XCIS.TRADESBBO.XCIS";
     }
-    case Publisher::XnysBbotradesXnys: {
-      return "XNYS.BBOTRADES.XNYS";
+    case Publisher::XnysTradesbboXnys: {
+      return "XNYS.TRADESBBO.XNYS";
     }
-    case Publisher::XnasBasicDbeq: {
-      return "XNAS.BASIC.DBEQ";
+    case Publisher::XnasBasicEqus: {
+      return "XNAS.BASIC.EQUS";
     }
-    case Publisher::DbeqMaxDbeq: {
-      return "DBEQ.MAX.DBEQ";
+    case Publisher::EqusAllEqus: {
+      return "EQUS.ALL.EQUS";
+    }
+    case Publisher::EqusMiniEqus: {
+      return "EQUS.MINI.EQUS";
+    }
+    case Publisher::XnysTradesEqus: {
+      return "XNYS.TRADES.EQUS";
     }
     default: {
       return "Unknown";
@@ -1550,32 +1580,32 @@ Publisher FromString(const std::string& str) {
   if (str == "XNAS.NLS.XNAS") {
     return Publisher::XnasNlsXnas;
   }
-  if (str == "DBEQ.PLUS.XCHI") {
-    return Publisher::DbeqPlusXchi;
+  if (str == "EQUS.PLUS.XCHI") {
+    return Publisher::EqusPlusXchi;
   }
-  if (str == "DBEQ.PLUS.XCIS") {
-    return Publisher::DbeqPlusXcis;
+  if (str == "EQUS.PLUS.XCIS") {
+    return Publisher::EqusPlusXcis;
   }
-  if (str == "DBEQ.PLUS.IEXG") {
-    return Publisher::DbeqPlusIexg;
+  if (str == "EQUS.PLUS.IEXG") {
+    return Publisher::EqusPlusIexg;
   }
-  if (str == "DBEQ.PLUS.EPRL") {
-    return Publisher::DbeqPlusEprl;
+  if (str == "EQUS.PLUS.EPRL") {
+    return Publisher::EqusPlusEprl;
   }
-  if (str == "DBEQ.PLUS.XNAS") {
-    return Publisher::DbeqPlusXnas;
+  if (str == "EQUS.PLUS.XNAS") {
+    return Publisher::EqusPlusXnas;
   }
-  if (str == "DBEQ.PLUS.XNYS") {
-    return Publisher::DbeqPlusXnys;
+  if (str == "EQUS.PLUS.XNYS") {
+    return Publisher::EqusPlusXnys;
   }
-  if (str == "DBEQ.PLUS.FINN") {
-    return Publisher::DbeqPlusFinn;
+  if (str == "EQUS.PLUS.FINN") {
+    return Publisher::EqusPlusFinn;
   }
-  if (str == "DBEQ.PLUS.FINY") {
-    return Publisher::DbeqPlusFiny;
+  if (str == "EQUS.PLUS.FINY") {
+    return Publisher::EqusPlusFiny;
   }
-  if (str == "DBEQ.PLUS.FINC") {
-    return Publisher::DbeqPlusFinc;
+  if (str == "EQUS.PLUS.FINC") {
+    return Publisher::EqusPlusFinc;
   }
   if (str == "IFEU.IMPACT.IFEU") {
     return Publisher::IfeuImpactIfeu;
@@ -1586,68 +1616,68 @@ Publisher FromString(const std::string& str) {
   if (str == "DBEQ.BASIC.DBEQ") {
     return Publisher::DbeqBasicDbeq;
   }
-  if (str == "DBEQ.PLUS.DBEQ") {
-    return Publisher::DbeqPlusDbeq;
+  if (str == "EQUS.PLUS.EQUS") {
+    return Publisher::EqusPlusEqus;
   }
   if (str == "OPRA.PILLAR.SPHR") {
     return Publisher::OpraPillarSphr;
   }
-  if (str == "DBEQ.MAX.XCHI") {
-    return Publisher::DbeqMaxXchi;
+  if (str == "EQUS.ALL.XCHI") {
+    return Publisher::EqusAllXchi;
   }
-  if (str == "DBEQ.MAX.XCIS") {
-    return Publisher::DbeqMaxXcis;
+  if (str == "EQUS.ALL.XCIS") {
+    return Publisher::EqusAllXcis;
   }
-  if (str == "DBEQ.MAX.IEXG") {
-    return Publisher::DbeqMaxIexg;
+  if (str == "EQUS.ALL.IEXG") {
+    return Publisher::EqusAllIexg;
   }
-  if (str == "DBEQ.MAX.EPRL") {
-    return Publisher::DbeqMaxEprl;
+  if (str == "EQUS.ALL.EPRL") {
+    return Publisher::EqusAllEprl;
   }
-  if (str == "DBEQ.MAX.XNAS") {
-    return Publisher::DbeqMaxXnas;
+  if (str == "EQUS.ALL.XNAS") {
+    return Publisher::EqusAllXnas;
   }
-  if (str == "DBEQ.MAX.XNYS") {
-    return Publisher::DbeqMaxXnys;
+  if (str == "EQUS.ALL.XNYS") {
+    return Publisher::EqusAllXnys;
   }
-  if (str == "DBEQ.MAX.FINN") {
-    return Publisher::DbeqMaxFinn;
+  if (str == "EQUS.ALL.FINN") {
+    return Publisher::EqusAllFinn;
   }
-  if (str == "DBEQ.MAX.FINY") {
-    return Publisher::DbeqMaxFiny;
+  if (str == "EQUS.ALL.FINY") {
+    return Publisher::EqusAllFiny;
   }
-  if (str == "DBEQ.MAX.FINC") {
-    return Publisher::DbeqMaxFinc;
+  if (str == "EQUS.ALL.FINC") {
+    return Publisher::EqusAllFinc;
   }
-  if (str == "DBEQ.MAX.BATS") {
-    return Publisher::DbeqMaxBats;
+  if (str == "EQUS.ALL.BATS") {
+    return Publisher::EqusAllBats;
   }
-  if (str == "DBEQ.MAX.BATY") {
-    return Publisher::DbeqMaxBaty;
+  if (str == "EQUS.ALL.BATY") {
+    return Publisher::EqusAllBaty;
   }
-  if (str == "DBEQ.MAX.EDGA") {
-    return Publisher::DbeqMaxEdga;
+  if (str == "EQUS.ALL.EDGA") {
+    return Publisher::EqusAllEdga;
   }
-  if (str == "DBEQ.MAX.EDGX") {
-    return Publisher::DbeqMaxEdgx;
+  if (str == "EQUS.ALL.EDGX") {
+    return Publisher::EqusAllEdgx;
   }
-  if (str == "DBEQ.MAX.XBOS") {
-    return Publisher::DbeqMaxXbos;
+  if (str == "EQUS.ALL.XBOS") {
+    return Publisher::EqusAllXbos;
   }
-  if (str == "DBEQ.MAX.XPSX") {
-    return Publisher::DbeqMaxXpsx;
+  if (str == "EQUS.ALL.XPSX") {
+    return Publisher::EqusAllXpsx;
   }
-  if (str == "DBEQ.MAX.MEMX") {
-    return Publisher::DbeqMaxMemx;
+  if (str == "EQUS.ALL.MEMX") {
+    return Publisher::EqusAllMemx;
   }
-  if (str == "DBEQ.MAX.XASE") {
-    return Publisher::DbeqMaxXase;
+  if (str == "EQUS.ALL.XASE") {
+    return Publisher::EqusAllXase;
   }
-  if (str == "DBEQ.MAX.ARCX") {
-    return Publisher::DbeqMaxArcx;
+  if (str == "EQUS.ALL.ARCX") {
+    return Publisher::EqusAllArcx;
   }
-  if (str == "DBEQ.MAX.LTSE") {
-    return Publisher::DbeqMaxLtse;
+  if (str == "EQUS.ALL.LTSE") {
+    return Publisher::EqusAllLtse;
   }
   if (str == "XNAS.BASIC.XNAS") {
     return Publisher::XnasBasicXnas;
@@ -1676,20 +1706,26 @@ Publisher FromString(const std::string& str) {
   if (str == "XNAS.BASIC.XPSX") {
     return Publisher::XnasBasicXpsx;
   }
-  if (str == "DBEQ.SUMMARY.DBEQ") {
-    return Publisher::DbeqSummaryDbeq;
+  if (str == "EQUS.SUMMARY.EQUS") {
+    return Publisher::EqusSummaryEqus;
   }
-  if (str == "XCIS.BBOTRADES.XCIS") {
-    return Publisher::XcisBbotradesXcis;
+  if (str == "XCIS.TRADESBBO.XCIS") {
+    return Publisher::XcisTradesbboXcis;
   }
-  if (str == "XNYS.BBOTRADES.XNYS") {
-    return Publisher::XnysBbotradesXnys;
+  if (str == "XNYS.TRADESBBO.XNYS") {
+    return Publisher::XnysTradesbboXnys;
   }
-  if (str == "XNAS.BASIC.DBEQ") {
-    return Publisher::XnasBasicDbeq;
+  if (str == "XNAS.BASIC.EQUS") {
+    return Publisher::XnasBasicEqus;
   }
-  if (str == "DBEQ.MAX.DBEQ") {
-    return Publisher::DbeqMaxDbeq;
+  if (str == "EQUS.ALL.EQUS") {
+    return Publisher::EqusAllEqus;
+  }
+  if (str == "EQUS.MINI.EQUS") {
+    return Publisher::EqusMiniEqus;
+  }
+  if (str == "XNYS.TRADES.EQUS") {
+    return Publisher::XnysTradesEqus;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
