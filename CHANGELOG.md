@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.28.1 - TBD
+
+### Enhancements
+- Fixed documentation for using external versions of libraries (credit: @ElBellaCiao)
+
 ## 0.28.0 - 2025-01-21
 
 ### Breaking changes

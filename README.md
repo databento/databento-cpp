@@ -69,7 +69,7 @@ You'll need to ensure the following dependencies are installed:
 
 By default, date, cpp-httplib and nlohmann\_json are downloaded by CMake as part of the build process.
 If you would like to use a local version of these libraries, enable the CMake flag
-`DATABENTO_ENABLE_EXTERNAL_DATE`, `DATABENTO_ENABLE_EXTERNAL_HTTPLIB`, or `DATABENTO_ENABLE_EXTERNAL_JSON` respectively.
+`DATABENTO_USE_EXTERNAL_DATE`, `DATABENTO_USE_EXTERNAL_HTTPLIB`, or `DATABENTO_USE_EXTERNAL_JSON` respectively.
 
 #### Ubuntu
 
