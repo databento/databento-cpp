@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.29.0 - TBD
+## 0.29.0 - 2025-02-04
 
 ### Enhancements
 - Fixed documentation for using external versions of libraries (credit: @ElBellaCiao)
