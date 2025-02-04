@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.29.0 - 2025-02-04
+
+### Enhancements
+- Fixed documentation for using external versions of libraries (credit: @ElBellaCiao)
+
+### Breaking changes
+- Updated the minimum supported C++ standard to C++17
+
 ## 0.28.0 - 2025-01-21
 
 ### Breaking changes

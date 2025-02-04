@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.28.0 LANGUAGES CXX)
+project("databento" VERSION 0.29.0 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
@@ -100,7 +100,7 @@ message(STATUS "Added all header and implementation files.")
 # Set the project standard and warnings
 #
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 include(cmake/CompilerWarnings.cmake)
 set_target_warnings(${PROJECT_NAME})
 include(cmake/Sanitizers.cmake)

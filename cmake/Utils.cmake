@@ -54,6 +54,6 @@ function(add_example_target name file)
     PRIVATE
       databento::databento
   )
-  target_compile_features(${name} PUBLIC cxx_std_11)
+  target_compile_features(${name} PUBLIC cxx_std_17)
   set_target_warnings(${name})
 endfunction()

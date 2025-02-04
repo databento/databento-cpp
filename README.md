@@ -9,11 +9,11 @@ The client supports both streaming real-time and historical market data through 
 
 ## Usage
 
-The minimum C++ standard is C++11 and the minimum CMake version is 3.14.
+The minimum C++ standard is C++17 and the minimum CMake version is 3.14.
 
 ### Integration
 
-The easiest way to use our library is by embedding it with [CMake FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html).
+The easiest way to use our library is by embedding it with [CMake FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html).
 Your `CMakeLists.txt` should look something like the following:
 
 ```cmake
@@ -69,7 +69,7 @@ You'll need to ensure the following dependencies are installed:
 
 By default, date, cpp-httplib and nlohmann\_json are downloaded by CMake as part of the build process.
 If you would like to use a local version of these libraries, enable the CMake flag
-`DATABENTO_ENABLE_EXTERNAL_DATE`, `DATABENTO_ENABLE_EXTERNAL_HTTPLIB`, or `DATABENTO_ENABLE_EXTERNAL_JSON` respectively.
+`DATABENTO_USE_EXTERNAL_DATE`, `DATABENTO_USE_EXTERNAL_HTTPLIB`, or `DATABENTO_USE_EXTERNAL_JSON` respectively.
 
 #### Ubuntu
 
