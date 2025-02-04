@@ -9,11 +9,11 @@ The client supports both streaming real-time and historical market data through 
 
 ## Usage
 
-The minimum C++ standard is C++11 and the minimum CMake version is 3.14.
+The minimum C++ standard is C++17 and the minimum CMake version is 3.14.
 
 ### Integration
 
-The easiest way to use our library is by embedding it with [CMake FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html).
+The easiest way to use our library is by embedding it with [CMake FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html).
 Your `CMakeLists.txt` should look something like the following:
 
 ```cmake
