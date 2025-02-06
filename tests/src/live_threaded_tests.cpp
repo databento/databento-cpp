@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <thread>  // this_thread
+#include <variant>
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
@@ -14,6 +15,7 @@
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"
 #include "databento/live.hpp"
+#include "databento/live_subscription.hpp"
 #include "databento/live_threaded.hpp"
 #include "databento/log.hpp"
 #include "databento/record.hpp"
@@ -173,7 +175,7 @@ TEST_F(LiveThreadedTests, TestStop) {
   mock_server.reset();
 }
 
-TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
+TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
   constexpr auto kSchema = Schema::Trades;
   constexpr auto kSType = SType::RawSymbol;
   constexpr TradeMsg kRec{DummyHeader<TradeMsg>(RType::Mbp0),
@@ -197,8 +199,9 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
        kSType, kUseSnapshot](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.SubscribeWithSnapshot(kAllSymbols, kSchema, kSType);
+        self.Subscribe(kAllSymbols, kSchema, kSType, "0");
         self.Start();
+        self.SendRecord(kRec);
         {
           std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
           should_close_cv.wait(shutdown_lock,
@@ -216,19 +219,22 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildThreaded();
   std::atomic<std::int32_t> metadata_calls{};
-  const auto metadata_cb = [&metadata_calls, &should_close, &should_close_cv,
-                            &should_close_mutex](Metadata&& metadata) {
+  const auto metadata_cb = [&metadata_calls](Metadata&& metadata) {
     ++metadata_calls;
     EXPECT_TRUE(metadata.has_mixed_schema);
-    // close server
-    const std::lock_guard<std::mutex> _lock{should_close_mutex};
-    should_close = true;
-    should_close_cv.notify_one();
   };
   std::atomic<std::int32_t> record_calls{};
-  const auto record_cb = [&record_calls, kRec](const Record& record) {
+  const auto record_cb = [&record_calls, kRec, &should_close_mutex,
+                          &should_close,
+                          &should_close_cv](const Record& record) {
     ++record_calls;
     EXPECT_EQ(record.Get<TradeMsg>(), kRec);
+    if (record_calls == 1) {  // close server
+      const std::lock_guard<std::mutex> _lock{should_close_mutex};
+      should_close = true;
+      should_close_cv.notify_one();
+      return KeepGoing::Continue;
+    }
     return KeepGoing::Stop;
   };
   std::atomic<std::int32_t> exception_calls{};
@@ -239,7 +245,10 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
       EXPECT_NE(dynamic_cast<const databento::DbnResponseError*>(&exc), nullptr)
           << "Unexpected exception type";
       target.Reconnect();
-      target.Subscribe(kAllSymbols, kSchema, kSType);
+      target.Resubscribe();
+      EXPECT_EQ(target.Subscriptions().size(), 1);
+      EXPECT_TRUE(std::holds_alternative<LiveSubscription::NoStart>(
+          target.Subscriptions()[0].start));
       return LiveThreaded::ExceptionAction::Restart;
     } else {
       GTEST_NONFATAL_FAILURE_("Exception callback called more than expected");
@@ -247,12 +256,14 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackAndReconnect) {
     }
   };
 
-  target.SubscribeWithSnapshot(kAllSymbols, kSchema, kSType);
+  ASSERT_TRUE(target.Subscriptions().empty());
+  target.Subscribe(kAllSymbols, kSchema, kSType, "0");
+  ASSERT_EQ(target.Subscriptions().size(), 1);
   target.Start(metadata_cb, record_cb, exception_cb);
   target.BlockForStop();
   EXPECT_EQ(metadata_calls, 2);
   EXPECT_EQ(exception_calls, 1);
-  EXPECT_EQ(record_calls, 1);
+  EXPECT_EQ(record_calls, 2);
 }
 
 TEST_F(LiveThreadedTests, TestDeadlockPrevention) {

@@ -10,7 +10,8 @@
 #include "databento/datetime.hpp"           // UnixNanos
 #include "databento/dbn.hpp"                // Metadata
 #include "databento/detail/tcp_client.hpp"  // TcpClient
-#include "databento/enums.hpp"   // Schema, SType, VersionUpgradePolicy
+#include "databento/enums.hpp"  // Schema, SType, VersionUpgradePolicy
+#include "databento/live_subscription.hpp"
 #include "databento/record.hpp"  // Record, RecordHeader
 
 namespace databento {
@@ -44,6 +45,10 @@ class LiveBlocking {
   std::pair<bool, std::chrono::seconds> HeartbeatInterval() const {
     return {heartbeat_interval_.count() > 0, heartbeat_interval_};
   }
+  const std::vector<LiveSubscription>& Subscriptions() const {
+    return subscriptions_;
+  }
+  std::vector<LiveSubscription>& Subscriptions() { return subscriptions_; }
 
   /*
    * Methods
@@ -80,6 +85,9 @@ class LiveBlocking {
   void Stop();
   // Closes the current connection and attempts to reconnect to the gateway.
   void Reconnect();
+  // Resubscribes to all subscriptions, removing the original `start` time, if
+  // any. Usually performed after a `Reconnect()`.
+  void Resubscribe();
 
  private:
   std::string DetermineGateway() const;
@@ -105,6 +113,7 @@ class LiveBlocking {
   VersionUpgradePolicy upgrade_policy_;
   std::chrono::seconds heartbeat_interval_;
   detail::TcpClient client_;
+  std::vector<LiveSubscription> subscriptions_;
   // Must be 8-byte aligned for records
   alignas(RecordHeader) std::array<char, kMaxStrLen> read_buffer_{};
   std::size_t buffer_size_{};

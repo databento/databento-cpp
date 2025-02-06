@@ -23,6 +23,7 @@ set(headers
   include/databento/ireadable.hpp
   include/databento/live.hpp
   include/databento/live_blocking.hpp
+  include/databento/live_subscription.hpp
   include/databento/live_threaded.hpp
   include/databento/log.hpp
   include/databento/metadata.hpp

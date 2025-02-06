@@ -94,6 +94,15 @@ std::pair<bool, std::chrono::seconds> LiveThreaded::HeartbeatInterval() const {
   return impl_->blocking.HeartbeatInterval();
 }
 
+const std::vector<databento::LiveSubscription>& LiveThreaded::Subscriptions()
+    const {
+  return impl_->blocking.Subscriptions();
+}
+
+std::vector<databento::LiveSubscription>& LiveThreaded::Subscriptions() {
+  return impl_->blocking.Subscriptions();
+}
+
 void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in) {
   impl_->blocking.Subscribe(symbols, schema, stype_in);
@@ -143,6 +152,8 @@ void LiveThreaded::Start(MetadataCallback metadata_callback,
 }
 
 void LiveThreaded::Reconnect() { impl_->blocking.Reconnect(); }
+
+void LiveThreaded::Resubscribe() { impl_->blocking.Resubscribe(); }
 
 void LiveThreaded::BlockForStop() {
   std::unique_lock<std::mutex> lock{impl_->last_cb_ret_mutex};
