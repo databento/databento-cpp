@@ -59,17 +59,18 @@ LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, bool send_ts_out,
                            VersionUpgradePolicy upgrade_policy,
                            std::chrono::seconds heartbeat_interval)
-    : impl_{new Impl{log_receiver, std::move(key), std::move(dataset),
-                     send_ts_out, upgrade_policy, heartbeat_interval}} {}
+    : impl_{std::make_unique<Impl>(log_receiver, std::move(key),
+                                   std::move(dataset), send_ts_out,
+                                   upgrade_policy, heartbeat_interval)} {}
 
 LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, std::string gateway,
                            std::uint16_t port, bool send_ts_out,
                            VersionUpgradePolicy upgrade_policy,
                            std::chrono::seconds heartbeat_interval)
-    : impl_{new Impl{log_receiver, std::move(key), std::move(dataset),
-                     std::move(gateway), port, send_ts_out, upgrade_policy,
-                     heartbeat_interval}} {}
+    : impl_{std::make_unique<Impl>(
+          log_receiver, std::move(key), std::move(dataset), std::move(gateway),
+          port, send_ts_out, upgrade_policy, heartbeat_interval)} {}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 

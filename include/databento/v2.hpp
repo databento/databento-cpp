@@ -3,8 +3,7 @@
 #include "databento/constants.hpp"  // kSymbolCstrLen
 #include "databento/record.hpp"
 
-namespace databento {
-namespace v2 {
+namespace databento::v2 {
 static constexpr std::size_t kSymbolCstrLen = databento::kSymbolCstrLen;
 
 using MboMsg = databento::MboMsg;
@@ -28,5 +27,4 @@ using StatMsg = databento::StatMsg;
 using ErrorMsg = databento::ErrorMsg;
 using SymbolMappingMsg = databento::SymbolMappingMsg;
 using SystemMsg = databento::SystemMsg;
-}  // namespace v2
-}  // namespace databento
+}  // namespace databento::v2

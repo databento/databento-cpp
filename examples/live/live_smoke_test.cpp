@@ -11,7 +11,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
 
 using namespace databento;
 
@@ -28,7 +27,6 @@ std::vector<std::string> SplitSymbols(const std::string& symbols) {
 }
 
 std::pair<bool, UnixNanos> TryConvertToUnixNanos(const char* start) {
-  std::stringstream ss(start);
   std::size_t pos;
   const uint64_t result = std::stoul(start, &pos, 10);
   if (pos != std::strlen(start)) {
@@ -187,10 +185,10 @@ int main(int argc, char* argv[]) {
   if (use_snapshot) {
     client.SubscribeWithSnapshot(symbols, schema, stype);
   } else if (start) {
-    const auto converted = TryConvertToUnixNanos(start);
-    if (converted.first) {
-      start_from_epoch = converted.second.time_since_epoch().count() == 0;
-      client.Subscribe(symbols, schema, stype, converted.second);
+    const auto [success, start_nanos] = TryConvertToUnixNanos(start);
+    if (success) {
+      start_from_epoch = start_nanos.time_since_epoch().count() == 0;
+      client.Subscribe(symbols, schema, stype, start_nanos);
     } else {
       client.Subscribe(symbols, schema, stype, start);
     }

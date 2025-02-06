@@ -7,8 +7,7 @@
 
 #include "databento/exceptions.hpp"  // DbnResponseError
 
-namespace databento {
-namespace detail {
+namespace databento::detail {
 class SharedChannel::Channel {
  public:
   Channel() = default;
@@ -36,8 +35,7 @@ class SharedChannel::Channel {
   std::condition_variable cv_;
   std::stringstream stream_;
 };
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail
 
 using databento::detail::SharedChannel;
 

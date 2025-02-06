@@ -11,9 +11,7 @@
 #include "databento/detail/shared_channel.hpp"
 #include "databento/exceptions.hpp"
 
-namespace databento {
-namespace detail {
-namespace test {
+namespace databento::detail::test {
 class SharedChannelTests : public testing::Test {
  protected:
   void Write(const std::vector<std::string>& inputs) {
@@ -83,6 +81,4 @@ TEST_F(SharedChannelTests, TestReadSome) {
 
   ASSERT_EQ(res, "parsestreamtestssomelast");
 }
-}  // namespace test
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail::test

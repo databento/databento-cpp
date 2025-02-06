@@ -8,8 +8,7 @@
 
 #include "databento/detail/scoped_thread.hpp"
 
-namespace databento {
-namespace mock {
+namespace databento::tests::mock {
 class MockHttpServer {
  public:
   explicit MockHttpServer(std::string api_key)
@@ -48,5 +47,4 @@ class MockHttpServer {
   detail::ScopedThread listen_thread_;
   std::string api_key_;
 };
-}  // namespace mock
-}  // namespace databento
+}  // namespace databento::tests::mock

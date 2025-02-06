@@ -20,7 +20,7 @@
 #include "databento/symbology.hpp"   // JoinSymbolStrings
 #include "mock/mock_tcp_server.hpp"  // InitSocket
 
-using databento::test::mock::SocketStream;
+using databento::tests::mock::SocketStream;
 
 void SocketStream::WriteAll(const std::uint8_t* buffer, std::size_t length) {
 // MSG_NOSIGNAL doesn't exist on Windows, but also isn't necessary
@@ -32,7 +32,7 @@ void SocketStream::WriteAll(const std::uint8_t* buffer, std::size_t length) {
                             length, MSG_NOSIGNAL);
 }
 
-using databento::test::mock::MockLsgServer;
+using databento::tests::mock::MockLsgServer;
 
 MockLsgServer::MockLsgServer(std::string dataset, bool ts_out,
                              std::function<void(MockLsgServer&)> serve_fn)

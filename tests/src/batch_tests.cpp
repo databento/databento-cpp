@@ -4,8 +4,7 @@
 #include "databento/constants.hpp"
 #include "databento/enums.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 TEST(BatchTests, TestBatchJobToString) {
   const BatchJob target{"aNiD",
                         "USER",
@@ -73,5 +72,4 @@ TEST(BatchTests, TestBatchJobToString) {
     ts_expiration = ""
 })");
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

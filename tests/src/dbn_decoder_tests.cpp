@@ -24,22 +24,23 @@
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"
 #include "databento/file_stream.hpp"
-#include "databento/ireadable.hpp"
 #include "databento/iwritable.hpp"
 #include "databento/log.hpp"
 #include "databento/record.hpp"
+#include "databento/v1.hpp"
+#include "databento/v2.hpp"
+#include "databento/v3.hpp"
 #include "databento/with_ts_out.hpp"
 #include "mock/mock_io.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 class DbnDecoderTests : public testing::Test {
  public:
   detail::SharedChannel channel_;
   std::unique_ptr<DbnDecoder> file_target_;
   std::unique_ptr<DbnDecoder> channel_target_;
   detail::ScopedThread write_thread_;
-  std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
+  std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
 
   void ReadFromFile(const std::string& schema_str, const std::string& extension,
                     std::uint8_t version) {
@@ -64,14 +65,13 @@ class DbnDecoderTests : public testing::Test {
                      size);
       channel_.Finish();
     }};
-    channel_target_.reset(new DbnDecoder{
-        logger_.get(),
-        std::unique_ptr<IReadable>{new detail::SharedChannel{channel_}},
-        upgrade_policy});
+    channel_target_ = std::make_unique<DbnDecoder>(
+        logger_.get(), std::make_unique<detail::SharedChannel>(channel_),
+        upgrade_policy);
     // File setup
-    file_target_.reset(new DbnDecoder{
-        logger_.get(), std::unique_ptr<IReadable>{new InFileStream{file_path}},
-        upgrade_policy});
+    file_target_ = std::make_unique<DbnDecoder>(
+        logger_.get(), std::make_unique<InFileStream>(file_path),
+        upgrade_policy);
   }
 
   static void AssertMappings(const std::vector<SymbolMapping>& mappings) {
@@ -1125,7 +1125,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeStatistics) {
 class DbnIdentityTests : public testing::TestWithParam<
                              std::tuple<std::uint8_t, Schema, Compression>> {
  protected:
-  std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
+  std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1201,16 +1201,16 @@ TEST_P(DbnIdentityTests, TestIdentity) {
       std::string{TEST_BUILD_DIR "/data/test_data."} + ToString(schema) +
       (version == 1 ? ".v1" : "") +
       (compression == Compression::Zstd ? ".dbn.zst" : ".dbn");
-  DbnDecoder file_decoder{
-      logger_.get(), std::unique_ptr<IReadable>{new InFileStream{file_name}},
-      VersionUpgradePolicy::AsIs};
+  DbnDecoder file_decoder{logger_.get(),
+                          std::make_unique<InFileStream>(file_name),
+                          VersionUpgradePolicy::AsIs};
   const Metadata file_metadata = file_decoder.DecodeMetadata();
 
   mock::MockIo buf_io;
   {
     std::unique_ptr<detail::ZstdCompressStream> zstd_io;
     if (compression == Compression::Zstd) {
-      zstd_io.reset(new detail::ZstdCompressStream{&buf_io});
+      zstd_io = std::make_unique<detail::ZstdCompressStream>(&buf_io);
     }
     DbnEncoder encoder{
         file_metadata,
@@ -1221,12 +1221,11 @@ TEST_P(DbnIdentityTests, TestIdentity) {
     // Free zstd_io and flush
   }
 
-  file_decoder = {logger_.get(),
-                  std::unique_ptr<IReadable>{new InFileStream{file_name}},
+  file_decoder = {logger_.get(), std::make_unique<InFileStream>(file_name),
                   VersionUpgradePolicy::AsIs};
   file_decoder.DecodeMetadata();
 
-  std::unique_ptr<IReadable> input{new mock::MockIo{std::move(buf_io)}};
+  auto input = std::make_unique<mock::MockIo>(std::move(buf_io));
   DbnDecoder buf_decoder{logger_.get(), std::move(input),
                          VersionUpgradePolicy::AsIs};
   const auto buf_metadata = buf_decoder.DecodeMetadata();
@@ -1248,8 +1247,19 @@ TEST_P(DbnIdentityTests, TestIdentity) {
       EXPECT_EQ(*trade, file_record->Get<TradeMsg>());
     } else if (auto* imbalance = buf_record->GetIf<ImbalanceMsg>()) {
       EXPECT_EQ(*imbalance, file_record->Get<ImbalanceMsg>());
-    } else if (auto* def = buf_record->GetIf<InstrumentDefMsg>()) {
-      EXPECT_EQ(*def, file_record->Get<InstrumentDefMsg>());
+    } else if (buf_record->Header().rtype == RType::InstrumentDef) {
+      if (buf_record->Size() == sizeof(v1::InstrumentDefMsg)) {
+        EXPECT_EQ(buf_record->Get<v1::InstrumentDefMsg>(),
+                  file_record->Get<v1::InstrumentDefMsg>());
+      } else if (buf_record->Size() == sizeof(v2::InstrumentDefMsg)) {
+        EXPECT_EQ(buf_record->Get<v2::InstrumentDefMsg>(),
+                  file_record->Get<v2::InstrumentDefMsg>());
+      } else if (buf_record->Size() == sizeof(v3::InstrumentDefMsg)) {
+        EXPECT_EQ(buf_record->Get<v3::InstrumentDefMsg>(),
+                  file_record->Get<v3::InstrumentDefMsg>());
+      } else {
+        FAIL() << "Unknown definition size";
+      }
     } else if (auto* stats = buf_record->GetIf<StatMsg>()) {
       EXPECT_EQ(*stats, file_record->Get<StatMsg>());
     } else {
@@ -1261,5 +1271,4 @@ TEST_P(DbnIdentityTests, TestIdentity) {
 }
 
 TEST_F(DbnDecoderTests, TestDbnIdentityWithTsOut) {}
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

@@ -13,17 +13,17 @@ namespace databento {
 TsSymbolMap SymbologyResolution::CreateSymbolMap() const {
   TsSymbolMap res;
   if (stype_in == SType::InstrumentId) {
-    for (const auto& mapping : mappings) {
-      const auto iid = static_cast<std::uint32_t>(std::stoul(mapping.first));
-      for (const auto& interval : mapping.second) {
+    for (const auto& [iid_str, intervals] : mappings) {
+      const auto iid = static_cast<std::uint32_t>(std::stoul(iid_str));
+      for (const auto& interval : intervals) {
         res.Insert(iid, interval.start_date, interval.end_date,
                    std::make_shared<std::string>(interval.symbol));
       }
     }
   } else {
-    for (const auto& mapping : mappings) {
-      auto symbol = std::make_shared<std::string>(mapping.first);
-      for (const auto& interval : mapping.second) {
+    for (const auto& [orig_symbol, intervals] : mappings) {
+      auto symbol = std::make_shared<std::string>(orig_symbol);
+      for (const auto& interval : intervals) {
         const auto iid =
             static_cast<std::uint32_t>(std::stoul(interval.symbol));
         res.Insert(iid, interval.start_date, interval.end_date, symbol);
@@ -71,17 +71,17 @@ std::ostream& operator<<(std::ostream& stream,
       StreamOpBuilder{intermediate}.SetIndent("    ").SetSpacer("\n    ");
   auto mappings_helper = intermediate_builder.Build();
   auto key_value_builder = StreamOpBuilder{key_value}.SetSpacer(" ");
-  for (const auto& mapping : sym_res.mappings) {
+  for (const auto& [symbol, intervals] : sym_res.mappings) {
     // empty stream
     key_value.str("");
-    std::ostringstream intervals;
-    auto interval_helper = StreamOpBuilder{intervals}.SetSpacer(" ").Build();
-    for (const auto& interval : mapping.second) {
+    std::ostringstream interval_ss;
+    auto interval_helper = StreamOpBuilder{interval_ss}.SetSpacer(" ").Build();
+    for (const auto& interval : intervals) {
       interval_helper.AddItem(interval);
     }
     mappings_helper.AddItem(static_cast<std::ostringstream&>(
         key_value_builder.Build()
-            .AddItem(mapping.first)
+            .AddItem(symbol)
             .AddItem(static_cast<std::ostringstream&>(interval_helper.Finish()))
             .Finish()));
   }

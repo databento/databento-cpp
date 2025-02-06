@@ -6,8 +6,7 @@
 #include "databento/datetime.hpp"
 #include "databento/dbn.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 TEST(DbnTests, TestMetadataToString) {
   const Metadata target{
       kDbnVersion,
@@ -50,5 +49,4 @@ TEST(DbnTests, TestMetadataToString) {
     }
 })");
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

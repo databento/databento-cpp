@@ -8,8 +8,7 @@
 #include "databento/enums.hpp"  // InstrumentClass, MatchingAlgorithm, RType, SecurityUpdateAction, Side, UserDefinedInstrument
 #include "databento/record.hpp"  // RecordHeader
 
-namespace databento {
-namespace v3 {
+namespace databento::v3 {
 static constexpr std::size_t kSymbolCstrLen = databento::kSymbolCstrLen;
 
 using MboMsg = databento::MboMsg;
@@ -142,5 +141,4 @@ inline bool operator!=(const InstrumentDefMsg& lhs,
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instr_def_msg);
-}  // namespace v3
-}  // namespace databento
+}  // namespace databento::v3

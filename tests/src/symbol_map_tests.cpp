@@ -16,8 +16,7 @@
 #include "databento/record.hpp"
 #include "databento/symbol_map.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 Metadata GenMetadata() {
   Metadata metadata{
       kDbnVersion,
@@ -282,5 +281,4 @@ TEST(PitSymbolMapTests, TestOnRecord) {
   target.OnRecord(Record{&sm2.hd});
   ASSERT_EQ(target[1], "MSFT");
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

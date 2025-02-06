@@ -22,8 +22,7 @@
 #include "databento/with_ts_out.hpp"
 #include "mock/mock_lsg_server.hpp"  // MockLsgServer
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 class LiveBlockingTests : public testing::Test {
  protected:
   template <typename T>
@@ -35,7 +34,7 @@ class LiveBlockingTests : public testing::Test {
   static constexpr auto kKey = "32-character-with-lots-of-filler";
   static constexpr auto kLocalhost = "127.0.0.1";
 
-  std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
+  std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
   LiveBuilder builder_{
       LiveBuilder{}.SetLogReceiver(logger_.get()).SetKey(kKey)};
 };
@@ -441,23 +440,21 @@ TEST_F(LiveBlockingTests, TestStop) {
        2},
       UnixNanos{std::chrono::seconds{1678910279000000000}}};
   std::atomic<bool> has_stopped{false};
-  std::unique_ptr<mock::MockLsgServer> mock_server{
-      new mock::MockLsgServer{
-          dataset::kXnasItch, kTsOut,
-          [send_rec, &has_stopped](mock::MockLsgServer& self) {
-            self.Accept();
-            self.Authenticate();
-            self.SendRecord(send_rec);
-            while (!has_stopped) {
-              std::this_thread::yield();
-            }
-            const std::string rec_str{reinterpret_cast<const char*>(&send_rec),
-                                      sizeof(send_rec)};
-            while (self.UncheckedSend(rec_str) ==
-                   static_cast<::ssize_t>(rec_str.size())) {
-            }
-          }}  // namespace test
-  };  // namespace databento
+  auto mock_server = std::make_unique<mock::MockLsgServer>(
+      dataset::kXnasItch, kTsOut,
+      [send_rec, &has_stopped](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.SendRecord(send_rec);
+        while (!has_stopped) {
+          std::this_thread::yield();
+        }
+        const std::string rec_str{reinterpret_cast<const char*>(&send_rec),
+                                  sizeof(send_rec)};
+        while (self.UncheckedSend(rec_str) ==
+               static_cast<::ssize_t>(rec_str.size())) {
+        }
+      });
 
   LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
                             .SetSendTsOut(kTsOut)
@@ -495,7 +492,7 @@ TEST_F(LiveBlockingTests, TestReconnect) {
   bool has_closed{};
   std::mutex has_closed_mutex;
   std::condition_variable has_closed_cv;
-  std::unique_ptr<mock::MockLsgServer> mock_server{new mock::MockLsgServer{
+  auto mock_server = std::make_unique<mock::MockLsgServer>(
       dataset::kXnasItch, kTsOut,
       [kRec, &has_closed, &has_closed_cv, &has_closed_mutex, &should_close,
        &should_close_cv, &should_close_mutex](mock::MockLsgServer& self) {
@@ -518,7 +515,7 @@ TEST_F(LiveBlockingTests, TestReconnect) {
         self.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol);
         self.Start();
         self.SendRecord(kRec);
-      }}};
+      });
   LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server->Port())
@@ -544,5 +541,4 @@ TEST_F(LiveBlockingTests, TestReconnect) {
   ASSERT_TRUE(rec.Holds<TradeMsg>());
   ASSERT_EQ(rec.Get<TradeMsg>(), kRec);
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

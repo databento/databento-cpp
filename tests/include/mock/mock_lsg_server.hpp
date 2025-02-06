@@ -24,9 +24,7 @@ using ssize_t = SSIZE_T;
 #include "databento/iwritable.hpp"
 #include "databento/record.hpp"  // RecordHeader
 
-namespace databento {
-namespace test {
-namespace mock {
+namespace databento::tests::mock {
 class SocketStream : public databento::IWritable {
  public:
   explicit SocketStream(detail::Socket socket) : socket_{socket} {}
@@ -107,6 +105,4 @@ class MockLsgServer {
   detail::ScopedFd conn_fd_{};
   detail::ScopedThread thread_;
 };
-}  // namespace mock
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests::mock

@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <cstring>  // strlen
+#include <iomanip>  // quoted
 #include <ios>      // boolalpha
 #include <ostream>  // ostream
 #include <sstream>  // stringstream
@@ -10,7 +11,6 @@
 #include <utility>  // move
 
 #include "databento/datetime.hpp"  // TimeDeltaNanos, UnixNanos
-#include "databento/enums.hpp"     // RType
 
 namespace databento {
 template <typename T>
@@ -28,10 +28,7 @@ class StreamOpHelper {
     stream_ << val;
   }
 
-  void FmtToStream(const std::string& val) {
-    // std::quoted requires C++14
-    stream_ << '"' << val << '"';
-  }
+  void FmtToStream(const std::string& val) { stream_ << std::quoted(val); }
 
   void FmtToStream(const bool& val) {
     // otherwise bool is formatted (1|0)

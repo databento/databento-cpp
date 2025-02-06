@@ -9,9 +9,7 @@
 #include "databento/detail/scoped_fd.hpp"      // ScopedFd
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
 
-namespace databento {
-namespace test {
-namespace mock {
+namespace databento::tests::mock {
 class MockTcpServer {
  public:
   MockTcpServer();
@@ -45,6 +43,4 @@ class MockTcpServer {
   mutable std::mutex send_mutex_;
   detail::ScopedThread thread_;
 };
-}  // namespace mock
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests::mock

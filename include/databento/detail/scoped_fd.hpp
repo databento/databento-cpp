@@ -4,8 +4,7 @@
 #include <winsock2.h>  // SOCKET
 #endif
 
-namespace databento {
-namespace detail {
+namespace databento::detail {
 #ifdef _WIN32
 using Socket = SOCKET;
 #else
@@ -35,5 +34,4 @@ class ScopedFd {
  private:
   Socket fd_{kUnset};
 };
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail

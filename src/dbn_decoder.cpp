@@ -65,12 +65,11 @@ date::year_month_day DecodeIso8601Date(std::uint32_t yyyymmdd_int) {
 DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
                        detail::SharedChannel channel)
     : DbnDecoder(log_receiver,
-                 std::unique_ptr<IReadable>{
-                     new detail::SharedChannel{std::move(channel)}}) {}
+                 std::make_unique<detail::SharedChannel>(std::move(channel))) {}
 
 DbnDecoder::DbnDecoder(ILogReceiver* log_receiver, InFileStream file_stream)
-    : DbnDecoder(log_receiver, std::unique_ptr<IReadable>{
-                                   new InFileStream{std::move(file_stream)}}) {}
+    : DbnDecoder(log_receiver,
+                 std::make_unique<InFileStream>(std::move(file_stream))) {}
 
 DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
                        std::unique_ptr<IReadable> input)
@@ -85,9 +84,8 @@ DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
       input_{std::move(input)} {
   read_buffer_.reserve(kBufferCapacity);
   if (DetectCompression()) {
-    input_ =
-        std::unique_ptr<detail::ZstdDecodeStream>(new detail::ZstdDecodeStream(
-            std::move(input_), std::move(read_buffer_)));
+    input_ = std::make_unique<detail::ZstdDecodeStream>(
+        std::move(input_), std::move(read_buffer_));
     // Reinitialize buffer and get it into the same state as uncompressed input
     read_buffer_ = std::vector<std::uint8_t>();
     read_buffer_.reserve(kBufferCapacity);
@@ -192,10 +190,10 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
   // already read first 4 bytes detecting compression
   read_buffer_.resize(kMetadataPreludeSize);
   input_->ReadExact(&read_buffer_[4], 4);
-  const auto version_and_size = DbnDecoder::DecodeMetadataVersionAndSize(
+  const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
       read_buffer_.data(), kMetadataPreludeSize);
-  version_ = version_and_size.first;
-  read_buffer_.resize(version_and_size.second);
+  version_ = version;
+  read_buffer_.resize(size);
   input_->ReadExact(read_buffer_.data(), read_buffer_.size());
   buffer_idx_ = read_buffer_.size();
   auto metadata = DbnDecoder::DecodeMetadataFields(version_, read_buffer_);

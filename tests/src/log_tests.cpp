@@ -1,13 +1,11 @@
 #include <gtest/gtest.h>
 
-#include <iostream>
-#include <ostream>
+#include <sstream>
 #include <string>
 
 #include "databento/log.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 class ConsoleLogReceiverTests : public testing::Test {
  protected:
   std::ostringstream stream_{};
@@ -34,5 +32,4 @@ TEST(ILogReceiverTests, TestDefault) {
   ASSERT_NE(log_receiver, nullptr);
   ASSERT_NE(dynamic_cast<ConsoleLogReceiver*>(log_receiver), nullptr);
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

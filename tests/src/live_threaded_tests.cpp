@@ -22,8 +22,7 @@
 #include "gtest/gtest.h"
 #include "mock/mock_lsg_server.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 class LiveThreadedTests : public testing::Test {
  protected:
   template <typename T>
@@ -36,7 +35,7 @@ class LiveThreadedTests : public testing::Test {
   static constexpr auto kTsOut = false;
   static constexpr auto kLocalhost = "127.0.0.1";
 
-  std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
+  std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
   LiveBuilder builder_{
       LiveBuilder{}.SetLogReceiver(logger_.get()).SetKey(kKey)};
 };
@@ -137,7 +136,7 @@ TEST_F(LiveThreadedTests, TestStop) {
                     TimeDeltaNanos{},
                     100};
   std::atomic<std::uint32_t> call_count{};
-  std::unique_ptr<mock::MockLsgServer> mock_server{new mock::MockLsgServer{
+  auto mock_server = std::make_unique<mock::MockLsgServer>(
       dataset::kXnasItch, kTsOut,
       [&kRec, &call_count](mock::MockLsgServer& self) {
         self.Accept();
@@ -154,7 +153,7 @@ TEST_F(LiveThreadedTests, TestStop) {
                static_cast<::ssize_t>(rec_str.size())) {
           std::this_thread::yield();
         }
-      }}};
+      });
 
   LiveThreaded target = builder_.SetDataset(dataset::kXnasItch)
                             .SetSendTsOut(kTsOut)
@@ -339,5 +338,4 @@ TEST_F(LiveThreadedTests, TestBlockForStopTimeout) {
   ASSERT_EQ(target.BlockForStop(std::chrono::milliseconds{100}),
             KeepGoing::Continue);
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests
