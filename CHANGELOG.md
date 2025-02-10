@@ -8,6 +8,9 @@
 - Added `Subscriptions()` getter methods to `LiveBlocking` and `LiveThreaded` for
   getting all active subscriptions
 
+### Breaking changes
+- Added `CommoditySpot` `InstrumentClass` variant
+
 ## 0.29.0 - 2025-02-04
 
 ### Enhancements

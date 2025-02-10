@@ -392,6 +392,9 @@ const char* ToString(InstrumentClass instrument_class) {
     case instrument_class::FxSpot: {
       return "FxSpot";
     }
+    case instrument_class::CommoditySpot: {
+      return "CommoditySpot";
+    }
     default: {
       return "Unknown";
     }

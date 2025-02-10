@@ -191,6 +191,7 @@ enum InstrumentClass : char {
   FutureSpread = 'S',
   OptionSpread = 'T',
   FxSpot = 'X',
+  CommoditySpot = 'Y',
 };
 }  // namespace instrument_class
 using instrument_class::InstrumentClass;
