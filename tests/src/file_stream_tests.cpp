@@ -6,8 +6,7 @@
 #include "databento/file_stream.hpp"
 #include "temp_file.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 TEST(InFileStreamTests, TestReadExactInsufficient) {
   const std::string file_path =
       TEST_BUILD_DIR "/data/test_data.ohlcv-1d.v1.dbn";
@@ -47,5 +46,4 @@ TEST(OutFileStreamTests, TestWriteAllCanBeRead) {
   input.ReadExact(reinterpret_cast<std::uint8_t*>(buf.data()), 8);
   ASSERT_STREQ(buf.data(), data);
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

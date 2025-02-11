@@ -8,14 +8,12 @@
 #include "databento/log.hpp"
 #include "mock/mock_http_server.hpp"
 
-namespace databento {
-namespace detail {
-namespace test {
+namespace databento::detail::tests {
 class HttpClientTests : public ::testing::Test {
  protected:
   static constexpr auto kApiKey = "HIST_SECRET";
 
-  mock::MockHttpServer mock_server_{kApiKey};
+  databento::tests::mock::MockHttpServer mock_server_{kApiKey};
 };
 
 TEST_F(HttpClientTests, TestLogWarnings) {
@@ -36,6 +34,4 @@ TEST_F(HttpClientTests, TestLogWarnings) {
       std::string::npos);
   EXPECT_NE(output.find("Server Warning: Large request"), std::string::npos);
 }
-}  // namespace test
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail::tests

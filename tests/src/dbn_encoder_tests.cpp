@@ -12,10 +12,9 @@
 #include "databento/log.hpp"
 #include "mock/mock_io.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 TEST(DbnEncoderTests, TestEncodeDecodeMetadataIdentity) {
-  std::unique_ptr<ILogReceiver> logger{new NullLogReceiver};
+  auto logger = std::make_unique<NullLogReceiver>();
   const Metadata metadata{
       kDbnVersion,
       dataset::kGlbxMdp3,
@@ -39,10 +38,9 @@ TEST(DbnEncoderTests, TestEncodeDecodeMetadataIdentity) {
          {date::year{2022} / 8 / 29, date::year{2022} / 9 / 1, "NGV2"}}}}};
   mock::MockIo io{};
   DbnEncoder::EncodeMetadata(metadata, &io);
-  DbnDecoder decoder{logger.get(), std::unique_ptr<IReadable>(
-                                       new mock::MockIo{std::move(io)})};
+  DbnDecoder decoder{logger.get(),
+                     std::make_unique<mock::MockIo>(std::move(io))};
   const auto res = decoder.DecodeMetadata();
   ASSERT_EQ(res, metadata);
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

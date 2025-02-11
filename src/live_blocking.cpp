@@ -7,8 +7,9 @@
 #include <chrono>
 #include <cstddef>  // ptrdiff_t
 #include <cstdlib>
-#include <ios>  //hex, setfill, setw
+#include <ios>  // hex, setfill, setw
 #include <sstream>
+#include <variant>
 
 #include "databento/constants.hpp"  //  kApiKeyLength
 #include "databento/dbn_decoder.hpp"
@@ -69,6 +70,8 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
   sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
           << "|start=" << start.time_since_epoch().count();
   Subscribe(sub_msg.str(), symbols, false);
+  subscriptions_.emplace_back(
+      LiveSubscription{symbols, schema, stype_in, start});
 }
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
@@ -81,6 +84,13 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
     sub_msg << "|start=" << start;
   }
   Subscribe(sub_msg.str(), symbols, false);
+  if (start.empty()) {
+    subscriptions_.emplace_back(LiveSubscription{symbols, schema, stype_in,
+                                                 LiveSubscription::NoStart{}});
+  } else {
+    subscriptions_.emplace_back(
+        LiveSubscription{symbols, schema, stype_in, start});
+  }
 }
 
 void LiveBlocking::SubscribeWithSnapshot(
@@ -90,6 +100,8 @@ void LiveBlocking::SubscribeWithSnapshot(
           << "|stype_in=" << ToString(stype_in);
 
   Subscribe(sub_msg.str(), symbols, true);
+  subscriptions_.emplace_back(LiveSubscription{symbols, schema, stype_in,
+                                               LiveSubscription::Snapshot{}});
 }
 
 void LiveBlocking::Subscribe(const std::string& sub_msg,
@@ -121,14 +133,12 @@ void LiveBlocking::Subscribe(const std::string& sub_msg,
 databento::Metadata LiveBlocking::Start() {
   client_.WriteAll("start_session\n");
   client_.ReadExact(read_buffer_.data(), kMetadataPreludeSize);
-  const auto version_and_size = DbnDecoder::DecodeMetadataVersionAndSize(
+  const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
       reinterpret_cast<std::uint8_t*>(read_buffer_.data()),
       kMetadataPreludeSize);
-  std::vector<std::uint8_t> meta_buffer(version_and_size.second);
-  client_.ReadExact(reinterpret_cast<char*>(meta_buffer.data()),
-                    version_and_size.second);
-  auto metadata =
-      DbnDecoder::DecodeMetadataFields(version_and_size.first, meta_buffer);
+  std::vector<std::uint8_t> meta_buffer(size);
+  client_.ReadExact(reinterpret_cast<char*>(meta_buffer.data()), size);
+  auto metadata = DbnDecoder::DecodeMetadataFields(version, meta_buffer);
   version_ = metadata.version;
   metadata.Upgrade(upgrade_policy_);
   return metadata;
@@ -170,8 +180,24 @@ const databento::Record* LiveBlocking::NextRecord(
 void LiveBlocking::Stop() { client_.Close(); }
 
 void LiveBlocking::Reconnect() {
+  log_receiver_->Receive(LogLevel::Info, "Reconnecting");
   client_ = detail::TcpClient{gateway_, port_};
   session_id_ = this->Authenticate();
+}
+
+void LiveBlocking::Resubscribe() {
+  for (auto& subscription : subscriptions_) {
+    if (std::holds_alternative<UnixNanos>(subscription.start) ||
+        std::holds_alternative<std::string>(subscription.start)) {
+      subscription.start = LiveSubscription::NoStart{};
+    }
+    std::ostringstream sub_msg;
+    sub_msg << "schema=" << ToString(subscription.schema)
+            << "|stype_in=" << ToString(subscription.stype_in);
+    Subscribe(
+        sub_msg.str(), subscription.symbols,
+        std::holds_alternative<LiveSubscription::Snapshot>(subscription.start));
+  }
 }
 
 std::string LiveBlocking::DecodeChallenge() {

@@ -6,8 +6,7 @@
 
 #include "databento/ireadable.hpp"
 
-namespace databento {
-namespace detail {
+namespace databento::detail {
 // Copyable, thread-safe, unidirectional channel.
 class SharedChannel : public IReadable {
  public:
@@ -28,5 +27,4 @@ class SharedChannel : public IReadable {
 
   std::shared_ptr<Channel> channel_;
 };
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail

@@ -3,8 +3,7 @@
 #include "databento/fixed_price.hpp"
 #include "stream_op_helper.hpp"
 
-namespace databento {
-namespace v3 {
+namespace databento::v3 {
 
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.ts_recv == rhs.ts_recv &&
@@ -158,5 +157,4 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("leg_side", instr_def_msg.leg_side)
       .Finish();
 }
-}  // namespace v3
-}  // namespace databento
+}  // namespace databento::v3

@@ -6,8 +6,7 @@
 
 #include "databento/detail/scoped_fd.hpp"  // ScopedFd
 
-namespace databento {
-namespace detail {
+namespace databento::detail {
 class TcpClient {
  public:
   enum class Status : std::uint8_t {
@@ -47,5 +46,4 @@ class TcpClient {
 
   ScopedFd socket_;
 };
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail

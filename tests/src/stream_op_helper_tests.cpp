@@ -9,8 +9,7 @@
 #include "databento/enums.hpp"
 #include "stream_op_helper.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 TEST(StreamOpHelperTests, TestEmpty) {
   std::ostringstream stream;
 
@@ -94,5 +93,4 @@ TEST(StreamOpHelperTests, TestCharArray) {
   target.AddField("array", test_data).Finish();
   ASSERT_EQ(stream.str(), R"({array = "USD"})");
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

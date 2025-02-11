@@ -2,9 +2,7 @@
 
 #include "databento/detail/scoped_thread.hpp"
 
-namespace databento {
-namespace detail {
-namespace test {
+namespace databento::detail ::test {
 TEST(ScopedThreadTests, CtorSimple) {
   bool flag = false;
   {
@@ -54,6 +52,4 @@ TEST(ScopedThreadTests, Join) {
   ASSERT_TRUE(flag1);
   ASSERT_FALSE(target.Joinable());
 }
-}  // namespace test
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail::test

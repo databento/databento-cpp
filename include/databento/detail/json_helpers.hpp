@@ -15,8 +15,7 @@ namespace httplib {
 using Params = std::multimap<std::string, std::string>;
 }
 
-namespace databento {
-namespace detail {
+namespace databento::detail {
 void SetIfNotEmpty(httplib::Params* params, const std::string& key,
                    const std::string& value);
 void SetIfNotEmpty(httplib::Params* params, const std::string& key,
@@ -95,5 +94,4 @@ date::year_month_day ParseAt(const std::string& endpoint,
                              const nlohmann::json& json,
                              const std::string& key);
 
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail

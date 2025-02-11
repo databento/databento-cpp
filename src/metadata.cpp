@@ -1,6 +1,6 @@
 #include "databento/metadata.hpp"
 
-#include <sstream>
+#include <ostream>
 
 #include "stream_op_helper.hpp"
 

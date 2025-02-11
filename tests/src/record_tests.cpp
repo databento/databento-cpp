@@ -9,8 +9,7 @@
 #include "databento/publishers.hpp"
 #include "databento/record.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 TEST(RecordTests, TestRecordToString) {
   TradeMsg target{
       RecordHeader{sizeof(TradeMsg) / RecordHeader::kLengthMultiplier,
@@ -283,5 +282,4 @@ TEST(RecordTests, TestImbalanceMsgToString) {
     significant_imbalance = 'N'
 })");
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

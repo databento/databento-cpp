@@ -4,8 +4,7 @@
 #include "databento/enums.hpp"
 #include "databento/symbology.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 TEST(SymbologyTests, TestSymbologyResolutionToString) {
   const SymbologyResolution target{
       {
@@ -42,5 +41,4 @@ TEST(SymbologyTests, TestSymbologyResolutionToString) {
     FAIL() << res;
   }
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

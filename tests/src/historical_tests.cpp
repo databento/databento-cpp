@@ -35,14 +35,13 @@ int unsetenv(const char* name) { return ::_putenv_s(name, ""); }
 }  // namespace
 #endif
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 constexpr auto kApiKey = "HIST_SECRET";
 
 class HistoricalTests : public ::testing::Test {
  protected:
   mock::MockHttpServer mock_server_{kApiKey};
-  std::unique_ptr<ILogReceiver> logger_{new NullLogReceiver};
+  std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
 };
 
 TEST_F(HistoricalTests, TestBatchSubmitJob) {
@@ -632,9 +631,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
        UnixNanos{std::chrono::nanoseconds{1609160800000711344}}},
       {"ESH1"}, Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2,
       [&metadata_ptr](Metadata&& metadata) {
-        // no std::make_unique until C++14
-        metadata_ptr =
-            std::unique_ptr<Metadata>{new Metadata(std::move(metadata))};
+        metadata_ptr = std::make_unique<Metadata>(std::move(metadata));
       },
       [&mbo_records](const Record& record) {
         mbo_records.emplace_back(record.Get<MboMsg>());
@@ -809,5 +806,4 @@ TEST(HistoricalBuilderTests, TestSetKeyFromEnvMissing) {
   ASSERT_THROW(databento::HistoricalBuilder().SetKeyFromEnv().Build(),
                Exception);
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

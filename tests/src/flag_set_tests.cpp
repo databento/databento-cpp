@@ -2,8 +2,7 @@
 
 #include "databento/flag_set.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 TEST(FlagSetTests, TestBasic) {
   const FlagSet no_flags{};
   EXPECT_FALSE(no_flags.Any());
@@ -58,5 +57,4 @@ TEST(FlagSetTests, ConstantBitFieldEquivalence) {
   EXPECT_EQ(FlagSet::kBadTsRecv, FlagSet{}.SetBadTsRecv().Raw());
   EXPECT_EQ(FlagSet::kMaybeBadBook, FlagSet{}.SetMaybeBadBook().Raw());
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

@@ -5,7 +5,7 @@
 
 databento::ILogReceiver* databento::ILogReceiver::Default() {
   static const std::unique_ptr<ILogReceiver> gDefaultLogger{
-      new ConsoleLogReceiver{}};
+      std::make_unique<ConsoleLogReceiver>()};
   return gDefaultLogger.get();
 }
 

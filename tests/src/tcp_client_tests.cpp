@@ -6,13 +6,11 @@
 #include <mutex>
 #include <string>
 
-#include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/tcp_client.hpp"
 #include "databento/exceptions.hpp"
 #include "mock/mock_tcp_server.hpp"
 
-namespace databento {
-namespace test {
+namespace databento::tests {
 class TcpClientTests : public testing::Test {
  protected:
   TcpClientTests()
@@ -155,5 +153,4 @@ TEST_F(TcpClientTests, ReadAfterClose) {
   ASSERT_THROW(target_.ReadSome(buffer.data(), buffer.size()),
                databento::TcpError);
 }
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests

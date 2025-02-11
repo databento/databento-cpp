@@ -16,8 +16,8 @@ static std::sig_atomic_t volatile gSignal;
 
 int main() {
   databento::PitSymbolMap symbol_mappings;
-  std::unique_ptr<databento::ILogReceiver> log_receiver{
-      new databento::ConsoleLogReceiver{databento::LogLevel::Debug}};
+  auto log_receiver = std::make_unique<databento::ConsoleLogReceiver>(
+      databento::LogLevel::Debug);
 
   auto client = databento::LiveBuilder{}
                     .SetLogReceiver(log_receiver.get())

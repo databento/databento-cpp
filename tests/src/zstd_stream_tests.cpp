@@ -9,20 +9,16 @@
 #include "databento/detail/zstd_stream.hpp"
 #include "databento/enums.hpp"
 #include "databento/file_stream.hpp"
-#include "databento/ireadable.hpp"
 #include "mock/mock_io.hpp"
 
-namespace databento {
-namespace detail {
-namespace test {
+namespace databento::detail::tests {
 TEST(ZstdStreamTests, TestMultiFrameFiles) {
   constexpr auto kRecordCount = 8;
   const std::string file_path =
       TEST_BUILD_DIR "/data/multi-frame.definition.v1.dbn.zst";
 
   databento::detail::ZstdDecodeStream target{
-      std::unique_ptr<databento::IReadable>{
-          new databento::InFileStream{file_path}}};
+      std::make_unique<databento::InFileStream>(file_path)};
   for (std::size_t i = 0; i < kRecordCount; ++i) {
     databento::InstrumentDefMsgV1 def_msg;
     target.ReadExact(reinterpret_cast<std::uint8_t*>(&def_msg),
@@ -37,7 +33,7 @@ TEST(ZstdStreamTests, TestIdentity) {
     source_data.emplace_back(i);
   }
   auto size = source_data.size() * sizeof(std::int64_t);
-  databento::test::mock::MockIo mock_io;
+  databento::tests::mock::MockIo mock_io;
   {
     ZstdCompressStream compressor{&mock_io};
     for (auto it = source_data.begin(); it != source_data.end(); it += 100) {
@@ -46,10 +42,10 @@ TEST(ZstdStreamTests, TestIdentity) {
     }
   }
   std::vector<std::uint8_t> res(size);
-  ZstdDecodeStream decode{std::unique_ptr<IReadable>{
-      new databento::test::mock::MockIo{std::move(mock_io)}}};
+  ZstdDecodeStream decode{
+      std::make_unique<databento::tests::mock::MockIo>(std::move(mock_io))
+
+  };
   decode.ReadExact(res.data(), size);
 }
-}  // namespace test
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail::tests

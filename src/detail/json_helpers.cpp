@@ -3,8 +3,7 @@
 #include <numeric>  // accumulate
 #include <sstream>  // istringstream
 
-namespace databento {
-namespace detail {
+namespace databento::detail {
 void SetIfNotEmpty(httplib::Params* params, const std::string& key,
                    const std::string& value) {
   if (!value.empty()) {
@@ -128,5 +127,4 @@ date::year_month_day ParseAt(const std::string& endpoint,
   }
   return start;
 }
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail

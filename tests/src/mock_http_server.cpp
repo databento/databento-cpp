@@ -6,10 +6,9 @@
 #include <fstream>   // ifstream
 #include <ios>       // streamsize
 #include <iostream>  // cerr
-#include <sstream>   // ostringstream
 #include <vector>
 
-using databento::mock::MockHttpServer;
+using databento::tests::mock::MockHttpServer;
 
 int MockHttpServer::ListenOnThread() {
   listen_thread_ =
@@ -45,7 +44,7 @@ void MockHttpServer::MockGetJson(
       resp.status = 401;
       return;
     }
-    auto _auth = req.get_header_value("Authorization");
+    [[maybe_unused]] auto _auth = req.get_header_value("Authorization");
     CheckParams(params, req);
     if (!warnings.empty()) {
       resp.set_header("X-Warning", warnings.dump());
@@ -65,7 +64,7 @@ void MockHttpServer::MockPostJson(
       resp.status = 401;
       return;
     }
-    auto _auth = req.get_header_value("Authorization");
+    [[maybe_unused]] auto _auth = req.get_header_value("Authorization");
     CheckFormParams(form_params, req);
     resp.set_content(json.dump(), "application/json");
     resp.status = 200;

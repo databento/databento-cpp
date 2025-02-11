@@ -49,11 +49,11 @@ int main() {
 
   const auto all_unit_prices = client.MetadataListUnitPrices(kGlbxMdp3);
   std::cout << "Unit prices:\n";
-  for (const auto& mode_and_prices : all_unit_prices) {
-    const auto* mode_str = ToString(mode_and_prices.mode);
-    for (const auto& schema_and_price : mode_and_prices.unit_prices) {
-      std::cout << "- (" << mode_str << ", " << schema_and_price.first
-                << "): " << schema_and_price.second << '\n';
+  for (const auto& [mode, unit_prices] : all_unit_prices) {
+    const auto* mode_str = ToString(mode);
+    for (const auto [schema, price] : unit_prices) {
+      std::cout << "- (" << mode_str << ", " << schema << "): " << price
+                << '\n';
     }
   }
   std::cout << '\n';

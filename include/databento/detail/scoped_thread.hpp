@@ -3,8 +3,7 @@
 #include <thread>
 #include <utility>  // forward, move
 
-namespace databento {
-namespace detail {
+namespace databento::detail {
 // An RAII thread that joins if necessary on destruction, like std::jthread in
 // C++20.
 class ScopedThread {
@@ -37,5 +36,4 @@ class ScopedThread {
  private:
   std::thread thread_;
 };
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail

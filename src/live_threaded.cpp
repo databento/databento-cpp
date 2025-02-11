@@ -59,17 +59,18 @@ LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, bool send_ts_out,
                            VersionUpgradePolicy upgrade_policy,
                            std::chrono::seconds heartbeat_interval)
-    : impl_{new Impl{log_receiver, std::move(key), std::move(dataset),
-                     send_ts_out, upgrade_policy, heartbeat_interval}} {}
+    : impl_{std::make_unique<Impl>(log_receiver, std::move(key),
+                                   std::move(dataset), send_ts_out,
+                                   upgrade_policy, heartbeat_interval)} {}
 
 LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, std::string gateway,
                            std::uint16_t port, bool send_ts_out,
                            VersionUpgradePolicy upgrade_policy,
                            std::chrono::seconds heartbeat_interval)
-    : impl_{new Impl{log_receiver, std::move(key), std::move(dataset),
-                     std::move(gateway), port, send_ts_out, upgrade_policy,
-                     heartbeat_interval}} {}
+    : impl_{std::make_unique<Impl>(
+          log_receiver, std::move(key), std::move(dataset), std::move(gateway),
+          port, send_ts_out, upgrade_policy, heartbeat_interval)} {}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 
@@ -91,6 +92,15 @@ databento::VersionUpgradePolicy LiveThreaded::UpgradePolicy() const {
 
 std::pair<bool, std::chrono::seconds> LiveThreaded::HeartbeatInterval() const {
   return impl_->blocking.HeartbeatInterval();
+}
+
+const std::vector<databento::LiveSubscription>& LiveThreaded::Subscriptions()
+    const {
+  return impl_->blocking.Subscriptions();
+}
+
+std::vector<databento::LiveSubscription>& LiveThreaded::Subscriptions() {
+  return impl_->blocking.Subscriptions();
 }
 
 void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
@@ -142,6 +152,8 @@ void LiveThreaded::Start(MetadataCallback metadata_callback,
 }
 
 void LiveThreaded::Reconnect() { impl_->blocking.Reconnect(); }
+
+void LiveThreaded::Resubscribe() { impl_->blocking.Resubscribe(); }
 
 void LiveThreaded::BlockForStop() {
   std::unique_lock<std::mutex> lock{impl_->last_cb_ret_mutex};

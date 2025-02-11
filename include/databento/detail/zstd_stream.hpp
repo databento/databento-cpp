@@ -11,8 +11,7 @@
 #include "databento/iwritable.hpp"
 #include "databento/log.hpp"
 
-namespace databento {
-namespace detail {
+namespace databento::detail {
 class ZstdDecodeStream : public IReadable {
  public:
   explicit ZstdDecodeStream(std::unique_ptr<IReadable> input);
@@ -54,5 +53,4 @@ class ZstdCompressStream : public IWritable {
   std::size_t in_size_;
   std::vector<std::uint8_t> out_buffer_;
 };
-}  // namespace detail
-}  // namespace databento
+}  // namespace databento::detail

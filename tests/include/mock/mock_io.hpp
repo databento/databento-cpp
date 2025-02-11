@@ -7,9 +7,7 @@
 #include "databento/ireadable.hpp"
 #include "databento/iwritable.hpp"
 
-namespace databento {
-namespace test {
-namespace mock {
+namespace databento::tests::mock {
 class MockIo : public databento::IWritable, public databento::IReadable {
  public:
   void WriteAll(const std::uint8_t* buffer, std::size_t length);
@@ -24,6 +22,4 @@ class MockIo : public databento::IWritable, public databento::IReadable {
   std::vector<std::uint8_t> contents_;
   std::ptrdiff_t read_idx_{0};
 };
-}  // namespace mock
-}  // namespace test
-}  // namespace databento
+}  // namespace databento::tests::mock

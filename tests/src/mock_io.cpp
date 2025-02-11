@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-using databento::test::mock::MockIo;
+using databento::tests::mock::MockIo;
 
 void MockIo::WriteAll(const std::uint8_t* buffer, std::size_t length) {
   contents_.insert(contents_.end(), buffer, buffer + length);

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.30.0 - 2025-02-11
+
+### Enhancements
+- Added `Resubscribe()` methods to `LiveBlocking` and `LiveThreaded` to make it easier
+  to resume a live session after losing the connection to the live gateway
+- Added `Subscriptions()` getter methods to `LiveBlocking` and `LiveThreaded` for
+  getting all active subscriptions
+- Added `CommoditySpot` `InstrumentClass` variant
+
 ## 0.29.0 - 2025-02-04
 
 ### Enhancements

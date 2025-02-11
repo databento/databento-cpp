@@ -10,6 +10,7 @@
 #include "databento/datetime.hpp"              // UnixNanos
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
 #include "databento/enums.hpp"                 // Schema, SType
+#include "databento/live_subscription.hpp"
 #include "databento/timeseries.hpp"  // MetadataCallback, RecordCallback
 
 namespace databento {
@@ -57,6 +58,8 @@ class LiveThreaded {
   // The the first member of the pair will be true, when the heartbeat interval
   // was overridden.
   std::pair<bool, std::chrono::seconds> HeartbeatInterval() const;
+  const std::vector<LiveSubscription>& Subscriptions() const;
+  std::vector<LiveSubscription>& Subscriptions();
 
   /*
    * Methods
@@ -86,6 +89,7 @@ class LiveThreaded {
              ExceptionCallback exception_callback);
   // Closes the current connection, and attempts to reconnect to the gateway.
   void Reconnect();
+  void Resubscribe();
   // Blocking wait with an optional timeout for the session to close when the
   // record_callback or the exception_callback return Stop.
   void BlockForStop();

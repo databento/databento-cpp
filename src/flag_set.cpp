@@ -17,12 +17,12 @@ std::ostream& operator<<(std::ostream& stream, FlagSet flag_set) {
       }};
 
   bool has_written_flag = false;
-  for (const auto& pair : kFlagsAndNames) {
-    if ((flag_set.*pair.first)()) {
+  for (const auto& [flag, name] : kFlagsAndNames) {
+    if ((flag_set.*flag)()) {
       if (has_written_flag) {
-        stream << " | " << pair.second;
+        stream << " | " << name;
       } else {
-        stream << pair.second;
+        stream << name;
         has_written_flag = true;
       }
     }

@@ -13,7 +13,7 @@
 
 #include "databento/exceptions.hpp"
 
-using databento::test::mock::MockTcpServer;
+using databento::tests::mock::MockTcpServer;
 
 MockTcpServer::MockTcpServer()
     : MockTcpServer([](MockTcpServer& self) { self.Serve(); }) {}

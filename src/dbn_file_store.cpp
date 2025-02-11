@@ -4,7 +4,6 @@
 #include <utility>  // move
 
 #include "databento/file_stream.hpp"
-#include "databento/ireadable.hpp"
 #include "databento/record.hpp"
 
 using databento::DbnFileStore;
@@ -15,8 +14,7 @@ DbnFileStore::DbnFileStore(const std::string& file_path)
 DbnFileStore::DbnFileStore(ILogReceiver* log_receiver,
                            const std::string& file_path,
                            VersionUpgradePolicy upgrade_policy)
-    : decoder_{log_receiver,
-               std::unique_ptr<IReadable>{new InFileStream{file_path}},
+    : decoder_{log_receiver, std::make_unique<InFileStream>(file_path),
                upgrade_policy} {}
 
 void DbnFileStore::Replay(const MetadataCallback& metadata_callback,

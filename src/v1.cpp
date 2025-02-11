@@ -11,8 +11,7 @@
 #include "databento/v3.hpp"
 #include "stream_op_helper.hpp"  // MakeString, StreamOpBuilder
 
-namespace databento {
-namespace v1 {
+namespace databento::v1 {
 v2::InstrumentDefMsg InstrumentDefMsg::ToV2() const {
   v2::InstrumentDefMsg ret{
       RecordHeader{
@@ -405,5 +404,4 @@ std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg) {
       .AddField("msg", system_msg.msg)
       .Finish();
 }
-}  // namespace v1
-}  // namespace databento
+}  // namespace databento::v1
