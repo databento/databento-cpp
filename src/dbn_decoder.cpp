@@ -85,9 +85,8 @@ DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
       input_{std::move(input)} {
   read_buffer_.reserve(kBufferCapacity);
   if (DetectCompression()) {
-    input_ =
-        std::unique_ptr<detail::ZstdDecodeStream>(new detail::ZstdDecodeStream(
-            std::move(input_), std::move(read_buffer_)));
+    input_ = std::make_unique<detail::ZstdDecodeStream>(
+        std::move(input_), std::move(read_buffer_));
     // Reinitialize buffer and get it into the same state as uncompressed input
     read_buffer_ = std::vector<std::uint8_t>();
     read_buffer_.reserve(kBufferCapacity);

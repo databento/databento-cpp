@@ -3,3 +3,5 @@ CMakeSettings.json
 vcpkg_installed
 .vs
 !*.zst
+.idea
+cmake-build*
