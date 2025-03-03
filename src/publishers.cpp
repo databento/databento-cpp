@@ -152,6 +152,12 @@ const char* ToString(Venue venue) {
     case Venue::Equs: {
       return "EQUS";
     }
+    case Venue::Ifus: {
+      return "IFUS";
+    }
+    case Venue::Ifll: {
+      return "IFLL";
+    }
     default: {
       return "Unknown";
     }
@@ -306,6 +312,12 @@ Venue FromString(const std::string& str) {
   if (str == "EQUS") {
     return Venue::Equs;
   }
+  if (str == "IFUS") {
+    return Venue::Ifus;
+  }
+  if (str == "IFLL") {
+    return Venue::Ifll;
+  }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -416,6 +428,12 @@ const char* ToString(Dataset dataset) {
     }
     case Dataset::EqusMini: {
       return "EQUS.MINI";
+    }
+    case Dataset::IfusImpact: {
+      return "IFUS.IMPACT";
+    }
+    case Dataset::IfllImpact: {
+      return "IFLL.IMPACT";
     }
     default: {
       return "Unknown";
@@ -534,6 +552,12 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "EQUS.MINI") {
     return Dataset::EqusMini;
+  }
+  if (str == "IFUS.IMPACT") {
+    return Dataset::IfusImpact;
+  }
+  if (str == "IFLL.IMPACT") {
+    return Dataset::IfllImpact;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -828,6 +852,18 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::XnysTradesEqus: {
       return Venue::Equs;
+    }
+    case Publisher::IfusImpactIfus: {
+      return Venue::Ifus;
+    }
+    case Publisher::IfusImpactXoff: {
+      return Venue::Xoff;
+    }
+    case Publisher::IfllImpactIfll: {
+      return Venue::Ifll;
+    }
+    case Publisher::IfllImpactXoff: {
+      return Venue::Xoff;
     }
     default: {
       throw InvalidArgumentError{
@@ -1127,6 +1163,18 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::XnysTradesEqus: {
       return Dataset::XnysTrades;
     }
+    case Publisher::IfusImpactIfus: {
+      return Dataset::IfusImpact;
+    }
+    case Publisher::IfusImpactXoff: {
+      return Dataset::IfusImpact;
+    }
+    case Publisher::IfllImpactIfll: {
+      return Dataset::IfllImpact;
+    }
+    case Publisher::IfllImpactXoff: {
+      return Dataset::IfllImpact;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -1425,6 +1473,18 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::XnysTradesEqus: {
       return "XNYS.TRADES.EQUS";
+    }
+    case Publisher::IfusImpactIfus: {
+      return "IFUS.IMPACT.IFUS";
+    }
+    case Publisher::IfusImpactXoff: {
+      return "IFUS.IMPACT.XOFF";
+    }
+    case Publisher::IfllImpactIfll: {
+      return "IFLL.IMPACT.IFLL";
+    }
+    case Publisher::IfllImpactXoff: {
+      return "IFLL.IMPACT.XOFF";
     }
     default: {
       return "Unknown";
@@ -1726,6 +1786,18 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "XNYS.TRADES.EQUS") {
     return Publisher::XnysTradesEqus;
+  }
+  if (str == "IFUS.IMPACT.IFUS") {
+    return Publisher::IfusImpactIfus;
+  }
+  if (str == "IFUS.IMPACT.XOFF") {
+    return Publisher::IfusImpactXoff;
+  }
+  if (str == "IFLL.IMPACT.IFLL") {
+    return Publisher::IfllImpactIfll;
+  }
+  if (str == "IFLL.IMPACT.XOFF") {
+    return Publisher::IfllImpactXoff;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

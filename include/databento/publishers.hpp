@@ -101,6 +101,10 @@ enum class Venue : std::uint16_t {
   Aspi = 46,
   // Databento US Equities - Consolidated
   Equs = 47,
+  // ICE Futures US
+  Ifus = 48,
+  // ICE Futures Europe (Financials)
+  Ifll = 49,
 };
 
 // A source of data.
@@ -175,6 +179,10 @@ enum class Dataset : std::uint16_t {
   XnysTradesbbo = 34,
   // Databento US Equities Mini
   EqusMini = 35,
+  // ICE Futures US iMpact
+  IfusImpact = 36,
+  // ICE Futures Europe (Financials) iMpact
+  IfllImpact = 37,
 };
 
 // A specific Venue from a specific data source.
@@ -371,6 +379,14 @@ enum class Publisher : std::uint16_t {
   EqusMiniEqus = 95,
   // NYSE Trades - Consolidated
   XnysTradesEqus = 96,
+  // ICE Futures US
+  IfusImpactIfus = 97,
+  // ICE Futures US - Off-Market Trades
+  IfusImpactXoff = 98,
+  // ICE Futures Europe (Financials)
+  IfllImpactIfll = 99,
+  // ICE Futures Europe (Financials) - Off-Market Trades
+  IfllImpactXoff = 100,
 };
 
 // Get a Publisher's Venue.
