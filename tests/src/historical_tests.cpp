@@ -803,6 +803,8 @@ TEST(HistoricalBuilderTests, TestSetKeyFromEnv) {
 }
 
 TEST(HistoricalBuilderTests, TestSetKeyFromEnvMissing) {
+  ASSERT_EQ(::unsetenv("DATABENTO_API_KEY"), 0)
+      << "Failed to set environment variable";
   ASSERT_THROW(databento::HistoricalBuilder().SetKeyFromEnv().Build(),
                Exception);
 }
