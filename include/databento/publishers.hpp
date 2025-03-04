@@ -105,6 +105,10 @@ enum class Venue : std::uint16_t {
   Ifus = 48,
   // ICE Futures Europe (Financials)
   Ifll = 49,
+  // Eurex Exchange
+  Xeur = 50,
+  // European Energy Exchange
+  Xeer = 51,
 };
 
 // A source of data.
@@ -183,6 +187,10 @@ enum class Dataset : std::uint16_t {
   IfusImpact = 36,
   // ICE Futures Europe (Financials) iMpact
   IfllImpact = 37,
+  // Eurex EOBI
+  XeurEobi = 38,
+  // European Energy Exchange EOBI
+  XeerEobi = 39,
 };
 
 // A specific Venue from a specific data source.
@@ -387,6 +395,10 @@ enum class Publisher : std::uint16_t {
   IfllImpactIfll = 99,
   // ICE Futures Europe (Financials) - Off-Market Trades
   IfllImpactXoff = 100,
+  // Eurex EOBI
+  XeurEobiXeur = 101,
+  // European Energy Exchange EOBI
+  XeerEobiXeer = 102,
 };
 
 // Get a Publisher's Venue.
