@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.32.0 - TBD
+
+### Enhancements
+- Upgraded default date version to 3.0.3
+
+### Breaking changes
+- Upgraded default cpp-httplib version to 0.20.0 which requires OpenSSL >= 3.0
+
 ## 0.31.0 - 2025-03-18
 
 ### Enhancements
@@ -261,8 +269,8 @@ for date fields were changed from strings or ints to `date::year_month_day`.
 - Added new publisher values for consolidated DBEQ.MAX
 - Added constructor to `WithTsOut` that updates `length` to the correct value to account
   for the extra 8 bytes
-- Upgrade default cpp-httplib version to 0.14.3 (last to still support OpenSSL 1.1)
-- Upgrade default nlohmann_json version to 3.11.3
+- Upgraded default cpp-httplib version to 0.14.3 (last to still support OpenSSL 1.1)
+- Upgraded default nlohmann_json version to 3.11.3
 
 ### Breaking changes
 - Changed default `upgrade_policy` to `Upgrade` so by default the primary record types
