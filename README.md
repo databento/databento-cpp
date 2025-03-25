@@ -59,7 +59,7 @@ target_link_libraries(example PRIVATE databento::databento)
 ### Dependencies
 
 You'll need to ensure the following dependencies are installed:
-- [OpenSSL](https://www.openssl.org/)
+- [OpenSSL](https://www.openssl.org/) (minimum version 3.0)
 - [Libcrypto](https://www.openssl.org/docs/man3.0/man7/crypto.html)
 - [Zstandard (zstd)](https://github.com/facebook/zstd)
 - [nlohmann\_json (header-only)](https://github.com/nlohmann/json)
