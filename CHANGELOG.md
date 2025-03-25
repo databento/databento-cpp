@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.32.0 - TBD
+## 0.32.0 - 2025-03-25
 
 ### Enhancements
 - Upgraded default date version to 3.0.3
