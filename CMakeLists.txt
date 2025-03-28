@@ -215,9 +215,6 @@ else()
 endif()
 # openSSL
 find_package(OpenSSL REQUIRED)
-if(OPENSSL_FOUND)
-  set(HTTPLIB_IS_USING_OPENSSL TRUE)
-endif()
 find_package(Zstd REQUIRED)
 find_package(Threads REQUIRED)
 
