@@ -163,7 +163,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
     find_package(httplib REQUIRED)
   endif()
 else()
-  set(httplib_version 0.14.3)
+  set(httplib_version 0.20.0)
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       httplib
@@ -195,7 +195,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_DATE)
     find_package(date REQUIRED)
   endif()
 else()
-  set(date_version 3.0.1)
+  set(date_version 3.0.3)
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       date_src
