@@ -111,8 +111,12 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 #
-# Model project dependencies
+# Project dependencies
 #
+
+find_package(OpenSSL REQUIRED)
+find_package(Zstd REQUIRED)
+find_package(Threads REQUIRED)
 
 include(FetchContent)
 # JSON
@@ -213,10 +217,6 @@ else()
   # Ignore compiler warnings in headers
   add_system_include_property(date)
 endif()
-# openSSL
-find_package(OpenSSL REQUIRED)
-find_package(Zstd REQUIRED)
-find_package(Threads REQUIRED)
 
 #
 # Platform-specific dependencies

@@ -50,6 +50,10 @@ if(ZSTD_FOUND AND NOT TARGET zstd::zstd)
       INTERFACE_INCLUDE_DIRECTORIES ${ZSTD_INCLUDE_DIR}
   )
 endif()
+# cpp-httplib only searches for zstd::libzstd
+if (NOT TARGET zstd::libzstd)
+  add_library(zstd::libzstd ALIAS zstd::zstd)
+endif()
 
 # Check if the Conan-provided target exists
 if(TARGET zstd::libzstd_static)

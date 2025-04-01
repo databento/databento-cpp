@@ -1,9 +1,10 @@
 # Changelog
 
-## 0.32.0 - 2025-04-01
+## 0.32.0 - 2025-04-02
 
 ### Enhancements
 - Upgraded default date version to 3.0.3
+- Updated `vcpkg` baseline
 
 ### Breaking changes
 - Upgraded default cpp-httplib version to 0.20.0 which requires OpenSSL >= 3.0
