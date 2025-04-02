@@ -13,10 +13,10 @@ add_test(
     ${CMAKE_COMMAND}
     -G "${CMAKE_GENERATOR}"
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-    -Ddatabento_DIR=${CMAKE_CURRENT_BINARY_DIR}/pkg/lib/cmake/databento
+    -Ddatabento_DIR=${CMAKE_CURRENT_BINARY_DIR}/pkg/${CMAKE_INSTALL_LIBDIR}/cmake/databento
     -Dnlohmann_json_DIR=${nlohmann_json_BINARY_DIR}
-    -Ddate_DIR=${CMAKE_CURRENT_BINARY_DIR}/pkg/lib/cmake/date
-    -Dhttplib_DIR=${CMAKE_CURRENT_BINARY_DIR}/pkg/lib/cmake/httplib
+    -Ddate_DIR=${CMAKE_CURRENT_BINARY_DIR}/pkg/${CMAKE_INSTALL_LIBDIR}/cmake/date
+    -Dhttplib_DIR=${CMAKE_CURRENT_BINARY_DIR}/pkg/${CMAKE_INSTALL_LIBDIR}/cmake/httplib
     ${CMAKE_CURRENT_SOURCE_DIR}/project
 )
 # Build test project

@@ -111,8 +111,12 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 #
-# Model project dependencies
+# Project dependencies
 #
+
+find_package(OpenSSL REQUIRED)
+find_package(Zstd REQUIRED)
+find_package(Threads REQUIRED)
 
 include(FetchContent)
 # JSON
@@ -163,7 +167,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
     find_package(httplib REQUIRED)
   endif()
 else()
-  set(httplib_version 0.14.3)
+  set(httplib_version 0.20.0)
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       httplib
@@ -195,7 +199,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_DATE)
     find_package(date REQUIRED)
   endif()
 else()
-  set(date_version 3.0.1)
+  set(date_version 3.0.3)
   if(CMAKE_VERSION VERSION_LESS 3.24)
     FetchContent_Declare(
       date_src
@@ -213,13 +217,6 @@ else()
   # Ignore compiler warnings in headers
   add_system_include_property(date)
 endif()
-# openSSL
-find_package(OpenSSL REQUIRED)
-if(OPENSSL_FOUND)
-  set(HTTPLIB_IS_USING_OPENSSL TRUE)
-endif()
-find_package(Zstd REQUIRED)
-find_package(Threads REQUIRED)
 
 #
 # Platform-specific dependencies

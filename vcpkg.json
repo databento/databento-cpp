@@ -9,5 +9,5 @@
     "openssl",
     "zstd"
   ],
-  "builtin-baseline": "d1e11918f5c88c1dd364b93e1452fea69bacd479"
+  "builtin-baseline": "b02e341c927f16d991edbd915d8ea43eac52096c"
 }

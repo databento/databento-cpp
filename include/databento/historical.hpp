@@ -37,6 +37,9 @@ class Historical {
    * Batch API
    */
 
+  // Submits a new batch job and returns a description of the job.
+  //
+  // WARNING: Calling this method will incur a cost.
   BatchJob BatchSubmitJob(const std::string& dataset,
                           const std::vector<std::string>& symbols,
                           Schema schema,
@@ -63,11 +66,13 @@ class Historical {
                           bool split_symbols, SplitDuration split_duration,
                           std::uint64_t split_size, Delivery delivery,
                           SType stype_in, SType stype_out, std::uint64_t limit);
+  // Lists previous batch jobs.
   std::vector<BatchJob> BatchListJobs();
   std::vector<BatchJob> BatchListJobs(const std::vector<JobState>& states,
                                       UnixNanos since);
   std::vector<BatchJob> BatchListJobs(const std::vector<JobState>& states,
                                       const std::string& since);
+  // Lists all files associated with a batch job.
   std::vector<BatchFileDesc> BatchListFiles(const std::string& job_id);
   // Returns the paths of the downloaded files.
   std::vector<std::string> BatchDownload(const std::string& output_dir,
@@ -160,12 +165,15 @@ class Historical {
    * Timeseries API
    */
 
-  // Stream historical market data to `record_callback`. This method will
-  // return only after all data has been returned or `record_callback` returns
-  // `KeepGoing::Stop`.
+  // Stream historical market data to `record_callback`. `metadata_callback`
+  // will be called exactly once, before any calls to `record_callback`.
+  // This method will return only after all data has been returned or
+  // `record_callback` returns `KeepGoing::Stop`.
   //
   // NOTE: This method spawns a thread, however, the callbacks will be called
   // from the current thread.
+  //
+  // WARNING: Calling this method will incur a cost.
   void TimeseriesGetRange(const std::string& dataset,
                           const DateTimeRange<UnixNanos>& datetime_range,
                           const std::vector<std::string>& symbols,
@@ -174,13 +182,6 @@ class Historical {
                           const DateTimeRange<std::string>& datetime_range,
                           const std::vector<std::string>& symbols,
                           Schema schema, const RecordCallback& record_callback);
-  // Stream historical market data to `record_callback`. `metadata_callback`
-  // will be called exactly once, before any calls to `record_callback`.
-  // This method will return only after all data has been returned or
-  // `record_callback` returns `KeepGoing::Stop`.
-  //
-  // NOTE: This method spawns a thread, however, the callbacks will be called
-  // from the current thread.
   void TimeseriesGetRange(const std::string& dataset,
                           const DateTimeRange<UnixNanos>& datetime_range,
                           const std::vector<std::string>& symbols,
@@ -199,6 +200,8 @@ class Historical {
   // object for replaying the data in `file_path`.
   //
   // If a file at `file_path` already exists, it will be overwritten.
+  //
+  // WARNING: Calling this method will incur a cost.
   DbnFileStore TimeseriesGetRangeToFile(
       const std::string& dataset,
       const DateTimeRange<UnixNanos>& datetime_range,
