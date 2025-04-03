@@ -115,7 +115,14 @@ endif()
 #
 
 find_package(OpenSSL REQUIRED)
-find_package(Zstd REQUIRED)
+find_package(zstd REQUIRED)
+if(NOT TARGET zstd::libzstd)
+  if(TARGET zstd::libzstd_shared)
+    add_library(zstd::libzstd ALIAS zstd::libzstd_shared)
+  elseif(TARGET zstd::libzstd_static)
+    add_library(zstd::libzstd ALIAS zstd::libzstd_static)
+  endif()
+endif()
 find_package(Threads REQUIRED)
 
 include(FetchContent)
@@ -239,7 +246,7 @@ target_link_libraries(
     OpenSSL::Crypto
     OpenSSL::SSL
     Threads::Threads
-    ${ZSTD_TARGET}
+    zstd::libzstd
 )
 
 target_compile_definitions(
@@ -376,7 +383,7 @@ install(
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     # Install so it can be used in databentoConfig.cmake
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindZstd.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Findzstd.cmake
   DESTINATION
     ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )

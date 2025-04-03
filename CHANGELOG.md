@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.32.1 - TBD
+
+### Bug fixes
+- Fixed CMake error when `zstdTargets.cmake` exists
+- Reverted `vcpkg` baseline change
+
 ## 0.32.0 - 2025-04-02
 
 ### Enhancements
