@@ -1,7 +1,23 @@
 include(FindPackageHandleStandardArgs)
 
-find_library(ZSTD_LIBRARY NAMES zstd)
+if(WIN32)
+  find_library(ZSTD_SHARED_LIBRARY NAMES zstd)
+else()
+  set(_previous_suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".dylib")
+  find_library(ZSTD_SHARED_LIBRARY NAMES zstd)
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".lib")
+  find_library(ZSTD_STATIC_LIBRARY NAMES zstd zstd_static zstd-static)
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ${_previous_suffixes})
+endif()
+
 find_path(ZSTD_INCLUDE_DIR NAMES zstd.h)
+
+if(ZSTD_SHARED_LIBRARY)
+  set(ZSTD_LIBRARY "${ZSTD_SHARED_LIBRARY}")
+elseif(ZSTD_STATIC_LIBRARY)
+  set(ZSTD_LIBRARY "${ZSTD_STATIC_LIBRARY}")
+endif()
 
 #
 # Detect version
@@ -25,7 +41,7 @@ if(ZSTD_INCLUDE_DIR)
 endif()
 
 find_package_handle_standard_args(
-  Zstd
+  zstd
   REQUIRED_VARS ZSTD_LIBRARY ZSTD_INCLUDE_DIR
   VERSION_VAR ZSTD_VERSION
 )
@@ -34,35 +50,36 @@ if(ZSTD_FOUND)
   mark_as_advanced(ZSTD_LIBRARY)
   mark_as_advanced(ZSTD_INCLUDE_DIR)
   mark_as_advanced(ZSTD_VERSION)
+else()
+  # Error out if neither target is found
+  message(FATAL_ERROR "zstd target not found.")
 endif()
 
 #
 # Create namespaced target
 #
-if(ZSTD_FOUND AND NOT TARGET zstd::zstd)
-  add_library(zstd::zstd UNKNOWN IMPORTED)
+if(NOT TARGET zstd::libzstd)
+  if(ZSTD_SHARED_LIBRARY)
+    if(WIN32)
+      add_library(zstd::libzstd UNKNOWN IMPORTED)
+    else()
+      add_library(zstd::libzstd SHARED IMPORTED)
+    endif()
+    if (NOT TARGET zstd::libzstd_shared)
+      add_library(zstd::libzstd_shared ALIAS zstd::libzstd)
+    endif()
+  else()
+    add_library(zstd::libzstd STATIC IMPORTED)
+    if (NOT TARGET zstd::libzstd_static)
+      add_library(zstd::libzstd_static ALIAS zstd::libzstd)
+    endif()
+  endif()
   set_target_properties(
-    zstd::zstd
+    zstd::libzstd
     PROPERTIES
       IMPORTED_LOCATION ${ZSTD_LIBRARY}
       # target_include_directories doesn't work with unknown imported libraries in older
       # cmake versions
       INTERFACE_INCLUDE_DIRECTORIES ${ZSTD_INCLUDE_DIR}
   )
-endif()
-# cpp-httplib only searches for zstd::libzstd
-if (NOT TARGET zstd::libzstd)
-  add_library(zstd::libzstd ALIAS zstd::zstd)
-endif()
-
-# Check if the Conan-provided target exists
-if(TARGET zstd::libzstd_static)
-  # If the Conan target exists, use it
-  set(ZSTD_TARGET zstd::libzstd_static)
-elseif(TARGET zstd::zstd)
-  # If the system-installed target exists, use it
-  set(ZSTD_TARGET zstd::zstd)
-else()
-  # Error out if neither target is found
-  message(FATAL_ERROR "Zstd target not found.")
 endif()

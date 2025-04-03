@@ -8,10 +8,17 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 # Add dependencies here so end-user doesn't have to
 include(CMakeFindDependencyMacro)
 find_dependency(date)
+find_dependency(zstd)
+if(NOT TARGET zstd::libzstd)
+  if(TARGET zstd::libzstd_shared)
+    add_library(zstd::libzstd ALIAS zstd::libzstd_shared)
+  elseif(TARGET zstd::libzstd_static)
+    add_library(zstd::libzstd ALIAS zstd::libzstd_static)
+  endif()
+endif()
 find_dependency(httplib)
 find_dependency(nlohmann_json)
 find_dependency(Threads)
-find_dependency(Zstd)
 
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 
