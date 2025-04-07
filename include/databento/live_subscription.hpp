@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <variant>
 #include <vector>
@@ -17,5 +18,6 @@ struct LiveSubscription {
   Schema schema;
   SType stype_in;
   Start start;
+  std::uint32_t id{};
 };
 }  // namespace databento

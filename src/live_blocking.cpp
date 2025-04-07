@@ -8,6 +8,7 @@
 #include <cstddef>  // ptrdiff_t
 #include <cstdlib>
 #include <ios>  // hex, setfill, setw
+#include <limits>
 #include <sstream>
 #include <variant>
 
@@ -66,42 +67,46 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in, UnixNanos start) {
+  IncrementSubCounter();
   std::ostringstream sub_msg;
   sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
-          << "|start=" << start.time_since_epoch().count();
+          << "|start=" << start.time_since_epoch().count()
+          << "|id=" << std::to_string(sub_counter_);
   Subscribe(sub_msg.str(), symbols, false);
   subscriptions_.emplace_back(
-      LiveSubscription{symbols, schema, stype_in, start});
+      LiveSubscription{symbols, schema, stype_in, start, sub_counter_});
 }
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in,
                              const std::string& start) {
+  IncrementSubCounter();
   std::ostringstream sub_msg;
-  sub_msg << "schema=" << ToString(schema)
-          << "|stype_in=" << ToString(stype_in);
+  sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
+          << "|id=" << std::to_string(sub_counter_);
   if (!start.empty()) {
     sub_msg << "|start=" << start;
   }
   Subscribe(sub_msg.str(), symbols, false);
   if (start.empty()) {
-    subscriptions_.emplace_back(LiveSubscription{symbols, schema, stype_in,
-                                                 LiveSubscription::NoStart{}});
+    subscriptions_.emplace_back(LiveSubscription{
+        symbols, schema, stype_in, LiveSubscription::NoStart{}, sub_counter_});
   } else {
     subscriptions_.emplace_back(
-        LiveSubscription{symbols, schema, stype_in, start});
+        LiveSubscription{symbols, schema, stype_in, start, sub_counter_});
   }
 }
 
 void LiveBlocking::SubscribeWithSnapshot(
     const std::vector<std::string>& symbols, Schema schema, SType stype_in) {
+  IncrementSubCounter();
   std::ostringstream sub_msg;
-  sub_msg << "schema=" << ToString(schema)
-          << "|stype_in=" << ToString(stype_in);
+  sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
+          << "|id=" << std::to_string(sub_counter_);
 
   Subscribe(sub_msg.str(), symbols, true);
-  subscriptions_.emplace_back(LiveSubscription{symbols, schema, stype_in,
-                                               LiveSubscription::Snapshot{}});
+  subscriptions_.emplace_back(LiveSubscription{
+      symbols, schema, stype_in, LiveSubscription::Snapshot{}, sub_counter_});
 }
 
 void LiveBlocking::Subscribe(const std::string& sub_msg,
@@ -182,6 +187,7 @@ void LiveBlocking::Stop() { client_.Close(); }
 void LiveBlocking::Reconnect() {
   log_receiver_->Receive(LogLevel::Info, "Reconnecting");
   client_ = detail::TcpClient{gateway_, port_};
+  sub_counter_ = 0;
   session_id_ = this->Authenticate();
 }
 
@@ -191,9 +197,11 @@ void LiveBlocking::Resubscribe() {
         std::holds_alternative<std::string>(subscription.start)) {
       subscription.start = LiveSubscription::NoStart{};
     }
+    sub_counter_ = std::max(sub_counter_, subscription.id);
     std::ostringstream sub_msg;
     sub_msg << "schema=" << ToString(subscription.schema)
-            << "|stype_in=" << ToString(subscription.stype_in);
+            << "|stype_in=" << ToString(subscription.stype_in)
+            << "|id=" << std::to_string(sub_counter_);
     Subscribe(
         sub_msg.str(), subscription.symbols,
         std::holds_alternative<LiveSubscription::Snapshot>(subscription.start));
@@ -375,6 +383,16 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
                                "Failed to authenticate: " + err_details};
   }
   return session_id;
+}
+
+void LiveBlocking::IncrementSubCounter() {
+  if (sub_counter_ == std::numeric_limits<uint32_t>::max()) {
+    log_receiver_->Receive(
+        LogLevel::Warning,
+        "[LiveBlocking::Subscribe] Exhausted all subscription IDs");
+  } else {
+    ++sub_counter_;
+  }
 }
 
 databento::detail::TcpClient::Result LiveBlocking::FillBuffer(

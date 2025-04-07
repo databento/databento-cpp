@@ -96,6 +96,7 @@ class LiveBlocking {
   std::string GenerateCramReply(const std::string& challenge_key);
   std::string EncodeAuthReq(const std::string& auth);
   std::uint64_t DecodeAuthResp();
+  void IncrementSubCounter();
   void Subscribe(const std::string& sub_msg,
                  const std::vector<std::string>& symbols, bool use_snapshot);
   detail::TcpClient::Result FillBuffer(std::chrono::milliseconds timeout);
@@ -113,6 +114,7 @@ class LiveBlocking {
   VersionUpgradePolicy upgrade_policy_;
   std::chrono::seconds heartbeat_interval_;
   detail::TcpClient client_;
+  std::uint32_t sub_counter_{};
   std::vector<LiveSubscription> subscriptions_;
   // Must be 8-byte aligned for records
   alignas(RecordHeader) std::array<char, kMaxStrLen> read_buffer_{};

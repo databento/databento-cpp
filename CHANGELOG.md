@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.33.0 - TBD
+
+##### Enhancements
+- Added `id` field to `LiveSubscription` requests, which will be used for improved error
+  messages
+
 ## 0.32.1 - 2025-04-07
 
 ### Bug fixes

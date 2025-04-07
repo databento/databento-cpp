@@ -136,6 +136,7 @@ void MockLsgServer::SubscribeWithSnapshot(
   EXPECT_NE(received.find(std::string{"stype_in="} + ToString(stype)),
             std::string::npos);
   EXPECT_EQ(received.find("start="), std::string::npos);
+  EXPECT_NE(received.find("id="), std::string::npos);
   EXPECT_NE(received.find("snapshot=1"), std::string::npos);
 }
 
@@ -156,6 +157,7 @@ void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
   } else {
     EXPECT_NE(received.find(std::string{"start="} + start), std::string::npos);
   }
+  EXPECT_NE(received.find("id="), std::string::npos);
   EXPECT_NE(received.find("snapshot=0"), std::string::npos);
 }
 
