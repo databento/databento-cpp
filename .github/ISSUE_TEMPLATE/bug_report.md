@@ -22,5 +22,5 @@ Add here...
 ### Specifications
 
 - OS platform:
-- Rust version:
+- C++ compiler and compiler version:
 - `databento-cpp` version:
