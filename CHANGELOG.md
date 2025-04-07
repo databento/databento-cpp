@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.32.1 - TBD
+## 0.32.1 - 2025-04-07
 
 ### Bug fixes
 - Fixed CMake error when `zstdTargets.cmake` exists
