@@ -439,7 +439,8 @@ using trading_event::TradingEvent;
 
 // An enum for representing unknown, true, or false values. Equivalent to a
 // std::optional<bool>.
-enum class TriState : char {
+namespace tri_state {
+enum TriState : char {
   // The value is not applicable or not known.
   NotAvailable = '~',
   // False
@@ -447,6 +448,46 @@ enum class TriState : char {
   // True
   Yes = 'Y',
 };
+}  // namespace tri_state
+using tri_state::TriState;
+
+namespace error_code {
+enum ErrorCode : std::uint8_t {
+  // The authentication step failed.
+  AuthFailed = 1,
+  // The user account or API key were deactivated.
+  ApiKeyDeactivated = 2,
+  // The user has exceeded their open connection limit
+  ConnectionLimitExceeded = 3,
+  // One or more symbols failed to resolve.
+  SymbolResolutionFailed = 4,
+  // There was an issue with a subscription request (other than symbol
+  // resolution).
+  InvalidSubscription = 5,
+  // An error occurred in the gateway.
+  InternalError = 6,
+
+  Unset = 255,
+};
+}  // namespace error_code
+using error_code::ErrorCode;
+
+namespace system_code {
+enum SystemCode : std::uint8_t {
+  // A message sent in the absence of other records to indicate the connection
+  // remains open.
+  Heartbeat = 0,
+  // An acknowledgement of a subscription request.
+  SubscriptionAck = 1,
+  // The gateway has detected this session is falling behind real-time.
+  SlowReaderWarning = 2,
+  // Indicates a replay subscription has caught up with real-time data.
+  ReplayCompleted = 3,
+
+  Unset = 255,
+};
+}  // namespace system_code
+using system_code::SystemCode;
 
 // Convert a HistoricalGateway to a URL.
 const char* UrlFromGateway(HistoricalGateway gateway);
@@ -474,6 +515,8 @@ const char* ToString(StatusReason status_reason);
 const char* ToString(TradingEvent trading_event);
 const char* ToString(TriState tri_state);
 const char* ToString(VersionUpgradePolicy upgrade_policy);
+const char* ToString(ErrorCode error_code);
+const char* ToString(SystemCode system_code);
 
 std::ostream& operator<<(std::ostream& out, Schema schema);
 std::ostream& operator<<(std::ostream& out, Encoding encoding);
@@ -501,6 +544,8 @@ std::ostream& operator<<(std::ostream& out, TradingEvent trading_event);
 std::ostream& operator<<(std::ostream& out, TriState tri_state);
 std::ostream& operator<<(std::ostream& out,
                          VersionUpgradePolicy upgrade_policy);
+std::ostream& operator<<(std::ostream& out, ErrorCode error_code);
+std::ostream& operator<<(std::ostream& out, SystemCode system_code);
 
 template <>
 Schema FromString(const std::string& str);

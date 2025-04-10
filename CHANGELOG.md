@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.34.0 - TBD
+
+### Enhancements
+- Added `SystemCode` and `ErrorCode` enums to indicate types of system and error
+  messages
+- Converting a `v1::SystemMsg` to a `v2::SystemMsg` now sets to `code` to the heartbeat
+  value
+
+### Breaking changes
+- Changed type of `code` field in `SystemMsg` to `SystemCode`
+- Changed type of `code` field in `ErrorMsg` to `ErrorCode`
+
+### Bug fixes
+- Changed `TriState` to a regular enum to handle unexpected values
+
 ## 0.33.0 - 2025-04-15
 
 ### Enhancements

@@ -760,6 +760,52 @@ const char* ToString(VersionUpgradePolicy upgrade_policy) {
   }
 }
 
+const char* ToString(ErrorCode error_code) {
+  switch (error_code) {
+    case ErrorCode::AuthFailed: {
+      return "auth_failed";
+    }
+    case ErrorCode::ApiKeyDeactivated: {
+      return "api_key_deactivated";
+    }
+    case ErrorCode::ConnectionLimitExceeded: {
+      return "connection_limit_exceeded";
+    }
+    case ErrorCode::SymbolResolutionFailed: {
+      return "symbol_resolution_failed";
+    }
+    case ErrorCode::InvalidSubscription: {
+      return "invalid_subscription";
+    }
+    case ErrorCode::InternalError: {
+      return "internal_error";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
+const char* ToString(SystemCode system_code) {
+  switch (system_code) {
+    case SystemCode::Heartbeat: {
+      return "heartbeat";
+    }
+    case SystemCode::SubscriptionAck: {
+      return "subscription_ack";
+    }
+    case SystemCode::SlowReaderWarning: {
+      return "slow_reader_warning";
+    }
+    case SystemCode::ReplayCompleted: {
+      return "replay_completed";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
 std::ostream& operator<<(std::ostream& out, Schema schema) {
   out << ToString(schema);
   return out;
@@ -873,6 +919,16 @@ std::ostream& operator<<(std::ostream& out, TriState tri_state) {
 std::ostream& operator<<(std::ostream& out,
                          VersionUpgradePolicy upgrade_policy) {
   out << ToString(upgrade_policy);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, ErrorCode error_code) {
+  out << ToString(error_code);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, SystemCode system_code) {
+  out << ToString(system_code);
   return out;
 }
 

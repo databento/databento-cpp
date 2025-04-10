@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>  // strncmp
+#include <limits>
 #include <string>
 #include <tuple>  // tie
 #include <type_traits>
@@ -528,7 +529,7 @@ struct ErrorMsg {
 
   RecordHeader hd;
   std::array<char, 302> err;
-  std::uint8_t code;
+  ErrorCode code;
   std::uint8_t is_last;
 };
 static_assert(sizeof(ErrorMsg) == 320, "ErrorMsg size must match Rust");
@@ -560,12 +561,17 @@ struct SystemMsg {
   UnixNanos IndexTs() const { return hd.ts_event; }
   const char* Msg() const { return msg.data(); }
   bool IsHeartbeat() const {
-    return std::strncmp(msg.data(), "Heartbeat", 9) == 0;
+    // Check if code is unset
+    if (static_cast<std::uint8_t>(code) ==
+        std::numeric_limits<std::uint8_t>::max()) {
+      return std::strncmp(msg.data(), "Heartbeat", 9) == 0;
+    }
+    return code == SystemCode::Heartbeat;
   }
 
   RecordHeader hd;
   std::array<char, 303> msg;
-  std::uint8_t code;
+  SystemCode code;
 };
 static_assert(sizeof(SystemMsg) == 320, "SystemMsg size must match Rust");
 static_assert(alignof(SystemMsg) == 8, "Must have 8-byte alignment");
