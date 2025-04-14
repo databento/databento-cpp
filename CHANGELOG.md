@@ -2,9 +2,12 @@
 
 ## 0.33.0 - TBD
 
-##### Enhancements
+### Enhancements
 - Added `id` field to `LiveSubscription` requests, which will be used for improved error
   messages
+
+### Breaking changes
+- Changed `DbnDecoder`, `FileStream`, `IReadable`, `IWritable` to work on `byte`s
 
 ## 0.32.1 - 2025-04-07
 

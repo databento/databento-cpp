@@ -10,7 +10,7 @@
 
 using databento::HttpRequestError;
 
-std::string HttpRequestError::BuildMessage(const std::string& request_path,
+std::string HttpRequestError::BuildMessage(std::string_view request_path,
                                            httplib::Error error_code) {
   std::ostringstream err_msg;
   err_msg << "Request to " << request_path << " failed with " << error_code;
@@ -32,9 +32,9 @@ std::string TcpError::BuildMessage(int err_num, std::string message) {
 
 using databento::HttpResponseError;
 
-std::string HttpResponseError::BuildMessage(const std::string& request_path,
+std::string HttpResponseError::BuildMessage(std::string_view request_path,
                                             std::int32_t status_code,
-                                            const std::string& response_body) {
+                                            std::string_view response_body) {
   std::ostringstream err_msg;
   err_msg << "Received an error response from request to " << request_path
           << " with status " << status_code << " and body '" << response_body
@@ -44,9 +44,9 @@ std::string HttpResponseError::BuildMessage(const std::string& request_path,
 
 using databento::InvalidArgumentError;
 
-std::string InvalidArgumentError::BuildMessage(const std::string& method_name,
-                                               const std::string& param_name,
-                                               const std::string& details) {
+std::string InvalidArgumentError::BuildMessage(std::string_view method_name,
+                                               std::string_view param_name,
+                                               std::string_view details) {
   std::ostringstream err_msg;
   err_msg << "Invalid argument '" << param_name << "' to " << method_name << ' '
           << details;
@@ -56,7 +56,7 @@ std::string InvalidArgumentError::BuildMessage(const std::string& method_name,
 using databento::JsonResponseError;
 
 JsonResponseError JsonResponseError::ParseError(
-    const std::string& method_name,
+    std::string_view method_name,
     const nlohmann::json::parse_error& parse_error) {
   std::ostringstream err_msg;
   err_msg << "Error parsing JSON response to " << method_name << ' '
@@ -64,7 +64,7 @@ JsonResponseError JsonResponseError::ParseError(
   return JsonResponseError{err_msg.str()};
 }
 
-JsonResponseError JsonResponseError::MissingKey(const std::string& path,
+JsonResponseError JsonResponseError::MissingKey(std::string_view path,
                                                 const nlohmann::json& key) {
   std::ostringstream err_msg;
   err_msg << "Missing key '" << key << "' in response for " << path;
@@ -72,7 +72,7 @@ JsonResponseError JsonResponseError::MissingKey(const std::string& path,
 }
 
 JsonResponseError JsonResponseError::TypeMismatch(
-    const std::string& method_name, const std::string& expected_type_name,
+    std::string_view method_name, std::string_view expected_type_name,
     const nlohmann::json& json) {
   std::ostringstream err_msg;
   err_msg << "Expected JSON " << expected_type_name << " response for "
@@ -81,7 +81,7 @@ JsonResponseError JsonResponseError::TypeMismatch(
 }
 
 JsonResponseError JsonResponseError::TypeMismatch(
-    const std::string& method_name, const std::string& expected_type_name,
+    std::string_view method_name, std::string_view expected_type_name,
     const nlohmann::json& key, const nlohmann::json& value) {
   std::ostringstream err_msg;
   err_msg << "Expected " << expected_type_name
@@ -92,8 +92,8 @@ JsonResponseError JsonResponseError::TypeMismatch(
 
 using databento::LiveApiError;
 
-LiveApiError LiveApiError::UnexpectedMsg(const std::string& message,
-                                         const std::string& response) {
+LiveApiError LiveApiError::UnexpectedMsg(std::string_view message,
+                                         std::string_view response) {
   std::ostringstream err_msg;
   err_msg << message << " with response '" << response << '\'';
   return LiveApiError{err_msg.str()};

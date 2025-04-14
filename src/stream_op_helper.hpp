@@ -8,6 +8,7 @@
 #include <ostream>  // ostream
 #include <sstream>  // stringstream
 #include <string>
+#include <string_view>
 #include <utility>  // move
 
 #include "databento/datetime.hpp"  // TimeDeltaNanos, UnixNanos
@@ -29,6 +30,8 @@ class StreamOpHelper {
   }
 
   void FmtToStream(const std::string& val) { stream_ << std::quoted(val); }
+
+  void FmtToStream(std::string_view val) { stream_ << std::quoted(val); }
 
   void FmtToStream(const bool& val) {
     // otherwise bool is formatted (1|0)
@@ -62,7 +65,7 @@ class StreamOpHelper {
   }
 
  public:
-  StreamOpHelper(std::ostream& stream, const std::string& type_name,
+  StreamOpHelper(std::ostream& stream, std::string_view type_name,
                  std::string spacer, std::string indent)
       : stream_{stream},
         spacer_{std::move(spacer)},
@@ -75,7 +78,7 @@ class StreamOpHelper {
   }
 
   template <typename T>
-  StreamOpHelper& AddField(const std::string& field_name, const T& field_val) {
+  StreamOpHelper& AddField(std::string_view field_name, const T& field_val) {
     if (!is_first_) {
       stream_ << ',';
     }

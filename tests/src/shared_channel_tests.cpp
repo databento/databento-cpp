@@ -2,7 +2,7 @@
 
 #include <array>
 #include <chrono>
-#include <cstdint>
+#include <cstddef>
 #include <string>
 #include <thread>
 #include <vector>
@@ -16,7 +16,7 @@ class SharedChannelTests : public testing::Test {
  protected:
   void Write(const std::vector<std::string>& inputs) {
     for (const auto& input : inputs) {
-      target_.Write(reinterpret_cast<const std::uint8_t*>(input.data()),
+      target_.Write(reinterpret_cast<const std::byte*>(input.data()),
                     input.size());
       std::this_thread::sleep_for(std::chrono::milliseconds{10});
     }
@@ -30,7 +30,7 @@ class SharedChannelTests : public testing::Test {
 TEST_F(SharedChannelTests, TestReadExact) {
   write_thread_ = ScopedThread{
       [this] { this->Write({"parse", "stream", "tests", "end"}); }};
-  std::array<std::uint8_t, 16> buffer{};
+  std::array<std::byte, 16> buffer{};
   target_.ReadExact(buffer.data(), 3);
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "par");
   target_.ReadExact(buffer.data(), 8);
@@ -43,7 +43,7 @@ TEST_F(SharedChannelTests, TestReadExact) {
 TEST_F(SharedChannelTests, TestReadExactAfterFinished) {
   // write on same thread, so all reading happens after writing
   this->Write({"parse", "exact"});
-  std::array<std::uint8_t, 16> buffer{};
+  std::array<std::byte, 16> buffer{};
   target_.ReadExact(buffer.data(), 7);
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "parseex");
   // reset buffer
@@ -53,12 +53,12 @@ TEST_F(SharedChannelTests, TestReadExactAfterFinished) {
 }
 
 TEST_F(SharedChannelTests, TestInterleavedReadsAndWrites) {
-  std::array<std::uint8_t, 16> buffer{};
-  target_.Write(reinterpret_cast<const std::uint8_t*>("hello"), 5);
+  std::array<std::byte, 16> buffer{};
+  target_.Write(reinterpret_cast<const std::byte*>("hello"), 5);
   ASSERT_EQ(target_.ReadSome(buffer.data(), buffer.size()), 5);
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), "hello");
   buffer = {};
-  target_.Write(reinterpret_cast<const std::uint8_t*>("longer message"), 14);
+  target_.Write(reinterpret_cast<const std::byte*>("longer message"), 14);
   target_.Finish();
   target_.ReadSome(buffer.data(), 6);
   target_.ReadSome(&buffer[6], 1);
@@ -69,7 +69,7 @@ TEST_F(SharedChannelTests, TestInterleavedReadsAndWrites) {
 TEST_F(SharedChannelTests, TestReadSome) {
   write_thread_ = ScopedThread{
       [this] { this->Write({"parse", "stream", "tests", "some", "last"}); }};
-  std::array<std::uint8_t, 16> buffer{};
+  std::array<std::byte, 16> buffer{};
   std::string res;
   // -1 to keep last null byte
   while (res.size() < 23) {

@@ -15,7 +15,7 @@ InFileStream::InFileStream(const std::string& file_path)
   }
 }
 
-void InFileStream::ReadExact(std::uint8_t* buffer, std::size_t length) {
+void InFileStream::ReadExact(std::byte* buffer, std::size_t length) {
   const auto size = ReadSome(buffer, length);
   if (size != length) {
     std::ostringstream err_msg;
@@ -25,8 +25,7 @@ void InFileStream::ReadExact(std::uint8_t* buffer, std::size_t length) {
   }
 }
 
-std::size_t InFileStream::ReadSome(std::uint8_t* buffer,
-                                   std::size_t max_length) {
+std::size_t InFileStream::ReadSome(std::byte* buffer, std::size_t max_length) {
   stream_.read(reinterpret_cast<char*>(buffer),
                static_cast<std::streamsize>(max_length));
   return static_cast<std::size_t>(stream_.gcount());
@@ -42,7 +41,7 @@ OutFileStream::OutFileStream(const std::string& file_path)
   }
 }
 
-void OutFileStream::WriteAll(const std::uint8_t* buffer, std::size_t length) {
+void OutFileStream::WriteAll(const std::byte* buffer, std::size_t length) {
   stream_.write(reinterpret_cast<const char*>(buffer),
                 static_cast<std::streamsize>(length));
 }

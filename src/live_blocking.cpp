@@ -109,7 +109,7 @@ void LiveBlocking::SubscribeWithSnapshot(
       symbols, schema, stype_in, LiveSubscription::Snapshot{}, sub_counter_});
 }
 
-void LiveBlocking::Subscribe(const std::string& sub_msg,
+void LiveBlocking::Subscribe(std::string_view sub_msg,
                              const std::vector<std::string>& symbols,
                              bool use_snapshot) {
   static constexpr auto kMethodName = "Live::Subscribe";
@@ -139,10 +139,9 @@ databento::Metadata LiveBlocking::Start() {
   client_.WriteAll("start_session\n");
   client_.ReadExact(read_buffer_.data(), kMetadataPreludeSize);
   const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
-      reinterpret_cast<std::uint8_t*>(read_buffer_.data()),
-      kMetadataPreludeSize);
-  std::vector<std::uint8_t> meta_buffer(size);
-  client_.ReadExact(reinterpret_cast<char*>(meta_buffer.data()), size);
+      read_buffer_.data(), kMetadataPreludeSize);
+  std::vector<std::byte> meta_buffer(size);
+  client_.ReadExact(meta_buffer.data(), size);
   auto metadata = DbnDecoder::DecodeMetadataFields(version, meta_buffer);
   version_ = metadata.version;
   metadata.Upgrade(upgrade_policy_);
@@ -215,7 +214,8 @@ std::string LiveBlocking::DecodeChallenge() {
     throw LiveApiError{"Gateway closed socket during authentication"};
   }
   // first line is version
-  std::string response{read_buffer_.data(), buffer_size_};
+  std::string response{reinterpret_cast<const char*>(read_buffer_.data()),
+                       buffer_size_};
   {
     std::ostringstream log_ss;
     log_ss << "[LiveBlocking::DecodeChallenge] Challenge: " << response;
@@ -239,7 +239,8 @@ std::string LiveBlocking::DecodeChallenge() {
     if (buffer_size_ == 0) {
       throw LiveApiError{"Gateway closed socket during authentication"};
     }
-    response = {read_buffer_.data(), buffer_size_};
+    response = {reinterpret_cast<const char*>(read_buffer_.data()),
+                buffer_size_};
     next_nl_pos = response.find('\n', find_start);
   }
   const auto challenge_line =
@@ -282,10 +283,10 @@ std::uint64_t LiveBlocking::Authenticate() {
   return session_id;
 }
 
-std::string LiveBlocking::GenerateCramReply(const std::string& challenge_key) {
+std::string LiveBlocking::GenerateCramReply(std::string_view challenge_key) {
   std::array<unsigned char, SHA256_DIGEST_LENGTH> sha{};
   const unsigned char* sha_res =
-      ::SHA256(reinterpret_cast<const unsigned char*>(challenge_key.c_str()),
+      ::SHA256(reinterpret_cast<const unsigned char*>(challenge_key.data()),
                challenge_key.size(), sha.data());
   if (sha_res == nullptr) {
     throw LiveApiError{"Unable to generate SHA 256"};
@@ -300,7 +301,7 @@ std::string LiveBlocking::GenerateCramReply(const std::string& challenge_key) {
   return auth_stream.str();
 }
 
-std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
+std::string LiveBlocking::EncodeAuthReq(std::string_view auth) {
   std::ostringstream req_stream;
   req_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
              << "ts_out=" << send_ts_out_ << "|client=C++ " DATABENTO_VERSION;
@@ -313,7 +314,7 @@ std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
 
 std::uint64_t LiveBlocking::DecodeAuthResp() {
   // handle split packet read
-  std::array<char, kMaxStrLen>::const_iterator nl_it;
+  std::array<std::byte, kMaxStrLen>::const_iterator nl_it;
   buffer_size_ = 0;
   do {
     buffer_idx_ = buffer_size_;
@@ -328,9 +329,12 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
     }
     buffer_size_ += read_size;
     nl_it = std::find(read_buffer_.begin() + buffer_idx_,
-                      read_buffer_.begin() + buffer_size_, '\n');
+                      read_buffer_.begin() + buffer_size_,
+                      static_cast<std::byte>('\n'));
   } while (nl_it == read_buffer_.end());
-  const std::string response{read_buffer_.cbegin(), nl_it};
+  const std::string response{
+      reinterpret_cast<const char*>(read_buffer_.cbegin()),
+      reinterpret_cast<const char*>(nl_it)};
   {
     std::ostringstream log_ss;
     log_ss << "[LiveBlocking::DecodeAuthResp] Authentication response: "

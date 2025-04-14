@@ -9,7 +9,6 @@
 #include <openssl/sha.h>  // SHA256_DIGEST_LENGTH
 
 #include <chrono>
-#include <cstdint>
 
 #include "databento/compat.hpp"
 #include "databento/constants.hpp"
@@ -22,7 +21,7 @@
 
 using databento::tests::mock::SocketStream;
 
-void SocketStream::WriteAll(const std::uint8_t* buffer, std::size_t length) {
+void SocketStream::WriteAll(const std::byte* buffer, std::size_t length) {
 // MSG_NOSIGNAL doesn't exist on Windows, but also isn't necessary
 #ifdef _WIN32
   constexpr int MSG_NOSIGNAL = {};

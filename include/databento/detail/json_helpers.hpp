@@ -5,6 +5,7 @@
 
 #include <map>  // multimap
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "databento/datetime.hpp"    // UnixNanos
@@ -22,7 +23,7 @@ void SetIfNotEmpty(httplib::Params* params, const std::string& key,
                    const std::vector<databento::JobState>& states);
 
 template <typename T>
-void SetIfPositive(httplib::Params* params, const std::string& key,
+void SetIfPositive(httplib::Params* params, std::string_view key,
                    const T value) {
   if (value > 0) {
     params->emplace(key, std::to_string(value));
@@ -31,30 +32,31 @@ void SetIfPositive(httplib::Params* params, const std::string& key,
 
 template <>
 inline void SetIfPositive<databento::UnixNanos>(
-    httplib::Params* params, const std::string& key,
+    httplib::Params* params, std::string_view key,
     const databento::UnixNanos value) {
   if (value.time_since_epoch().count()) {
     params->emplace(key, databento::ToString(value));
   }
 }
 
-const nlohmann::json& CheckedAt(const std::string& endpoint,
+const nlohmann::json& CheckedAt(std::string_view endpoint,
                                 const nlohmann::json& json,
-                                const std::string& key);
+                                std::string_view key);
 
 template <typename T>
-T FromCheckedAtString(const std::string& endpoint, const nlohmann::json& json,
-                      const std::string& key) {
+T FromCheckedAtString(std::string_view endpoint, const nlohmann::json& json,
+                      std::string_view key) {
   const auto& val_json = CheckedAt(endpoint, json, key);
   if (!val_json.is_string()) {
-    throw JsonResponseError::TypeMismatch(endpoint, key + " string", val_json);
+    throw JsonResponseError::TypeMismatch(
+        endpoint, std::string{key} + " string", val_json);
   }
   return databento::FromString<T>(val_json);
 }
 
 template <typename T>
-T FromCheckedAtStringOrNull(const std::string& endpoint,
-                            const nlohmann::json& json, const std::string& key,
+T FromCheckedAtStringOrNull(std::string_view endpoint,
+                            const nlohmann::json& json, std::string_view key,
                             T null_value) {
   const auto& val_json = CheckedAt(endpoint, json, key);
   if (val_json.is_null()) {
@@ -63,35 +65,34 @@ T FromCheckedAtStringOrNull(const std::string& endpoint,
   if (val_json.is_string()) {
     return databento::FromString<T>(val_json);
   }
-  throw JsonResponseError::TypeMismatch(endpoint, key + " null or string",
-                                        val_json);
+  throw JsonResponseError::TypeMismatch(
+      endpoint, std::string{key} + " null or string", val_json);
 }
 
 template <typename T>
-T ParseAt(const std::string& endpoint, const nlohmann::json& json,
-          const std::string& key);
+T ParseAt(std::string_view endpoint, const nlohmann::json& json,
+          std::string_view key);
 template <>
-bool ParseAt(const std::string& endpoint, const nlohmann::json& json,
-             const std::string& key);
+bool ParseAt(std::string_view endpoint, const nlohmann::json& json,
+             std::string_view key);
 template <>
-std::string ParseAt(const std::string& endpoint, const nlohmann::json& json,
-                    const std::string& key);
+std::string ParseAt(std::string_view endpoint, const nlohmann::json& json,
+                    std::string_view key);
 template <>
-std::uint64_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
-                      const std::string& key);
+std::uint64_t ParseAt(std::string_view endpoint, const nlohmann::json& json,
+                      std::string_view key);
 template <>
-std::uint16_t ParseAt(const std::string& endpoint, const nlohmann::json& json,
-                      const std::string& key);
+std::uint16_t ParseAt(std::string_view endpoint, const nlohmann::json& json,
+                      std::string_view key);
 template <>
-double ParseAt(const std::string& endpoint, const nlohmann::json& json,
-               const std::string& key);
+double ParseAt(std::string_view endpoint, const nlohmann::json& json,
+               std::string_view key);
 template <>
-std::vector<std::string> ParseAt(const std::string& endpoint,
+std::vector<std::string> ParseAt(std::string_view endpoint,
                                  const nlohmann::json& json,
-                                 const std::string& key);
+                                 std::string_view key);
 template <>
-date::year_month_day ParseAt(const std::string& endpoint,
-                             const nlohmann::json& json,
-                             const std::string& key);
+date::year_month_day ParseAt(std::string_view endpoint,
+                             const nlohmann::json& json, std::string_view key);
 
 }  // namespace databento::detail

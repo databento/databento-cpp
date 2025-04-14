@@ -27,8 +27,8 @@ static constexpr auto kSymbolCstrLen = 71;
 // The multiplier for converting the `length` field in `RecordHeader` to bytes.
 static constexpr std::size_t kRecordHeaderLengthMultiplier = 4;
 
-// This is not necessarily a comprehensive list of available datasets. Please
-// use `Historical.MetadataListDatasets` to retrieve an up-to-date list.
+// This is not a comprehensive list of datasets, for that see the `Dataset`
+// enum.
 namespace dataset {
 // The dataset code for Databento Equities Basic.
 static constexpr auto kDbeqBasic = "DBEQ.BASIC";

@@ -17,13 +17,13 @@ class SharedChannel::Channel {
   Channel& operator=(Channel&&) = delete;
   ~Channel();
 
-  void Write(const std::uint8_t* data, std::size_t length);
+  void Write(const std::byte* data, std::size_t length);
   void Finish();
   // Read exactly `length` bytes
-  void ReadExact(std::uint8_t* buffer, std::size_t length);
+  void ReadExact(std::byte* buffer, std::size_t length);
   // Read at most `length` bytes. Returns the number of bytes read. Will only
   // return 0 if the end of the stream is reached.
-  std::size_t ReadSome(std::uint8_t* buffer, std::size_t length);
+  std::size_t ReadSome(std::byte* buffer, std::size_t length);
 
  private:
   std::size_t Size();
@@ -41,27 +41,25 @@ using databento::detail::SharedChannel;
 
 SharedChannel::SharedChannel() : channel_{std::make_shared<Channel>()} {}
 
-void SharedChannel::Write(const std::uint8_t* data, std::size_t length) {
+void SharedChannel::Write(const std::byte* data, std::size_t length) {
   channel_->Write(data, length);
 }
 
 void SharedChannel::Finish() { channel_->Finish(); }
 
-void SharedChannel::ReadExact(std::uint8_t* buffer, std::size_t length) {
+void SharedChannel::ReadExact(std::byte* buffer, std::size_t length) {
   channel_->ReadExact(buffer, length);
 }
 
 // Read at most `length` bytes. Returns the number of bytes read. Will only
 // return 0 if the end of the stream is reached.
-std::size_t SharedChannel::ReadSome(std::uint8_t* buffer,
-                                    std::size_t max_length) {
+std::size_t SharedChannel::ReadSome(std::byte* buffer, std::size_t max_length) {
   return channel_->ReadSome(buffer, max_length);
 }
 
 SharedChannel::Channel::~Channel() { Finish(); }
 
-void SharedChannel::Channel::Write(const std::uint8_t* data,
-                                   std::size_t length) {
+void SharedChannel::Channel::Write(const std::byte* data, std::size_t length) {
   const std::lock_guard<std::mutex> lock{mutex_};
   stream_.write(reinterpret_cast<const char*>(data),
                 static_cast<std::streamsize>(length));
@@ -74,8 +72,7 @@ void SharedChannel::Channel::Finish() {
   cv_.notify_one();
 }
 
-void SharedChannel::Channel::ReadExact(std::uint8_t* buffer,
-                                       std::size_t length) {
+void SharedChannel::Channel::ReadExact(std::byte* buffer, std::size_t length) {
   std::unique_lock<std::mutex> lock{mutex_};
   cv_.wait(lock, [this, length] { return Size() >= length || is_finished_; });
   if (Size() < length) {
@@ -88,7 +85,7 @@ void SharedChannel::Channel::ReadExact(std::uint8_t* buffer,
                static_cast<std::streamsize>(length));
 }
 
-std::size_t SharedChannel::Channel::ReadSome(std::uint8_t* buffer,
+std::size_t SharedChannel::Channel::ReadSome(std::byte* buffer,
                                              std::size_t length) {
   std::unique_lock<std::mutex> lock{mutex_};
   cv_.wait(lock, [this] { return Size() > 0 || is_finished_; });

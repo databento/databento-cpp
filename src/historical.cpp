@@ -160,7 +160,6 @@ Historical::Historical(ILogReceiver* log_receiver, std::string key,
 static const std::string kBatchSubmitJobEndpoint = "Historical::BatchSubmitJob";
 
 databento::BatchJob Historical::BatchSubmitJob(
-
     const std::string& dataset, const std::vector<std::string>& symbols,
     Schema schema, const DateTimeRange<UnixNanos>& datetime_range) {
   return this->BatchSubmitJob(dataset, symbols, schema, datetime_range,
@@ -342,7 +341,7 @@ void Historical::StreamToFile(const std::string& url_path,
   OutFileStream out_file{file_path};
   this->client_.GetRawStream(
       url_path, params, [&out_file](const char* data, std::size_t length) {
-        out_file.WriteAll(reinterpret_cast<const std::uint8_t*>(data), length);
+        out_file.WriteAll(reinterpret_cast<const std::byte*>(data), length);
         return true;
       });
 }
@@ -868,23 +867,23 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
   std::atomic<bool> should_continue{true};
   detail::SharedChannel channel;
   std::exception_ptr exception_ptr{};
-  detail::ScopedThread stream{[this, &channel, &exception_ptr, &params,
-                               &should_continue] {
-    try {
-      this->client_.GetRawStream(
-          kTimeseriesGetRangePath, params,
-          [channel, &should_continue](const char* data,
-                                      std::size_t length) mutable {
-            channel.Write(reinterpret_cast<const std::uint8_t*>(data), length);
-            return should_continue.load();
-          });
-      channel.Finish();
-    } catch (const std::exception&) {
-      channel.Finish();
-      // rethrowing here will cause the process to be terminated
-      exception_ptr = std::current_exception();
-    }
-  }};
+  detail::ScopedThread stream{
+      [this, &channel, &exception_ptr, &params, &should_continue] {
+        try {
+          this->client_.GetRawStream(
+              kTimeseriesGetRangePath, params,
+              [channel, &should_continue](const char* data,
+                                          std::size_t length) mutable {
+                channel.Write(reinterpret_cast<const std::byte*>(data), length);
+                return should_continue.load();
+              });
+          channel.Finish();
+        } catch (const std::exception&) {
+          channel.Finish();
+          // rethrowing here will cause the process to be terminated
+          exception_ptr = std::current_exception();
+        }
+      }};
   try {
     DbnDecoder dbn_decoder{log_receiver_, channel};
     Metadata metadata = dbn_decoder.DecodeMetadata();

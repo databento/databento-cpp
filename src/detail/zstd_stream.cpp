@@ -13,14 +13,14 @@ ZstdDecodeStream::ZstdDecodeStream(std::unique_ptr<IReadable> input)
     : ZstdDecodeStream{std::move(input), {}} {}
 
 ZstdDecodeStream::ZstdDecodeStream(std::unique_ptr<IReadable> input,
-                                   std::vector<std::uint8_t>&& in_buffer)
+                                   std::vector<std::byte>&& in_buffer)
     : input_{std::move(input)},
       z_dstream_{::ZSTD_createDStream(), ::ZSTD_freeDStream},
       read_suggestion_{::ZSTD_initDStream(z_dstream_.get())},
       in_buffer_{std::move(in_buffer)},
       z_in_buffer_{in_buffer_.data(), in_buffer_.size(), 0} {}
 
-void ZstdDecodeStream::ReadExact(std::uint8_t* buffer, std::size_t length) {
+void ZstdDecodeStream::ReadExact(std::byte* buffer, std::size_t length) {
   std::size_t size{};
   do {
     size += ReadSome(&buffer[size], length - size);
@@ -34,7 +34,7 @@ void ZstdDecodeStream::ReadExact(std::uint8_t* buffer, std::size_t length) {
   }
 }
 
-std::size_t ZstdDecodeStream::ReadSome(std::uint8_t* buffer,
+std::size_t ZstdDecodeStream::ReadSome(std::byte* buffer,
                                        std::size_t max_length) {
   ZSTD_outBuffer z_out_buffer{buffer, max_length, 0};
   std::size_t read_size = 0;
@@ -110,8 +110,7 @@ ZstdCompressStream::~ZstdCompressStream() {
   }
 }
 
-void ZstdCompressStream::WriteAll(const std::uint8_t* buffer,
-                                  std::size_t length) {
+void ZstdCompressStream::WriteAll(const std::byte* buffer, std::size_t length) {
   in_buffer_.insert(in_buffer_.end(), buffer, buffer + length);
   z_in_buffer_ = {in_buffer_.data(), in_buffer_.size(), 0};
   // Wait for sufficient data before compressing
