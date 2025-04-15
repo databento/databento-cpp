@@ -333,8 +333,8 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
                       static_cast<std::byte>('\n'));
   } while (nl_it == read_buffer_.end());
   const std::string response{
-      reinterpret_cast<const char*>(read_buffer_.cbegin()),
-      reinterpret_cast<const char*>(nl_it)};
+      reinterpret_cast<const char*>(read_buffer_.data()),
+      static_cast<std::size_t>(nl_it - read_buffer_.cbegin())};
   {
     std::ostringstream log_ss;
     log_ss << "[LiveBlocking::DecodeAuthResp] Authentication response: "

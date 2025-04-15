@@ -44,7 +44,8 @@ void TcpClient::WriteAll(std::string_view str) {
 
 void TcpClient::WriteAll(const std::byte* buffer, std::size_t size) {
   do {
-    const ::ssize_t res = ::send(socket_.Get(), buffer, size, {});
+    const ::ssize_t res =
+        ::send(socket_.Get(), reinterpret_cast<const char*>(buffer), size, {});
     if (res < 0) {
       throw TcpError{::GetErrNo(), "Error writing to socket"};
     }
@@ -54,14 +55,16 @@ void TcpClient::WriteAll(const std::byte* buffer, std::size_t size) {
 }
 
 void TcpClient::ReadExact(std::byte* buffer, std::size_t size) {
-  const ::ssize_t res = ::recv(socket_.Get(), buffer, size, MSG_WAITALL);
+  const ::ssize_t res =
+      ::recv(socket_.Get(), reinterpret_cast<char*>(buffer), size, MSG_WAITALL);
   if (res != static_cast<::ssize_t>(size)) {
     throw TcpError{::GetErrNo(), "Error reading from socket"};
   }
 }
 
 TcpClient::Result TcpClient::ReadSome(std::byte* buffer, std::size_t max_size) {
-  const ::ssize_t res = ::recv(socket_.Get(), buffer, max_size, {});
+  const ::ssize_t res =
+      ::recv(socket_.Get(), reinterpret_cast<char*>(buffer), max_size, {});
   if (res < 0) {
     throw TcpError{::GetErrNo(), "Error reading from socket"};
   }
