@@ -5,6 +5,7 @@
 ### Enhancements
 - Added `id` field to `LiveSubscription` requests, which will be used for improved error
   messages
+- Removed Windows-only `dirent` dependency
 
 ### Breaking changes
 - Changed `DbnDecoder`, `FileStream`, `IReadable`, `IWritable` to work on `byte`s

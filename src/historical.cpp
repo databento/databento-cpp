@@ -1,6 +1,5 @@
 #include "databento/historical.hpp"
 
-#include <dirent.h>  // closedir, opendir
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
@@ -9,15 +8,11 @@
 #include <cstddef>    // size_t
 #include <cstdlib>    // get_env
 #include <exception>  // exception, exception_ptr
-#include <iterator>   // back_inserter
-#include <memory>     // unique_ptr
+#include <filesystem>
+#include <iterator>  // back_inserter
 #include <string>
+#include <system_error>
 #include <utility>  // move
-
-#include "databento/file_stream.hpp"
-#ifdef _WIN32
-#include <direct.h>  // _mkdir
-#endif
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
@@ -28,6 +23,7 @@
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception, JsonResponseError
+#include "databento/file_stream.hpp"
 #include "databento/log.hpp"
 #include "databento/metadata.hpp"
 #include "databento/timeseries.hpp"
@@ -112,24 +108,18 @@ databento::BatchJob Parse(const std::string& endpoint,
   return res;
 }
 
-void TryCreateDir(const std::string& dir_name) {
+void TryCreateDir(const std::filesystem::path& dir_name) {
+  using namespace std::string_literals;
   if (dir_name.empty()) {
     return;
   }
-  const std::unique_ptr<DIR, int (*)(DIR*)> dir{::opendir(dir_name.c_str()),
-                                                &::closedir};
-  if (dir == nullptr) {
-    const int ret =
-#ifdef _WIN32
-        ::_mkdir(dir_name.c_str());
-#else
-        ::mkdir(dir_name.c_str(), 0777);
-#endif
-    if (ret != 0) {
-      throw databento::Exception{std::string{"Unable to create directory "} +
-                                 dir_name + ": " + ::strerror(errno)};
-    }
+  std::error_code ec{};
+  if (std::filesystem::create_directory(dir_name, ec) || !ec) {
+    // Successfully created directory or it already exists
+    return;
   }
+  throw databento::Exception{"Unable to create directory "s +
+                             dir_name.generic_string() + ": " + ec.message()};
 }
 
 std::string PathJoin(const std::string& dir, const std::string& path) {
