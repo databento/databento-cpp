@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <cstdint>
+#include <cstddef>
 
 #include "databento/exceptions.hpp"
 #include "databento/file_stream.hpp"
@@ -11,7 +11,7 @@ TEST(InFileStreamTests, TestReadExactInsufficient) {
   const std::string file_path =
       TEST_BUILD_DIR "/data/test_data.ohlcv-1d.v1.dbn";
   InFileStream target{file_path};
-  std::vector<std::uint8_t> buffer(1024);  // File is less than 1KiB
+  std::vector<std::byte> buffer(1024);  // File is less than 1KiB
   try {
     target.ReadExact(buffer.data(), buffer.size());
     FAIL() << "Expected throw";
@@ -25,11 +25,12 @@ TEST(InFileStreamTests, TestReadSomeLessThanMax) {
   const std::string file_path =
       TEST_BUILD_DIR "/data/test_data.ohlcv-1d.v1.dbn";
   InFileStream target{file_path};
-  std::vector<std::uint8_t> buffer(1024);  // File is less than 1KiB
+  std::vector<std::byte> buffer(1024);  // File is less than 1KiB
   const auto read_size = target.ReadSome(buffer.data(), buffer.size());
   ASSERT_GT(read_size, 0);
-  ASSERT_TRUE(std::any_of(buffer.cbegin(), buffer.cend(),
-                          [](std::uint8_t byte) { return byte != 0; }));
+  ASSERT_TRUE(std::any_of(buffer.cbegin(), buffer.cend(), [](std::byte byte) {
+    return std::to_integer<int>(byte) != 0;
+  }));
 }
 
 TEST(OutFileStreamTests, TestWriteAllCanBeRead) {
@@ -38,12 +39,12 @@ TEST(OutFileStreamTests, TestWriteAllCanBeRead) {
   ASSERT_FALSE(temp_file.Exists());
   {
     OutFileStream target{temp_file.Path()};
-    target.WriteAll(reinterpret_cast<const std::uint8_t*>(data), 8);
+    target.WriteAll(reinterpret_cast<const std::byte*>(data), 8);
   }
   ASSERT_TRUE(temp_file.Exists());
   InFileStream input{temp_file.Path()};
   std::vector<char> buf(9);
-  input.ReadExact(reinterpret_cast<std::uint8_t*>(buf.data()), 8);
+  input.ReadExact(reinterpret_cast<std::byte*>(buf.data()), 8);
   ASSERT_STREQ(buf.data(), data);
 }
 }  // namespace databento::tests

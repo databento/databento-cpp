@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.14)
 # Project details
 #
 
-project("databento" VERSION 0.32.1 LANGUAGES CXX)
+project("databento" VERSION 0.33.0 LANGUAGES CXX)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
@@ -223,18 +223,6 @@ else()
   FetchContent_MakeAvailable(date_src)
   # Ignore compiler warnings in headers
   add_system_include_property(date)
-endif()
-
-#
-# Platform-specific dependencies
-#
-if(WIN32)
-  find_path(
-    DIRENT_INCLUDE_DIR "dirent.h"
-    PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include"
-    REQUIRED
-  )
-  target_include_directories(${PROJECT_NAME} PRIVATE ${DIRENT_INCLUDE_DIR})
 endif()
 
 target_link_libraries(

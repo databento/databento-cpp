@@ -19,7 +19,7 @@ using databento::DbnEncoder;
 namespace {
 void EncodeChars(const char* bytes, std::size_t length,
                  databento::IWritable* output) {
-  output->WriteAll(reinterpret_cast<const std::uint8_t*>(bytes), length);
+  output->WriteAll(reinterpret_cast<const std::byte*>(bytes), length);
 }
 
 void EncodeFixedLenCStr(std::size_t cstr_len, const std::string& str,
@@ -31,17 +31,16 @@ void EncodeFixedLenCStr(std::size_t cstr_len, const std::string& str,
         std::string{"String is too long to encode, maximum length of "} +
             std::to_string(cstr_len - 1)};
   }
-  output->WriteAll(reinterpret_cast<const std::uint8_t*>(str.data()),
+  output->WriteAll(reinterpret_cast<const std::byte*>(str.data()),
                    str.length());
   // Null padding
-  std::vector<std::uint8_t> filler(cstr_len - str.length());
+  std::vector<std::byte> filler(cstr_len - str.length());
   output->WriteAll(filler.data(), filler.size());
 }
 
 template <typename T>
 void EncodeAsBytes(T bytes, databento::IWritable* output) {
-  output->WriteAll(reinterpret_cast<const std::uint8_t*>(&bytes),
-                   sizeof(bytes));
+  output->WriteAll(reinterpret_cast<const std::byte*>(&bytes), sizeof(bytes));
 }
 
 void EncodeDate(date::year_month_day date, databento::IWritable* output) {
@@ -122,8 +121,7 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
   // padding + schema definition length
   auto reserved_length =
       version == 1 ? kMetadataReservedLenV1 : kMetadataReservedLen;
-  const std::vector<std::uint8_t> padding(reserved_length +
-                                          sizeof(std::uint32_t));
+  const std::vector<std::byte> padding(reserved_length + sizeof(std::uint32_t));
   output->WriteAll(padding.data(), padding.size());
 
   // variable-length data
@@ -135,7 +133,7 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
 }
 
 void DbnEncoder::EncodeRecord(const Record& record, IWritable* output) {
-  output->WriteAll(reinterpret_cast<const std::uint8_t*>(&record.Header()),
+  output->WriteAll(reinterpret_cast<const std::byte*>(&record.Header()),
                    record.Size());
 }
 

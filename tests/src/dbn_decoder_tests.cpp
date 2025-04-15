@@ -61,8 +61,7 @@ class DbnDecoderTests : public testing::Test {
       std::vector<char> buffer(size);
       input_file.read(buffer.data(), static_cast<std::streamsize>(size));
       ASSERT_EQ(input_file.gcount(), size);
-      channel_.Write(reinterpret_cast<const std::uint8_t*>(buffer.data()),
-                     size);
+      channel_.Write(reinterpret_cast<const std::byte*>(buffer.data()), size);
       channel_.Finish();
     }};
     channel_target_ = std::make_unique<DbnDecoder>(
@@ -163,7 +162,7 @@ TEST_F(DbnDecoderTests, TestUpgradeSymbolMappingWithTsOut) {
       {}};
   WithTsOut<SymbolMappingMsgV1> orig{
       sym_map, UnixNanos{std::chrono::system_clock::now()}};
-  std::array<std::uint8_t, kMaxRecordLen> compat_buffer{};
+  std::array<std::byte, kMaxRecordLen> compat_buffer{};
   const auto res =
       DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::UpgradeToV2, true,
                                      &compat_buffer, Record{&orig.rec.hd});
@@ -182,7 +181,7 @@ TEST_F(DbnDecoderTests, TestUpgradeSymbolMappingWithTsOut) {
   // `length` properly set
   EXPECT_EQ(upgraded.rec.hd.Size(), sizeof(upgraded));
   // used compat buffer
-  EXPECT_EQ(reinterpret_cast<const std::uint8_t*>(&upgraded),
+  EXPECT_EQ(reinterpret_cast<const std::byte*>(&upgraded),
             compat_buffer.data());
 }
 
@@ -204,7 +203,7 @@ TEST_F(DbnDecoderTests, TestUpgradeMbp1WithTsOut) {
               {},
               {}},
       {std::chrono::system_clock::now()}};
-  std::array<std::uint8_t, kMaxRecordLen> compat_buffer{};
+  std::array<std::byte, kMaxRecordLen> compat_buffer{};
   const auto res =
       DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::UpgradeToV2, true,
                                      &compat_buffer, Record{&orig.rec.hd});

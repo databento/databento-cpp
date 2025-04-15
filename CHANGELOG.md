@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.33.0 - 2025-04-15
+
+### Enhancements
+- Added `id` field to `LiveSubscription` requests, which will be used for improved error
+  messages
+- Removed Windows-only `dirent` dependency
+
+### Breaking changes
+- Changed `DbnDecoder`, `FileStream`, `IReadable`, `IWritable` to work on `byte`s
+
 ## 0.32.1 - 2025-04-07
 
 ### Bug fixes

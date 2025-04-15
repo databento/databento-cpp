@@ -1,6 +1,5 @@
 #include "databento/historical.hpp"
 
-#include <dirent.h>  // closedir, opendir
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
@@ -9,15 +8,11 @@
 #include <cstddef>    // size_t
 #include <cstdlib>    // get_env
 #include <exception>  // exception, exception_ptr
-#include <iterator>   // back_inserter
-#include <memory>     // unique_ptr
+#include <filesystem>
+#include <iterator>  // back_inserter
 #include <string>
+#include <system_error>
 #include <utility>  // move
-
-#include "databento/file_stream.hpp"
-#ifdef _WIN32
-#include <direct.h>  // _mkdir
-#endif
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
@@ -28,6 +23,7 @@
 #include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception, JsonResponseError
+#include "databento/file_stream.hpp"
 #include "databento/log.hpp"
 #include "databento/metadata.hpp"
 #include "databento/timeseries.hpp"
@@ -112,24 +108,18 @@ databento::BatchJob Parse(const std::string& endpoint,
   return res;
 }
 
-void TryCreateDir(const std::string& dir_name) {
+void TryCreateDir(const std::filesystem::path& dir_name) {
+  using namespace std::string_literals;
   if (dir_name.empty()) {
     return;
   }
-  const std::unique_ptr<DIR, int (*)(DIR*)> dir{::opendir(dir_name.c_str()),
-                                                &::closedir};
-  if (dir == nullptr) {
-    const int ret =
-#ifdef _WIN32
-        ::_mkdir(dir_name.c_str());
-#else
-        ::mkdir(dir_name.c_str(), 0777);
-#endif
-    if (ret != 0) {
-      throw databento::Exception{std::string{"Unable to create directory "} +
-                                 dir_name + ": " + ::strerror(errno)};
-    }
+  std::error_code ec{};
+  if (std::filesystem::create_directory(dir_name, ec) || !ec) {
+    // Successfully created directory or it already exists
+    return;
   }
+  throw databento::Exception{"Unable to create directory "s +
+                             dir_name.generic_string() + ": " + ec.message()};
 }
 
 std::string PathJoin(const std::string& dir, const std::string& path) {
@@ -160,7 +150,6 @@ Historical::Historical(ILogReceiver* log_receiver, std::string key,
 static const std::string kBatchSubmitJobEndpoint = "Historical::BatchSubmitJob";
 
 databento::BatchJob Historical::BatchSubmitJob(
-
     const std::string& dataset, const std::vector<std::string>& symbols,
     Schema schema, const DateTimeRange<UnixNanos>& datetime_range) {
   return this->BatchSubmitJob(dataset, symbols, schema, datetime_range,
@@ -342,7 +331,7 @@ void Historical::StreamToFile(const std::string& url_path,
   OutFileStream out_file{file_path};
   this->client_.GetRawStream(
       url_path, params, [&out_file](const char* data, std::size_t length) {
-        out_file.WriteAll(reinterpret_cast<const std::uint8_t*>(data), length);
+        out_file.WriteAll(reinterpret_cast<const std::byte*>(data), length);
         return true;
       });
 }
@@ -868,23 +857,23 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
   std::atomic<bool> should_continue{true};
   detail::SharedChannel channel;
   std::exception_ptr exception_ptr{};
-  detail::ScopedThread stream{[this, &channel, &exception_ptr, &params,
-                               &should_continue] {
-    try {
-      this->client_.GetRawStream(
-          kTimeseriesGetRangePath, params,
-          [channel, &should_continue](const char* data,
-                                      std::size_t length) mutable {
-            channel.Write(reinterpret_cast<const std::uint8_t*>(data), length);
-            return should_continue.load();
-          });
-      channel.Finish();
-    } catch (const std::exception&) {
-      channel.Finish();
-      // rethrowing here will cause the process to be terminated
-      exception_ptr = std::current_exception();
-    }
-  }};
+  detail::ScopedThread stream{
+      [this, &channel, &exception_ptr, &params, &should_continue] {
+        try {
+          this->client_.GetRawStream(
+              kTimeseriesGetRangePath, params,
+              [channel, &should_continue](const char* data,
+                                          std::size_t length) mutable {
+                channel.Write(reinterpret_cast<const std::byte*>(data), length);
+                return should_continue.load();
+              });
+          channel.Finish();
+        } catch (const std::exception&) {
+          channel.Finish();
+          // rethrowing here will cause the process to be terminated
+          exception_ptr = std::current_exception();
+        }
+      }};
   try {
     DbnDecoder dbn_decoder{log_receiver_, channel};
     Metadata metadata = dbn_decoder.DecodeMetadata();

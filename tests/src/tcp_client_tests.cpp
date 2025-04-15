@@ -3,6 +3,7 @@
 #include <array>
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <mutex>
 #include <string>
 
@@ -30,7 +31,7 @@ TEST_F(TcpClientTests, TestWriteAllString) {
 
 TEST_F(TcpClientTests, TestWriteAllCStr) {
   const std::string msg = "testing 1, 2, 3";
-  target_.WriteAll(msg.c_str(), msg.length());
+  target_.WriteAll(msg);
   ASSERT_EQ(mock_server_.AwaitReceived(), msg);
 }
 
@@ -39,11 +40,11 @@ TEST_F(TcpClientTests, TestReadExact) {
   mock_server_.SetSend(kSendData);
   target_.WriteAll("start");
 
-  std::array<char, 13> buffer{0};
+  std::array<std::byte, 13> buffer{};
   ASSERT_EQ(buffer.size() - 1, kSendData.size());
 
   target_.ReadExact(buffer.data(), buffer.size() - 1);
-  ASSERT_STREQ(buffer.data(), kSendData.c_str());
+  ASSERT_STREQ(reinterpret_cast<const char*>(buffer.data()), kSendData.c_str());
 }
 
 TEST_F(TcpClientTests, TestFullReadSome) {
@@ -52,11 +53,11 @@ TEST_F(TcpClientTests, TestFullReadSome) {
   // server does one write than reads
   target_.WriteAll("start");
 
-  std::array<char, 10> buffer{0};
+  std::array<std::byte, 10> buffer{};
   // - 1 to leave NUL byte
   const auto res = target_.ReadSome(buffer.data(), buffer.size() - 1);
 
-  EXPECT_STREQ(buffer.data(), kSendData.c_str());
+  EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), kSendData.c_str());
   EXPECT_EQ(res.status, detail::TcpClient::Status::Ok);
   EXPECT_EQ(res.read_size, kSendData.length());
   EXPECT_EQ(res.read_size, buffer.size() - 1);
@@ -68,10 +69,10 @@ TEST_F(TcpClientTests, TestPartialReadSome) {
   // server does one write than reads
   target_.WriteAll("start");
 
-  std::array<char, 100> buffer{0};
+  std::array<std::byte, 100> buffer{};
   const auto res = target_.ReadSome(buffer.data(), buffer.size());
 
-  EXPECT_STREQ(buffer.data(), kSendData.c_str());
+  EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), kSendData.c_str());
   EXPECT_EQ(res.status, detail::TcpClient::Status::Ok);
   EXPECT_EQ(res.read_size, kSendData.length());
 }
@@ -80,7 +81,7 @@ TEST_F(TcpClientTests, TestReadSomeClose) {
   // server does one write than reads
   target_.WriteAll("start");
 
-  std::array<char, 10> buffer{0};
+  std::array<std::byte, 10> buffer{};
   const auto res = target_.ReadSome(buffer.data(), buffer.size());
   EXPECT_EQ(res.status, detail::TcpClient::Status::Closed);
   EXPECT_EQ(res.read_size, 0);
@@ -107,7 +108,7 @@ TEST_F(TcpClientTests, TestReadSomeTimeout) {
   }};
   target_ = {"127.0.0.1", mock_server.Port()};
 
-  std::array<char, 10> buffer{0};
+  std::array<std::byte, 10> buffer{};
   const auto res = target_.ReadSome(buffer.data(), buffer.size(),
                                     std::chrono::milliseconds{5});
   {
@@ -128,7 +129,7 @@ TEST_F(TcpClientTests, TestReadCloseNoTimeout) {
 
   constexpr std::chrono::milliseconds kTimeout{5};
 
-  std::array<char, 10> buffer{0};
+  std::array<std::byte, 10> buffer{};
   const auto start = std::chrono::steady_clock::now();
   // server closing the connection should cause `ReadSome` to return
   // immediately, not wait for the timeout
@@ -145,7 +146,7 @@ TEST_F(TcpClientTests, ReadAfterClose) {
   // server does one write than reads
   target_.WriteAll("start");
 
-  std::array<char, 10> buffer{0};
+  std::array<std::byte, 10> buffer{};
   const auto res = target_.ReadSome(buffer.data(), buffer.size());
   EXPECT_EQ(res.status, detail::TcpClient::Status::Ok);
   EXPECT_GT(res.read_size, 0);

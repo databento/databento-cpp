@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <exception>
 #include <string>
+#include <string_view>
 #include <utility>  // move
 
 namespace databento {
@@ -32,7 +33,7 @@ class HttpRequestError : public Exception {
   httplib::Error ErrorCode() const { return error_code_; }
 
  private:
-  static std::string BuildMessage(const std::string& request_path,
+  static std::string BuildMessage(std::string_view request_path,
                                   httplib::Error error_code);
 
   const std::string request_path_;
@@ -55,9 +56,9 @@ class HttpResponseError : public Exception {
   const std::string& ResponseBody() const { return response_body_; }
 
  private:
-  static std::string BuildMessage(const std::string& request_path,
+  static std::string BuildMessage(std::string_view request_path,
                                   std::int32_t status_code,
-                                  const std::string& response_body);
+                                  std::string_view response_body);
 
   const std::string request_path_;
   // int32 is the representation used by httplib
@@ -95,9 +96,9 @@ class InvalidArgumentError : public Exception {
   const std::string& Details() const { return details_; }
 
  private:
-  static std::string BuildMessage(const std::string& method_name,
-                                  const std::string& param_name,
-                                  const std::string& details);
+  static std::string BuildMessage(std::string_view method_name,
+                                  std::string_view param_name,
+                                  std::string_view details);
 
   const std::string method_name_;
   const std::string param_name_;
@@ -108,15 +109,14 @@ class InvalidArgumentError : public Exception {
 class JsonResponseError : public Exception {
  public:
   static JsonResponseError ParseError(
-      const std::string& path,
-      const nlohmann::detail::parse_error& parse_error);
-  static JsonResponseError MissingKey(const std::string& method_name,
+      std::string_view path, const nlohmann::detail::parse_error& parse_error);
+  static JsonResponseError MissingKey(std::string_view method_name,
                                       const nlohmann::json& key);
-  static JsonResponseError TypeMismatch(const std::string& method_name,
-                                        const std::string& expected_type_name,
+  static JsonResponseError TypeMismatch(std::string_view method_name,
+                                        std::string_view expected_type_name,
                                         const nlohmann::json& json);
-  static JsonResponseError TypeMismatch(const std::string& method_name,
-                                        const std::string& expected_type_name,
+  static JsonResponseError TypeMismatch(std::string_view method_name,
+                                        std::string_view expected_type_name,
                                         const nlohmann::json& key,
                                         const nlohmann::json& value);
 
@@ -138,7 +138,7 @@ class LiveApiError : public Exception {
  public:
   explicit LiveApiError(std::string message) : Exception{std::move(message)} {}
 
-  static LiveApiError UnexpectedMsg(const std::string& message,
-                                    const std::string& response);
+  static LiveApiError UnexpectedMsg(std::string_view message,
+                                    std::string_view response);
 };
 }  // namespace databento

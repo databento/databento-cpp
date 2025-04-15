@@ -13,6 +13,7 @@ using ssize_t = SSIZE_T;
 
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <functional>  // function
 #include <mutex>
 #include <string>
@@ -29,7 +30,7 @@ class SocketStream : public databento::IWritable {
  public:
   explicit SocketStream(detail::Socket socket) : socket_{socket} {}
 
-  void WriteAll(const std::uint8_t* buffer, std::size_t length) override;
+  void WriteAll(const std::byte* buffer, std::size_t length) override;
   ::ssize_t LastWriteSize() const { return last_write_size_; }
 
  private:

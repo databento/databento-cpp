@@ -8,6 +8,7 @@
 #include <cstddef>  // ptrdiff_t
 #include <cstdlib>
 #include <ios>  // hex, setfill, setw
+#include <limits>
 #include <sstream>
 #include <variant>
 
@@ -66,45 +67,49 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in, UnixNanos start) {
+  IncrementSubCounter();
   std::ostringstream sub_msg;
   sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
-          << "|start=" << start.time_since_epoch().count();
+          << "|start=" << start.time_since_epoch().count()
+          << "|id=" << std::to_string(sub_counter_);
   Subscribe(sub_msg.str(), symbols, false);
   subscriptions_.emplace_back(
-      LiveSubscription{symbols, schema, stype_in, start});
+      LiveSubscription{symbols, schema, stype_in, start, sub_counter_});
 }
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
                              Schema schema, SType stype_in,
                              const std::string& start) {
+  IncrementSubCounter();
   std::ostringstream sub_msg;
-  sub_msg << "schema=" << ToString(schema)
-          << "|stype_in=" << ToString(stype_in);
+  sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
+          << "|id=" << std::to_string(sub_counter_);
   if (!start.empty()) {
     sub_msg << "|start=" << start;
   }
   Subscribe(sub_msg.str(), symbols, false);
   if (start.empty()) {
-    subscriptions_.emplace_back(LiveSubscription{symbols, schema, stype_in,
-                                                 LiveSubscription::NoStart{}});
+    subscriptions_.emplace_back(LiveSubscription{
+        symbols, schema, stype_in, LiveSubscription::NoStart{}, sub_counter_});
   } else {
     subscriptions_.emplace_back(
-        LiveSubscription{symbols, schema, stype_in, start});
+        LiveSubscription{symbols, schema, stype_in, start, sub_counter_});
   }
 }
 
 void LiveBlocking::SubscribeWithSnapshot(
     const std::vector<std::string>& symbols, Schema schema, SType stype_in) {
+  IncrementSubCounter();
   std::ostringstream sub_msg;
-  sub_msg << "schema=" << ToString(schema)
-          << "|stype_in=" << ToString(stype_in);
+  sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
+          << "|id=" << std::to_string(sub_counter_);
 
   Subscribe(sub_msg.str(), symbols, true);
-  subscriptions_.emplace_back(LiveSubscription{symbols, schema, stype_in,
-                                               LiveSubscription::Snapshot{}});
+  subscriptions_.emplace_back(LiveSubscription{
+      symbols, schema, stype_in, LiveSubscription::Snapshot{}, sub_counter_});
 }
 
-void LiveBlocking::Subscribe(const std::string& sub_msg,
+void LiveBlocking::Subscribe(std::string_view sub_msg,
                              const std::vector<std::string>& symbols,
                              bool use_snapshot) {
   static constexpr auto kMethodName = "Live::Subscribe";
@@ -134,10 +139,9 @@ databento::Metadata LiveBlocking::Start() {
   client_.WriteAll("start_session\n");
   client_.ReadExact(read_buffer_.data(), kMetadataPreludeSize);
   const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
-      reinterpret_cast<std::uint8_t*>(read_buffer_.data()),
-      kMetadataPreludeSize);
-  std::vector<std::uint8_t> meta_buffer(size);
-  client_.ReadExact(reinterpret_cast<char*>(meta_buffer.data()), size);
+      read_buffer_.data(), kMetadataPreludeSize);
+  std::vector<std::byte> meta_buffer(size);
+  client_.ReadExact(meta_buffer.data(), size);
   auto metadata = DbnDecoder::DecodeMetadataFields(version, meta_buffer);
   version_ = metadata.version;
   metadata.Upgrade(upgrade_policy_);
@@ -182,6 +186,7 @@ void LiveBlocking::Stop() { client_.Close(); }
 void LiveBlocking::Reconnect() {
   log_receiver_->Receive(LogLevel::Info, "Reconnecting");
   client_ = detail::TcpClient{gateway_, port_};
+  sub_counter_ = 0;
   session_id_ = this->Authenticate();
 }
 
@@ -191,9 +196,11 @@ void LiveBlocking::Resubscribe() {
         std::holds_alternative<std::string>(subscription.start)) {
       subscription.start = LiveSubscription::NoStart{};
     }
+    sub_counter_ = std::max(sub_counter_, subscription.id);
     std::ostringstream sub_msg;
     sub_msg << "schema=" << ToString(subscription.schema)
-            << "|stype_in=" << ToString(subscription.stype_in);
+            << "|stype_in=" << ToString(subscription.stype_in)
+            << "|id=" << std::to_string(sub_counter_);
     Subscribe(
         sub_msg.str(), subscription.symbols,
         std::holds_alternative<LiveSubscription::Snapshot>(subscription.start));
@@ -207,7 +214,8 @@ std::string LiveBlocking::DecodeChallenge() {
     throw LiveApiError{"Gateway closed socket during authentication"};
   }
   // first line is version
-  std::string response{read_buffer_.data(), buffer_size_};
+  std::string response{reinterpret_cast<const char*>(read_buffer_.data()),
+                       buffer_size_};
   {
     std::ostringstream log_ss;
     log_ss << "[LiveBlocking::DecodeChallenge] Challenge: " << response;
@@ -231,7 +239,8 @@ std::string LiveBlocking::DecodeChallenge() {
     if (buffer_size_ == 0) {
       throw LiveApiError{"Gateway closed socket during authentication"};
     }
-    response = {read_buffer_.data(), buffer_size_};
+    response = {reinterpret_cast<const char*>(read_buffer_.data()),
+                buffer_size_};
     next_nl_pos = response.find('\n', find_start);
   }
   const auto challenge_line =
@@ -274,10 +283,10 @@ std::uint64_t LiveBlocking::Authenticate() {
   return session_id;
 }
 
-std::string LiveBlocking::GenerateCramReply(const std::string& challenge_key) {
+std::string LiveBlocking::GenerateCramReply(std::string_view challenge_key) {
   std::array<unsigned char, SHA256_DIGEST_LENGTH> sha{};
   const unsigned char* sha_res =
-      ::SHA256(reinterpret_cast<const unsigned char*>(challenge_key.c_str()),
+      ::SHA256(reinterpret_cast<const unsigned char*>(challenge_key.data()),
                challenge_key.size(), sha.data());
   if (sha_res == nullptr) {
     throw LiveApiError{"Unable to generate SHA 256"};
@@ -292,7 +301,7 @@ std::string LiveBlocking::GenerateCramReply(const std::string& challenge_key) {
   return auth_stream.str();
 }
 
-std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
+std::string LiveBlocking::EncodeAuthReq(std::string_view auth) {
   std::ostringstream req_stream;
   req_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
              << "ts_out=" << send_ts_out_ << "|client=C++ " DATABENTO_VERSION;
@@ -305,7 +314,7 @@ std::string LiveBlocking::EncodeAuthReq(const std::string& auth) {
 
 std::uint64_t LiveBlocking::DecodeAuthResp() {
   // handle split packet read
-  std::array<char, kMaxStrLen>::const_iterator nl_it;
+  std::array<std::byte, kMaxStrLen>::const_iterator nl_it;
   buffer_size_ = 0;
   do {
     buffer_idx_ = buffer_size_;
@@ -320,9 +329,12 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
     }
     buffer_size_ += read_size;
     nl_it = std::find(read_buffer_.begin() + buffer_idx_,
-                      read_buffer_.begin() + buffer_size_, '\n');
+                      read_buffer_.begin() + buffer_size_,
+                      static_cast<std::byte>('\n'));
   } while (nl_it == read_buffer_.end());
-  const std::string response{read_buffer_.cbegin(), nl_it};
+  const std::string response{
+      reinterpret_cast<const char*>(read_buffer_.data()),
+      static_cast<std::size_t>(nl_it - read_buffer_.cbegin())};
   {
     std::ostringstream log_ss;
     log_ss << "[LiveBlocking::DecodeAuthResp] Authentication response: "
@@ -375,6 +387,16 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
                                "Failed to authenticate: " + err_details};
   }
   return session_id;
+}
+
+void LiveBlocking::IncrementSubCounter() {
+  if (sub_counter_ == std::numeric_limits<uint32_t>::max()) {
+    log_receiver_->Receive(
+        LogLevel::Warning,
+        "[LiveBlocking::Subscribe] Exhausted all subscription IDs");
+  } else {
+    ++sub_counter_;
+  }
 }
 
 databento::detail::TcpClient::Result LiveBlocking::FillBuffer(

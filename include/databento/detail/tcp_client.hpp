@@ -1,8 +1,10 @@
 #pragma once
 
 #include <chrono>  // milliseconds
+#include <cstddef>
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 #include "databento/detail/scoped_fd.hpp"  // ScopedFd
 
@@ -29,13 +31,13 @@ class TcpClient {
   TcpClient(const std::string& gateway, std::uint16_t port,
             RetryConf retry_conf);
 
-  void WriteAll(const std::string& str);
-  void WriteAll(const char* buffer, std::size_t size);
-  void ReadExact(char* buffer, std::size_t size);
-  Result ReadSome(char* buffer, std::size_t max_size);
+  void WriteAll(std::string_view str);
+  void WriteAll(const std::byte* buffer, std::size_t size);
+  void ReadExact(std::byte* buffer, std::size_t size);
+  Result ReadSome(std::byte* buffer, std::size_t max_size);
   // Passing a timeout of 0 will block until data is available of the socket is
   // closed, the same behavior as the Read overload without a timeout.
-  Result ReadSome(char* buffer, std::size_t max_size,
+  Result ReadSome(std::byte* buffer, std::size_t max_size,
                   std::chrono::milliseconds timeout);
   // Closes the socket.
   void Close();

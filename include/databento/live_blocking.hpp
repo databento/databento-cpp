@@ -2,8 +2,10 @@
 
 #include <array>
 #include <chrono>  // milliseconds
+#include <cstddef>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <utility>  // pair
 #include <vector>
 
@@ -93,10 +95,11 @@ class LiveBlocking {
   std::string DetermineGateway() const;
   std::uint64_t Authenticate();
   std::string DecodeChallenge();
-  std::string GenerateCramReply(const std::string& challenge_key);
-  std::string EncodeAuthReq(const std::string& auth);
+  std::string GenerateCramReply(std::string_view challenge_key);
+  std::string EncodeAuthReq(std::string_view auth);
   std::uint64_t DecodeAuthResp();
-  void Subscribe(const std::string& sub_msg,
+  void IncrementSubCounter();
+  void Subscribe(std::string_view sub_msg,
                  const std::vector<std::string>& symbols, bool use_snapshot);
   detail::TcpClient::Result FillBuffer(std::chrono::milliseconds timeout);
   RecordHeader* BufferRecordHeader();
@@ -113,14 +116,14 @@ class LiveBlocking {
   VersionUpgradePolicy upgrade_policy_;
   std::chrono::seconds heartbeat_interval_;
   detail::TcpClient client_;
+  std::uint32_t sub_counter_{};
   std::vector<LiveSubscription> subscriptions_;
   // Must be 8-byte aligned for records
-  alignas(RecordHeader) std::array<char, kMaxStrLen> read_buffer_{};
+  alignas(RecordHeader) std::array<std::byte, kMaxStrLen> read_buffer_{};
   std::size_t buffer_size_{};
   std::size_t buffer_idx_{};
   // Must be 8-byte aligned for records
-  alignas(
-      RecordHeader) std::array<std::uint8_t, kMaxRecordLen> compat_buffer_{};
+  alignas(RecordHeader) std::array<std::byte, kMaxRecordLen> compat_buffer_{};
   std::uint64_t session_id_;
   Record current_record_{nullptr};
 };

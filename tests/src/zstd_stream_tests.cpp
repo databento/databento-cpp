@@ -21,8 +21,7 @@ TEST(ZstdStreamTests, TestMultiFrameFiles) {
       std::make_unique<databento::InFileStream>(file_path)};
   for (std::size_t i = 0; i < kRecordCount; ++i) {
     databento::InstrumentDefMsgV1 def_msg;
-    target.ReadExact(reinterpret_cast<std::uint8_t*>(&def_msg),
-                     sizeof(def_msg));
+    target.ReadExact(reinterpret_cast<std::byte*>(&def_msg), sizeof(def_msg));
     EXPECT_EQ(def_msg.hd.rtype, databento::rtype::InstrumentDef);
   }
 }
@@ -37,11 +36,11 @@ TEST(ZstdStreamTests, TestIdentity) {
   {
     ZstdCompressStream compressor{&mock_io};
     for (auto it = source_data.begin(); it != source_data.end(); it += 100) {
-      compressor.WriteAll(reinterpret_cast<const std::uint8_t*>(&*it),
+      compressor.WriteAll(reinterpret_cast<const std::byte*>(&*it),
                           100 * sizeof(std::int64_t));
     }
   }
-  std::vector<std::uint8_t> res(size);
+  std::vector<std::byte> res(size);
   ZstdDecodeStream decode{
       std::make_unique<databento::tests::mock::MockIo>(std::move(mock_io))
 

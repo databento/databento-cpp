@@ -34,9 +34,12 @@ std::size_t Record::SizeOfSchema(const Schema schema) {
     case Schema::Tbbo: {
       return sizeof(Mbp1Msg);
     }
-    case Schema::Ohlcv1S:  // fallthrough
-    case Schema::Ohlcv1M:  // fallthrough
-    case Schema::Ohlcv1H:  // fallthrough
+    case Schema::Ohlcv1S:
+      [[fallthrough]];
+    case Schema::Ohlcv1M:
+      [[fallthrough]];
+    case Schema::Ohlcv1H:
+      [[fallthrough]];
     case Schema::Ohlcv1D: {
       return sizeof(OhlcvMsg);
     }

@@ -38,13 +38,14 @@ TcpClient::TcpClient(const std::string& gateway, std::uint16_t port,
                      RetryConf retry_conf)
     : socket_{InitSocket(gateway, port, retry_conf)} {}
 
-void TcpClient::WriteAll(const std::string& str) {
-  WriteAll(str.c_str(), str.length());
+void TcpClient::WriteAll(std::string_view str) {
+  WriteAll(reinterpret_cast<const std::byte*>(str.data()), str.length());
 }
 
-void TcpClient::WriteAll(const char* buffer, std::size_t size) {
+void TcpClient::WriteAll(const std::byte* buffer, std::size_t size) {
   do {
-    const ::ssize_t res = ::send(socket_.Get(), buffer, size, {});
+    const ::ssize_t res =
+        ::send(socket_.Get(), reinterpret_cast<const char*>(buffer), size, {});
     if (res < 0) {
       throw TcpError{::GetErrNo(), "Error writing to socket"};
     }
@@ -53,15 +54,17 @@ void TcpClient::WriteAll(const char* buffer, std::size_t size) {
   } while (size > 0);
 }
 
-void TcpClient::ReadExact(char* buffer, std::size_t size) {
-  const ::ssize_t res = ::recv(socket_.Get(), buffer, size, MSG_WAITALL);
+void TcpClient::ReadExact(std::byte* buffer, std::size_t size) {
+  const ::ssize_t res =
+      ::recv(socket_.Get(), reinterpret_cast<char*>(buffer), size, MSG_WAITALL);
   if (res != static_cast<::ssize_t>(size)) {
     throw TcpError{::GetErrNo(), "Error reading from socket"};
   }
 }
 
-TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size) {
-  const ::ssize_t res = ::recv(socket_.Get(), buffer, max_size, {});
+TcpClient::Result TcpClient::ReadSome(std::byte* buffer, std::size_t max_size) {
+  const ::ssize_t res =
+      ::recv(socket_.Get(), reinterpret_cast<char*>(buffer), max_size, {});
   if (res < 0) {
     throw TcpError{::GetErrNo(), "Error reading from socket"};
   }
@@ -69,7 +72,7 @@ TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size) {
           res == 0 ? Status::Closed : Status::Ok};
 }
 
-TcpClient::Result TcpClient::ReadSome(char* buffer, std::size_t max_size,
+TcpClient::Result TcpClient::ReadSome(std::byte* buffer, std::size_t max_size,
                                       std::chrono::milliseconds timeout) {
   pollfd fds{socket_.Get(), POLLIN, {}};
   // passing a timeout of -1 blocks indefinitely, which is the equivalent of

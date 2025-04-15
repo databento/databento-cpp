@@ -226,7 +226,8 @@ static_assert(sizeof(Mbp10Msg) == sizeof(TradeMsg) + sizeof(BidAskPair) * 10,
 struct BboMsg {
   static bool HasRType(RType rtype) {
     switch (rtype) {
-      case RType::Bbo1S:  // fallthrough
+      case RType::Bbo1S:
+        [[fallthrough]];
       case RType::Bbo1M:
         return true;
       default:
@@ -256,7 +257,8 @@ static_assert(sizeof(BboMsg) == sizeof(Mbp1Msg), "BboMsg size must match Rust");
 struct Cmbp1Msg {
   static bool HasRType(RType rtype) {
     switch (rtype) {
-      case RType::Cmbp1:  // fallthrough
+      case RType::Cmbp1:
+        [[fallthrough]];
       case RType::Tcbbo:
         return true;
       default:
@@ -287,8 +289,9 @@ static_assert(sizeof(Cmbp1Msg) ==
 struct CbboMsg {
   static bool HasRType(RType rtype) {
     switch (rtype) {
-      case RType::Cbbo1S:  // fallthrough
-      case RType::Cbbo1M:  // fallthrough
+      case RType::Cbbo1S:
+        [[fallthrough]];
+      case RType::Cbbo1M:
         return true;
       default:
         return false;
@@ -324,10 +327,14 @@ static_assert(sizeof(CbboMsg) ==
 struct OhlcvMsg {
   static bool HasRType(RType rtype) {
     switch (rtype) {
-      case RType::OhlcvDeprecated:  // fallthrough
-      case RType::Ohlcv1S:          // fallthrough
-      case RType::Ohlcv1M:          // fallthrough
-      case RType::Ohlcv1H:          // fallthrough
+      case RType::OhlcvDeprecated:
+        [[fallthrough]];
+      case RType::Ohlcv1S:
+        [[fallthrough]];
+      case RType::Ohlcv1M:
+        [[fallthrough]];
+      case RType::Ohlcv1H:
+        [[fallthrough]];
       case RType::Ohlcv1D:
         return true;
       default:

@@ -20,27 +20,27 @@ using databento::DbnDecoder;
 
 namespace {
 template <typename T>
-T Consume(std::vector<std::uint8_t>::const_iterator& byte_it) {
+T Consume(std::vector<std::byte>::const_iterator& byte_it) {
   const auto res = *reinterpret_cast<const T*>(&*byte_it);
   byte_it += sizeof(T);
   return res;
 }
 
 template <>
-std::uint8_t Consume(std::vector<std::uint8_t>::const_iterator& byte_it) {
+std::uint8_t Consume(std::vector<std::byte>::const_iterator& byte_it) {
   const auto res = *byte_it;
   byte_it += 1;
-  return res;
+  return static_cast<std::uint8_t>(res);
 }
 
-const char* Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
+const char* Consume(std::vector<std::byte>::const_iterator& byte_it,
                     const std::ptrdiff_t num_bytes) {
   const auto* pos = &*byte_it;
   byte_it += num_bytes;
   return reinterpret_cast<const char*>(pos);
 }
 
-std::string Consume(std::vector<std::uint8_t>::const_iterator& byte_it,
+std::string Consume(std::vector<std::byte>::const_iterator& byte_it,
                     const std::ptrdiff_t num_bytes, const char* context) {
   const auto cstr = Consume(byte_it, num_bytes);
   // strnlen isn't portable
@@ -87,7 +87,7 @@ DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
     input_ = std::make_unique<detail::ZstdDecodeStream>(
         std::move(input_), std::move(read_buffer_));
     // Reinitialize buffer and get it into the same state as uncompressed input
-    read_buffer_ = std::vector<std::uint8_t>();
+    read_buffer_ = std::vector<std::byte>();
     read_buffer_.reserve(kBufferCapacity);
     read_buffer_.resize(kMagicSize);
     input_->ReadExact(read_buffer_.data(), kMagicSize);
@@ -99,14 +99,14 @@ DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
 }
 
 std::pair<std::uint8_t, std::size_t> DbnDecoder::DecodeMetadataVersionAndSize(
-    const std::uint8_t* buffer, std::size_t size) {
+    const std::byte* buffer, std::size_t size) {
   if (size < 8) {
     throw DbnResponseError{"Buffer too small to decode version and size"};
   }
   if (std::strncmp(reinterpret_cast<const char*>(buffer), kDbnPrefix, 3) != 0) {
     throw DbnResponseError{"Missing DBN prefix"};
   }
-  const auto version = buffer[3];
+  const auto version = static_cast<std::uint8_t>(buffer[3]);
   const auto frame_size = *reinterpret_cast<const std::uint32_t*>(&buffer[4]);
   if (frame_size < kFixedMetadataLen) {
     throw DbnResponseError{
@@ -116,7 +116,7 @@ std::pair<std::uint8_t, std::size_t> DbnDecoder::DecodeMetadataVersionAndSize(
 }
 
 databento::Metadata DbnDecoder::DecodeMetadataFields(
-    std::uint8_t version, const std::vector<std::uint8_t>& buffer) {
+    std::uint8_t version, const std::vector<std::byte>& buffer) {
   Metadata res;
   res.version = version;
   if (res.version > kDbnVersion) {
@@ -205,17 +205,16 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
 namespace {
 template <typename T, typename U>
 databento::Record UpgradeRecord(
-    bool ts_out,
-    std::array<std::uint8_t, databento::kMaxRecordLen>* compat_buffer,
+    bool ts_out, std::array<std::byte, databento::kMaxRecordLen>* compat_buffer,
     databento::Record rec) {
   if (ts_out) {
     const auto orig = rec.Get<databento::WithTsOut<T>>();
     const databento::WithTsOut<U> v2{orig.rec.ToV2(), orig.ts_out};
-    const auto v2_ptr = reinterpret_cast<const std::uint8_t*>(&v2);
+    const auto v2_ptr = reinterpret_cast<const std::byte*>(&v2);
     std::copy(v2_ptr, v2_ptr + v2.rec.hd.Size(), compat_buffer->data());
   } else {
     const auto v2 = rec.Get<T>().ToV2();
-    const auto v2_ptr = reinterpret_cast<const std::uint8_t*>(&v2);
+    const auto v2_ptr = reinterpret_cast<const std::byte*>(&v2);
     std::copy(v2_ptr, v2_ptr + v2.hd.Size(), compat_buffer->data());
   }
   return databento::Record{
@@ -225,7 +224,7 @@ databento::Record UpgradeRecord(
 
 databento::Record DbnDecoder::DecodeRecordCompat(
     std::uint8_t version, VersionUpgradePolicy upgrade_policy, bool ts_out,
-    std::array<std::uint8_t, kMaxRecordLen>* compat_buffer, Record rec) {
+    std::array<std::byte, kMaxRecordLen>* compat_buffer, Record rec) {
   if (version == 1 && upgrade_policy == VersionUpgradePolicy::UpgradeToV2) {
     if (rec.RType() == RType::InstrumentDef) {
       return UpgradeRecord<InstrumentDefMsgV1, InstrumentDefMsgV2>(
@@ -319,15 +318,15 @@ bool DbnDecoder::DetectCompression() {
 
 std::string DbnDecoder::DecodeSymbol(
     std::size_t symbol_cstr_len,
-    std::vector<std::uint8_t>::const_iterator& read_buffer_it) {
+    std::vector<std::byte>::const_iterator& read_buffer_it) {
   return Consume(read_buffer_it, static_cast<std::ptrdiff_t>(symbol_cstr_len),
                  "symbol");
 }
 
 std::vector<std::string> DbnDecoder::DecodeRepeatedSymbol(
     std::size_t symbol_cstr_len,
-    std::vector<std::uint8_t>::const_iterator& read_buffer_it,
-    std::vector<std::uint8_t>::const_iterator read_buffer_end_it) {
+    std::vector<std::byte>::const_iterator& read_buffer_it,
+    std::vector<std::byte>::const_iterator read_buffer_end_it) {
   if (read_buffer_it + sizeof(std::uint32_t) > read_buffer_end_it) {
     throw DbnResponseError{
         "Unexpected end of metadata buffer while parsing symbol"};
@@ -348,8 +347,8 @@ std::vector<std::string> DbnDecoder::DecodeRepeatedSymbol(
 
 std::vector<databento::SymbolMapping> DbnDecoder::DecodeSymbolMappings(
     std::size_t symbol_cstr_len,
-    std::vector<std::uint8_t>::const_iterator& read_buffer_it,
-    std::vector<std::uint8_t>::const_iterator read_buffer_end_it) {
+    std::vector<std::byte>::const_iterator& read_buffer_it,
+    std::vector<std::byte>::const_iterator read_buffer_end_it) {
   if (read_buffer_it + sizeof(std::uint32_t) > read_buffer_end_it) {
     throw DbnResponseError{
         "Unexpected end of metadata buffer while parsing mappings"};
@@ -366,8 +365,8 @@ std::vector<databento::SymbolMapping> DbnDecoder::DecodeSymbolMappings(
 
 databento::SymbolMapping DbnDecoder::DecodeSymbolMapping(
     std::size_t symbol_cstr_len,
-    std::vector<std::uint8_t>::const_iterator& read_buffer_it,
-    std::vector<std::uint8_t>::const_iterator read_buffer_end_it) {
+    std::vector<std::byte>::const_iterator& read_buffer_it,
+    std::vector<std::byte>::const_iterator read_buffer_end_it) {
   const auto min_symbol_mapping_encoded_len =
       static_cast<std::ptrdiff_t>(symbol_cstr_len + sizeof(std::uint32_t));
   const auto mapping_encoded_len = sizeof(std::uint32_t) * 2 + symbol_cstr_len;

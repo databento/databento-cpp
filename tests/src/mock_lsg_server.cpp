@@ -9,7 +9,6 @@
 #include <openssl/sha.h>  // SHA256_DIGEST_LENGTH
 
 #include <chrono>
-#include <cstdint>
 
 #include "databento/compat.hpp"
 #include "databento/constants.hpp"
@@ -22,7 +21,7 @@
 
 using databento::tests::mock::SocketStream;
 
-void SocketStream::WriteAll(const std::uint8_t* buffer, std::size_t length) {
+void SocketStream::WriteAll(const std::byte* buffer, std::size_t length) {
 // MSG_NOSIGNAL doesn't exist on Windows, but also isn't necessary
 #ifdef _WIN32
   constexpr int MSG_NOSIGNAL = {};
@@ -136,6 +135,7 @@ void MockLsgServer::SubscribeWithSnapshot(
   EXPECT_NE(received.find(std::string{"stype_in="} + ToString(stype)),
             std::string::npos);
   EXPECT_EQ(received.find("start="), std::string::npos);
+  EXPECT_NE(received.find("id="), std::string::npos);
   EXPECT_NE(received.find("snapshot=1"), std::string::npos);
 }
 
@@ -156,6 +156,7 @@ void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
   } else {
     EXPECT_NE(received.find(std::string{"start="} + start), std::string::npos);
   }
+  EXPECT_NE(received.find("id="), std::string::npos);
   EXPECT_NE(received.find("snapshot=0"), std::string::npos);
 }
 

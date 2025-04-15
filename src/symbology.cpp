@@ -5,6 +5,7 @@
 #include <numeric>  // accumulate
 #include <sstream>
 #include <string>
+#include <string_view>
 
 #include "databento/exceptions.hpp"  // InvalidArgumentError
 #include "stream_op_helper.hpp"      // StreamOpBuilder

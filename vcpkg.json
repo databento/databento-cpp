@@ -2,10 +2,6 @@
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "databento",
   "dependencies": [
-    {
-      "name": "dirent",
-      "platform": "windows"
-    },
     "openssl",
     "zstd"
   ],
