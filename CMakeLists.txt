@@ -1,10 +1,15 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.24..4.0)
 
 #
 # Project details
 #
 
-project("databento" VERSION 0.33.0 LANGUAGES CXX)
+project(
+  databento
+  VERSION 0.33.0
+  LANGUAGES CXX
+  DESCRIPTION "Official Databento client library"
+)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
 
 #
@@ -83,6 +88,7 @@ endif()
 
 add_library(
   ${PROJECT_NAME}
+  STATIC
   ${headers}
   ${sources}
 )
@@ -101,6 +107,7 @@ message(STATUS "Added all header and implementation files.")
 #
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 include(cmake/CompilerWarnings.cmake)
 set_target_warnings(${PROJECT_NAME})
 include(cmake/Sanitizers.cmake)
@@ -143,19 +150,11 @@ else()
   set(json_version 3.11.3)
   # Required to correctly install nlohmann_json
   set(JSON_Install ON)
-  if(CMAKE_VERSION VERSION_LESS 3.24)
-    FetchContent_Declare(
-      json
-      URL https://github.com/nlohmann/json/releases/download/v${json_version}/json.tar.xz
-    )
-  else()
-    # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
-    FetchContent_Declare(
-      json
-      URL https://github.com/nlohmann/json/releases/download/v${json_version}/json.tar.xz
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    )
-  endif()
+  FetchContent_Declare(
+    json
+    URL https://github.com/nlohmann/json/releases/download/v${json_version}/json.tar.xz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  )
   FetchContent_MakeAvailable(json)
   # Ignore compiler warnings in headers
   add_system_include_property(nlohmann_json)
@@ -175,19 +174,11 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
   endif()
 else()
   set(httplib_version 0.20.0)
-  if(CMAKE_VERSION VERSION_LESS 3.24)
-    FetchContent_Declare(
-      httplib
-      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz
-    )
-  else()
-    # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
-    FetchContent_Declare(
-      httplib
-      URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    )
-  endif()
+  FetchContent_Declare(
+    httplib
+    URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  )
   FetchContent_MakeAvailable(httplib)
   # Ignore compiler warnings in headers
   add_system_include_property(httplib)
@@ -207,19 +198,11 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_DATE)
   endif()
 else()
   set(date_version 3.0.3)
-  if(CMAKE_VERSION VERSION_LESS 3.24)
-    FetchContent_Declare(
-      date_src
-      URL https://github.com/HowardHinnant/date/archive/refs/tags/v${date_version}.tar.gz
-    )
-  else()
-    # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
-    FetchContent_Declare(
-      date_src
-      URL https://github.com/HowardHinnant/date/archive/refs/tags/v${date_version}.tar.gz
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    )
-  endif()
+  FetchContent_Declare(
+    date_src
+    URL https://github.com/HowardHinnant/date/archive/refs/tags/v${date_version}.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  )
   FetchContent_MakeAvailable(date_src)
   # Ignore compiler warnings in headers
   add_system_include_property(date)

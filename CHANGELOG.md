@@ -7,15 +7,20 @@
   messages
 - Converting a `v1::SystemMsg` to a `v2::SystemMsg` now sets to `code` to the heartbeat
   value
-- Introduced `kAssetCstrLen` constant containing the size of `asset` field in `InstrumentDefMsg`
+- Introduced `kAssetCstrLen` constant containing the size of `asset` field in
+  `InstrumentDefMsg`
 
 ### Breaking changes
+- Increased the size of `asset` field in `v3::InstrumentDefMsg` from 7 to 11. The
+  `v3::InstrumentDefMsg` message size remains 520 bytes.
+- Set minimum CMake version to 3.24
 - Changed type of `code` field in `SystemMsg` to `SystemCode`
 - Changed type of `code` field in `ErrorMsg` to `ErrorCode`
-- Increased the size of `asset` field in `v3::InstrumentDefMsg` from 7 to 11. The `v3::InstrumentDefMsg` message size remains 520 bytes.
 
 ### Bug fixes
 - Changed `TriState` to a regular enum to handle unexpected values
+- Fixed `ccache` support
+- Changed to explicitly only support being built as a static library
 
 ## 0.33.0 - 2025-04-15
 

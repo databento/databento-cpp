@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.24)
 
 add_example_target(batch batch.cpp)
 add_example_target(metadata metadata.cpp)
