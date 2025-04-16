@@ -10,6 +10,7 @@
 
 namespace databento::v3 {
 static constexpr std::size_t kSymbolCstrLen = databento::kSymbolCstrLen;
+static constexpr std::size_t kAssetCstrLen = 11;
 
 using MboMsg = databento::MboMsg;
 using TradeMsg = databento::TradeMsg;
@@ -100,7 +101,7 @@ struct InstrumentDefMsg {
   std::array<char, kSymbolCstrLen> raw_symbol;
   std::array<char, 21> group;
   std::array<char, 5> exchange;
-  std::array<char, 7> asset;
+  std::array<char, kAssetCstrLen> asset;
   std::array<char, 7> cfi;
   std::array<char, 7> security_type;
   std::array<char, 31> unit_of_measure;
@@ -124,7 +125,7 @@ struct InstrumentDefMsg {
   InstrumentClass leg_instrument_class;
   Side leg_side;
   // padding for alignment
-  std::array<char, 21> reserved;
+  std::array<char, 17> reserved;
 };
 static_assert(sizeof(InstrumentDefMsg) == 520,
               "InstrumentDefMsg size must match Rust");
