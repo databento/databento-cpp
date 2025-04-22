@@ -24,6 +24,8 @@ static constexpr auto kUndefTimestamp =
 static constexpr auto kDbnVersion = 2;
 // The length of fixed-length symbol strings.
 static constexpr auto kSymbolCstrLen = 71;
+// The length of fixed-length asset string.
+static constexpr auto kAssetCstrLen = 7;
 // The multiplier for converting the `length` field in `RecordHeader` to bytes.
 static constexpr std::size_t kRecordHeaderLengthMultiplier = 4;
 

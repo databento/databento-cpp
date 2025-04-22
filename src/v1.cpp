@@ -2,9 +2,11 @@
 
 #include <algorithm>  // copy
 #include <cstdint>
+#include <cstring>
 #include <limits>  // numeric_limits
 
 #include "databento/constants.hpp"
+#include "databento/enums.hpp"
 #include "databento/fixed_price.hpp"  // FixedPx
 #include "databento/record.hpp"
 #include "databento/v2.hpp"
@@ -193,7 +195,7 @@ v2::ErrorMsg ErrorMsg::ToV2() const {
                    RType::Error, hd.publisher_id, hd.instrument_id,
                    hd.ts_event},
       {},
-      std::numeric_limits<std::uint8_t>::max(),
+      ErrorCode::Unset,
       std::numeric_limits<std::uint8_t>::max()};
   std::copy(err.begin(), err.end(), ret.err.begin());
   return ret;
@@ -227,7 +229,7 @@ v2::SystemMsg SystemMsg::ToV2() const {
                    RType::System, hd.publisher_id, hd.instrument_id,
                    hd.ts_event},
       {},
-      std::numeric_limits<std::uint8_t>::max()};
+      IsHeartbeat() ? SystemCode::Heartbeat : SystemCode::Unset};
   std::copy(msg.begin(), msg.end(), ret.msg.begin());
   return ret;
 }

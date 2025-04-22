@@ -9,7 +9,7 @@ The client supports both streaming real-time and historical market data through 
 
 ## Usage
 
-The minimum C++ standard is C++17 and the minimum CMake version is 3.14.
+The minimum C++ standard is C++17 and the minimum CMake version is 3.24.
 
 ### Integration
 
@@ -18,7 +18,7 @@ Your `CMakeLists.txt` should look something like the following:
 
 ```cmake
 # CMakeLists.txt
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.24)
 
 project(databento_example)
 include(FetchContent)

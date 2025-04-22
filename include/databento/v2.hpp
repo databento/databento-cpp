@@ -5,6 +5,7 @@
 
 namespace databento::v2 {
 static constexpr std::size_t kSymbolCstrLen = databento::kSymbolCstrLen;
+static constexpr std::size_t kAssetCstrLen = databento::kAssetCstrLen;
 
 using MboMsg = databento::MboMsg;
 using TradeMsg = databento::TradeMsg;
