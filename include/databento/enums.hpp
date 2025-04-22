@@ -208,6 +208,7 @@ enum MatchAlgorithm : char {
   ThresholdProRataLmm = 'Q',
   EurodollarFutures = 'Y',
   TimeProRata = 'P',
+  InstitutionalPrioritization = 'V',
 };
 }  // namespace match_algorithm
 using match_algorithm::MatchAlgorithm;

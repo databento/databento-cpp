@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.35.0 - TBD
+
+### Enhancements
+- Added `InstitutionalPrioritization` variant to `MatchingAlgorithm`
+
 ## 0.34.0 - 2025-04-22
 
 ### Enhancements
