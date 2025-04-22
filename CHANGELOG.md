@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.34.0 - TBD
+## 0.34.0 - 2025-04-22
 
 ### Enhancements
 - Added `SystemCode` and `ErrorCode` enums to indicate types of system and error
