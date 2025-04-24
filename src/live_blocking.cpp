@@ -137,12 +137,13 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
 
 databento::Metadata LiveBlocking::Start() {
   client_.WriteAll("start_session\n");
-  client_.ReadExact(read_buffer_.data(), kMetadataPreludeSize);
+  client_.ReadExact(buffer_.WriteBegin(), kMetadataPreludeSize);
   const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
-      read_buffer_.data(), kMetadataPreludeSize);
+      buffer_.ReadBegin(), kMetadataPreludeSize);
   std::vector<std::byte> meta_buffer(size);
   client_.ReadExact(meta_buffer.data(), size);
-  auto metadata = DbnDecoder::DecodeMetadataFields(version, meta_buffer);
+  auto metadata = DbnDecoder::DecodeMetadataFields(version, meta_buffer.data(),
+                                                   &*meta_buffer.end());
   version_ = metadata.version;
   metadata.Upgrade(upgrade_policy_);
   return metadata;
@@ -153,7 +154,7 @@ const databento::Record& LiveBlocking::NextRecord() { return *NextRecord({}); }
 const databento::Record* LiveBlocking::NextRecord(
     std::chrono::milliseconds timeout) {
   // need some unread_bytes
-  const auto unread_bytes = buffer_size_ - buffer_idx_;
+  const auto unread_bytes = buffer_.ReadCapacity();
   if (unread_bytes == 0) {
     const auto read_res = FillBuffer(timeout);
     if (read_res.status == detail::TcpClient::Status::Timeout) {
@@ -164,7 +165,7 @@ const databento::Record* LiveBlocking::NextRecord(
     }
   }
   // check length
-  while (buffer_size_ - buffer_idx_ < BufferRecordHeader()->Size()) {
+  while (buffer_.ReadCapacity() < BufferRecordHeader()->Size()) {
     const auto read_res = FillBuffer(timeout);
     if (read_res.status == detail::TcpClient::Status::Timeout) {
       return nullptr;
@@ -174,7 +175,7 @@ const databento::Record* LiveBlocking::NextRecord(
     }
   }
   current_record_ = Record{BufferRecordHeader()};
-  buffer_idx_ += current_record_.Size();
+  buffer_.ReadBegin() += current_record_.Size();
   current_record_ =
       DbnDecoder::DecodeRecordCompat(version_, upgrade_policy_, send_ts_out_,
                                      &compat_buffer_, current_record_);
@@ -208,14 +209,15 @@ void LiveBlocking::Resubscribe() {
 }
 
 std::string LiveBlocking::DecodeChallenge() {
-  buffer_size_ =
-      client_.ReadSome(read_buffer_.data(), read_buffer_.size()).read_size;
-  if (buffer_size_ == 0) {
+  const auto read_size =
+      client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size;
+  if (read_size == 0) {
     throw LiveApiError{"Gateway closed socket during authentication"};
   }
+  buffer_.WriteBegin() += read_size;
   // first line is version
-  std::string response{reinterpret_cast<const char*>(read_buffer_.data()),
-                       buffer_size_};
+  std::string response{reinterpret_cast<const char*>(buffer_.ReadBegin()),
+                       buffer_.ReadCapacity()};
   {
     std::ostringstream log_ss;
     log_ss << "[LiveBlocking::DecodeChallenge] Challenge: " << response;
@@ -232,15 +234,14 @@ std::string LiveBlocking::DecodeChallenge() {
                          : response.find('\n', find_start);
   while (next_nl_pos == std::string::npos) {
     // read more
-    buffer_size_ += client_
-                        .ReadSome(&read_buffer_[buffer_size_],
-                                  read_buffer_.size() - buffer_size_)
-                        .read_size;
-    if (buffer_size_ == 0) {
+    buffer_.WriteBegin() +=
+        client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity())
+            .read_size;
+    if (buffer_.ReadCapacity() == 0) {
       throw LiveApiError{"Gateway closed socket during authentication"};
     }
-    response = {reinterpret_cast<const char*>(read_buffer_.data()),
-                buffer_size_};
+    response = {reinterpret_cast<const char*>(buffer_.ReadBegin()),
+                buffer_.ReadCapacity()};
     next_nl_pos = response.find('\n', find_start);
   }
   const auto challenge_line =
@@ -314,27 +315,24 @@ std::string LiveBlocking::EncodeAuthReq(std::string_view auth) {
 
 std::uint64_t LiveBlocking::DecodeAuthResp() {
   // handle split packet read
-  std::array<std::byte, kMaxStrLen>::const_iterator nl_it;
-  buffer_size_ = 0;
+  const std::byte* newline_ptr;
+  buffer_.Clear();
   do {
-    buffer_idx_ = buffer_size_;
-    const auto read_size = client_
-                               .ReadSome(&read_buffer_[buffer_idx_],
-                                         read_buffer_.size() - buffer_idx_)
-                               .read_size;
+    const auto read_size =
+        client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity())
+            .read_size;
     if (read_size == 0) {
       throw LiveApiError{
           "Unexpected end of message received from server after replying to "
           "CRAM"};
     }
-    buffer_size_ += read_size;
-    nl_it = std::find(read_buffer_.begin() + buffer_idx_,
-                      read_buffer_.begin() + buffer_size_,
-                      static_cast<std::byte>('\n'));
-  } while (nl_it == read_buffer_.end());
+    buffer_.WriteBegin() += read_size;
+    newline_ptr = std::find(buffer_.ReadBegin(), buffer_.ReadEnd(),
+                            static_cast<std::byte>('\n'));
+  } while (newline_ptr == buffer_.ReadEnd());
   const std::string response{
-      reinterpret_cast<const char*>(read_buffer_.data()),
-      static_cast<std::size_t>(nl_it - read_buffer_.cbegin())};
+      reinterpret_cast<const char*>(buffer_.ReadBegin()),
+      static_cast<std::size_t>(newline_ptr - buffer_.ReadBegin())};
   {
     std::ostringstream log_ss;
     log_ss << "[LiveBlocking::DecodeAuthResp] Authentication response: "
@@ -342,7 +340,7 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
     log_receiver_->Receive(LogLevel::Debug, log_ss.str());
   }
   // set in case Read call also read records. One beyond newline
-  buffer_idx_ = response.length() + 1;
+  buffer_.ReadBegin() += response.length() + 1;
 
   std::size_t pos{};
   bool found_success{};
@@ -401,17 +399,13 @@ void LiveBlocking::IncrementSubCounter() {
 
 databento::detail::TcpClient::Result LiveBlocking::FillBuffer(
     std::chrono::milliseconds timeout) {
-  // Shift data forward
-  std::copy(read_buffer_.cbegin() + static_cast<std::ptrdiff_t>(buffer_idx_),
-            read_buffer_.cend(), read_buffer_.begin());
-  buffer_size_ -= buffer_idx_;
-  buffer_idx_ = 0;
-  const auto read_res = client_.ReadSome(
-      &read_buffer_[buffer_size_], read_buffer_.size() - buffer_size_, timeout);
-  buffer_size_ += read_res.read_size;
+  buffer_.Shift();
+  const auto read_res =
+      client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity(), timeout);
+  buffer_.WriteBegin() += read_res.read_size;
   return read_res;
 }
 
 databento::RecordHeader* LiveBlocking::BufferRecordHeader() {
-  return reinterpret_cast<RecordHeader*>(&read_buffer_[buffer_idx_]);
+  return reinterpret_cast<RecordHeader*>(buffer_.ReadBegin());
 }

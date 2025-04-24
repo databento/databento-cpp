@@ -20,29 +20,28 @@ using databento::DbnDecoder;
 
 namespace {
 template <typename T>
-T Consume(std::vector<std::byte>::const_iterator& byte_it) {
-  const auto res = *reinterpret_cast<const T*>(&*byte_it);
-  byte_it += sizeof(T);
+T Consume(const std::byte*& buf) {
+  const auto res = *reinterpret_cast<const T*>(&*buf);
+  buf += sizeof(T);
   return res;
 }
 
 template <>
-std::uint8_t Consume(std::vector<std::byte>::const_iterator& byte_it) {
-  const auto res = *byte_it;
-  byte_it += 1;
+std::uint8_t Consume(const std::byte*& buf) {
+  const auto res = *buf;
+  buf += 1;
   return static_cast<std::uint8_t>(res);
 }
 
-const char* Consume(std::vector<std::byte>::const_iterator& byte_it,
-                    const std::ptrdiff_t num_bytes) {
-  const auto* pos = &*byte_it;
-  byte_it += num_bytes;
+const char* Consume(const std::byte*& buf, const std::ptrdiff_t num_bytes) {
+  const auto* pos = &*buf;
+  buf += num_bytes;
   return reinterpret_cast<const char*>(pos);
 }
 
-std::string Consume(std::vector<std::byte>::const_iterator& byte_it,
-                    const std::ptrdiff_t num_bytes, const char* context) {
-  const auto cstr = Consume(byte_it, num_bytes);
+std::string Consume(const std::byte*& buf, const std::ptrdiff_t num_bytes,
+                    const char* context) {
+  const auto cstr = Consume(buf, num_bytes);
   // strnlen isn't portable
   const auto str_len = std::find(cstr, cstr + num_bytes, '\0') - cstr;
   if (str_len == num_bytes) {
@@ -61,11 +60,6 @@ date::year_month_day DecodeIso8601Date(std::uint32_t yyyymmdd_int) {
           date::day{day}};
 }
 }  // namespace
-
-DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
-                       detail::SharedChannel channel)
-    : DbnDecoder(log_receiver,
-                 std::make_unique<detail::SharedChannel>(std::move(channel))) {}
 
 DbnDecoder::DbnDecoder(ILogReceiver* log_receiver, InFileStream file_stream)
     : DbnDecoder(log_receiver,
@@ -91,8 +85,8 @@ DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
     read_buffer_.reserve(kBufferCapacity);
     read_buffer_.resize(kMagicSize);
     input_->ReadExact(read_buffer_.data(), kMagicSize);
-    auto read_buffer_it = read_buffer_.cbegin();
-    if (std::strncmp(Consume(read_buffer_it, 3), kDbnPrefix, 3) != 0) {
+    const auto* buf_ptr = read_buffer_.data();
+    if (std::strncmp(Consume(buf_ptr, 3), kDbnPrefix, 3) != 0) {
       throw DbnResponseError{"Found Zstd input, but not DBN prefix"};
     }
   }
@@ -116,7 +110,8 @@ std::pair<std::uint8_t, std::size_t> DbnDecoder::DecodeMetadataVersionAndSize(
 }
 
 databento::Metadata DbnDecoder::DecodeMetadataFields(
-    std::uint8_t version, const std::vector<std::byte>& buffer) {
+    std::uint8_t version, const std::byte* buffer,
+    const std::byte* buffer_end) {
   Metadata res;
   res.version = version;
   if (res.version > kDbnVersion) {
@@ -125,9 +120,8 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
         std::to_string(kDbnVersion) + ", input version is " +
         std::to_string(res.version)};
   }
-  auto read_buffer_it = buffer.cbegin();
-  res.dataset = Consume(read_buffer_it, kDatasetCstrLen, "dataset");
-  const auto raw_schema = Consume<std::uint16_t>(read_buffer_it);
+  res.dataset = Consume(buffer, kDatasetCstrLen, "dataset");
+  const auto raw_schema = Consume<std::uint16_t>(buffer);
   if (raw_schema == kNullSchema) {
     res.has_mixed_schema = true;
     // must initialize
@@ -136,16 +130,15 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
     res.has_mixed_schema = false;
     res.schema = static_cast<Schema>(raw_schema);
   }
-  res.start = UnixNanos{
-      std::chrono::nanoseconds{Consume<std::uint64_t>(read_buffer_it)}};
-  res.end = UnixNanos{
-      std::chrono::nanoseconds{Consume<std::uint64_t>(read_buffer_it)}};
-  res.limit = Consume<std::uint64_t>(read_buffer_it);
+  res.start =
+      UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(buffer)}};
+  res.end = UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(buffer)}};
+  res.limit = Consume<std::uint64_t>(buffer);
   if (version == 1) {
     // skip deprecated record_count
-    read_buffer_it += 8;
+    buffer += 8;
   }
-  const auto raw_stype_in = Consume<std::uint8_t>(read_buffer_it);
+  const auto raw_stype_in = Consume<std::uint8_t>(buffer);
   if (raw_stype_in == kNullSType) {
     res.has_mixed_stype_in = true;
     // must initialize
@@ -154,34 +147,34 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
     res.has_mixed_stype_in = false;
     res.stype_in = static_cast<SType>(raw_stype_in);
   }
-  res.stype_out = static_cast<SType>(Consume<std::uint8_t>(read_buffer_it));
-  res.ts_out = static_cast<bool>(Consume<std::uint8_t>(read_buffer_it));
+  res.stype_out = static_cast<SType>(Consume<std::uint8_t>(buffer));
+  res.ts_out = static_cast<bool>(Consume<std::uint8_t>(buffer));
   if (version > 1) {
     res.symbol_cstr_len =
-        static_cast<std::size_t>(Consume<std::uint16_t>(read_buffer_it));
+        static_cast<std::size_t>(Consume<std::uint16_t>(buffer));
   } else {
     res.symbol_cstr_len = kSymbolCstrLenV1;
   }
   // skip reserved
   if (version == 1) {
-    read_buffer_it += kMetadataReservedLenV1;
+    buffer += kMetadataReservedLenV1;
   } else {
-    read_buffer_it += kMetadataReservedLen;
+    buffer += kMetadataReservedLen;
   }
 
-  const auto schema_definition_length = Consume<std::uint32_t>(read_buffer_it);
+  const auto schema_definition_length = Consume<std::uint32_t>(buffer);
   if (schema_definition_length != 0) {
     throw DbnResponseError{
         "This version of dbn can't parse schema definitions"};
   }
-  res.symbols = DbnDecoder::DecodeRepeatedSymbol(res.symbol_cstr_len,
-                                                 read_buffer_it, buffer.cend());
-  res.partial = DbnDecoder::DecodeRepeatedSymbol(res.symbol_cstr_len,
-                                                 read_buffer_it, buffer.cend());
-  res.not_found = DbnDecoder::DecodeRepeatedSymbol(
-      res.symbol_cstr_len, read_buffer_it, buffer.cend());
-  res.mappings = DbnDecoder::DecodeSymbolMappings(
-      res.symbol_cstr_len, read_buffer_it, buffer.cend());
+  res.symbols =
+      DbnDecoder::DecodeRepeatedSymbol(res.symbol_cstr_len, buffer, buffer_end);
+  res.partial =
+      DbnDecoder::DecodeRepeatedSymbol(res.symbol_cstr_len, buffer, buffer_end);
+  res.not_found =
+      DbnDecoder::DecodeRepeatedSymbol(res.symbol_cstr_len, buffer, buffer_end);
+  res.mappings =
+      DbnDecoder::DecodeSymbolMappings(res.symbol_cstr_len, buffer, buffer_end);
 
   return res;
 }
@@ -196,7 +189,8 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
   read_buffer_.resize(size);
   input_->ReadExact(read_buffer_.data(), read_buffer_.size());
   buffer_idx_ = read_buffer_.size();
-  auto metadata = DbnDecoder::DecodeMetadataFields(version_, read_buffer_);
+  auto metadata = DbnDecoder::DecodeMetadataFields(
+      version_, read_buffer_.data(), &*read_buffer_.cend());
   ts_out_ = metadata.ts_out;
   metadata.Upgrade(upgrade_policy_);
   return metadata;
@@ -293,11 +287,11 @@ databento::RecordHeader* DbnDecoder::BufferRecordHeader() {
 bool DbnDecoder::DetectCompression() {
   read_buffer_.resize(kMagicSize);
   input_->ReadExact(read_buffer_.data(), kMagicSize);
-  auto read_buffer_it = read_buffer_.cbegin();
+  const auto* read_buffer_it = read_buffer_.data();
   if (std::strncmp(Consume(read_buffer_it, 3), kDbnPrefix, 3) == 0) {
     return false;
   }
-  read_buffer_it = read_buffer_.cbegin();
+  read_buffer_it = read_buffer_.data();
   auto x = Consume<std::uint32_t>(read_buffer_it);
   if (x == kZstdMagicNumber) {
     return true;
@@ -316,84 +310,79 @@ bool DbnDecoder::DetectCompression() {
       "DBN."};
 }
 
-std::string DbnDecoder::DecodeSymbol(
-    std::size_t symbol_cstr_len,
-    std::vector<std::byte>::const_iterator& read_buffer_it) {
+std::string DbnDecoder::DecodeSymbol(std::size_t symbol_cstr_len,
+                                     std::byte const*& read_buffer_it) {
   return Consume(read_buffer_it, static_cast<std::ptrdiff_t>(symbol_cstr_len),
                  "symbol");
 }
 
 std::vector<std::string> DbnDecoder::DecodeRepeatedSymbol(
-    std::size_t symbol_cstr_len,
-    std::vector<std::byte>::const_iterator& read_buffer_it,
-    std::vector<std::byte>::const_iterator read_buffer_end_it) {
-  if (read_buffer_it + sizeof(std::uint32_t) > read_buffer_end_it) {
+    std::size_t symbol_cstr_len, const std::byte*& read_buf,
+    const std::byte* read_buf_end) {
+  if (read_buf + sizeof(std::uint32_t) > read_buf_end) {
     throw DbnResponseError{
         "Unexpected end of metadata buffer while parsing symbol"};
   }
-  const auto count = std::size_t{Consume<std::uint32_t>(read_buffer_it)};
-  if (read_buffer_it + static_cast<std::ptrdiff_t>(count * symbol_cstr_len) >
-      read_buffer_end_it) {
+  const auto count = std::size_t{Consume<std::uint32_t>(read_buf)};
+  if (read_buf + static_cast<std::ptrdiff_t>(count * symbol_cstr_len) >
+      read_buf_end) {
     throw DbnResponseError{
         "Unexpected end of metadata buffer while parsing symbol"};
   }
   std::vector<std::string> res;
   res.reserve(count);
   for (std::size_t i = 0; i < count; ++i) {
-    res.emplace_back(DecodeSymbol(symbol_cstr_len, read_buffer_it));
+    res.emplace_back(DecodeSymbol(symbol_cstr_len, read_buf));
   }
   return res;
 }
 
 std::vector<databento::SymbolMapping> DbnDecoder::DecodeSymbolMappings(
-    std::size_t symbol_cstr_len,
-    std::vector<std::byte>::const_iterator& read_buffer_it,
-    std::vector<std::byte>::const_iterator read_buffer_end_it) {
-  if (read_buffer_it + sizeof(std::uint32_t) > read_buffer_end_it) {
+    std::size_t symbol_cstr_len, const std::byte*& read_buf,
+    const std::byte* read_buf_end) {
+  if (read_buf + sizeof(std::uint32_t) > read_buf_end) {
     throw DbnResponseError{
         "Unexpected end of metadata buffer while parsing mappings"};
   }
-  const auto count = std::size_t{Consume<std::uint32_t>(read_buffer_it)};
+  const auto count = std::size_t{Consume<std::uint32_t>(read_buf)};
   std::vector<SymbolMapping> res;
   res.reserve(count);
   for (std::size_t i = 0; i < count; ++i) {
-    res.emplace_back(DbnDecoder::DecodeSymbolMapping(
-        symbol_cstr_len, read_buffer_it, read_buffer_end_it));
+    res.emplace_back(DbnDecoder::DecodeSymbolMapping(symbol_cstr_len, read_buf,
+                                                     read_buf_end));
   }
   return res;
 }
 
 databento::SymbolMapping DbnDecoder::DecodeSymbolMapping(
-    std::size_t symbol_cstr_len,
-    std::vector<std::byte>::const_iterator& read_buffer_it,
-    std::vector<std::byte>::const_iterator read_buffer_end_it) {
+    std::size_t symbol_cstr_len, const std::byte*& read_buf,
+    const std::byte* read_buf_end) {
   const auto min_symbol_mapping_encoded_len =
       static_cast<std::ptrdiff_t>(symbol_cstr_len + sizeof(std::uint32_t));
   const auto mapping_encoded_len = sizeof(std::uint32_t) * 2 + symbol_cstr_len;
 
-  if (read_buffer_it + min_symbol_mapping_encoded_len > read_buffer_end_it) {
+  if (read_buf + min_symbol_mapping_encoded_len > read_buf_end) {
     throw DbnResponseError{
         "Unexpected end of metadata buffer while parsing symbol "
         "mapping"};
   }
   SymbolMapping res;
-  res.raw_symbol = DecodeSymbol(symbol_cstr_len, read_buffer_it);
-  const auto interval_count =
-      std::size_t{Consume<std::uint32_t>(read_buffer_it)};
+  res.raw_symbol = DecodeSymbol(symbol_cstr_len, read_buf);
+  const auto interval_count = std::size_t{Consume<std::uint32_t>(read_buf)};
   const auto read_size =
       static_cast<std::ptrdiff_t>(interval_count * mapping_encoded_len);
-  if (read_buffer_it + read_size > read_buffer_end_it) {
+  if (read_buf + read_size > read_buf_end) {
     throw DbnResponseError{
         "Symbol mapping interval_count doesn't match size of buffer"};
   }
   res.intervals.reserve(interval_count);
   for (std::size_t i = 0; i < interval_count; ++i) {
     MappingInterval interval;
-    auto raw_start_date = Consume<std::uint32_t>(read_buffer_it);
+    auto raw_start_date = Consume<std::uint32_t>(read_buf);
     interval.start_date = DecodeIso8601Date(raw_start_date);
-    auto raw_end_date = Consume<std::uint32_t>(read_buffer_it);
+    auto raw_end_date = Consume<std::uint32_t>(read_buf);
     interval.end_date = DecodeIso8601Date(raw_end_date);
-    interval.symbol = DecodeSymbol(symbol_cstr_len, read_buffer_it);
+    interval.symbol = DecodeSymbol(symbol_cstr_len, read_buf);
     res.intervals.emplace_back(std::move(interval));
   }
   return res;

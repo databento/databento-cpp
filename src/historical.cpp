@@ -4,10 +4,8 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>  // find_if
-#include <atomic>     // atomic<bool>
 #include <cstddef>    // size_t
 #include <cstdlib>    // get_env
-#include <exception>  // exception, exception_ptr
 #include <filesystem>
 #include <iterator>  // back_inserter
 #include <string>
@@ -18,15 +16,15 @@
 #include "databento/datetime.hpp"
 #include "databento/dbn_decoder.hpp"
 #include "databento/dbn_file_store.hpp"
+#include "databento/detail/dbn_buffer_decoder.hpp"
 #include "databento/detail/json_helpers.hpp"
-#include "databento/detail/scoped_thread.hpp"
-#include "databento/detail/shared_channel.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // Exception, JsonResponseError
 #include "databento/file_stream.hpp"
 #include "databento/log.hpp"
 #include "databento/metadata.hpp"
 #include "databento/timeseries.hpp"
+#include "dbn_constants.hpp"
 
 using databento::Historical;
 
@@ -851,54 +849,23 @@ void Historical::TimeseriesGetRange(
 
   this->TimeseriesGetRange(params, metadata_callback, record_callback);
 }
+
+enum class DecoderState : std::uint8_t {
+  Init,
+  Metadata,
+  Records,
+};
 void Historical::TimeseriesGetRange(const HttplibParams& params,
                                     const MetadataCallback& metadata_callback,
                                     const RecordCallback& record_callback) {
-  std::atomic<bool> should_continue{true};
-  detail::SharedChannel channel;
-  std::exception_ptr exception_ptr{};
-  detail::ScopedThread stream{
-      [this, &channel, &exception_ptr, &params, &should_continue] {
-        try {
-          this->client_.GetRawStream(
-              kTimeseriesGetRangePath, params,
-              [channel, &should_continue](const char* data,
-                                          std::size_t length) mutable {
-                channel.Write(reinterpret_cast<const std::byte*>(data), length);
-                return should_continue.load();
-              });
-          channel.Finish();
-        } catch (const std::exception&) {
-          channel.Finish();
-          // rethrowing here will cause the process to be terminated
-          exception_ptr = std::current_exception();
-        }
-      }};
-  try {
-    DbnDecoder dbn_decoder{log_receiver_, channel};
-    Metadata metadata = dbn_decoder.DecodeMetadata();
-    if (metadata_callback) {
-      metadata_callback(std::move(metadata));
-    }
-    const Record* record;
-    while ((record = dbn_decoder.DecodeRecord()) != nullptr) {
-      if (record_callback(*record) == KeepGoing::Stop) {
-        should_continue = false;
-        break;
-      }
-    }
-  } catch (const std::exception&) {
-    should_continue = false;
-    // wait for thread to finish before checking for exceptions
-    stream.Join();
-    // check if there's an exception from stream thread. Thread safe because
-    // `stream` thread has been joined
-    if (exception_ptr) {
-      std::rethrow_exception(exception_ptr);
-    }
-    // otherwise rethrow original exception
-    throw;
-  }
+  detail::DbnBufferDecoder decoder{metadata_callback, record_callback};
+
+  this->client_.GetRawStream(
+      kTimeseriesGetRangePath, params,
+      [&decoder](const char* data, std::size_t length) mutable {
+        return decoder.Process(data, length) == KeepGoing::Continue;
+      });
+  // FIXME: check if remaining partial records
 }
 
 static const std::string kTimeseriesGetRangeToFileEndpoint =

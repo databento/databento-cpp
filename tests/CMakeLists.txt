@@ -27,6 +27,7 @@ set(
 set(
   test_sources
   src/batch_tests.cpp
+  src/buffer_tests.cpp
   src/datetime_tests.cpp
   src/dbn_decoder_tests.cpp
   src/dbn_encoder_tests.cpp
@@ -46,7 +47,6 @@ set(
   src/mock_tcp_server.cpp
   src/record_tests.cpp
   src/scoped_thread_tests.cpp
-  src/shared_channel_tests.cpp
   src/stream_op_helper_tests.cpp
   src/symbol_map_tests.cpp
   src/symbology_tests.cpp
