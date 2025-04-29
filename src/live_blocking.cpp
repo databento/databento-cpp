@@ -138,12 +138,16 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
 databento::Metadata LiveBlocking::Start() {
   client_.WriteAll("start_session\n");
   client_.ReadExact(buffer_.WriteBegin(), kMetadataPreludeSize);
+  buffer_.WriteBegin() += kMetadataPreludeSize;
   const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
       buffer_.ReadBegin(), kMetadataPreludeSize);
-  std::vector<std::byte> meta_buffer(size);
-  client_.ReadExact(meta_buffer.data(), size);
-  auto metadata = DbnDecoder::DecodeMetadataFields(version, meta_buffer.data(),
-                                                   &*meta_buffer.end());
+  buffer_.ReadBegin() += kMetadataPreludeSize;
+  buffer_.Reserve(size);
+  client_.ReadExact(buffer_.WriteBegin(), size);
+  buffer_.WriteBegin() += size;
+  auto metadata = DbnDecoder::DecodeMetadataFields(version, buffer_.ReadBegin(),
+                                                   buffer_.ReadEnd());
+  buffer_.ReadBegin() += size;
   version_ = metadata.version;
   metadata.Upgrade(upgrade_policy_);
   return metadata;
