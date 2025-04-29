@@ -9,8 +9,9 @@
 #include <utility>  // pair
 #include <vector>
 
-#include "databento/datetime.hpp"           // UnixNanos
-#include "databento/dbn.hpp"                // Metadata
+#include "databento/datetime.hpp"  // UnixNanos
+#include "databento/dbn.hpp"       // Metadata
+#include "databento/detail/buffer.hpp"
 #include "databento/detail/tcp_client.hpp"  // TcpClient
 #include "databento/enums.hpp"  // Schema, SType, VersionUpgradePolicy
 #include "databento/live_subscription.hpp"
@@ -118,10 +119,7 @@ class LiveBlocking {
   detail::TcpClient client_;
   std::uint32_t sub_counter_{};
   std::vector<LiveSubscription> subscriptions_;
-  // Must be 8-byte aligned for records
-  alignas(RecordHeader) std::array<std::byte, kMaxStrLen> read_buffer_{};
-  std::size_t buffer_size_{};
-  std::size_t buffer_idx_{};
+  detail::Buffer buffer_{};
   // Must be 8-byte aligned for records
   alignas(RecordHeader) std::array<std::byte, kMaxRecordLen> compat_buffer_{};
   std::uint64_t session_id_;

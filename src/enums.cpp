@@ -433,6 +433,9 @@ const char* ToString(MatchAlgorithm match_algorithm) {
     case match_algorithm::TimeProRata: {
       return "TimeProRata";
     }
+    case match_algorithm::InstitutionalPrioritization: {
+      return "InstitutionalPrioritization";
+    }
     default: {
       return "Unknown";
     }

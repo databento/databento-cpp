@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.34.1 - 2025-04-29
+
+### Enhancements
+- Added `InstitutionalPrioritization` variant to `MatchingAlgorithm`
+
+### Bug fixes
+- Improved memory usage of historical streaming requests (`TimeseriesGetRange`)
+
 ## 0.34.0 - 2025-04-22
 
 ### Enhancements

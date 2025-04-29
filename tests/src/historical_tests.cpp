@@ -637,6 +637,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
         mbo_records.emplace_back(record.Get<MboMsg>());
         return KeepGoing::Continue;
       });
+  ASSERT_NE(metadata_ptr, nullptr) << "metadata callback wasn't called";
   EXPECT_EQ(metadata_ptr->limit, 2);
   EXPECT_EQ(metadata_ptr->schema, Schema::Mbo);
   EXPECT_EQ(mbo_records.size(), 2);
