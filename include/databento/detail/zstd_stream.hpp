@@ -23,6 +23,8 @@ class ZstdDecodeStream : public IReadable {
   // return 0 if the end of the stream is reached.
   std::size_t ReadSome(std::byte* buffer, std::size_t max_length) override;
 
+  IReadable* Input() const { return input_.get(); }
+
  private:
   std::unique_ptr<IReadable> input_;
   std::unique_ptr<ZSTD_DStream, std::size_t (*)(ZSTD_DStream*)> z_dstream_;

@@ -14,7 +14,6 @@
 
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
-#include "databento/dbn_decoder.hpp"
 #include "databento/dbn_file_store.hpp"
 #include "databento/detail/dbn_buffer_decoder.hpp"
 #include "databento/detail/json_helpers.hpp"
@@ -24,7 +23,6 @@
 #include "databento/log.hpp"
 #include "databento/metadata.hpp"
 #include "databento/timeseries.hpp"
-#include "dbn_constants.hpp"
 
 using databento::Historical;
 
@@ -676,7 +674,6 @@ double Historical::MetadataGetCost(
     const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, FeedMode mode,
     SType stype_in, std::uint64_t limit) {
-  static const std::string kPath = ::BuildMetadataPath(".get_cost");
   httplib::Params params{
       {"dataset", dataset},
       {"start", ToString(datetime_range.start)},
@@ -693,7 +690,6 @@ double Historical::MetadataGetCost(
     const DateTimeRange<std::string>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, FeedMode mode,
     SType stype_in, std::uint64_t limit) {
-  static const std::string kPath = ::BuildMetadataPath(".get_cost");
   httplib::Params params{
       {"dataset", dataset},
       {"start", datetime_range.start},

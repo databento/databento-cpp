@@ -21,7 +21,7 @@ using databento::DbnDecoder;
 namespace {
 template <typename T>
 T Consume(const std::byte*& buf) {
-  const auto res = *reinterpret_cast<const T*>(&*buf);
+  const auto res = *reinterpret_cast<const T*>(buf);
   buf += sizeof(T);
   return res;
 }
@@ -34,7 +34,7 @@ std::uint8_t Consume(const std::byte*& buf) {
 }
 
 const char* Consume(const std::byte*& buf, const std::ptrdiff_t num_bytes) {
-  const auto* pos = &*buf;
+  const auto* pos = buf;
   buf += num_bytes;
   return reinterpret_cast<const char*>(pos);
 }

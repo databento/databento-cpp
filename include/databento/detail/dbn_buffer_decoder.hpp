@@ -6,7 +6,6 @@
 
 #include "databento/detail/buffer.hpp"
 #include "databento/detail/zstd_stream.hpp"
-#include "databento/ireadable.hpp"
 #include "databento/record.hpp"
 #include "databento/timeseries.hpp"
 
@@ -18,7 +17,8 @@ class DbnBufferDecoder {
                    const RecordCallback& record_callback)
       : metadata_callback_{metadata_callback},
         record_callback_{record_callback},
-        zstd_stream_{InitZstdBuffer()} {}
+        zstd_stream_{std::make_unique<Buffer>()},
+        zstd_buffer_{static_cast<Buffer*>(zstd_stream_.Input())} {}
 
   KeepGoing Process(const char* data, std::size_t length);
 
@@ -29,12 +29,6 @@ class DbnBufferDecoder {
     Records,
   };
 
-  std::unique_ptr<IReadable> InitZstdBuffer() {
-    auto zstd_buffer = std::make_unique<Buffer>();
-    zstd_buffer_ = zstd_buffer.get();
-    return zstd_buffer;
-  }
-
   const MetadataCallback& metadata_callback_;
   const RecordCallback& record_callback_;
   ZstdDecodeStream zstd_stream_;
@@ -43,7 +37,7 @@ class DbnBufferDecoder {
   std::size_t bytes_needed_{};
   alignas(RecordHeader) std::array<std::byte, kMaxRecordLen> compat_buffer_{};
   std::uint8_t input_version_{};
-  bool ts_out_;
+  bool ts_out_{};
   DecoderState state_{DecoderState::Init};
 };
 }  // namespace databento::detail
