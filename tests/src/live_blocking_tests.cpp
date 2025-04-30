@@ -107,7 +107,7 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunkingUnixNanos) {
   constexpr auto kTsOut = false;
   constexpr auto kDataset = dataset::kXnasItch;
   const auto kSymbol = "TEST";
-  const std::size_t kSymbolCount = 1000;
+  const std::size_t kSymbolCount = 1001;
   const auto kSchema = Schema::Ohlcv1M;
   const auto kSType = SType::RawSymbol;
 
@@ -117,9 +117,9 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunkingUnixNanos) {
         self.Accept();
         self.Authenticate();
         std::size_t i{};
-        while (i < 1000) {
+        while (i < kSymbolCount) {
           const auto chunk_size =
-              std::min(static_cast<std::size_t>(128), kSymbolCount - i);
+              std::min(static_cast<std::size_t>(500), kSymbolCount - i);
           const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
           self.Subscribe(symbols_chunk, kSchema, kSType);
           i += chunk_size;
@@ -162,7 +162,7 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunkingStringStart) {
   constexpr auto kTsOut = false;
   constexpr auto kDataset = dataset::kXnasItch;
   const auto kSymbol = "TEST";
-  const std::size_t kSymbolCount = 1000;
+  const std::size_t kSymbolCount = 1001;
   const auto kSchema = Schema::Ohlcv1M;
   const auto kSType = SType::RawSymbol;
   const auto kStart = "2020-01-01T00:00:00";
@@ -174,9 +174,9 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunkingStringStart) {
         self.Accept();
         self.Authenticate();
         std::size_t i{};
-        while (i < 1000) {
+        while (i < kSymbolCount) {
           const auto chunk_size =
-              std::min(static_cast<std::size_t>(128), kSymbolCount - i);
+              std::min(static_cast<std::size_t>(500), kSymbolCount - i);
           const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
           self.Subscribe(symbols_chunk, kSchema, kSType, kStart);
           i += chunk_size;
@@ -195,7 +195,7 @@ TEST_F(LiveBlockingTests, TestSubscribeSnapshot) {
   constexpr auto kTsOut = false;
   constexpr auto kDataset = dataset::kXnasItch;
   const auto kSymbol = "TEST";
-  const std::size_t kSymbolCount = 1000;
+  const std::size_t kSymbolCount = 1001;
   const auto kSchema = Schema::Ohlcv1M;
   const auto kSType = SType::RawSymbol;
   const auto kUseSnapshot = true;
@@ -207,9 +207,9 @@ TEST_F(LiveBlockingTests, TestSubscribeSnapshot) {
         self.Accept();
         self.Authenticate();
         std::size_t i{};
-        while (i < 1000) {
+        while (i < kSymbolCount) {
           const auto chunk_size =
-              std::min(static_cast<std::size_t>(128), kSymbolCount - i);
+              std::min(static_cast<std::size_t>(500), kSymbolCount - i);
           const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
           self.SubscribeWithSnapshot(symbols_chunk, kSchema, kSType);
           i += chunk_size;

@@ -54,7 +54,7 @@ void MockLsgServer::Accept() {
 }
 
 std::string MockLsgServer::Receive() {
-  std::string received(1024, 0);
+  std::string received(static_cast<std::size_t>(32 * 1024), 0);
   char c{};
   std::size_t read_size{};
   // Read char by char until newline
@@ -68,8 +68,8 @@ std::string MockLsgServer::Receive() {
     }
     c = received[read_size];
     ++read_size;
-  } while (c != '\n' && read_size < 1024);
-  if (read_size == 1024) {
+  } while (c != '\n' && read_size < received.size());
+  if (read_size == received.size()) {
     throw TcpError{{}, "Overran buffer in MockLsgServer"};
   }
   received.resize(read_size);

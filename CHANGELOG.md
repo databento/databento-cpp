@@ -7,6 +7,7 @@
 - Added `kDbnVersion` constants to each version namespace: `v1`, `v2`, and `v3`
 - Added `kUndefStatQuantity` constants to each version namespace
 - Added new off-market publishers for Eurex, and European Energy Exchange (EEX)
+- Increased live subscription symbol chunking size
 
 ## 0.34.2 - 2025-05-06
 
