@@ -94,7 +94,7 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
       [&kSymbols, kSchema, kSType](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kSymbols, kSchema, kSType);
+        self.Subscribe(kSymbols, kSchema, kSType, true);
       }};
 
   LiveBlocking target = builder_.SetDataset(kDataset)
@@ -122,7 +122,8 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunkingUnixNanos) {
           const auto chunk_size =
               std::min(static_cast<std::size_t>(500), kSymbolCount - i);
           const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
-          self.Subscribe(symbols_chunk, kSchema, kSType);
+          self.Subscribe(symbols_chunk, kSchema, kSType,
+                         i + chunk_size == kSymbolCount);
           i += chunk_size;
         }
       }};
@@ -149,7 +150,7 @@ TEST_F(LiveBlockingTests, TestSubscriptionUnixNanos0) {
         self.Accept();
         self.Authenticate();
         std::size_t i{};
-        self.Subscribe(kSymbols, kSchema, kSType, "0");
+        self.Subscribe(kSymbols, kSchema, kSType, "0", true);
       }};
 
   LiveBlocking target = builder_.SetDataset(kDataset)
@@ -179,7 +180,8 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunkingStringStart) {
           const auto chunk_size =
               std::min(static_cast<std::size_t>(500), kSymbolCount - i);
           const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
-          self.Subscribe(symbols_chunk, kSchema, kSType, kStart);
+          self.Subscribe(symbols_chunk, kSchema, kSType, kStart,
+                         i + chunk_size == kSymbolCount);
           i += chunk_size;
         }
       }};
@@ -212,7 +214,8 @@ TEST_F(LiveBlockingTests, TestSubscribeSnapshot) {
           const auto chunk_size =
               std::min(static_cast<std::size_t>(500), kSymbolCount - i);
           const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
-          self.SubscribeWithSnapshot(symbols_chunk, kSchema, kSType);
+          self.SubscribeWithSnapshot(symbols_chunk, kSchema, kSType,
+                                     i + chunk_size == kSymbolCount);
           i += chunk_size;
         }
       }};
@@ -501,7 +504,8 @@ TEST_F(LiveBlockingTests, TestReconnectAndResubscribe) {
        &should_close_cv, &should_close_mutex](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol, "0");
+        self.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol, "0",
+                       true);
         self.Start();
         self.SendRecord(kRec);
         {
@@ -518,7 +522,7 @@ TEST_F(LiveBlockingTests, TestReconnectAndResubscribe) {
         // Wait for reconnect
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol);
+        self.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol, true);
         self.Start();
         self.SendRecord(kRec);
       });

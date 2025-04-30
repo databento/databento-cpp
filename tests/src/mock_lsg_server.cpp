@@ -9,6 +9,7 @@
 #include <openssl/sha.h>  // SHA256_DIGEST_LENGTH
 
 #include <chrono>
+#include <cstddef>
 
 #include "databento/compat.hpp"
 #include "databento/constants.hpp"
@@ -119,12 +120,13 @@ void MockLsgServer::Authenticate() {
 }
 
 void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
-                              Schema schema, SType stype) {
-  Subscribe(symbols, schema, stype, "");
+                              Schema schema, SType stype, bool is_last) {
+  Subscribe(symbols, schema, stype, "", is_last);
 }
 
 void MockLsgServer::SubscribeWithSnapshot(
-    const std::vector<std::string>& symbols, Schema schema, SType stype) {
+    const std::vector<std::string>& symbols, Schema schema, SType stype,
+    bool is_last) {
   const auto received = Receive();
   EXPECT_NE(
       received.find("symbols=" +
@@ -137,11 +139,13 @@ void MockLsgServer::SubscribeWithSnapshot(
   EXPECT_EQ(received.find("start="), std::string::npos);
   EXPECT_NE(received.find("id="), std::string::npos);
   EXPECT_NE(received.find("snapshot=1"), std::string::npos);
+  EXPECT_NE(received.find(std::string{"is_last="} + std::to_string(is_last)),
+            std::string::npos);
 }
 
 void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
                               Schema schema, SType stype,
-                              const std::string& start) {
+                              const std::string& start, bool is_last) {
   const auto received = Receive();
   EXPECT_NE(
       received.find("symbols=" +
@@ -158,6 +162,8 @@ void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
   }
   EXPECT_NE(received.find("id="), std::string::npos);
   EXPECT_NE(received.find("snapshot=0"), std::string::npos);
+  EXPECT_NE(received.find(std::string{"is_last="} + std::to_string(is_last)),
+            std::string::npos);
 }
 
 void MockLsgServer::Start() {

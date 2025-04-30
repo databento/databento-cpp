@@ -12,6 +12,8 @@ upgrading the input to DBNv3.
   method
 - Metadata will now always be encoded with a length divisible by 8 bytes for better
   alignment
+- Added `is_last` field to live subscription requests which will be used to improve the
+  handling of split subscription requests
 
 ### Breaking changes
 - Release of DBN version 3

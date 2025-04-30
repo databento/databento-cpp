@@ -128,7 +128,9 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
     chunked_sub_msg << sub_msg << "|symbols="
                     << JoinSymbolStrings(kMethodName, symbols_it,
                                          symbols_it + chunk_size)
-                    << "|snapshot=" << use_snapshot << '\n';
+                    << "|snapshot=" << use_snapshot
+                    << "|is_last=" << (distance_from_end <= kSymbolMaxChunkSize)
+                    << '\n';
     client_.WriteAll(chunked_sub_msg.str());
 
     symbols_it += chunk_size;

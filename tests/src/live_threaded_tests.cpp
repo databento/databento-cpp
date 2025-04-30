@@ -199,7 +199,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
        kSType, kUseSnapshot](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kAllSymbols, kSchema, kSType, "0");
+        self.Subscribe(kAllSymbols, kSchema, kSType, "0", true);
         self.Start();
         self.SendRecord(kRec);
         {
@@ -210,7 +210,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
         self.Close();
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kAllSymbols, kSchema, kSType);
+        self.Subscribe(kAllSymbols, kSchema, kSType, true);
         self.Start();
         self.SendRecord(kRec);
       }};
@@ -290,7 +290,7 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
         self.Close();
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kSymbols, kSchema, kSType);
+        self.Subscribe(kSymbols, kSchema, kSType, true);
       }};
   LiveThreaded target = builder_.SetLogReceiver(ILogReceiver::Default())
                             .SetDataset(dataset::kXnasItch)
