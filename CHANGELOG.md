@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.34.2 - TBD
+
+#### Bug fixes
+- Fixed potential for unaligned records in live and historical streaming requests
+
 ## 0.34.1 - 2025-04-29
 
 ### Enhancements

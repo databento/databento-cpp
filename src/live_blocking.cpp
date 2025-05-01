@@ -148,6 +148,9 @@ databento::Metadata LiveBlocking::Start() {
   auto metadata = DbnDecoder::DecodeMetadataFields(version, buffer_.ReadBegin(),
                                                    buffer_.ReadEnd());
   buffer_.ReadBegin() += size;
+  // Metadata may leave buffer misaligned. Shift records to ensure 8-byte
+  // alignment
+  buffer_.Shift();
   version_ = metadata.version;
   metadata.Upgrade(upgrade_policy_);
   return metadata;

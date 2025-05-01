@@ -54,7 +54,7 @@ void Buffer::Reserve(std::size_t capacity) {
   if (capacity <= Capacity()) {
     return;
   }
-  auto new_buf = std::make_unique<std::byte[]>(capacity);
+  UniqueBufPtr new_buf{AlignedNew(capacity), AlignedDelete};
   const auto unread_bytes = ReadCapacity();
   std::copy(ReadBegin(), ReadEnd(), new_buf.get());
   buf_ = std::move(new_buf);
