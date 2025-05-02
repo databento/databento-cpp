@@ -1,11 +1,14 @@
 #pragma once
 
-#include "databento/constants.hpp"  // kSymbolCstrLen
+#include "databento/constants.hpp"  // kAssetCstrLen, kSymbolCstrLen, kUndefStatQuantity
 #include "databento/record.hpp"
 
 namespace databento::v2 {
+static constexpr std::uint8_t kDbnVersion = 2;
 static constexpr std::size_t kSymbolCstrLen = databento::kSymbolCstrLen;
 static constexpr std::size_t kAssetCstrLen = databento::kAssetCstrLen;
+static constexpr std::int32_t kUndefStatQuantity =
+    databento::kUndefStatQuantity;
 
 using MboMsg = databento::MboMsg;
 using TradeMsg = databento::TradeMsg;

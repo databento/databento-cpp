@@ -1,7 +1,7 @@
 #pragma once
 
-#include "databento/constants.hpp"  // kSymbolCstrLen
-#include "databento/datetime.hpp"   // UnixNanos
+#include "databento/constants.hpp"  // kAssetCstrLen, kSymbolCstrLen, kUndefStatQuantity
+#include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
 #include "databento/record.hpp"
 #include "databento/v2.hpp"
@@ -13,8 +13,11 @@ struct InstrumentDefMsg;
 }
 
 namespace v1 {
+static constexpr std::uint8_t kDbnVersion = 1;
 static constexpr std::size_t kSymbolCstrLen = 22;
 static constexpr std::size_t kAssetCstrLen = databento::kAssetCstrLen;
+static constexpr std::int32_t kUndefStatQuantity =
+    databento::kUndefStatQuantity;
 
 using MboMsg = databento::MboMsg;
 using TradeMsg = databento::TradeMsg;

@@ -1,8 +1,15 @@
 # Changelog
 
+## 0.35.0 - TBD
+
+### Enhancements
+- Added a `v3::StatMsg` record with an expanded 64-bit `quantity` field
+- Added `kDbnVersion` constants to each version namespace: `v1`, `v2`, and `v3`
+- Added `kUndefStatQuantity` constants to each version namespace
+
 ## 0.34.2 - 2025-05-06
 
-#### Bug fixes
+### Bug fixes
 - Fixed potential for unaligned records in live and historical streaming requests
 
 ## 0.34.1 - 2025-04-29

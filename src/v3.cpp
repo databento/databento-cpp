@@ -157,4 +157,24 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("leg_side", instr_def_msg.leg_side)
       .Finish();
 }
+
+std::string ToString(const StatMsg& stat_msg) { return MakeString(stat_msg); }
+std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("StatMsg")
+      .Build()
+      .AddField("hd", stat_msg.hd)
+      .AddField("ts_recv", stat_msg.ts_recv)
+      .AddField("ts_ref", stat_msg.ts_ref)
+      .AddField("price", FixPx{stat_msg.price})
+      .AddField("quantity", stat_msg.quantity)
+      .AddField("sequence", stat_msg.sequence)
+      .AddField("ts_in_delta", stat_msg.ts_in_delta)
+      .AddField("stat_type", stat_msg.stat_type)
+      .AddField("channel_id", stat_msg.channel_id)
+      .AddField("update_action", stat_msg.update_action)
+      .AddField("stat_flags", stat_msg.stat_flags)
+      .Finish();
+}
 }  // namespace databento::v3

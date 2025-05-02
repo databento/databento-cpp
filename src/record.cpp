@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "databento/constants.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // InvalidArgumentError
 #include "databento/fixed_price.hpp"
@@ -198,6 +199,26 @@ databento::v3::InstrumentDefMsg InstrumentDefMsg::ToV3() const {
   std::copy(strike_price_currency.begin(), strike_price_currency.end(),
             ret.strike_price_currency.begin());
   return ret;
+}
+
+using databento::StatMsg;
+
+databento::v3::StatMsg StatMsg::ToV3() const {
+  return databento::v3::StatMsg{
+      RecordHeader{sizeof(v3::StatMsg) / RecordHeader::kLengthMultiplier,
+                   RType::Statistics, hd.publisher_id, hd.instrument_id,
+                   hd.ts_event},
+      ts_recv,
+      ts_ref,
+      price,
+      quantity == kUndefStatQuantity ? v3::kUndefStatQuantity : quantity,
+      sequence,
+      ts_in_delta,
+      stat_type,
+      channel_id,
+      update_action,
+      stat_flags,
+      {}};
 }
 
 bool databento::operator==(const InstrumentDefMsg& lhs,
