@@ -58,7 +58,10 @@ class Buffer : public IReadable, public IWritable {
   using UniqueBufPtr = std::unique_ptr<std::byte[], void (*)(std::byte*)>;
 
   std::byte* AlignedNew(std::size_t capacity) {
-    return new (kAlignment) std::byte[capacity];
+    // Can't use `new` expression due to MSVC bug
+    // See
+    // https://developercommunity.visualstudio.com/t/using-c17-new-stdalign-val-tn-syntax-results-in-er/528320
+    return static_cast<std::byte*>(operator new[](capacity, kAlignment));
   }
   static void AlignedDelete(std::byte* p) { operator delete[](p, kAlignment); }
 
