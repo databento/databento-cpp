@@ -6,6 +6,7 @@
 #include <string>
 
 #include "databento/dbn.hpp"
+#include "databento/detail/buffer.hpp"
 #include "databento/enums.hpp"  // Upgrade Policy
 #include "databento/file_stream.hpp"
 #include "databento/ireadable.hpp"
@@ -54,7 +55,6 @@ class DbnDecoder {
                                            const std::byte* buffer_end);
   bool DetectCompression();
   std::size_t FillBuffer();
-  std::size_t GetReadBufferSize() const;
   RecordHeader* BufferRecordHeader();
 
   ILogReceiver* log_receiver_;
@@ -62,8 +62,7 @@ class DbnDecoder {
   VersionUpgradePolicy upgrade_policy_;
   bool ts_out_{};
   std::unique_ptr<IReadable> input_;
-  std::vector<std::byte> read_buffer_;
-  std::size_t buffer_idx_{};
+  detail::Buffer buffer_{};
   // Must be 8-byte aligned for records
   alignas(RecordHeader) std::array<std::byte, kMaxRecordLen> compat_buffer_{};
   Record current_record_{nullptr};

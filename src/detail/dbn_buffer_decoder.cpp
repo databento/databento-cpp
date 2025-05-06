@@ -35,6 +35,9 @@ databento::KeepGoing DbnBufferDecoder::Process(const char* data,
       auto metadata = DbnDecoder::DecodeMetadataFields(
           input_version_, dbn_buffer_.ReadBegin(), dbn_buffer_.ReadEnd());
       dbn_buffer_.ReadBegin() += bytes_needed_;
+      // Metadata may leave buffer misaligned. Shift records to ensure 8-byte
+      // alignment
+      dbn_buffer_.Shift();
       ts_out_ = metadata.ts_out;
       metadata.Upgrade(VersionUpgradePolicy::UpgradeToV2);
       if (metadata_callback_) {

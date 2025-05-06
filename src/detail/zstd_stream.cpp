@@ -4,21 +4,28 @@
 #include <sstream>
 #include <utility>  // move
 
+#include "databento/detail/buffer.hpp"
 #include "databento/exceptions.hpp"
 #include "databento/log.hpp"
 
 using databento::detail::ZstdDecodeStream;
 
 ZstdDecodeStream::ZstdDecodeStream(std::unique_ptr<IReadable> input)
-    : ZstdDecodeStream{std::move(input), {}} {}
-
-ZstdDecodeStream::ZstdDecodeStream(std::unique_ptr<IReadable> input,
-                                   std::vector<std::byte>&& in_buffer)
     : input_{std::move(input)},
       z_dstream_{::ZSTD_createDStream(), ::ZSTD_freeDStream},
       read_suggestion_{::ZSTD_initDStream(z_dstream_.get())},
-      in_buffer_{std::move(in_buffer)},
-      z_in_buffer_{in_buffer_.data(), in_buffer_.size(), 0} {}
+      in_buffer_{},
+      z_in_buffer_{in_buffer_.data(), 0, 0} {}
+
+ZstdDecodeStream::ZstdDecodeStream(std::unique_ptr<IReadable> input,
+                                   detail::Buffer& in_buffer)
+    : input_{std::move(input)},
+      z_dstream_{::ZSTD_createDStream(), ::ZSTD_freeDStream},
+      read_suggestion_{::ZSTD_initDStream(z_dstream_.get())},
+      in_buffer_{in_buffer.ReadBegin(), in_buffer.ReadEnd()},
+      z_in_buffer_{in_buffer_.data(), in_buffer_.size(), 0} {
+  in_buffer.ReadBegin() += in_buffer.ReadCapacity();
+}
 
 void ZstdDecodeStream::ReadExact(std::byte* buffer, std::size_t length) {
   std::size_t size{};

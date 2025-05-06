@@ -9,6 +9,7 @@
 #include "databento/compat.hpp"
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
+#include "databento/detail/buffer.hpp"
 #include "databento/detail/zstd_stream.hpp"
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"
@@ -21,7 +22,7 @@ using databento::DbnDecoder;
 namespace {
 template <typename T>
 T Consume(const std::byte*& buf) {
-  const auto res = *reinterpret_cast<const T*>(&*buf);
+  const auto res = *reinterpret_cast<const T*>(buf);
   buf += sizeof(T);
   return res;
 }
@@ -34,7 +35,7 @@ std::uint8_t Consume(const std::byte*& buf) {
 }
 
 const char* Consume(const std::byte*& buf, const std::ptrdiff_t num_bytes) {
-  const auto* pos = &*buf;
+  const auto* pos = buf;
   buf += num_bytes;
   return reinterpret_cast<const char*>(pos);
 }
@@ -76,16 +77,12 @@ DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
     : log_receiver_{log_receiver},
       upgrade_policy_{upgrade_policy},
       input_{std::move(input)} {
-  read_buffer_.reserve(kBufferCapacity);
   if (DetectCompression()) {
-    input_ = std::make_unique<detail::ZstdDecodeStream>(
-        std::move(input_), std::move(read_buffer_));
-    // Reinitialize buffer and get it into the same state as uncompressed input
-    read_buffer_ = std::vector<std::byte>();
-    read_buffer_.reserve(kBufferCapacity);
-    read_buffer_.resize(kMagicSize);
-    input_->ReadExact(read_buffer_.data(), kMagicSize);
-    const auto* buf_ptr = read_buffer_.data();
+    input_ =
+        std::make_unique<detail::ZstdDecodeStream>(std::move(input_), buffer_);
+    input_->ReadExact(buffer_.WriteBegin(), kMagicSize);
+    buffer_.WriteBegin() += kMagicSize;
+    const auto* buf_ptr = buffer_.ReadBegin();
     if (std::strncmp(Consume(buf_ptr, 3), kDbnPrefix, 3) != 0) {
       throw DbnResponseError{"Found Zstd input, but not DBN prefix"};
     }
@@ -181,16 +178,22 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
 
 databento::Metadata DbnDecoder::DecodeMetadata() {
   // already read first 4 bytes detecting compression
-  read_buffer_.resize(kMetadataPreludeSize);
-  input_->ReadExact(&read_buffer_[4], 4);
+  const auto read_size = kMetadataPreludeSize - kMagicSize;
+  input_->ReadExact(buffer_.WriteBegin(), read_size);
+  buffer_.WriteBegin() += read_size;
   const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
-      read_buffer_.data(), kMetadataPreludeSize);
+      buffer_.ReadBegin(), kMetadataPreludeSize);
+  buffer_.ReadBegin() += kMetadataPreludeSize;
   version_ = version;
-  read_buffer_.resize(size);
-  input_->ReadExact(read_buffer_.data(), read_buffer_.size());
-  buffer_idx_ = read_buffer_.size();
+  buffer_.Reserve(size);
+  input_->ReadExact(buffer_.WriteBegin(), size);
+  buffer_.WriteBegin() += size;
   auto metadata = DbnDecoder::DecodeMetadataFields(
-      version_, read_buffer_.data(), read_buffer_.data() + read_buffer_.size());
+      version_, buffer_.ReadBegin(), buffer_.ReadEnd());
+  buffer_.ReadBegin() += size;
+  // Metadata may leave buffer misaligned. Shift records to ensure 8-byte
+  // alignment
+  buffer_.Shift();
   ts_out_ = metadata.ts_out;
   metadata.Upgrade(upgrade_policy_);
   return metadata;
@@ -239,60 +242,53 @@ databento::Record DbnDecoder::DecodeRecordCompat(
 // assumes DecodeMetadata has been called
 const databento::Record* DbnDecoder::DecodeRecord() {
   // need some unread unread_bytes
-  if (GetReadBufferSize() == 0) {
+  if (buffer_.ReadCapacity() == 0) {
     if (FillBuffer() == 0) {
       return nullptr;
     }
   }
   // check length
-  while (GetReadBufferSize() < BufferRecordHeader()->Size()) {
+  while (buffer_.ReadCapacity() < BufferRecordHeader()->Size()) {
     if (FillBuffer() == 0) {
-      if (GetReadBufferSize() > 0) {
+      if (buffer_.ReadCapacity() > 0) {
         log_receiver_->Receive(
             LogLevel::Warning,
             "Unexpected partial record remaining in stream: " +
-                std::to_string(GetReadBufferSize()) + " bytes");
+                std::to_string(buffer_.ReadCapacity()) + " bytes");
       }
       return nullptr;
     }
   }
   current_record_ = Record{BufferRecordHeader()};
-  buffer_idx_ += current_record_.Size();
+  buffer_.ReadBegin() += current_record_.Size();
   current_record_ = DbnDecoder::DecodeRecordCompat(
       version_, upgrade_policy_, ts_out_, &compat_buffer_, current_record_);
   return &current_record_;
 }
 
 size_t DbnDecoder::FillBuffer() {
-  // Shift data forward
-  std::copy(read_buffer_.cbegin() + static_cast<std::ptrdiff_t>(buffer_idx_),
-            read_buffer_.cend(), read_buffer_.begin());
-  const auto unread_size = read_buffer_.size() - buffer_idx_;
-  buffer_idx_ = 0;
-  read_buffer_.resize(kBufferCapacity);
-  const auto fill_size = input_->ReadSome(&read_buffer_[unread_size],
-                                          kBufferCapacity - unread_size);
-  read_buffer_.resize(unread_size + fill_size);
+  if (buffer_.WriteCapacity() < kMaxRecordLen) {
+    buffer_.Shift();
+  }
+  const auto fill_size =
+      input_->ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity());
+  buffer_.WriteBegin() += fill_size;
   return fill_size;
 }
 
-std::size_t DbnDecoder::GetReadBufferSize() const {
-  return read_buffer_.size() - buffer_idx_;
-}
-
 databento::RecordHeader* DbnDecoder::BufferRecordHeader() {
-  return reinterpret_cast<RecordHeader*>(&read_buffer_[buffer_idx_]);
+  return reinterpret_cast<RecordHeader*>(buffer_.ReadBegin());
 }
 
 bool DbnDecoder::DetectCompression() {
-  read_buffer_.resize(kMagicSize);
-  input_->ReadExact(read_buffer_.data(), kMagicSize);
-  const auto* read_buffer_it = read_buffer_.data();
-  if (std::strncmp(Consume(read_buffer_it, 3), kDbnPrefix, 3) == 0) {
+  input_->ReadExact(buffer_.WriteBegin(), kMagicSize);
+  buffer_.WriteBegin() += kMagicSize;
+  const auto* buffer_it = buffer_.ReadBegin();
+  if (std::strncmp(Consume(buffer_it, 3), kDbnPrefix, 3) == 0) {
     return false;
   }
-  read_buffer_it = read_buffer_.data();
-  auto x = Consume<std::uint32_t>(read_buffer_it);
+  buffer_it = buffer_.ReadBegin();
+  auto x = Consume<std::uint32_t>(buffer_it);
   if (x == kZstdMagicNumber) {
     return true;
   }
@@ -302,12 +298,10 @@ bool DbnDecoder::DetectCompression() {
   if ((x & kZstdSkippableFrame) == kZstdSkippableFrame) {
     throw DbnResponseError{
         "Legacy DBZ encoding is not supported. Please use the dbn CLI tool "
-        "to "
-        "convert it to DBN."};
+        "to convert it to DBN."};
   }
   throw DbnResponseError{
-      "Couldn't detect input type. It doesn't appear to be Zstd or "
-      "DBN."};
+      "Couldn't detect input type. It doesn't appear to be Zstd or DBN."};
 }
 
 std::string DbnDecoder::DecodeSymbol(std::size_t symbol_cstr_len,

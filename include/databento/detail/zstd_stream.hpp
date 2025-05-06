@@ -6,6 +6,7 @@
 #include <memory>   // unique_ptr
 #include <vector>
 
+#include "databento/detail/buffer.hpp"
 #include "databento/ireadable.hpp"
 #include "databento/iwritable.hpp"
 #include "databento/log.hpp"
@@ -14,14 +15,15 @@ namespace databento::detail {
 class ZstdDecodeStream : public IReadable {
  public:
   explicit ZstdDecodeStream(std::unique_ptr<IReadable> input);
-  ZstdDecodeStream(std::unique_ptr<IReadable> input,
-                   std::vector<std::byte>&& in_buffer);
+  ZstdDecodeStream(std::unique_ptr<IReadable> input, detail::Buffer& in_buffer);
 
   // Read exactly `length` bytes into `buffer`.
   void ReadExact(std::byte* buffer, std::size_t length) override;
   // Read at most `length` bytes. Returns the number of bytes read. Will only
   // return 0 if the end of the stream is reached.
   std::size_t ReadSome(std::byte* buffer, std::size_t max_length) override;
+
+  IReadable* Input() const { return input_.get(); }
 
  private:
   std::unique_ptr<IReadable> input_;

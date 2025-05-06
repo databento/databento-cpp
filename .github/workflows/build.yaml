@@ -24,7 +24,7 @@ jobs:
           sudo apt-get install libpcre3 libpcre3-dev libzstd-dev ninja-build
       - name: Install cppcheck
         run: |
-          git clone https://github.com/danmar/cppcheck.git --branch 2.14.1
+          git clone https://github.com/danmar/cppcheck.git --branch 2.17.1
           cd cppcheck
           cmake -S. -B build \
             -DCMAKE_BUILD_TYPE=Release \
