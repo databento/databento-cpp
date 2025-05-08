@@ -31,7 +31,7 @@ enum class Venue : std::uint16_t {
   Xase = 11,
   // NYSE Arca
   Arcx = 12,
-  // NYSE Chicago, Inc.
+  // NYSE Texas, Inc.
   Xchi = 13,
   // Investors Exchange
   Iexg = 14,
@@ -135,7 +135,7 @@ enum class Dataset : std::uint16_t {
   XcisPillar = 10,
   // NYSE American Integrated
   XasePillar = 11,
-  // NYSE Chicago Integrated
+  // NYSE Texas Integrated
   XchiPillar = 12,
   // NYSE National BBO
   XcisBbo = 13,
@@ -217,7 +217,7 @@ enum class Publisher : std::uint16_t {
   XcisPillarXcis = 10,
   // NYSE American Integrated
   XasePillarXase = 11,
-  // NYSE Chicago Integrated
+  // NYSE Texas Integrated
   XchiPillarXchi = 12,
   // NYSE National BBO
   XcisBboXcis = 13,
@@ -271,7 +271,7 @@ enum class Publisher : std::uint16_t {
   OpraPillarMxop = 37,
   // IEX TOPS
   IexgTopsIexg = 38,
-  // DBEQ Basic - NYSE Chicago
+  // DBEQ Basic - NYSE Texas
   DbeqBasicXchi = 39,
   // DBEQ Basic - NYSE National
   DbeqBasicXcis = 40,
@@ -289,7 +289,7 @@ enum class Publisher : std::uint16_t {
   XnasQbboXnas = 46,
   // Nasdaq Trades
   XnasNlsXnas = 47,
-  // Databento US Equities Plus - NYSE Chicago
+  // Databento US Equities Plus - NYSE Texas
   EqusPlusXchi = 48,
   // Databento US Equities Plus - NYSE National
   EqusPlusXcis = 49,
@@ -317,7 +317,7 @@ enum class Publisher : std::uint16_t {
   EqusPlusEqus = 60,
   // OPRA - MIAX Sapphire
   OpraPillarSphr = 61,
-  // Databento US Equities (All Feeds) - NYSE Chicago
+  // Databento US Equities (All Feeds) - NYSE Texas
   EqusAllXchi = 62,
   // Databento US Equities (All Feeds) - NYSE National
   EqusAllXcis = 63,
