@@ -47,21 +47,21 @@ enum class Venue : std::uint16_t {
   Eprl = 19,
   // NYSE American Options
   Amxo = 20,
-  // BOX Options Exchange
+  // BOX Options
   Xbox = 21,
-  // Cboe Options Exchange
+  // Cboe Options
   Xcbo = 22,
   // MIAX Emerald
   Emld = 23,
-  // Cboe EDGX Options Exchange
+  // Cboe EDGX Options
   Edgo = 24,
-  // ISE Gemini Exchange
+  // Nasdaq GEMX
   Gmni = 25,
-  // International Securities Exchange, LLC
+  // Nasdaq ISE
   Xisx = 26,
-  // ISE Mercury, LLC
+  // Nasdaq MRX
   Mcry = 27,
-  // Miami International Securities Exchange
+  // MIAX Options
   Xmio = 28,
   // NYSE Arca Options
   Arco = 29,
@@ -69,17 +69,17 @@ enum class Venue : std::uint16_t {
   Opra = 30,
   // MIAX Pearl
   Mprl = 31,
-  // Nasdaq Options Market
+  // Nasdaq Options
   Xndq = 32,
-  // Nasdaq OMX BX Options
+  // Nasdaq BX Options
   Xbxo = 33,
-  // Cboe C2 Options Exchange
+  // Cboe C2 Options
   C2Ox = 34,
-  // Nasdaq OMX PHLX
+  // Nasdaq PHLX
   Xphl = 35,
-  // Cboe BZX Options Exchange
+  // Cboe BZX Options
   Bato = 36,
-  // MEMX LLC Options
+  // MEMX Options
   Mxop = 37,
   // ICE Futures Europe (Commodities)
   Ifeu = 38,
@@ -233,15 +233,15 @@ enum class Publisher : std::uint16_t {
   XnasNlsFinc = 18,
   // FINRA/NYSE TRF
   XnysTradesFiny = 19,
-  // OPRA - NYSE American
+  // OPRA - NYSE American Options
   OpraPillarAmxo = 20,
-  // OPRA - Boston Options Exchange
+  // OPRA - BOX Options
   OpraPillarXbox = 21,
-  // OPRA - Cboe Options Exchange
+  // OPRA - Cboe Options
   OpraPillarXcbo = 22,
   // OPRA - MIAX Emerald
   OpraPillarEmld = 23,
-  // OPRA - Cboe EDGX Options Exchange
+  // OPRA - Cboe EDGX Options
   OpraPillarEdgo = 24,
   // OPRA - Nasdaq GEMX
   OpraPillarGmni = 25,
@@ -249,25 +249,25 @@ enum class Publisher : std::uint16_t {
   OpraPillarXisx = 26,
   // OPRA - Nasdaq MRX
   OpraPillarMcry = 27,
-  // OPRA - Miami International Securities
+  // OPRA - MIAX Options
   OpraPillarXmio = 28,
-  // OPRA - NYSE Arca
+  // OPRA - NYSE Arca Options
   OpraPillarArco = 29,
   // OPRA - Options Price Reporting Authority
   OpraPillarOpra = 30,
   // OPRA - MIAX Pearl
   OpraPillarMprl = 31,
-  // OPRA - Nasdaq Options Market
+  // OPRA - Nasdaq Options
   OpraPillarXndq = 32,
   // OPRA - Nasdaq BX Options
   OpraPillarXbxo = 33,
-  // OPRA - Cboe C2 Options Exchange
+  // OPRA - Cboe C2 Options
   OpraPillarC2Ox = 34,
   // OPRA - Nasdaq PHLX
   OpraPillarXphl = 35,
   // OPRA - Cboe BZX Options
   OpraPillarBato = 36,
-  // OPRA - MEMX Options Exchange
+  // OPRA - MEMX Options
   OpraPillarMxop = 37,
   // IEX TOPS
   IexgTopsIexg = 38,
