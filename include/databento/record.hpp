@@ -20,7 +20,8 @@ namespace databento {
 // Forward declare
 namespace v3 {
 struct InstrumentDefMsg;
-}
+struct StatMsg;
+}  // namespace v3
 
 // Common data for all Databento Records.
 struct RecordHeader {
@@ -501,6 +502,7 @@ static_assert(alignof(ImbalanceMsg) == 8, "Must have 8-byte alignment");
 struct StatMsg {
   static bool HasRType(RType rtype) { return rtype == RType::Statistics; }
 
+  v3::StatMsg ToV3() const;
   UnixNanos IndexTs() const { return ts_recv; }
 
   RecordHeader hd;

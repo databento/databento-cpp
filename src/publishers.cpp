@@ -895,6 +895,12 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::XeerEobiXeer: {
       return Venue::Xeer;
     }
+    case Publisher::XeurEobiXoff: {
+      return Venue::Xoff;
+    }
+    case Publisher::XeerEobiXoff: {
+      return Venue::Xoff;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherVenue", "publisher",
@@ -1209,6 +1215,12 @@ Dataset PublisherDataset(Publisher publisher) {
       return Dataset::XeurEobi;
     }
     case Publisher::XeerEobiXeer: {
+      return Dataset::XeerEobi;
+    }
+    case Publisher::XeurEobiXoff: {
+      return Dataset::XeurEobi;
+    }
+    case Publisher::XeerEobiXoff: {
       return Dataset::XeerEobi;
     }
     default: {
@@ -1528,6 +1540,12 @@ const char* ToString(Publisher publisher) {
     case Publisher::XeerEobiXeer: {
       return "XEER.EOBI.XEER";
     }
+    case Publisher::XeurEobiXoff: {
+      return "XEUR.EOBI.XOFF";
+    }
+    case Publisher::XeerEobiXoff: {
+      return "XEER.EOBI.XOFF";
+    }
     default: {
       return "Unknown";
     }
@@ -1846,6 +1864,12 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "XEER.EOBI.XEER") {
     return Publisher::XeerEobiXeer;
+  }
+  if (str == "XEUR.EOBI.XOFF") {
+    return Publisher::XeurEobiXoff;
+  }
+  if (str == "XEER.EOBI.XOFF") {
+    return Publisher::XeerEobiXoff;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

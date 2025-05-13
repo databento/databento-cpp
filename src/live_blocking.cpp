@@ -113,7 +113,7 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
                              const std::vector<std::string>& symbols,
                              bool use_snapshot) {
   static constexpr auto kMethodName = "Live::Subscribe";
-  constexpr std::ptrdiff_t kSymbolMaxChunkSize = 128;
+  constexpr std::ptrdiff_t kSymbolMaxChunkSize = 500;
 
   if (symbols.empty()) {
     throw InvalidArgumentError{kMethodName, "symbols",
@@ -121,8 +121,8 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
   }
   auto symbols_it = symbols.begin();
   while (symbols_it != symbols.end()) {
-    const auto chunk_size =
-        std::min(kSymbolMaxChunkSize, std::distance(symbols_it, symbols.end()));
+    const auto distance_from_end = std::distance(symbols_it, symbols.end());
+    const auto chunk_size = std::min(kSymbolMaxChunkSize, distance_from_end);
 
     std::ostringstream chunked_sub_msg;
     chunked_sub_msg << sub_msg << "|symbols="

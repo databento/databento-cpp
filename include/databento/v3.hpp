@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
 #include "databento/constants.hpp"  // kSymbolCstrLen
 #include "databento/datetime.hpp"   // UnixNanos
@@ -9,8 +10,11 @@
 #include "databento/record.hpp"  // RecordHeader
 
 namespace databento::v3 {
+static constexpr std::uint8_t kDbnVersion = 3;
 static constexpr std::size_t kSymbolCstrLen = databento::kSymbolCstrLen;
 static constexpr std::size_t kAssetCstrLen = 11;
+static constexpr std::int64_t kUndefStatQuantity =
+    std::numeric_limits<int64_t>::max();
 
 using MboMsg = databento::MboMsg;
 using TradeMsg = databento::TradeMsg;
@@ -28,7 +32,6 @@ using Cbbo1MMsg = databento::Cbbo1MMsg;
 using OhlcvMsg = databento::OhlcvMsg;
 using StatusMsg = databento::StatusMsg;
 using ImbalanceMsg = databento::ImbalanceMsg;
-using StatMsg = databento::StatMsg;
 using ErrorMsg = databento::ErrorMsg;
 using SymbolMappingMsg = databento::SymbolMappingMsg;
 using SystemMsg = databento::SystemMsg;
@@ -133,13 +136,50 @@ static_assert(alignof(InstrumentDefMsg) == 8, "Must have 8-byte alignment");
 static_assert(kMaxRecordLen == sizeof(InstrumentDefMsg) + sizeof(UnixNanos),
               "v3 definition with ts_out should be the largest record");
 
+/// A statistics message. A catchall for various data disseminated by
+/// publishers. The `stat_type` indicates the statistic contained in the
+/// message.
+struct StatMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::Statistics; }
+
+  UnixNanos IndexTs() const { return ts_recv; }
+
+  RecordHeader hd;
+  UnixNanos ts_recv;
+  UnixNanos ts_ref;
+  std::int64_t price;
+  std::int64_t quantity;
+  std::uint32_t sequence;
+  TimeDeltaNanos ts_in_delta;
+  StatType stat_type;
+  std::uint16_t channel_id;
+  StatUpdateAction update_action;
+  std::uint8_t stat_flags;
+  std::array<char, 18> reserved;
+};
+static_assert(sizeof(StatMsg) == 80, "StatMsg size must match Rust");
+static_assert(alignof(StatMsg) == 8, "Must have 8-byte alignment");
+
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs);
 inline bool operator!=(const InstrumentDefMsg& lhs,
                        const InstrumentDefMsg& rhs) {
+  return !(lhs == rhs);
+}
+inline bool operator==(const StatMsg& lhs, const StatMsg& rhs) {
+  return std::tie(lhs.hd, lhs.ts_recv, lhs.ts_ref, lhs.price, lhs.quantity,
+                  lhs.sequence, lhs.ts_in_delta, lhs.stat_type, lhs.channel_id,
+                  lhs.update_action, lhs.stat_flags) ==
+         std::tie(rhs.hd, rhs.ts_recv, rhs.ts_ref, rhs.price, rhs.quantity,
+                  rhs.sequence, rhs.ts_in_delta, rhs.stat_type, rhs.channel_id,
+                  rhs.update_action, rhs.stat_flags);
+}
+inline bool operator!=(const StatMsg& lhs, const StatMsg& rhs) {
   return !(lhs == rhs);
 }
 
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instr_def_msg);
+std::string ToString(const StatMsg& stat_msg);
+std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg);
 }  // namespace databento::v3
