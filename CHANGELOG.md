@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.35.0 - TBD
+## 0.35.0 - 2025-05-13
 
 ### Enhancements
 - Added a `v3::StatMsg` record with an expanded 64-bit `quantity` field
