@@ -399,6 +399,10 @@ enum class Publisher : std::uint16_t {
   XeurEobiXeur = 101,
   // European Energy Exchange EOBI
   XeerEobiXeer = 102,
+  // Eurex EOBI - Off-Market Trades
+  XeurEobiXoff = 103,
+  // European Energy Exchange EOBI - Off-Market Trades
+  XeerEobiXoff = 104,
 };
 
 // Get a Publisher's Venue.
