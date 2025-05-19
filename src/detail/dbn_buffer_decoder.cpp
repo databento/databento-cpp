@@ -8,6 +8,8 @@ using databento::detail::DbnBufferDecoder;
 
 databento::KeepGoing DbnBufferDecoder::Process(const char* data,
                                                std::size_t length) {
+  constexpr auto kUpgradePolicy = VersionUpgradePolicy::UpgradeToV3;
+
   zstd_buffer_->WriteAll(data, length);
   const auto read_size = zstd_stream_.ReadSome(dbn_buffer_.WriteBegin(),
                                                dbn_buffer_.WriteCapacity());
@@ -39,7 +41,7 @@ databento::KeepGoing DbnBufferDecoder::Process(const char* data,
       // alignment
       dbn_buffer_.Shift();
       ts_out_ = metadata.ts_out;
-      metadata.Upgrade(VersionUpgradePolicy::UpgradeToV2);
+      metadata.Upgrade(kUpgradePolicy);
       if (metadata_callback_) {
         metadata_callback_(std::move(metadata));
       }
@@ -55,8 +57,7 @@ databento::KeepGoing DbnBufferDecoder::Process(const char* data,
           break;
         }
         record = DbnDecoder::DecodeRecordCompat(
-            input_version_, VersionUpgradePolicy::UpgradeToV2, ts_out_,
-            &compat_buffer_, record);
+            input_version_, kUpgradePolicy, ts_out_, &compat_buffer_, record);
         if (record_callback_(record) == KeepGoing::Stop) {
           return KeepGoing::Stop;
         }

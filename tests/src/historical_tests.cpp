@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <filesystem>
 #include <stdexcept>  // logic_error
 #include <utility>    // move
 
@@ -40,6 +41,7 @@ constexpr auto kApiKey = "HIST_SECRET";
 
 class HistoricalTests : public ::testing::Test {
  protected:
+  std::filesystem::path tmp_path_{std::filesystem::temp_directory_path()};
   mock::MockHttpServer mock_server_{kApiKey};
   std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
 };
@@ -229,13 +231,12 @@ static const nlohmann::json kListFilesResp{
 
 TEST_F(HistoricalTests, TestBatchDownloadAll) {
   const auto kJobId = "job123";
-  const TempFile temp_metadata_file{TEST_BUILD_DIR
-                                    "/job123/test_metadata.json"};
-  const TempFile temp_dbn_file{TEST_BUILD_DIR "/job123/test.dbn"};
+  const TempFile temp_metadata_file{tmp_path_ / "job123/test_metadata.json"};
+  const TempFile temp_dbn_file{tmp_path_ / "job123/test.dbn"};
   mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
                            kListFilesResp);
   mock_server_.MockStreamDbn("/v0/job_id/test.dbn", {},
-                             TEST_BUILD_DIR "/data/test_data.mbo.dbn");
+                             TEST_DATA_DIR "/test_data.mbo.v3.dbn");
   mock_server_.MockGetJson("/v0/job_id/test_metadata.json", {{"key", "value"}});
   const auto port = mock_server_.ListenOnThread();
 
@@ -244,7 +245,7 @@ TEST_F(HistoricalTests, TestBatchDownloadAll) {
   ASSERT_FALSE(temp_metadata_file.Exists());
   ASSERT_FALSE(temp_dbn_file.Exists());
   const std::vector<std::string> paths =
-      target.BatchDownload(TEST_BUILD_DIR, kJobId);
+      target.BatchDownload(tmp_path_, kJobId);
   EXPECT_TRUE(temp_metadata_file.Exists());
   EXPECT_TRUE(temp_dbn_file.Exists());
   ASSERT_EQ(paths.size(), 2);
@@ -256,7 +257,7 @@ TEST_F(HistoricalTests, TestBatchDownloadAll) {
 
 TEST_F(HistoricalTests, TestBatchDownloadSingle) {
   const auto kJobId = "654";
-  const TempFile temp_metadata_file{TEST_BUILD_DIR "/654/test_metadata.json"};
+  const TempFile temp_metadata_file{tmp_path_ / "654/test_metadata.json"};
   mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
                            kListFilesResp);
   mock_server_.MockGetJson("/v0/job_id/test_metadata.json", {{"key", "value"}});
@@ -266,7 +267,7 @@ TEST_F(HistoricalTests, TestBatchDownloadSingle) {
                                static_cast<std::uint16_t>(port)};
   ASSERT_FALSE(temp_metadata_file.Exists());
   const std::string path =
-      target.BatchDownload(TEST_BUILD_DIR, kJobId, "test_metadata.json");
+      target.BatchDownload(tmp_path_, kJobId, "test_metadata.json");
   EXPECT_TRUE(temp_metadata_file.Exists());
   EXPECT_EQ(path, temp_metadata_file.Path());
 }
@@ -279,7 +280,7 @@ TEST_F(HistoricalTests, TestBatchDownloadSingleInvalidFile) {
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  ASSERT_THROW(target.BatchDownload(TEST_BUILD_DIR, kJobId, "test_metadata.js"),
+  ASSERT_THROW(target.BatchDownload(tmp_path_, kJobId, "test_metadata.js"),
                InvalidArgumentError);
 }
 
@@ -618,7 +619,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
                               {"stype_in", "raw_symbol"},
                               {"stype_out", "instrument_id"},
                               {"limit", "2"}},
-                             TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
+                             TEST_DATA_DIR "/test_data.mbo.v3.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
@@ -653,7 +654,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_NoMetadataCallback) {
                               {"encoding", "dbn"},
                               {"stype_in", "raw_symbol"},
                               {"stype_out", "instrument_id"}},
-                             TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
+                             TEST_DATA_DIR "/test_data.tbbo.v3.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
@@ -698,7 +699,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_BadRequest) {
 
 TEST_F(HistoricalTests, TestTimeseriesGetRange_CallbackException) {
   mock_server_.MockStreamDbn("/v0/timeseries.get_range", {},
-                             TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
+                             TEST_DATA_DIR "/test_data.mbo.v3.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
@@ -716,7 +717,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_CallbackException) {
 
 TEST_F(HistoricalTests, TestTimeseriesGetRangeCancellation) {
   mock_server_.MockStreamDbn("/v0/timeseries.get_range", {},
-                             TEST_BUILD_DIR "/data/test_data.mbo.dbn.zst");
+                             TEST_DATA_DIR "/test_data.mbo.v3.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
@@ -747,7 +748,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
                               {"encoding", "dbn"},
                               {"stype_in", "raw_symbol"},
                               {"stype_out", "instrument_id"}},
-                             TEST_BUILD_DIR "/data/test_data.tbbo.dbn.zst");
+                             TEST_DATA_DIR "/test_data.tbbo.v3.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",

@@ -16,8 +16,11 @@ PitSymbolMap Metadata::CreateSymbolMapForDate(date::year_month_day date) const {
 TsSymbolMap Metadata::CreateSymbolMap() const { return TsSymbolMap{*this}; }
 
 void Metadata::Upgrade(VersionUpgradePolicy upgrade_policy) {
-  if (version < kDbnVersion &&
-      upgrade_policy == VersionUpgradePolicy::UpgradeToV2) {
+  if (upgrade_policy == VersionUpgradePolicy::UpgradeToV2 && version < 2) {
+    version = 2;
+    symbol_cstr_len = kSymbolCstrLen;
+  } else if (upgrade_policy == VersionUpgradePolicy::UpgradeToV3 &&
+             version < 3) {
     version = kDbnVersion;
     symbol_cstr_len = kSymbolCstrLen;
   }

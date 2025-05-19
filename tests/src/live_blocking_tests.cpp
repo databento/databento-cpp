@@ -59,9 +59,10 @@ TEST_F(LiveBlockingTests, TestAuthentication) {
 
 TEST_F(LiveBlockingTests, TestStartAndUpgrade) {
   constexpr auto kTsOut = true;
-  for (const auto policy_and_version :
+  for (const auto [upgrade_policy, exp_version] :
        {std::make_pair(VersionUpgradePolicy::AsIs, 1),
-        std::make_pair(VersionUpgradePolicy::UpgradeToV2, 2)}) {
+        std::make_pair(VersionUpgradePolicy::UpgradeToV2, 2),
+        std::make_pair(VersionUpgradePolicy::UpgradeToV3, 3)}) {
     const mock::MockLsgServer mock_server{dataset::kGlbxMdp3, kTsOut,
                                           [](mock::MockLsgServer& self) {
                                             self.Accept();
@@ -72,10 +73,10 @@ TEST_F(LiveBlockingTests, TestStartAndUpgrade) {
     LiveBlocking target = builder_.SetAddress(kLocalhost, mock_server.Port())
                               .SetSendTsOut(kTsOut)
                               .SetDataset(dataset::kGlbxMdp3)
-                              .SetUpgradePolicy(policy_and_version.first)
+                              .SetUpgradePolicy(upgrade_policy)
                               .BuildBlocking();
     const auto metadata = target.Start();
-    EXPECT_EQ(metadata.version, policy_and_version.second);
+    EXPECT_EQ(metadata.version, exp_version);
     EXPECT_TRUE(metadata.has_mixed_schema);
     EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   }

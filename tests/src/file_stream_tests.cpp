@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <filesystem>
 
 #include "databento/exceptions.hpp"
 #include "databento/file_stream.hpp"
@@ -8,8 +9,7 @@
 
 namespace databento::tests {
 TEST(InFileStreamTests, TestReadExactInsufficient) {
-  const std::string file_path =
-      TEST_BUILD_DIR "/data/test_data.ohlcv-1d.v1.dbn";
+  const std::string file_path = TEST_DATA_DIR "/test_data.mbo.v3.dbn";
   InFileStream target{file_path};
   std::vector<std::byte> buffer(1024);  // File is less than 1KiB
   try {
@@ -17,13 +17,12 @@ TEST(InFileStreamTests, TestReadExactInsufficient) {
     FAIL() << "Expected throw";
   } catch (const databento::Exception& exc) {
     ASSERT_STREQ(exc.what(),
-                 "Unexpected end of file, expected 1024 bytes, got 206");
+                 "Unexpected end of file, expected 1024 bytes, got 472");
   }
 }
 
 TEST(InFileStreamTests, TestReadSomeLessThanMax) {
-  const std::string file_path =
-      TEST_BUILD_DIR "/data/test_data.ohlcv-1d.v1.dbn";
+  const std::string file_path = TEST_DATA_DIR "/test_data.ohlcv-1d.v1.dbn.zst";
   InFileStream target{file_path};
   std::vector<std::byte> buffer(1024);  // File is less than 1KiB
   const auto read_size = target.ReadSome(buffer.data(), buffer.size());
@@ -35,7 +34,7 @@ TEST(InFileStreamTests, TestReadSomeLessThanMax) {
 
 TEST(OutFileStreamTests, TestWriteAllCanBeRead) {
   constexpr auto data = "abcdefgh";
-  TempFile temp_file{"out"};
+  TempFile temp_file{std::filesystem::temp_directory_path() / "out"};
   ASSERT_FALSE(temp_file.Exists());
   {
     OutFileStream target{temp_file.Path()};

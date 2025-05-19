@@ -303,6 +303,7 @@ enum class StatUpdateAction : std::uint8_t {
 enum class VersionUpgradePolicy : std::uint8_t {
   AsIs = 0,
   UpgradeToV2 = 1,
+  UpgradeToV3 = 2,
 };
 
 namespace status_action {

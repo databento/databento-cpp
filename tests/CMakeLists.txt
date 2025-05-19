@@ -158,7 +158,7 @@ gtest_discover_tests(${PROJECT_NAME})
 #
 
 file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-add_compile_definitions(TEST_BUILD_DIR="${CMAKE_CURRENT_BINARY_DIR}")
+add_compile_definitions(TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
 verbose_message("Finished adding unit tests for ${CMAKE_PROJECT_NAME}.")
 

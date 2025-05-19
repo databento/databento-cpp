@@ -52,7 +52,7 @@ class LiveBuilder {
   std::string key_;
   std::string dataset_;
   bool send_ts_out_{false};
-  VersionUpgradePolicy upgrade_policy_{VersionUpgradePolicy::UpgradeToV2};
+  VersionUpgradePolicy upgrade_policy_{VersionUpgradePolicy::UpgradeToV3};
   std::chrono::seconds heartbeat_interval_{};
 };
 }  // namespace databento

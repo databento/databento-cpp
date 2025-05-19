@@ -2,10 +2,8 @@
 
 #include <algorithm>  // copy
 #include <cstdint>
-#include <cstring>
 #include <limits>  // numeric_limits
 
-#include "databento/constants.hpp"
 #include "databento/enums.hpp"
 #include "databento/fixed_price.hpp"  // FixedPx
 #include "databento/record.hpp"
@@ -189,6 +187,38 @@ v3::InstrumentDefMsg InstrumentDefMsg::ToV3() const {
   return ret;
 }
 
+template <>
+v2::InstrumentDefMsg InstrumentDefMsg::Upgrade() const {
+  return ToV2();
+}
+template <>
+v3::InstrumentDefMsg InstrumentDefMsg::Upgrade() const {
+  return ToV3();
+}
+
+v3::StatMsg StatMsg::ToV3() const {
+  return v3::StatMsg{
+      RecordHeader{sizeof(v3::StatMsg) / RecordHeader::kLengthMultiplier,
+                   RType::Statistics, hd.publisher_id, hd.instrument_id,
+                   hd.ts_event},
+      ts_recv,
+      ts_ref,
+      price,
+      quantity == kUndefStatQuantity ? v3::kUndefStatQuantity : quantity,
+      sequence,
+      ts_in_delta,
+      stat_type,
+      channel_id,
+      update_action,
+      stat_flags,
+      {}};
+}
+
+template <>
+v3::StatMsg StatMsg::Upgrade() const {
+  return ToV3();
+}
+
 v2::ErrorMsg ErrorMsg::ToV2() const {
   v2::ErrorMsg ret{
       RecordHeader{sizeof(v2::ErrorMsg) / RecordHeader::kLengthMultiplier,
@@ -199,6 +229,11 @@ v2::ErrorMsg ErrorMsg::ToV2() const {
       std::numeric_limits<std::uint8_t>::max()};
   std::copy(err.begin(), err.end(), ret.err.begin());
   return ret;
+}
+
+template <>
+v2::ErrorMsg ErrorMsg::Upgrade() const {
+  return ToV2();
 }
 
 v2::SymbolMappingMsg SymbolMappingMsg::ToV2() const {
@@ -223,6 +258,11 @@ v2::SymbolMappingMsg SymbolMappingMsg::ToV2() const {
   return ret;
 }
 
+template <>
+v2::SymbolMappingMsg SymbolMappingMsg::Upgrade() const {
+  return ToV2();
+}
+
 v2::SystemMsg SystemMsg::ToV2() const {
   v2::SystemMsg ret{
       RecordHeader{sizeof(v2::SystemMsg) / RecordHeader::kLengthMultiplier,
@@ -232,6 +272,11 @@ v2::SystemMsg SystemMsg::ToV2() const {
       IsHeartbeat() ? SystemCode::Heartbeat : SystemCode::Unset};
   std::copy(msg.begin(), msg.end(), ret.msg.begin());
   return ret;
+}
+
+template <>
+v2::SystemMsg SystemMsg::Upgrade() const {
+  return ToV2();
 }
 
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
@@ -368,6 +413,27 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("tick_rule", instr_def_msg.tick_rule)
       .Finish();
 }
+
+std::string ToString(const StatMsg& stat_msg) { return MakeString(stat_msg); }
+std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("StatMsg")
+      .Build()
+      .AddField("hd", stat_msg.hd)
+      .AddField("ts_recv", stat_msg.ts_recv)
+      .AddField("ts_ref", stat_msg.ts_ref)
+      .AddField("price", FixPx{stat_msg.price})
+      .AddField("quantity", stat_msg.quantity)
+      .AddField("sequence", stat_msg.sequence)
+      .AddField("ts_in_delta", stat_msg.ts_in_delta)
+      .AddField("stat_type", stat_msg.stat_type)
+      .AddField("channel_id", stat_msg.channel_id)
+      .AddField("update_action", stat_msg.update_action)
+      .AddField("stat_flags", stat_msg.stat_flags)
+      .Finish();
+}
+
 std::string ToString(const ErrorMsg& err_msg) { return MakeString(err_msg); }
 std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg) {
   return StreamOpBuilder{stream}

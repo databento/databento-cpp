@@ -32,7 +32,8 @@ class DbnEncoder {
   void EncodeRecord(const Record& record);
 
  private:
-  static std::uint32_t CalcLength(const Metadata& metadata);
+  static std::pair<std::uint32_t, std::uint32_t> CalcLength(
+      const Metadata& metadata);
 
   IWritable* output_;
 };
