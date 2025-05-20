@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.35.1 - TBD
+## 0.35.1 - 2025-05-20
 
 ### Bug fixes
 - Added missing `operator<<` and `ToString` implementations for `Cmbp1Msg`
