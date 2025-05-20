@@ -770,6 +770,8 @@ std::string ToString(const Mbp10Msg& mbp_msg);
 std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp_msg);
 std::string ToString(const BboMsg& bbo_msg);
 std::ostream& operator<<(std::ostream& stream, const BboMsg& bbo_msg);
+std::string ToString(const Cmbp1Msg& cmbp1_msg);
+std::ostream& operator<<(std::ostream& stream, const Cmbp1Msg& cmbp1_msg);
 std::string ToString(const CbboMsg& cbbo_msg);
 std::ostream& operator<<(std::ostream& stream, const CbboMsg& cbbo_msg);
 std::string ToString(const TradeMsg& trade_msg);
