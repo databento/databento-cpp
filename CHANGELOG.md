@@ -1,10 +1,10 @@
 # Changelog
 
-## 0.36.0 - TBD
+## 0.36.0 - 2025-05-27
 
 This version marks the release of DBN version 3 (DBNv3), which is the new default.
-Decoders support decoding all versions of DBN and the DBN encoders default to
-upgrading the input to DBNv3.
+API methods and `DbnDecoder` support decoding all versions of DBN, but now default to
+upgrading data to version 3.
 
 ### Enhancements
 - Added `UpgradeToV3` variant to `VersionUpgradePolicy` enum
@@ -16,8 +16,8 @@ upgrading the input to DBNv3.
   handling of split subscription requests
 
 ### Breaking changes
-- Release of DBN version 3
-  - Definition
+- Release of DBN version 3:
+  - Definition schema:
     - Updated `InstrumentDefMsg` with new `leg_` fields to support multi-leg strategy
       definitions.
     - Expanded `raw_instrument_id` to 64 bits to support more venues. Like other 64-bit
@@ -26,7 +26,7 @@ upgrading the input to DBNv3.
       `settl_price_type` fields which will be normalized in the statistics schema
     - Removed `md_security_trading_status` better served by the status schema
     - Updated `asset` to 11 bytes and `kAssetCstrLen` to match
-  - Statistics
+  - Statistics schema:
     - Updated `StatMsg` has an expanded 64-bit `quantity` field. `kUndefStatQuantity`
       has been updated to match
     - The previous `StatMsg` has been moved to `v2::StatMsg` or `StatMsgV2`
