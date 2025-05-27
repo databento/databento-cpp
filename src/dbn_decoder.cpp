@@ -82,7 +82,7 @@ DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
     input_ =
         std::make_unique<detail::ZstdDecodeStream>(std::move(input_), buffer_);
     input_->ReadExact(buffer_.WriteBegin(), kMagicSize);
-    buffer_.WriteBegin() += kMagicSize;
+    buffer_.Fill(kMagicSize);
     const auto* buf_ptr = buffer_.ReadBegin();
     if (std::strncmp(Consume(buf_ptr, 3), kDbnPrefix, 3) != 0) {
       throw DbnResponseError{"Found Zstd input, but not DBN prefix"};
@@ -181,17 +181,17 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
   // already read first 4 bytes detecting compression
   const auto read_size = kMetadataPreludeSize - kMagicSize;
   input_->ReadExact(buffer_.WriteBegin(), read_size);
-  buffer_.WriteBegin() += read_size;
+  buffer_.Fill(read_size);
   const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
       buffer_.ReadBegin(), kMetadataPreludeSize);
-  buffer_.ReadBegin() += kMetadataPreludeSize;
+  buffer_.Consume(kMetadataPreludeSize);
   version_ = version;
   buffer_.Reserve(size);
   input_->ReadExact(buffer_.WriteBegin(), size);
-  buffer_.WriteBegin() += size;
+  buffer_.Fill(size);
   auto metadata = DbnDecoder::DecodeMetadataFields(
       version_, buffer_.ReadBegin(), buffer_.ReadEnd());
-  buffer_.ReadBegin() += size;
+  buffer_.Consume(size);
   // Metadata may leave buffer misaligned. Shift records to ensure 8-byte
   // alignment
   buffer_.Shift();
@@ -316,7 +316,7 @@ const databento::Record* DbnDecoder::DecodeRecord() {
     }
   }
   current_record_ = Record{BufferRecordHeader()};
-  buffer_.ReadBegin() += current_record_.Size();
+  buffer_.Consume(current_record_.Size());
   current_record_ = DbnDecoder::DecodeRecordCompat(
       version_, upgrade_policy_, ts_out_, &compat_buffer_, current_record_);
   return &current_record_;
@@ -328,7 +328,7 @@ size_t DbnDecoder::FillBuffer() {
   }
   const auto fill_size =
       input_->ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity());
-  buffer_.WriteBegin() += fill_size;
+  buffer_.Fill(fill_size);
   return fill_size;
 }
 
@@ -338,7 +338,7 @@ databento::RecordHeader* DbnDecoder::BufferRecordHeader() {
 
 bool DbnDecoder::DetectCompression() {
   input_->ReadExact(buffer_.WriteBegin(), kMagicSize);
-  buffer_.WriteBegin() += kMagicSize;
+  buffer_.Fill(kMagicSize);
   const auto* buffer_it = buffer_.ReadBegin();
   if (std::strncmp(Consume(buffer_it, 3), kDbnPrefix, 3) == 0) {
     return false;

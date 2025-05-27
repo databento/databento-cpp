@@ -31,6 +31,11 @@ upgrading the input to DBNv3.
       has been updated to match
     - The previous `StatMsg` has been moved to `v2::StatMsg` or `StatMsgV2`
 
+### Bug fixes
+- Fixed "Zstd error decompressing: Operation made no progress over multiple calls, due
+  to output buffer being full" error with `TimeseriesGetRange`
+- Fixed missing implementation of `HistoricalBuilder::SetLogReceiver`
+
 ## 0.35.1 - 2025-05-20
 
 ### Bug fixes

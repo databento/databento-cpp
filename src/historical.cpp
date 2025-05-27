@@ -949,6 +949,12 @@ HistoricalBuilder& HistoricalBuilder::SetGateway(HistoricalGateway gateway) {
   return *this;
 }
 
+HistoricalBuilder& HistoricalBuilder::SetLogReceiver(
+    ILogReceiver* log_receiver) {
+  log_receiver_ = log_receiver;
+  return *this;
+}
+
 Historical HistoricalBuilder::Build() {
   if (key_.empty()) {
     throw Exception{"'key' is unset"};

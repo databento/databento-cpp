@@ -140,16 +140,16 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
 databento::Metadata LiveBlocking::Start() {
   client_.WriteAll("start_session\n");
   client_.ReadExact(buffer_.WriteBegin(), kMetadataPreludeSize);
-  buffer_.WriteBegin() += kMetadataPreludeSize;
+  buffer_.Fill(kMetadataPreludeSize);
   const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
       buffer_.ReadBegin(), kMetadataPreludeSize);
-  buffer_.ReadBegin() += kMetadataPreludeSize;
+  buffer_.Consume(kMetadataPreludeSize);
   buffer_.Reserve(size);
   client_.ReadExact(buffer_.WriteBegin(), size);
-  buffer_.WriteBegin() += size;
+  buffer_.Fill(size);
   auto metadata = DbnDecoder::DecodeMetadataFields(version, buffer_.ReadBegin(),
                                                    buffer_.ReadEnd());
-  buffer_.ReadBegin() += size;
+  buffer_.Consume(size);
   // Metadata may leave buffer misaligned. Shift records to ensure 8-byte
   // alignment
   buffer_.Shift();
@@ -184,7 +184,7 @@ const databento::Record* LiveBlocking::NextRecord(
     }
   }
   current_record_ = Record{BufferRecordHeader()};
-  buffer_.ReadBegin() += current_record_.Size();
+  buffer_.Consume(current_record_.Size());
   current_record_ =
       DbnDecoder::DecodeRecordCompat(version_, upgrade_policy_, send_ts_out_,
                                      &compat_buffer_, current_record_);
@@ -223,7 +223,7 @@ std::string LiveBlocking::DecodeChallenge() {
   if (read_size == 0) {
     throw LiveApiError{"Gateway closed socket during authentication"};
   }
-  buffer_.WriteBegin() += read_size;
+  buffer_.Fill(read_size);
   // first line is version
   std::string response{reinterpret_cast<const char*>(buffer_.ReadBegin()),
                        buffer_.ReadCapacity()};
@@ -243,9 +243,8 @@ std::string LiveBlocking::DecodeChallenge() {
                          : response.find('\n', find_start);
   while (next_nl_pos == std::string::npos) {
     // read more
-    buffer_.WriteBegin() +=
-        client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity())
-            .read_size;
+    buffer_.Fill(client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity())
+                     .read_size);
     if (buffer_.ReadCapacity() == 0) {
       throw LiveApiError{"Gateway closed socket during authentication"};
     }
@@ -335,7 +334,7 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
           "Unexpected end of message received from server after replying to "
           "CRAM"};
     }
-    buffer_.WriteBegin() += read_size;
+    buffer_.Fill(read_size);
     newline_ptr = std::find(buffer_.ReadBegin(), buffer_.ReadEnd(),
                             static_cast<std::byte>('\n'));
   } while (newline_ptr == buffer_.ReadEnd());
@@ -349,7 +348,7 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
     log_receiver_->Receive(LogLevel::Debug, log_ss.str());
   }
   // set in case Read call also read records. One beyond newline
-  buffer_.ReadBegin() += response.length() + 1;
+  buffer_.Consume(response.length() + 1);
 
   std::size_t pos{};
   bool found_success{};
@@ -411,7 +410,7 @@ databento::detail::TcpClient::Result LiveBlocking::FillBuffer(
   buffer_.Shift();
   const auto read_res =
       client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity(), timeout);
-  buffer_.WriteBegin() += read_res.read_size;
+  buffer_.Fill(read_res.read_size);
   return read_res;
 }
 
