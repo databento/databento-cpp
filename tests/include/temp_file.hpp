@@ -4,6 +4,7 @@
 
 #include <cassert>  // assert
 #include <cstdio>   // remove
+#include <filesystem>
 #include <fstream>  // ifstream
 #include <string>
 #include <utility>  // move
@@ -15,6 +16,8 @@ namespace databento {
 // goes out of scope.
 class TempFile {
  public:
+  explicit TempFile(const std::filesystem::path& path)
+      : TempFile{path.string()} {}
   explicit TempFile(std::string path) : path_{std::move(path)} {
     std::ifstream f{path_};
     if (Exists()) {

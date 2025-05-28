@@ -73,8 +73,8 @@ void Buffer::Shift() {
   write_pos_ = read_pos_ + unread_bytes;
 }
 
-std::ostream& databento::detail::operator<<(std::ostream& stream,
-                                            const Buffer& buffer) {
+namespace databento::detail {
+std::ostream& operator<<(std::ostream& stream, const Buffer& buffer) {
   return StreamOpBuilder{stream}
       .SetTypeName("Buffer")
       .SetSpacer(" ")
@@ -87,3 +87,4 @@ std::ostream& databento::detail::operator<<(std::ostream& stream,
       .AddField("WriteCapacity", buffer.WriteCapacity())
       .Finish();
 }
+}  // namespace databento::detail
