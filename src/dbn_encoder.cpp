@@ -91,7 +91,7 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
       std::max<std::uint8_t>(1, metadata.version), kDbnVersion);
   EncodeChars(kDbnPrefix, kMagicSize - 1, output);
   EncodeAsBytes(version, output);
-  const std::uint32_t length = CalcLength(metadata);
+  const auto [length, end_padding] = CalcLength(metadata);
   EncodeAsBytes(length, output);
   EncodeFixedLenCStr(kDatasetCstrLen, metadata.dataset, output);
   if (metadata.has_mixed_schema) {
@@ -130,6 +130,10 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
   EncodeRepeatedSymbolCStr(metadata.symbol_cstr_len, metadata.not_found,
                            output);
   EncodeSymbolMappings(metadata.symbol_cstr_len, metadata.mappings, output);
+  if (end_padding > 0) {
+    std::array<std::byte, 7> end_padding_buf{};
+    output->WriteAll(end_padding_buf.data(), end_padding);
+  }
 }
 
 void DbnEncoder::EncodeRecord(const Record& record, IWritable* output) {
@@ -141,7 +145,8 @@ void DbnEncoder::EncodeRecord(const Record& record) {
   EncodeRecord(record, output_);
 }
 
-std::uint32_t DbnEncoder::CalcLength(const Metadata& metadata) {
+std::pair<std::uint32_t, std::uint32_t> DbnEncoder::CalcLength(
+    const Metadata& metadata) {
   const auto symbol_cstr_len = metadata.symbol_cstr_len;
   const auto mapping_interval_len = sizeof(std::uint32_t) * 2 + symbol_cstr_len;
   // schema_definition_length, symbols_count, partial_count, not_found_count,
@@ -157,7 +162,13 @@ std::uint32_t DbnEncoder::CalcLength(const Metadata& metadata) {
         return acc + symbol_cstr_len + sizeof(std::uint32_t) +
                m.intervals.size() * mapping_interval_len;
       });
-  return static_cast<std::uint32_t>(kFixedMetadataLen + var_len_counts_size +
-                                    c_str_count * symbol_cstr_len +
-                                    mappings_len);
+  const auto needed_len =
+      static_cast<std::uint32_t>(kFixedMetadataLen + var_len_counts_size +
+                                 c_str_count * symbol_cstr_len + mappings_len);
+  const auto rem = needed_len % 8;
+  if (metadata.version < 3 || rem == 0) {
+    return {needed_len, 0};
+  }
+  const auto end_padding = 8 - rem;
+  return {needed_len + end_padding, end_padding};
 }

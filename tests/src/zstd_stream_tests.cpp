@@ -15,7 +15,7 @@ namespace databento::detail::tests {
 TEST(ZstdStreamTests, TestMultiFrameFiles) {
   constexpr auto kRecordCount = 8;
   const std::string file_path =
-      TEST_BUILD_DIR "/data/multi-frame.definition.v1.dbn.zst";
+      TEST_DATA_DIR "/multi-frame.definition.v1.dbn.frag.zst";
 
   databento::detail::ZstdDecodeStream target{
       std::make_unique<databento::InFileStream>(file_path)};

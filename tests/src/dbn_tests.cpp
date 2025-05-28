@@ -28,7 +28,7 @@ TEST(DbnTests, TestMetadataToString) {
        {"NGQ4", {{date::year{2022} / 6 / 1, date::year{2022} / 7 / 1, "4"}}}}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(Metadata {
-    version = 2,
+    version = 3,
     dataset = "GLBX.MDP3",
     has_mixed_schema = false,
     schema = ohlcv-1d,

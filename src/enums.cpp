@@ -755,7 +755,10 @@ const char* ToString(VersionUpgradePolicy upgrade_policy) {
       return "AsIs";
     }
     case VersionUpgradePolicy::UpgradeToV2: {
-      return "Upgrade";
+      return "UpgradeToV2";
+    }
+    case VersionUpgradePolicy::UpgradeToV3: {
+      return "UpgradeToV3";
     }
     default: {
       return "Unknown";

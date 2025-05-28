@@ -925,7 +925,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
     const HttplibParams& params, const std::string& file_path) {
   StreamToFile(kTimeseriesGetRangePath, params, file_path);
   return DbnFileStore{log_receiver_, file_path,
-                      VersionUpgradePolicy::UpgradeToV2};
+                      VersionUpgradePolicy::UpgradeToV3};
 }
 
 using databento::HistoricalBuilder;
@@ -946,6 +946,12 @@ HistoricalBuilder& HistoricalBuilder::SetKey(std::string key) {
 
 HistoricalBuilder& HistoricalBuilder::SetGateway(HistoricalGateway gateway) {
   gateway_ = gateway;
+  return *this;
+}
+
+HistoricalBuilder& HistoricalBuilder::SetLogReceiver(
+    ILogReceiver* log_receiver) {
+  log_receiver_ = log_receiver;
   return *this;
 }
 

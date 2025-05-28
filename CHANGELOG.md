@@ -1,5 +1,41 @@
 # Changelog
 
+## 0.36.0 - 2025-05-27
+
+This version marks the release of DBN version 3 (DBNv3), which is the new default.
+API methods and `DbnDecoder` support decoding all versions of DBN, but now default to
+upgrading data to version 3.
+
+### Enhancements
+- Added `UpgradeToV3` variant to `VersionUpgradePolicy` enum
+- Version 1 and 2 structs can be converted to version 3 structs with templated `Upgrade`
+  method
+- Metadata will now always be encoded with a length divisible by 8 bytes for better
+  alignment
+- Added `is_last` field to live subscription requests which will be used to improve the
+  handling of split subscription requests
+
+### Breaking changes
+- Release of DBN version 3:
+  - Definition schema:
+    - Updated `InstrumentDefMsg` with new `leg_` fields to support multi-leg strategy
+      definitions.
+    - Expanded `raw_instrument_id` to 64 bits to support more venues. Like other 64-bit
+      integer fields, its value will now be quoted in JSON
+    - Removed `trading_reference_date`, `trading_reference_price`, and
+      `settl_price_type` fields which will be normalized in the statistics schema
+    - Removed `md_security_trading_status` better served by the status schema
+    - Updated `asset` to 11 bytes and `kAssetCstrLen` to match
+  - Statistics schema:
+    - Updated `StatMsg` has an expanded 64-bit `quantity` field. `kUndefStatQuantity`
+      has been updated to match
+    - The previous `StatMsg` has been moved to `v2::StatMsg` or `StatMsgV2`
+
+### Bug fixes
+- Fixed "Zstd error decompressing: Operation made no progress over multiple calls, due
+  to output buffer being full" error with `TimeseriesGetRange`
+- Fixed missing implementation of `HistoricalBuilder::SetLogReceiver`
+
 ## 0.35.1 - 2025-05-20
 
 ### Bug fixes

@@ -15,7 +15,8 @@
 
 namespace databento {
 // DBN decoder. Set upgrade_policy to control how DBN version 1 data should be
-// handled. Defaults to upgrading DBNv1 data to version 2 (the current version).
+// handled. Defaults to upgrading DBN versions 1 and 2 to version 3 (the current
+// version).
 class DbnDecoder {
  public:
   DbnDecoder(ILogReceiver* log_receiver, InFileStream file_stream);

@@ -35,7 +35,7 @@
 namespace databento::tests {
 class DbnDecoderTests : public testing::Test {
  public:
-  std::unique_ptr<DbnDecoder> file_target_;
+  std::unique_ptr<DbnDecoder> target_;
   detail::ScopedThread write_thread_;
   std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
 
@@ -46,13 +46,13 @@ class DbnDecoderTests : public testing::Test {
 
   void ReadFromFile(const std::string& schema_str, const std::string& extension,
                     std::uint8_t version, VersionUpgradePolicy upgrade_policy) {
-    const char* version_str = version == 1 ? ".v1" : "";
-    const std::string file_path = TEST_BUILD_DIR "/data/test_data." +
-                                  schema_str + version_str + extension;
+    const std::string file_path =
+        TEST_DATA_DIR "/test_data." + schema_str +
+        (version == 0 ? "" : ".v" + std::to_string(+version)) + extension;
     // Channel setup
     write_thread_ = detail::ScopedThread{[this, file_path] {
       std::ifstream input_file{file_path, std::ios::binary | std::ios::ate};
-      ASSERT_TRUE(input_file.good());
+      ASSERT_TRUE(input_file.good()) << "Failed to open: " << file_path;
       const auto size = static_cast<std::size_t>(input_file.tellg());
       input_file.seekg(0, std::ios::beg);
       std::vector<char> buffer(size);
@@ -60,7 +60,7 @@ class DbnDecoderTests : public testing::Test {
       ASSERT_EQ(input_file.gcount(), size);
     }};
     // File setup
-    file_target_ = std::make_unique<DbnDecoder>(
+    target_ = std::make_unique<DbnDecoder>(
         logger_.get(), std::make_unique<InFileStream>(file_path),
         upgrade_policy);
   }
@@ -77,20 +77,25 @@ class DbnDecoderTests : public testing::Test {
   }
 };
 
-// FIXME: update for only a single record
 template <typename D>
-void AssertDefEq(const Record* ch_record, const Record* f_record) {
-  ASSERT_TRUE(ch_record->Holds<D>());
-  ASSERT_TRUE(f_record->Holds<D>());
-  const auto& ch_def = ch_record->Get<D>();
-  const auto& f_def = f_record->Get<D>();
-  EXPECT_EQ(ch_def, f_def);
-  EXPECT_STREQ(ch_def.Exchange(), "XNAS");
-  EXPECT_STREQ(ch_def.RawSymbol(), "MSFT");
-  EXPECT_EQ(ch_def.security_update_action, SecurityUpdateAction::Add);
-  EXPECT_EQ(ch_def.min_lot_size_round_lot, 100);
-  EXPECT_EQ(ch_def.instrument_class, InstrumentClass::Stock);
-  EXPECT_EQ(ch_def.strike_price, kUndefPrice);
+void AssertDefHas(const Record* record) {
+  ASSERT_TRUE(record->Holds<D>());
+  const auto& def = record->Get<D>();
+  EXPECT_STREQ(def.Exchange(), "XNAS");
+  EXPECT_EQ(def.security_update_action, SecurityUpdateAction::Add);
+  EXPECT_EQ(def.min_lot_size_round_lot, 100);
+  EXPECT_EQ(def.instrument_class, InstrumentClass::Stock);
+  EXPECT_EQ(def.strike_price, kUndefPrice);
+}
+
+template <typename S, typename Q>
+void AssertStatHas(const Record* record, StatType stat_type, std::int64_t price,
+                   Q quantity) {
+  ASSERT_TRUE(record->Holds<S>());
+  const auto& stat = record->Get<S>();
+  ASSERT_EQ(stat.stat_type, stat_type);
+  ASSERT_EQ(stat.price, price);
+  ASSERT_EQ(stat.quantity, quantity);
 }
 
 TEST_F(DbnDecoderTests, TestDecodeDbz) {
@@ -106,11 +111,11 @@ TEST_F(DbnDecoderTests, TestDecodeDbz) {
 }
 
 TEST_F(DbnDecoderTests, TestDecodeDefinitionUpgrade) {
-  ReadFromFile("definition", ".dbn", 1, VersionUpgradePolicy::UpgradeToV2);
+  ReadFromFile("definition", ".dbn.zst", 1, VersionUpgradePolicy::UpgradeToV3);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata, metadata);
-  EXPECT_EQ(metadata.version, 2);
+  EXPECT_EQ(metadata.version, kDbnVersion);
   EXPECT_EQ(metadata.dataset, dataset::kXnasItch);
   EXPECT_EQ(metadata.schema, Schema::Definition);
   EXPECT_EQ(metadata.start.time_since_epoch().count(), 1633305600000000000);
@@ -130,13 +135,30 @@ TEST_F(DbnDecoderTests, TestDecodeDefinitionUpgrade) {
   EXPECT_EQ(interval.start_date, date::year{2021} / 10 / 4);
   EXPECT_EQ(interval.end_date, date::year{2021} / 10 / 5);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
+  record1->Get<v3::InstrumentDefMsg>();
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
-  // AssertDefEq<InstrumentDefMsgV2>(ch_record1, f_record1);
-  // AssertDefEq<InstrumentDefMsgV2>(ch_record2, f_record2);
+  record2->Get<v3::InstrumentDefMsg>();
+}
+
+TEST_F(DbnDecoderTests, TestDecodeStatUpgrade) {
+  ReadFromFile("statistics", ".dbn.zst", 2, VersionUpgradePolicy::UpgradeToV3);
+  const Metadata metadata = target_->DecodeMetadata();
+  EXPECT_EQ(metadata, metadata);
+  EXPECT_EQ(metadata.version, kDbnVersion);
+
+  const auto record1 = target_->DecodeRecord();
+  ASSERT_NE(record1, nullptr);
+  AssertStatHas<v3::StatMsg>(record1, StatType::LowestOffer,
+                             100 * kFixedPriceScale, v3::kUndefStatQuantity);
+
+  const auto record2 = target_->DecodeRecord();
+  ASSERT_NE(record2, nullptr);
+  AssertStatHas<v3::StatMsg>(record2, StatType::TradingSessionHighPrice,
+                             100 * kFixedPriceScale, v3::kUndefStatQuantity);
 }
 
 TEST_F(DbnDecoderTests, TestUpgradeSymbolMappingWithTsOut) {
@@ -205,20 +227,17 @@ class DbnDecoderSchemaTests
       public testing::WithParamInterface<std::pair<const char*, std::uint8_t>> {
 };
 
-INSTANTIATE_TEST_SUITE_P(
-    TestFiles, DbnDecoderSchemaTests,
-    testing::Values(std::make_pair(".dbn", 1), std::make_pair(".dbn", 2),
-                    std::make_pair(".dbn.zst", 1),
-                    std::make_pair(".dbn.zst", 2)),
-    [](const testing::TestParamInfo<std::pair<const char*, std::uint8_t>>&
-           test_info) {
-      const auto extension = test_info.param.first;
-      const auto version = test_info.param.second;
-      const auto size = ::strlen(extension);
-      return ::strncmp(extension + size - 3, "zst", 3) == 0
-                 ? "ZstdDBNv" + std::to_string(version)
-                 : "UncompressedDBNv" + std::to_string(version);
-    });
+INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderSchemaTests,
+                         testing::Values(std::make_pair(".dbn.zst", 1),
+                                         std::make_pair(".dbn.zst", 2),
+                                         std::make_pair(".dbn.zst", 3)),
+                         [](const testing::TestParamInfo<
+                             std::pair<const char*, std::uint8_t>>& test_info) {
+                           const auto extension = test_info.param.first;
+                           const auto version = test_info.param.second;
+                           const auto size = ::strlen(extension);
+                           return "ZstdDBNv" + std::to_string(version);
+                         });
 
 // Expected data for these tests obtained using the `dbn` CLI tool
 
@@ -227,7 +246,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   const auto version = GetParam().second;
   ReadFromFile("mbo", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata, metadata);
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
@@ -241,7 +260,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   EXPECT_TRUE(metadata.partial.empty());
   EXPECT_TRUE(metadata.not_found.empty());
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<MboMsg>());
   const auto& mbo1 = record1->Get<MboMsg>();
@@ -260,7 +279,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
   EXPECT_EQ(mbo1.ts_in_delta.count(), 22993);
   EXPECT_EQ(mbo1.sequence, 1170352);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<MboMsg>());
   const auto& mbo2 = record2->Get<MboMsg>();
@@ -285,7 +304,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   const auto version = GetParam().second;
   ReadFromFile("mbp-1", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata, metadata);
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
@@ -300,7 +319,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   EXPECT_TRUE(metadata.not_found.empty());
   AssertMappings(metadata.mappings);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<Mbp1Msg>());
   const auto& mbp1 = record1->Get<Mbp1Msg>();
@@ -323,7 +342,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
   EXPECT_EQ(mbp1.levels[0].bid_ct, 15);
   EXPECT_EQ(mbp1.levels[0].ask_ct, 9);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<Mbp1Msg>());
   const auto& mbp2 = record2->Get<Mbp1Msg>();
@@ -353,7 +372,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   const auto version = GetParam().second;
   ReadFromFile("mbp-10", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(metadata.schema, Schema::Mbp10);
@@ -367,7 +386,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_TRUE(metadata.not_found.empty());
   AssertMappings(metadata.mappings);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<Mbp10Msg>());
   const auto& mbp1 = record1->Get<Mbp10Msg>();
@@ -402,7 +421,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
   EXPECT_EQ(mbp1.levels[2].bid_ct, 23);
   EXPECT_EQ(mbp1.levels[2].ask_ct, 25);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<Mbp10Msg>());
   const auto& mbp2 = record2->Get<Mbp10Msg>();
@@ -444,7 +463,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeCmbp1) {
   const auto version = GetParam().second;
   ReadFromFile("cmbp-1", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(metadata.schema, Schema::Cmbp1);
@@ -458,7 +477,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeCmbp1) {
   EXPECT_TRUE(metadata.not_found.empty());
   AssertMappings(metadata.mappings);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<Cmbp1Msg>());
   const auto& cmbp1 = record1->Get<Cmbp1Msg>();
@@ -479,7 +498,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeCmbp1) {
   EXPECT_EQ(cmbp1.levels[0].bid_pb, 1);
   EXPECT_EQ(cmbp1.levels[0].ask_pb, 1);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<Cmbp1Msg>());
   const auto& cmbp2 = record2->Get<Cmbp1Msg>();
@@ -504,9 +523,9 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeCmbp1) {
 TEST_P(DbnDecoderSchemaTests, TestDecodeCbbo) {
   const auto extension = GetParam().first;
   const auto version = GetParam().second;
-  ReadFromFile("cbbo", extension, version);
+  ReadFromFile("cbbo-1s", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(metadata.schema, Schema::Cbbo1S);
@@ -520,7 +539,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeCbbo) {
   EXPECT_TRUE(metadata.not_found.empty());
   AssertMappings(metadata.mappings);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<CbboMsg>());
   const auto& cbbo1 = record1->Get<CbboMsg>();
@@ -539,7 +558,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeCbbo) {
   EXPECT_EQ(cbbo1.levels[0].bid_pb, 1);
   EXPECT_EQ(cbbo1.levels[0].ask_pb, 1);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<CbboMsg>());
   const auto& cbbo2 = record2->Get<CbboMsg>();
@@ -564,7 +583,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   const auto version = GetParam().second;
   ReadFromFile("tbbo", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(metadata.schema, Schema::Tbbo);
@@ -578,7 +597,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   EXPECT_TRUE(metadata.not_found.empty());
   AssertMappings(metadata.mappings);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<TbboMsg>());
   const auto& tbbo1 = record1->Get<TbboMsg>();
@@ -601,7 +620,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
   EXPECT_EQ(tbbo1.levels[0].bid_ct, 16);
   EXPECT_EQ(tbbo1.levels[0].ask_ct, 6);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<TbboMsg>());
   const auto& tbbo2 = record2->Get<TbboMsg>();
@@ -630,7 +649,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   const auto version = GetParam().second;
   ReadFromFile("trades", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(metadata.schema, Schema::Trades);
@@ -644,7 +663,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   EXPECT_TRUE(metadata.not_found.empty());
   AssertMappings(metadata.mappings);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<TradeMsg>());
   const auto& trade1 = record1->Get<TradeMsg>();
@@ -661,7 +680,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
   EXPECT_EQ(trade1.ts_in_delta.count(), 19251);
   EXPECT_EQ(trade1.sequence, 1170380);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<TradeMsg>());
   const auto& trade2 = record2->Get<TradeMsg>();
@@ -684,7 +703,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1D) {
   const auto version = GetParam().second;
   ReadFromFile("ohlcv-1d", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(metadata.schema, Schema::Ohlcv1D);
@@ -704,7 +723,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
   const auto version = GetParam().second;
   ReadFromFile("ohlcv-1h", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(metadata.schema, Schema::Ohlcv1H);
@@ -718,7 +737,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
   EXPECT_TRUE(metadata.not_found.empty());
   AssertMappings(metadata.mappings);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<OhlcvMsg>());
   const auto& ohlcv1 = record1->Get<OhlcvMsg>();
@@ -731,7 +750,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
   EXPECT_EQ(ohlcv1.close, 372225000000000);
   EXPECT_EQ(ohlcv1.volume, 9385);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<OhlcvMsg>());
   const auto& ohlcv2 = record2->Get<OhlcvMsg>();
@@ -750,7 +769,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
   const auto version = GetParam().second;
   ReadFromFile("ohlcv-1m", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(metadata.schema, Schema::Ohlcv1M);
@@ -764,7 +783,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
   EXPECT_TRUE(metadata.not_found.empty());
   AssertMappings(metadata.mappings);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<OhlcvMsg>());
   const auto& ohlcv1 = record1->Get<OhlcvMsg>();
@@ -777,7 +796,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
   EXPECT_EQ(ohlcv1.close, 372100000000000);
   EXPECT_EQ(ohlcv1.volume, 353);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<OhlcvMsg>());
   const auto& ohlcv2 = record2->Get<OhlcvMsg>();
@@ -796,7 +815,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
   const auto version = GetParam().second;
   ReadFromFile("ohlcv-1s", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(metadata.schema, Schema::Ohlcv1S);
@@ -810,7 +829,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
   EXPECT_TRUE(metadata.not_found.empty());
   AssertMappings(metadata.mappings);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<OhlcvMsg>());
   const auto& ohlcv1 = record1->Get<OhlcvMsg>();
@@ -823,7 +842,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
   EXPECT_EQ(ohlcv1.close, 372050000000000);
   EXPECT_EQ(ohlcv1.volume, 57);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<OhlcvMsg>());
   const auto& ohlcv2 = record2->Get<OhlcvMsg>();
@@ -842,7 +861,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   const auto version = GetParam().second;
   ReadFromFile("definition", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kXnasItch);
   EXPECT_EQ(metadata.schema, Schema::Definition);
@@ -863,19 +882,22 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
   EXPECT_EQ(interval.start_date, date::year{2021} / 10 / 4);
   EXPECT_EQ(interval.end_date, date::year{2021} / 10 / 5);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_NE(record1, nullptr);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_NE(record2, nullptr);
   if (version == 1) {
-    AssertDefEq<InstrumentDefMsgV1>(record1, record1);
-    AssertDefEq<InstrumentDefMsgV1>(record2, record2);
+    AssertDefHas<v1::InstrumentDefMsg>(record1);
+    AssertDefHas<v1::InstrumentDefMsg>(record2);
+  } else if (version == 2) {
+    AssertDefHas<v2::InstrumentDefMsg>(record1);
+    AssertDefHas<v2::InstrumentDefMsg>(record2);
   } else {
-    AssertDefEq<InstrumentDefMsgV2>(record1, record1);
-    AssertDefEq<InstrumentDefMsgV2>(record2, record2);
+    AssertDefHas<v3::InstrumentDefMsg>(record1);
+    AssertDefHas<v3::InstrumentDefMsg>(record2);
   }
 }
 
@@ -884,7 +906,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeImbalance) {
   const auto version = GetParam().second;
   ReadFromFile("imbalance", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kXnasItch);
   EXPECT_EQ(metadata.schema, Schema::Imbalance);
@@ -898,14 +920,14 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeImbalance) {
   EXPECT_TRUE(metadata.not_found.empty());
   EXPECT_EQ(metadata.mappings.size(), 1);
 
-  const auto record1 = file_target_->DecodeRecord();
+  const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
   ASSERT_TRUE(record1->Holds<ImbalanceMsg>());
   const auto& imbalance1 = record1->Get<ImbalanceMsg>();
   EXPECT_EQ(imbalance1, imbalance1);
   EXPECT_EQ(imbalance1.ref_price, 229430000000);
 
-  const auto record2 = file_target_->DecodeRecord();
+  const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
   ASSERT_TRUE(record2->Holds<ImbalanceMsg>());
   const auto& imbalance2 = record2->Get<ImbalanceMsg>();
@@ -917,7 +939,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeStatistics) {
   const auto version = GetParam().second;
   ReadFromFile("statistics", extension, version);
 
-  const Metadata metadata = file_target_->DecodeMetadata();
+  const Metadata metadata = target_->DecodeMetadata();
   EXPECT_EQ(metadata.version, version);
   EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   EXPECT_EQ(metadata.schema, Schema::Statistics);
@@ -931,19 +953,23 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeStatistics) {
   EXPECT_TRUE(metadata.not_found.empty());
   EXPECT_TRUE(metadata.mappings.empty());
 
-  const auto record1 = file_target_->DecodeRecord();
-  ASSERT_NE(record1, nullptr);
-  ASSERT_TRUE(record1->Holds<StatMsg>());
-  const auto& stat1 = record1->Get<StatMsg>();
-  EXPECT_EQ(stat1.stat_type, StatType::LowestOffer);
-  EXPECT_EQ(stat1.price, 100 * kFixedPriceScale);
+  const auto record1 = target_->DecodeRecord();
+  if (version < 3) {
+    AssertStatHas<v1::StatMsg>(record1, StatType::LowestOffer,
+                               100 * kFixedPriceScale, v1::kUndefStatQuantity);
+  } else {
+    AssertStatHas<v3::StatMsg>(record1, StatType::LowestOffer,
+                               100 * kFixedPriceScale, v3::kUndefStatQuantity);
+  }
 
-  const auto record2 = file_target_->DecodeRecord();
-  ASSERT_NE(record2, nullptr);
-  ASSERT_TRUE(record2->Holds<StatMsg>());
-  const auto& stat2 = record2->Get<StatMsg>();
-  EXPECT_EQ(stat2.stat_type, StatType::TradingSessionHighPrice);
-  EXPECT_EQ(stat2.price, 100 * kFixedPriceScale);
+  const auto record2 = target_->DecodeRecord();
+  if (version < 3) {
+    AssertStatHas<v1::StatMsg>(record2, StatType::TradingSessionHighPrice,
+                               100 * kFixedPriceScale, v1::kUndefStatQuantity);
+  } else {
+    AssertStatHas<v3::StatMsg>(record2, StatType::TradingSessionHighPrice,
+                               100 * kFixedPriceScale, v3::kUndefStatQuantity);
+  }
 }
 
 class DbnIdentityTests : public testing::TestWithParam<
@@ -954,19 +980,7 @@ class DbnIdentityTests : public testing::TestWithParam<
 
 INSTANTIATE_TEST_SUITE_P(
     TestFiles, DbnIdentityTests,
-    testing::Values(std::make_tuple(1, Schema::Mbo, Compression::None),
-                    std::make_tuple(1, Schema::Trades, Compression::None),
-                    std::make_tuple(1, Schema::Mbp1, Compression::None),
-                    std::make_tuple(1, Schema::Tbbo, Compression::None),
-                    std::make_tuple(1, Schema::Mbp10, Compression::None),
-                    std::make_tuple(1, Schema::Ohlcv1D, Compression::None),
-                    std::make_tuple(1, Schema::Ohlcv1H, Compression::None),
-                    std::make_tuple(1, Schema::Ohlcv1M, Compression::None),
-                    std::make_tuple(1, Schema::Ohlcv1S, Compression::None),
-                    std::make_tuple(1, Schema::Definition, Compression::None),
-                    std::make_tuple(1, Schema::Imbalance, Compression::None),
-                    std::make_tuple(1, Schema::Statistics, Compression::None),
-                    std::make_tuple(1, Schema::Mbo, Compression::Zstd),
+    testing::Values(std::make_tuple(1, Schema::Mbo, Compression::Zstd),
                     std::make_tuple(1, Schema::Trades, Compression::Zstd),
                     std::make_tuple(1, Schema::Mbp1, Compression::Zstd),
                     std::make_tuple(1, Schema::Tbbo, Compression::Zstd),
@@ -978,18 +992,8 @@ INSTANTIATE_TEST_SUITE_P(
                     std::make_tuple(1, Schema::Definition, Compression::Zstd),
                     std::make_tuple(1, Schema::Imbalance, Compression::Zstd),
                     std::make_tuple(1, Schema::Statistics, Compression::Zstd),
-                    std::make_tuple(2, Schema::Mbo, Compression::None),
-                    std::make_tuple(2, Schema::Trades, Compression::None),
-                    std::make_tuple(2, Schema::Tbbo, Compression::None),
-                    std::make_tuple(2, Schema::Mbp1, Compression::None),
-                    std::make_tuple(2, Schema::Mbp10, Compression::None),
-                    std::make_tuple(2, Schema::Ohlcv1D, Compression::None),
-                    std::make_tuple(2, Schema::Ohlcv1H, Compression::None),
-                    std::make_tuple(2, Schema::Ohlcv1M, Compression::None),
-                    std::make_tuple(2, Schema::Ohlcv1S, Compression::None),
-                    std::make_tuple(2, Schema::Definition, Compression::None),
-                    std::make_tuple(2, Schema::Imbalance, Compression::None),
-                    std::make_tuple(2, Schema::Statistics, Compression::None),
+                    std::make_tuple(1, Schema::Cmbp1, Compression::Zstd),
+                    std::make_tuple(1, Schema::Cbbo1S, Compression::Zstd),
                     std::make_tuple(2, Schema::Mbo, Compression::Zstd),
                     std::make_tuple(2, Schema::Trades, Compression::Zstd),
                     std::make_tuple(2, Schema::Tbbo, Compression::Zstd),
@@ -1001,7 +1005,30 @@ INSTANTIATE_TEST_SUITE_P(
                     std::make_tuple(2, Schema::Ohlcv1S, Compression::Zstd),
                     std::make_tuple(2, Schema::Definition, Compression::Zstd),
                     std::make_tuple(2, Schema::Imbalance, Compression::Zstd),
-                    std::make_tuple(2, Schema::Statistics, Compression::Zstd)),
+                    std::make_tuple(2, Schema::Statistics, Compression::Zstd),
+                    std::make_tuple(2, Schema::Bbo1S, Compression::Zstd),
+                    std::make_tuple(2, Schema::Bbo1M, Compression::Zstd),
+                    std::make_tuple(2, Schema::Cmbp1, Compression::Zstd),
+                    std::make_tuple(2, Schema::Cbbo1S, Compression::Zstd),
+                    std::make_tuple(2, Schema::Status, Compression::Zstd),
+                    std::make_tuple(3, Schema::Mbo, Compression::None),
+                    std::make_tuple(3, Schema::Mbo, Compression::Zstd),
+                    std::make_tuple(3, Schema::Trades, Compression::Zstd),
+                    std::make_tuple(3, Schema::Tbbo, Compression::Zstd),
+                    std::make_tuple(3, Schema::Mbp1, Compression::Zstd),
+                    std::make_tuple(3, Schema::Mbp10, Compression::Zstd),
+                    std::make_tuple(3, Schema::Ohlcv1D, Compression::Zstd),
+                    std::make_tuple(3, Schema::Ohlcv1H, Compression::Zstd),
+                    std::make_tuple(3, Schema::Ohlcv1M, Compression::Zstd),
+                    std::make_tuple(3, Schema::Ohlcv1S, Compression::Zstd),
+                    std::make_tuple(3, Schema::Definition, Compression::Zstd),
+                    std::make_tuple(3, Schema::Imbalance, Compression::Zstd),
+                    std::make_tuple(3, Schema::Statistics, Compression::Zstd),
+                    std::make_tuple(3, Schema::Bbo1S, Compression::Zstd),
+                    std::make_tuple(3, Schema::Bbo1M, Compression::Zstd),
+                    std::make_tuple(3, Schema::Cmbp1, Compression::Zstd),
+                    std::make_tuple(3, Schema::Cbbo1S, Compression::Zstd),
+                    std::make_tuple(3, Schema::Status, Compression::Zstd)),
     [](const testing::TestParamInfo<
         std::tuple<std::uint8_t, Schema, Compression>>& test_info) {
       const auto version = std::get<0>(test_info.param);
@@ -1022,8 +1049,8 @@ TEST_P(DbnIdentityTests, TestIdentity) {
   const auto schema = std::get<1>(GetParam());
   const auto compression = std::get<2>(GetParam());
   const auto file_name =
-      std::string{TEST_BUILD_DIR "/data/test_data."} + ToString(schema) +
-      (version == 1 ? ".v1" : "") +
+      std::string{TEST_DATA_DIR "/test_data."} + ToString(schema) + ".v" +
+      std::to_string(+version) +
       (compression == Compression::Zstd ? ".dbn.zst" : ".dbn");
   DbnDecoder file_decoder{logger_.get(),
                           std::make_unique<InFileStream>(file_name),
@@ -1065,6 +1092,14 @@ TEST_P(DbnIdentityTests, TestIdentity) {
       EXPECT_EQ(*mbp1, file_record->Get<Mbp1Msg>());
     } else if (auto* mbp10 = buf_record->GetIf<Mbp10Msg>()) {
       EXPECT_EQ(*mbp10, file_record->Get<Mbp10Msg>());
+    } else if (auto* cmbp = buf_record->GetIf<Cmbp1Msg>()) {
+      EXPECT_EQ(*cmbp, file_record->Get<Cmbp1Msg>());
+    } else if (auto* bbo = buf_record->GetIf<BboMsg>()) {
+      EXPECT_EQ(*bbo, file_record->Get<BboMsg>());
+    } else if (auto* cbbo = buf_record->GetIf<CbboMsg>()) {
+      EXPECT_EQ(*cbbo, file_record->Get<CbboMsg>());
+    } else if (auto* status = buf_record->GetIf<StatusMsg>()) {
+      EXPECT_EQ(*status, file_record->Get<StatusMsg>());
     } else if (auto* ohlcv = buf_record->GetIf<OhlcvMsg>()) {
       EXPECT_EQ(*ohlcv, file_record->Get<OhlcvMsg>());
     } else if (auto* trade = buf_record->GetIf<TradeMsg>()) {
@@ -1084,8 +1119,16 @@ TEST_P(DbnIdentityTests, TestIdentity) {
       } else {
         FAIL() << "Unknown definition size";
       }
-    } else if (auto* stats = buf_record->GetIf<StatMsg>()) {
-      EXPECT_EQ(*stats, file_record->Get<StatMsg>());
+    } else if (buf_record->Header().rtype == RType::Statistics) {
+      if (buf_record->Size() == sizeof(v1::StatMsg)) {
+        EXPECT_EQ(buf_record->Get<v1::StatMsg>(),
+                  file_record->Get<v1::StatMsg>());
+      } else if (buf_record->Size() == sizeof(v3::StatMsg)) {
+        EXPECT_EQ(buf_record->Get<v3::StatMsg>(),
+                  file_record->Get<v3::StatMsg>());
+      } else {
+        FAIL() << "Unknown stats size";
+      }
     } else {
       FAIL() << "Unexpected rtype "
              << static_cast<std::uint16_t>(file_record->Header().rtype);

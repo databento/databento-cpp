@@ -24,7 +24,7 @@ ZstdDecodeStream::ZstdDecodeStream(std::unique_ptr<IReadable> input,
       read_suggestion_{::ZSTD_initDStream(z_dstream_.get())},
       in_buffer_{in_buffer.ReadBegin(), in_buffer.ReadEnd()},
       z_in_buffer_{in_buffer_.data(), in_buffer_.size(), 0} {
-  in_buffer.ReadBegin() += in_buffer.ReadCapacity();
+  in_buffer.Consume(in_buffer.ReadCapacity());
 }
 
 void ZstdDecodeStream::ReadExact(std::byte* buffer, std::size_t length) {

@@ -17,12 +17,6 @@
 #include "databento/publishers.hpp"  // Publisher
 
 namespace databento {
-// Forward declare
-namespace v3 {
-struct InstrumentDefMsg;
-struct StatMsg;
-}  // namespace v3
-
 // Common data for all Databento Records.
 struct RecordHeader {
   static constexpr std::size_t kLengthMultiplier =
@@ -379,7 +373,6 @@ static_assert(alignof(StatusMsg) == 8, "Must have 8-byte alignment");
 struct InstrumentDefMsg {
   static bool HasRType(RType rtype) { return rtype == RType::InstrumentDef; }
 
-  v3::InstrumentDefMsg ToV3() const;
   UnixNanos IndexTs() const { return ts_recv; }
   const char* Currency() const { return currency.data(); }
   const char* SettlCurrency() const { return settl_currency.data(); }
@@ -395,6 +388,7 @@ struct InstrumentDefMsg {
   const char* StrikePriceCurrency() const {
     return strike_price_currency.data();
   }
+  const char* LegRawSymbol() const { return leg_raw_symbol.data(); }
 
   RecordHeader hd;
   UnixNanos ts_recv;
@@ -405,14 +399,15 @@ struct InstrumentDefMsg {
   std::int64_t high_limit_price;
   std::int64_t low_limit_price;
   std::int64_t max_price_variation;
-  std::int64_t trading_reference_price;
   std::int64_t unit_of_measure_qty;
   std::int64_t min_price_increment_amount;
   std::int64_t price_ratio;
   std::int64_t strike_price;
+  std::uint64_t raw_instrument_id;
+  std::int64_t leg_price;
+  std::int64_t leg_delta;
   std::int32_t inst_attrib_value;
   std::uint32_t underlying_id;
-  std::uint32_t raw_instrument_id;
   std::int32_t market_depth_implied;
   std::int32_t market_depth;
   std::uint32_t market_segment_id;
@@ -424,11 +419,18 @@ struct InstrumentDefMsg {
   std::int32_t contract_multiplier;
   std::int32_t decay_quantity;
   std::int32_t original_contract_size;
-  std::uint16_t trading_reference_date;
+  std::uint32_t leg_instrument_id;
+  std::int32_t leg_ratio_price_numerator;
+  std::int32_t leg_ratio_price_denominator;
+  std::int32_t leg_ratio_qty_numerator;
+  std::int32_t leg_ratio_qty_denominator;
+  std::uint32_t leg_underlying_id;
   std::int16_t appl_id;
   std::uint16_t maturity_year;
   std::uint16_t decay_start_date;
   std::uint16_t channel_id;
+  std::uint16_t leg_count;
+  std::uint16_t leg_index;
   std::array<char, 4> currency;
   std::array<char, 4> settl_currency;
   std::array<char, 6> secsubtype;
@@ -441,12 +443,11 @@ struct InstrumentDefMsg {
   std::array<char, 31> unit_of_measure;
   std::array<char, 21> underlying;
   std::array<char, 4> strike_price_currency;
+  std::array<char, kSymbolCstrLen> leg_raw_symbol;
   InstrumentClass instrument_class;
   MatchAlgorithm match_algorithm;
-  std::uint8_t md_security_trading_status;
   std::uint8_t main_fraction;
   std::uint8_t price_display_format;
-  std::uint8_t settl_price_type;
   std::uint8_t sub_fraction;
   std::uint8_t underlying_product;
   SecurityUpdateAction security_update_action;
@@ -457,9 +458,12 @@ struct InstrumentDefMsg {
   std::int8_t contract_multiplier_unit;
   std::int8_t flow_schedule_type;
   std::uint8_t tick_rule;
-  std::array<char, 10> reserved;
+  InstrumentClass leg_instrument_class;
+  Side leg_side;
+  // padding for alignment
+  std::array<char, 17> reserved;
 };
-static_assert(sizeof(InstrumentDefMsg) == 400,
+static_assert(sizeof(InstrumentDefMsg) == 520,
               "InstrumentDefMsg size must match Rust");
 static_assert(alignof(InstrumentDefMsg) == 8, "Must have 8-byte alignment");
 
@@ -502,23 +506,22 @@ static_assert(alignof(ImbalanceMsg) == 8, "Must have 8-byte alignment");
 struct StatMsg {
   static bool HasRType(RType rtype) { return rtype == RType::Statistics; }
 
-  v3::StatMsg ToV3() const;
   UnixNanos IndexTs() const { return ts_recv; }
 
   RecordHeader hd;
   UnixNanos ts_recv;
   UnixNanos ts_ref;
   std::int64_t price;
-  std::int32_t quantity;
+  std::int64_t quantity;
   std::uint32_t sequence;
   TimeDeltaNanos ts_in_delta;
   StatType stat_type;
   std::uint16_t channel_id;
   StatUpdateAction update_action;
   std::uint8_t stat_flags;
-  std::array<char, 6> reserved;
+  std::array<char, 18> reserved;
 };
-static_assert(sizeof(StatMsg) == 64, "StatMsg size must match Rust");
+static_assert(sizeof(StatMsg) == 80, "StatMsg size must match Rust");
 static_assert(alignof(StatMsg) == 8, "Must have 8-byte alignment");
 
 // An error message from the Live Subscription Gateway (LSG). This will never
@@ -798,4 +801,6 @@ std::ostream& operator<<(std::ostream& stream,
 
 // The length in bytes of the largest record type.
 static constexpr std::size_t kMaxRecordLen = 520 + 8;
+static_assert(kMaxRecordLen == sizeof(InstrumentDefMsg) + sizeof(UnixNanos),
+              "v3 definition with ts_out should be the largest record");
 }  // namespace databento

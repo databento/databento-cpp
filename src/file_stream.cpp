@@ -11,7 +11,7 @@ InFileStream::InFileStream(const std::string& file_path)
     : stream_{file_path, std::ios::binary} {
   if (stream_.fail()) {
     throw InvalidArgumentError{"InFileStream", "file_path",
-                               "Non-existent or invalid file"};
+                               "Non-existent or invalid file at " + file_path};
   }
 }
 

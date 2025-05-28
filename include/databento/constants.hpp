@@ -16,16 +16,16 @@ static constexpr auto kUndefOrderSize =
     std::numeric_limits<std::uint32_t>::max();
 // The sentinel value for an unset statistic quantity.
 static constexpr auto kUndefStatQuantity =
-    std::numeric_limits<std::int32_t>::max();
+    std::numeric_limits<std::int64_t>::max();
 // The sentinel value for an unset or null timestamp.
 static constexpr auto kUndefTimestamp =
     std::numeric_limits<std::uint64_t>::max();
 // The current version of the DBN encoding.
-static constexpr auto kDbnVersion = 2;
+static constexpr auto kDbnVersion = 3;
 // The length of fixed-length symbol strings.
 static constexpr auto kSymbolCstrLen = 71;
 // The length of fixed-length asset string.
-static constexpr auto kAssetCstrLen = 7;
+static constexpr auto kAssetCstrLen = 11;
 // The multiplier for converting the `length` field in `RecordHeader` to bytes.
 static constexpr std::size_t kRecordHeaderLengthMultiplier = 4;
 

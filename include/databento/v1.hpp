@@ -1,23 +1,21 @@
 #pragma once
 
-#include "databento/constants.hpp"  // kAssetCstrLen, kSymbolCstrLen, kUndefStatQuantity
 #include "databento/datetime.hpp"  // UnixNanos
 #include "databento/enums.hpp"
 #include "databento/record.hpp"
-#include "databento/v2.hpp"
 
 namespace databento {
 // Forward declare
-namespace v3 {
+namespace v2 {
 struct InstrumentDefMsg;
-}
+}  // namespace v2
 
 namespace v1 {
 static constexpr std::uint8_t kDbnVersion = 1;
 static constexpr std::size_t kSymbolCstrLen = 22;
-static constexpr std::size_t kAssetCstrLen = databento::kAssetCstrLen;
-static constexpr std::int32_t kUndefStatQuantity =
-    databento::kUndefStatQuantity;
+static constexpr std::size_t kAssetCstrLen = 7;
+static constexpr auto kUndefStatQuantity =
+    std::numeric_limits<std::int32_t>::max();
 
 using MboMsg = databento::MboMsg;
 using TradeMsg = databento::TradeMsg;
@@ -35,13 +33,14 @@ using Cbbo1MMsg = databento::Cbbo1MMsg;
 using OhlcvMsg = databento::OhlcvMsg;
 using StatusMsg = databento::StatusMsg;
 using ImbalanceMsg = databento::ImbalanceMsg;
-using StatMsg = databento::StatMsg;
 
 struct InstrumentDefMsg {
   static bool HasRType(RType rtype) { return rtype == RType::InstrumentDef; }
 
   v2::InstrumentDefMsg ToV2() const;
-  v3::InstrumentDefMsg ToV3() const;
+  databento::InstrumentDefMsg ToV3() const;
+  template <typename T>
+  T Upgrade() const;
   const char* Currency() const { return currency.data(); }
   const char* SettlCurrency() const { return settl_currency.data(); }
   const char* SecSubType() const { return secsubtype.data(); }
@@ -125,21 +124,58 @@ struct InstrumentDefMsg {
   // padding for alignment
   std::array<char, 3> dummy;
 };
+template <>
+v2::InstrumentDefMsg InstrumentDefMsg::Upgrade() const;
+template <>
+databento::InstrumentDefMsg InstrumentDefMsg::Upgrade() const;
 static_assert(sizeof(InstrumentDefMsg) == 360, "Size must match Rust");
 static_assert(alignof(InstrumentDefMsg) == 8, "Must have 8-byte alignment");
+
+/// A statistics message. A catchall for various data disseminated by
+/// publishers. The `stat_type` indicates the statistic contained in the
+/// message.
+struct StatMsg {
+  static bool HasRType(RType rtype) { return rtype == RType::Statistics; }
+
+  databento::StatMsg ToV3() const;
+  template <typename T>
+  T Upgrade() const;
+  UnixNanos IndexTs() const { return ts_recv; }
+
+  RecordHeader hd;
+  UnixNanos ts_recv;
+  UnixNanos ts_ref;
+  std::int64_t price;
+  std::int32_t quantity;
+  std::uint32_t sequence;
+  TimeDeltaNanos ts_in_delta;
+  StatType stat_type;
+  std::uint16_t channel_id;
+  StatUpdateAction update_action;
+  std::uint8_t stat_flags;
+  std::array<char, 6> reserved;
+};
+template <>
+databento::StatMsg StatMsg::Upgrade() const;
+static_assert(sizeof(StatMsg) == 64, "StatMsg size must match Rust");
+static_assert(alignof(StatMsg) == 8, "Must have 8-byte alignment");
 
 // An error message from the Live Subscription Gateway (LSG). This will never
 // be present in historical data.
 struct ErrorMsg {
   static bool HasRType(RType rtype) { return rtype == RType::Error; }
 
-  v2::ErrorMsg ToV2() const;
+  databento::ErrorMsg ToV2() const;
+  template <typename T>
+  T Upgrade() const;
   UnixNanos IndexTs() const { return hd.ts_event; }
   const char* Err() const { return err.data(); }
 
   RecordHeader hd;
   std::array<char, 64> err;
 };
+template <>
+ErrorMsg ErrorMsg::Upgrade() const;
 static_assert(sizeof(ErrorMsg) == 80, "ErrorMsg size must match Rust");
 static_assert(alignof(ErrorMsg) == 8, "Must have 8-byte alignment");
 
@@ -147,7 +183,9 @@ static_assert(alignof(ErrorMsg) == 8, "Must have 8-byte alignment");
 struct SymbolMappingMsg {
   static bool HasRType(RType rtype) { return rtype == RType::SymbolMapping; }
 
-  v2::SymbolMappingMsg ToV2() const;
+  databento::SymbolMappingMsg ToV2() const;
+  template <typename T>
+  T Upgrade() const;
   const char* STypeInSymbol() const { return stype_in_symbol.data(); }
   const char* STypeOutSymbol() const { return stype_out_symbol.data(); }
 
@@ -159,13 +197,17 @@ struct SymbolMappingMsg {
   UnixNanos start_ts;
   UnixNanos end_ts;
 };
+template <>
+SymbolMappingMsg SymbolMappingMsg::Upgrade() const;
 static_assert(sizeof(SymbolMappingMsg) == 80, "Size must match Rust");
 static_assert(alignof(SymbolMappingMsg) == 8, "Must have 8-byte alignment");
 
 struct SystemMsg {
   static bool HasRType(RType rtype) { return rtype == RType::System; }
 
-  v2::SystemMsg ToV2() const;
+  databento::SystemMsg ToV2() const;
+  template <typename T>
+  T Upgrade() const;
   UnixNanos IndexTs() const { return hd.ts_event; }
   const char* Msg() const { return msg.data(); }
   bool IsHeartbeat() const {
@@ -175,12 +217,25 @@ struct SystemMsg {
   RecordHeader hd;
   std::array<char, 64> msg;
 };
+template <>
+SystemMsg SystemMsg::Upgrade() const;
 static_assert(sizeof(SystemMsg) == 80, "SystemMsg size must match Rust");
 static_assert(alignof(SystemMsg) == 8, "Must have 8-byte alignment");
 
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs);
 inline bool operator!=(const InstrumentDefMsg& lhs,
                        const InstrumentDefMsg& rhs) {
+  return !(lhs == rhs);
+}
+inline bool operator==(const StatMsg& lhs, const StatMsg& rhs) {
+  return std::tie(lhs.hd, lhs.ts_recv, lhs.ts_ref, lhs.price, lhs.quantity,
+                  lhs.sequence, lhs.ts_in_delta, lhs.stat_type, lhs.channel_id,
+                  lhs.update_action, lhs.stat_flags) ==
+         std::tie(rhs.hd, rhs.ts_recv, rhs.ts_ref, rhs.price, rhs.quantity,
+                  rhs.sequence, rhs.ts_in_delta, rhs.stat_type, rhs.channel_id,
+                  rhs.update_action, rhs.stat_flags);
+}
+inline bool operator!=(const StatMsg& lhs, const StatMsg& rhs) {
   return !(lhs == rhs);
 }
 inline bool operator==(const ErrorMsg& lhs, const ErrorMsg& rhs) {
@@ -209,6 +264,8 @@ inline bool operator!=(const SystemMsg& lhs, const SystemMsg& rhs) {
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instr_def_msg);
+std::string ToString(const StatMsg& stat_msg);
+std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg);
 std::string ToString(const ErrorMsg& err_msg);
 std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg);
 std::string ToString(const SymbolMappingMsg& symbol_mapping_msg);

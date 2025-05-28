@@ -1,9 +1,104 @@
-#include "databento/v3.hpp"
+#include "databento/v2.hpp"
 
 #include "databento/fixed_price.hpp"
+#include "databento/v3.hpp"
 #include "stream_op_helper.hpp"
 
-namespace databento::v3 {
+namespace databento::v2 {
+databento::v3::InstrumentDefMsg InstrumentDefMsg::ToV3() const {
+  v3::InstrumentDefMsg ret{
+      RecordHeader{
+          sizeof(v3::InstrumentDefMsg) / RecordHeader::kLengthMultiplier,
+          RType::InstrumentDef, hd.publisher_id, hd.instrument_id, hd.ts_event},
+      ts_recv,
+      min_price_increment,
+      display_factor,
+      expiration,
+      activation,
+      high_limit_price,
+      low_limit_price,
+      max_price_variation,
+      unit_of_measure_qty,
+      min_price_increment_amount,
+      price_ratio,
+      strike_price,
+      raw_instrument_id,
+      kUndefPrice,
+      kUndefPrice,
+      inst_attrib_value,
+      underlying_id,
+      market_depth_implied,
+      market_depth,
+      market_segment_id,
+      max_trade_vol,
+      min_lot_size,
+      min_lot_size_block,
+      min_lot_size_round_lot,
+      min_trade_vol,
+      contract_multiplier,
+      decay_quantity,
+      original_contract_size,
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      appl_id,
+      maturity_year,
+      decay_start_date,
+      channel_id,
+      {},
+      {},
+      currency,
+      settl_currency,
+      secsubtype,
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      instrument_class,
+      match_algorithm,
+      main_fraction,
+      price_display_format,
+      sub_fraction,
+      underlying_product,
+      security_update_action,
+      maturity_month,
+      maturity_day,
+      maturity_week,
+      user_defined_instrument,
+      contract_multiplier_unit,
+      flow_schedule_type,
+      tick_rule,
+      {},
+      Side::None,
+      {}};
+  std::copy(raw_symbol.begin(), raw_symbol.end(), ret.raw_symbol.begin());
+  std::copy(group.begin(), group.end(), ret.group.begin());
+  std::copy(exchange.begin(), exchange.end(), ret.exchange.begin());
+  std::copy(asset.begin(), asset.end(), ret.asset.begin());
+  std::copy(cfi.begin(), cfi.end(), ret.cfi.begin());
+  std::copy(security_type.begin(), security_type.end(),
+            ret.security_type.begin());
+  std::copy(unit_of_measure.begin(), unit_of_measure.end(),
+            ret.unit_of_measure.begin());
+  std::copy(underlying.begin(), underlying.end(), ret.underlying.begin());
+  std::copy(strike_price_currency.begin(), strike_price_currency.end(),
+            ret.strike_price_currency.begin());
+  return ret;
+}
+
+template <>
+v3::InstrumentDefMsg InstrumentDefMsg::Upgrade() const {
+  return ToV3();
+}
 
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.ts_recv == rhs.ts_recv &&
@@ -13,14 +108,14 @@ bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
          lhs.high_limit_price == rhs.high_limit_price &&
          lhs.low_limit_price == rhs.low_limit_price &&
          lhs.max_price_variation == rhs.max_price_variation &&
+         lhs.trading_reference_price == rhs.trading_reference_price &&
          lhs.unit_of_measure_qty == rhs.unit_of_measure_qty &&
          lhs.min_price_increment_amount == rhs.min_price_increment_amount &&
          lhs.price_ratio == rhs.price_ratio &&
          lhs.strike_price == rhs.strike_price &&
-         lhs.raw_instrument_id == rhs.raw_instrument_id &&
-         lhs.leg_price == rhs.leg_price && lhs.leg_delta == rhs.leg_delta &&
          lhs.inst_attrib_value == rhs.inst_attrib_value &&
          lhs.underlying_id == rhs.underlying_id &&
+         lhs.raw_instrument_id == rhs.raw_instrument_id &&
          lhs.market_depth_implied == rhs.market_depth_implied &&
          lhs.market_depth == rhs.market_depth &&
          lhs.market_segment_id == rhs.market_segment_id &&
@@ -32,16 +127,10 @@ bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
          lhs.contract_multiplier == rhs.contract_multiplier &&
          lhs.decay_quantity == rhs.decay_quantity &&
          lhs.original_contract_size == rhs.original_contract_size &&
-         lhs.leg_instrument_id == rhs.leg_instrument_id &&
-         lhs.leg_ratio_price_numerator == rhs.leg_ratio_price_numerator &&
-         lhs.leg_ratio_price_denominator == rhs.leg_ratio_price_denominator &&
-         lhs.leg_ratio_qty_numerator == rhs.leg_ratio_qty_numerator &&
-         lhs.leg_ratio_qty_denominator == rhs.leg_ratio_qty_denominator &&
-         lhs.leg_underlying_id == rhs.leg_underlying_id &&
+         lhs.trading_reference_date == rhs.trading_reference_date &&
          lhs.appl_id == rhs.appl_id && lhs.maturity_year == rhs.maturity_year &&
          lhs.decay_start_date == rhs.decay_start_date &&
-         lhs.channel_id == rhs.channel_id && lhs.leg_count == rhs.leg_count &&
-         lhs.leg_index == rhs.leg_index && lhs.currency == rhs.currency &&
+         lhs.channel_id == rhs.channel_id && lhs.currency == rhs.currency &&
          lhs.settl_currency == rhs.settl_currency &&
          lhs.secsubtype == rhs.secsubtype && lhs.raw_symbol == rhs.raw_symbol &&
          lhs.group == rhs.group && lhs.exchange == rhs.exchange &&
@@ -50,11 +139,12 @@ bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
          lhs.unit_of_measure == rhs.unit_of_measure &&
          lhs.underlying == rhs.underlying &&
          lhs.strike_price_currency == rhs.strike_price_currency &&
-         lhs.leg_raw_symbol == rhs.leg_raw_symbol &&
          lhs.instrument_class == rhs.instrument_class &&
          lhs.match_algorithm == rhs.match_algorithm &&
+         lhs.md_security_trading_status == rhs.md_security_trading_status &&
          lhs.main_fraction == rhs.main_fraction &&
          lhs.price_display_format == rhs.price_display_format &&
+         lhs.settl_price_type == rhs.settl_price_type &&
          lhs.sub_fraction == rhs.sub_fraction &&
          lhs.underlying_product == rhs.underlying_product &&
          lhs.security_update_action == rhs.security_update_action &&
@@ -64,9 +154,7 @@ bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
          lhs.user_defined_instrument == rhs.user_defined_instrument &&
          lhs.contract_multiplier_unit == rhs.contract_multiplier_unit &&
          lhs.flow_schedule_type == rhs.flow_schedule_type &&
-         lhs.tick_rule == rhs.tick_rule &&
-         lhs.leg_instrument_class == rhs.leg_instrument_class &&
-         lhs.leg_side == rhs.leg_side;
+         lhs.tick_rule == rhs.tick_rule;
 }
 
 std::string ToString(const InstrumentDefMsg& instr_def_msg) {
@@ -76,7 +164,7 @@ std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instr_def_msg) {
   return StreamOpBuilder{stream}
       .SetSpacer("\n    ")
-      .SetTypeName("v1::InstrumentDefMsg")
+      .SetTypeName("v2::InstrumentDefMsg")
       .Build()
       .AddField("hd", instr_def_msg.hd)
       .AddField("ts_recv", instr_def_msg.ts_recv)
@@ -87,16 +175,16 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("high_limit_price", FixPx{instr_def_msg.high_limit_price})
       .AddField("low_limit_price", FixPx{instr_def_msg.low_limit_price})
       .AddField("max_price_variation", FixPx{instr_def_msg.max_price_variation})
+      .AddField("trading_reference_price",
+                FixPx{instr_def_msg.trading_reference_price})
       .AddField("unit_of_measure_qty", FixPx{instr_def_msg.unit_of_measure_qty})
       .AddField("min_price_increment_amount",
                 FixPx{instr_def_msg.min_price_increment_amount})
       .AddField("price_ratio", FixPx{instr_def_msg.price_ratio})
       .AddField("strike_price", FixPx{instr_def_msg.strike_price})
-      .AddField("raw_instrument_id", instr_def_msg.raw_instrument_id)
-      .AddField("leg_price", FixPx{instr_def_msg.leg_price})
-      .AddField("leg_delta", FixPx{instr_def_msg.leg_delta})
       .AddField("inst_attrib_value", instr_def_msg.inst_attrib_value)
       .AddField("underlying_id", instr_def_msg.underlying_id)
+      .AddField("raw_instrument_id", instr_def_msg.raw_instrument_id)
       .AddField("market_depth_implied", instr_def_msg.market_depth_implied)
       .AddField("market_depth", instr_def_msg.market_depth)
       .AddField("market_segment_id", instr_def_msg.market_segment_id)
@@ -108,22 +196,11 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("contract_multiplier", instr_def_msg.contract_multiplier)
       .AddField("decay_quantity", instr_def_msg.decay_quantity)
       .AddField("original_contract_size", instr_def_msg.original_contract_size)
-      .AddField("leg_instrument_id", instr_def_msg.leg_instrument_id)
-      .AddField("leg_ratio_price_numerator",
-                instr_def_msg.leg_ratio_price_numerator)
-      .AddField("leg_ratio_price_denominator",
-                instr_def_msg.leg_ratio_price_denominator)
-      .AddField("leg_ratio_qty_numerator",
-                instr_def_msg.leg_ratio_qty_numerator)
-      .AddField("leg_ratio_qty_denominator",
-                instr_def_msg.leg_ratio_qty_denominator)
-      .AddField("leg_underlying_id", instr_def_msg.leg_underlying_id)
+      .AddField("trading_reference_date", instr_def_msg.trading_reference_date)
       .AddField("appl_id", instr_def_msg.appl_id)
       .AddField("maturity_year", instr_def_msg.maturity_year)
       .AddField("decay_start_date", instr_def_msg.decay_start_date)
       .AddField("channel_id", instr_def_msg.channel_id)
-      .AddField("leg_count", instr_def_msg.leg_count)
-      .AddField("leg_index", instr_def_msg.leg_index)
       .AddField("currency", instr_def_msg.currency)
       .AddField("settl_currency", instr_def_msg.settl_currency)
       .AddField("secsubtype", instr_def_msg.secsubtype)
@@ -136,11 +213,13 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("unit_of_measure", instr_def_msg.unit_of_measure)
       .AddField("underlying", instr_def_msg.underlying)
       .AddField("strike_price_currency", instr_def_msg.strike_price_currency)
-      .AddField("leg_raw_symbol", instr_def_msg.leg_raw_symbol)
       .AddField("instrument_class", instr_def_msg.instrument_class)
       .AddField("match_algorithm", instr_def_msg.match_algorithm)
+      .AddField("md_security_trading_status",
+                instr_def_msg.md_security_trading_status)
       .AddField("main_fraction", instr_def_msg.main_fraction)
       .AddField("price_display_format", instr_def_msg.price_display_format)
+      .AddField("settl_price_type", instr_def_msg.settl_price_type)
       .AddField("sub_fraction", instr_def_msg.sub_fraction)
       .AddField("underlying_product", instr_def_msg.underlying_product)
       .AddField("security_update_action", instr_def_msg.security_update_action)
@@ -153,28 +232,7 @@ std::ostream& operator<<(std::ostream& stream,
                 instr_def_msg.contract_multiplier_unit)
       .AddField("flow_schedule_type", instr_def_msg.flow_schedule_type)
       .AddField("tick_rule", instr_def_msg.tick_rule)
-      .AddField("leg_instrument_class", instr_def_msg.leg_instrument_class)
-      .AddField("leg_side", instr_def_msg.leg_side)
       .Finish();
 }
 
-std::string ToString(const StatMsg& stat_msg) { return MakeString(stat_msg); }
-std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg) {
-  return StreamOpBuilder{stream}
-      .SetSpacer("\n    ")
-      .SetTypeName("StatMsg")
-      .Build()
-      .AddField("hd", stat_msg.hd)
-      .AddField("ts_recv", stat_msg.ts_recv)
-      .AddField("ts_ref", stat_msg.ts_ref)
-      .AddField("price", FixPx{stat_msg.price})
-      .AddField("quantity", stat_msg.quantity)
-      .AddField("sequence", stat_msg.sequence)
-      .AddField("ts_in_delta", stat_msg.ts_in_delta)
-      .AddField("stat_type", stat_msg.stat_type)
-      .AddField("channel_id", stat_msg.channel_id)
-      .AddField("update_action", stat_msg.update_action)
-      .AddField("stat_flags", stat_msg.stat_flags)
-      .Finish();
-}
-}  // namespace databento::v3
+}  // namespace databento::v2

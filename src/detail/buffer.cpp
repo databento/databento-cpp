@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "databento/exceptions.hpp"
+#include "stream_op_helper.hpp"
 
 using databento::detail::Buffer;
 
@@ -16,7 +17,7 @@ size_t Buffer::Write(const std::byte* data, std::size_t length) {
   }
   const auto write_size = std::min(WriteCapacity(), length);
   std::copy(data, data + write_size, WriteBegin());
-  WriteBegin() += write_size;
+  Fill(length);
   return write_size;
 }
 
@@ -34,7 +35,7 @@ void Buffer::WriteAll(const std::byte* data, std::size_t length) {
 }
 
 void Buffer::ReadExact(std::byte* buffer, std::size_t length) {
-  if (length < ReadCapacity()) {
+  if (length > ReadCapacity()) {
     std::ostringstream err_msg;
     err_msg << "Reached end of buffer without " << length << " bytes, only "
             << ReadCapacity() << " bytes available";
@@ -46,7 +47,7 @@ void Buffer::ReadExact(std::byte* buffer, std::size_t length) {
 std::size_t Buffer::ReadSome(std::byte* buffer, std::size_t max_length) {
   const auto read_size = std::min(ReadCapacity(), max_length);
   std::copy(ReadBegin(), ReadBegin() + read_size, buffer);
-  ReadBegin() += read_size;
+  Consume(read_size);
   return read_size;
 }
 
@@ -71,3 +72,19 @@ void Buffer::Shift() {
   read_pos_ = buf_.get();
   write_pos_ = read_pos_ + unread_bytes;
 }
+
+namespace databento::detail {
+std::ostream& operator<<(std::ostream& stream, const Buffer& buffer) {
+  return StreamOpBuilder{stream}
+      .SetTypeName("Buffer")
+      .SetSpacer(" ")
+      .Build()
+      .AddField("buf_", buffer.buf_.get())
+      .AddField("end_", buffer.end_)
+      .AddField("read_pos", buffer.read_pos_)
+      .AddField("write_pos_", buffer.write_pos_)
+      .AddField("ReadCapacity", buffer.ReadCapacity())
+      .AddField("WriteCapacity", buffer.WriteCapacity())
+      .Finish();
+}
+}  // namespace databento::detail

@@ -14,6 +14,7 @@
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"
 #include "databento/record.hpp"
+#include "databento/v3.hpp"
 #include "databento/with_ts_out.hpp"
 #include "dbn_constants.hpp"
 
@@ -69,7 +70,7 @@ DbnDecoder::DbnDecoder(ILogReceiver* log_receiver, InFileStream file_stream)
 DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
                        std::unique_ptr<IReadable> input)
     : DbnDecoder(log_receiver, std::move(input),
-                 VersionUpgradePolicy::UpgradeToV2) {}
+                 VersionUpgradePolicy::UpgradeToV3) {}
 
 DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
                        std::unique_ptr<IReadable> input,
@@ -81,7 +82,7 @@ DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
     input_ =
         std::make_unique<detail::ZstdDecodeStream>(std::move(input_), buffer_);
     input_->ReadExact(buffer_.WriteBegin(), kMagicSize);
-    buffer_.WriteBegin() += kMagicSize;
+    buffer_.Fill(kMagicSize);
     const auto* buf_ptr = buffer_.ReadBegin();
     if (std::strncmp(Consume(buf_ptr, 3), kDbnPrefix, 3) != 0) {
       throw DbnResponseError{"Found Zstd input, but not DBN prefix"};
@@ -180,17 +181,17 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
   // already read first 4 bytes detecting compression
   const auto read_size = kMetadataPreludeSize - kMagicSize;
   input_->ReadExact(buffer_.WriteBegin(), read_size);
-  buffer_.WriteBegin() += read_size;
+  buffer_.Fill(read_size);
   const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
       buffer_.ReadBegin(), kMetadataPreludeSize);
-  buffer_.ReadBegin() += kMetadataPreludeSize;
+  buffer_.Consume(kMetadataPreludeSize);
   version_ = version;
   buffer_.Reserve(size);
   input_->ReadExact(buffer_.WriteBegin(), size);
-  buffer_.WriteBegin() += size;
+  buffer_.Fill(size);
   auto metadata = DbnDecoder::DecodeMetadataFields(
       version_, buffer_.ReadBegin(), buffer_.ReadEnd());
-  buffer_.ReadBegin() += size;
+  buffer_.Consume(size);
   // Metadata may leave buffer misaligned. Shift records to ensure 8-byte
   // alignment
   buffer_.Shift();
@@ -206,13 +207,17 @@ databento::Record UpgradeRecord(
     databento::Record rec) {
   if (ts_out) {
     const auto orig = rec.Get<databento::WithTsOut<T>>();
-    const databento::WithTsOut<U> v2{orig.rec.ToV2(), orig.ts_out};
-    const auto v2_ptr = reinterpret_cast<const std::byte*>(&v2);
-    std::copy(v2_ptr, v2_ptr + v2.rec.hd.Size(), compat_buffer->data());
+    const databento::WithTsOut<U> upgraded = {orig.rec.template Upgrade<U>(),
+                                              orig.ts_out};
+    const auto upgraded_ptr = reinterpret_cast<const std::byte*>(&upgraded);
+    std::copy(upgraded_ptr, upgraded_ptr + upgraded.rec.hd.Size(),
+              compat_buffer->data());
   } else {
-    const auto v2 = rec.Get<T>().ToV2();
-    const auto v2_ptr = reinterpret_cast<const std::byte*>(&v2);
-    std::copy(v2_ptr, v2_ptr + v2.hd.Size(), compat_buffer->data());
+    const auto& orig = rec.Get<T>();
+    const U upgraded = orig.template Upgrade<U>();
+    const auto upgraded_ptr = reinterpret_cast<const std::byte*>(&upgraded);
+    std::copy(upgraded_ptr, upgraded_ptr + upgraded.hd.Size(),
+              compat_buffer->data());
   }
   return databento::Record{
       reinterpret_cast<databento::RecordHeader*>(compat_buffer->data())};
@@ -223,17 +228,68 @@ databento::Record DbnDecoder::DecodeRecordCompat(
     std::uint8_t version, VersionUpgradePolicy upgrade_policy, bool ts_out,
     std::array<std::byte, kMaxRecordLen>* compat_buffer, Record rec) {
   if (version == 1 && upgrade_policy == VersionUpgradePolicy::UpgradeToV2) {
-    if (rec.RType() == RType::InstrumentDef) {
-      return UpgradeRecord<InstrumentDefMsgV1, InstrumentDefMsgV2>(
-          ts_out, compat_buffer, rec);
-    } else if (rec.RType() == RType::SymbolMapping) {
-      return UpgradeRecord<SymbolMappingMsgV1, SymbolMappingMsgV2>(
-          ts_out, compat_buffer, rec);
-    } else if (rec.RType() == RType::Error) {
-      return UpgradeRecord<ErrorMsgV1, ErrorMsgV2>(ts_out, compat_buffer, rec);
-    } else if (rec.RType() == RType::System) {
-      return UpgradeRecord<SystemMsgV1, SystemMsgV2>(ts_out, compat_buffer,
-                                                     rec);
+    switch (rec.RType()) {
+      case RType::InstrumentDef: {
+        return UpgradeRecord<v1::InstrumentDefMsg, v2::InstrumentDefMsg>(
+            ts_out, compat_buffer, rec);
+      }
+      case RType::SymbolMapping: {
+        return UpgradeRecord<v1::SymbolMappingMsg, v2::SymbolMappingMsg>(
+            ts_out, compat_buffer, rec);
+      }
+      case RType::Error: {
+        return UpgradeRecord<v1::ErrorMsg, v2::ErrorMsg>(ts_out, compat_buffer,
+                                                         rec);
+      }
+      case RType::System: {
+        return UpgradeRecord<v1::SystemMsg, v2::SystemMsg>(ts_out,
+                                                           compat_buffer, rec);
+      }
+      default: {
+        break;
+      }
+    }
+  } else if (version == 1 &&
+             upgrade_policy == VersionUpgradePolicy::UpgradeToV3) {
+    switch (rec.RType()) {
+      case RType::InstrumentDef: {
+        return UpgradeRecord<v1::InstrumentDefMsg, v3::InstrumentDefMsg>(
+            ts_out, compat_buffer, rec);
+      }
+      case RType::Statistics: {
+        return UpgradeRecord<v1::StatMsg, v3::StatMsg>(ts_out, compat_buffer,
+                                                       rec);
+      }
+      case RType::SymbolMapping: {
+        return UpgradeRecord<v1::SymbolMappingMsg, v3::SymbolMappingMsg>(
+            ts_out, compat_buffer, rec);
+      }
+      case RType::Error: {
+        return UpgradeRecord<v1::ErrorMsg, v3::ErrorMsg>(ts_out, compat_buffer,
+                                                         rec);
+      }
+      case RType::System: {
+        return UpgradeRecord<v1::SystemMsg, v3::SystemMsg>(ts_out,
+                                                           compat_buffer, rec);
+      }
+      default: {
+        break;
+      }
+    }
+  } else if (version == 2 &&
+             upgrade_policy == VersionUpgradePolicy::UpgradeToV3) {
+    switch (rec.RType()) {
+      case RType::InstrumentDef: {
+        return UpgradeRecord<v2::InstrumentDefMsg, v3::InstrumentDefMsg>(
+            ts_out, compat_buffer, rec);
+      }
+      case RType::Statistics: {
+        return UpgradeRecord<v2::StatMsg, v3::StatMsg>(ts_out, compat_buffer,
+                                                       rec);
+      }
+      default: {
+        break;
+      }
     }
   }
   return rec;
@@ -260,7 +316,7 @@ const databento::Record* DbnDecoder::DecodeRecord() {
     }
   }
   current_record_ = Record{BufferRecordHeader()};
-  buffer_.ReadBegin() += current_record_.Size();
+  buffer_.Consume(current_record_.Size());
   current_record_ = DbnDecoder::DecodeRecordCompat(
       version_, upgrade_policy_, ts_out_, &compat_buffer_, current_record_);
   return &current_record_;
@@ -272,7 +328,7 @@ size_t DbnDecoder::FillBuffer() {
   }
   const auto fill_size =
       input_->ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity());
-  buffer_.WriteBegin() += fill_size;
+  buffer_.Fill(fill_size);
   return fill_size;
 }
 
@@ -282,7 +338,7 @@ databento::RecordHeader* DbnDecoder::BufferRecordHeader() {
 
 bool DbnDecoder::DetectCompression() {
   input_->ReadExact(buffer_.WriteBegin(), kMagicSize);
-  buffer_.WriteBegin() += kMagicSize;
+  buffer_.Fill(kMagicSize);
   const auto* buffer_it = buffer_.ReadBegin();
   if (std::strncmp(Consume(buffer_it, 3), kDbnPrefix, 3) == 0) {
     return false;

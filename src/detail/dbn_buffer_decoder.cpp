@@ -8,10 +8,12 @@ using databento::detail::DbnBufferDecoder;
 
 databento::KeepGoing DbnBufferDecoder::Process(const char* data,
                                                std::size_t length) {
+  constexpr auto kUpgradePolicy = VersionUpgradePolicy::UpgradeToV3;
+
   zstd_buffer_->WriteAll(data, length);
   const auto read_size = zstd_stream_.ReadSome(dbn_buffer_.WriteBegin(),
                                                dbn_buffer_.WriteCapacity());
-  dbn_buffer_.WriteBegin() += read_size;
+  dbn_buffer_.Fill(read_size);
   if (read_size == 0) {
     return KeepGoing::Continue;
   }
@@ -23,7 +25,7 @@ databento::KeepGoing DbnBufferDecoder::Process(const char* data,
       std::tie(input_version_, bytes_needed_) =
           DbnDecoder::DecodeMetadataVersionAndSize(dbn_buffer_.ReadBegin(),
                                                    dbn_buffer_.ReadCapacity());
-      dbn_buffer_.ReadBegin() += kMetadataPreludeSize;
+      dbn_buffer_.Consume(kMetadataPreludeSize);
       dbn_buffer_.Reserve(bytes_needed_);
       state_ = DecoderState::Metadata;
       [[fallthrough]];
@@ -34,12 +36,12 @@ databento::KeepGoing DbnBufferDecoder::Process(const char* data,
       }
       auto metadata = DbnDecoder::DecodeMetadataFields(
           input_version_, dbn_buffer_.ReadBegin(), dbn_buffer_.ReadEnd());
-      dbn_buffer_.ReadBegin() += bytes_needed_;
+      dbn_buffer_.Consume(bytes_needed_);
       // Metadata may leave buffer misaligned. Shift records to ensure 8-byte
       // alignment
       dbn_buffer_.Shift();
       ts_out_ = metadata.ts_out;
-      metadata.Upgrade(VersionUpgradePolicy::UpgradeToV2);
+      metadata.Upgrade(kUpgradePolicy);
       if (metadata_callback_) {
         metadata_callback_(std::move(metadata));
       }
@@ -55,12 +57,11 @@ databento::KeepGoing DbnBufferDecoder::Process(const char* data,
           break;
         }
         record = DbnDecoder::DecodeRecordCompat(
-            input_version_, VersionUpgradePolicy::UpgradeToV2, ts_out_,
-            &compat_buffer_, record);
+            input_version_, kUpgradePolicy, ts_out_, &compat_buffer_, record);
         if (record_callback_(record) == KeepGoing::Stop) {
           return KeepGoing::Stop;
         }
-        dbn_buffer_.ReadBegin() += bytes_needed_;
+        dbn_buffer_.Consume(bytes_needed_);
       }
     }
   }

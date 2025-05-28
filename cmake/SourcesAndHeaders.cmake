@@ -71,5 +71,5 @@ set(sources
   src/symbol_map.cpp
   src/symbology.cpp
   src/v1.cpp
-  src/v3.cpp
+  src/v2.cpp
 )
