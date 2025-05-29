@@ -9,6 +9,9 @@
   `HistoricalClient::TimeseriesGetRangeToFile()` to a `std::filesystem::path`
 - Changed the type of the `file_path` parameter in the `DbnFileStore`, `InFileStream`,
   and `OutFileStream` constructors to a `std::filesystem::path`
+- Made `stype_in` and `schema` optionals in `Metadata` to align with how
+  `Metadata` is represented in other languages and removed the boolean
+  `has_mixed_stype_in` and `has_mixed_schema` fields
 
 ## 0.36.0 - 2025-05-27
 

@@ -21,12 +21,10 @@ Metadata GenMetadata() {
   Metadata metadata{
       kDbnVersion,
       ToString(Dataset::XnasItch),
-      false,
       Schema::Trades,
       {date::sys_days{date::year{2023} / 7 / 1}},
       {date::sys_days{date::year{2023} / 8 / 1}},
       {},
-      false,
       SType::RawSymbol,
       SType::InstrumentId,
       false,

@@ -94,10 +94,10 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
   const auto [length, end_padding] = CalcLength(metadata);
   EncodeAsBytes(length, output);
   EncodeFixedLenCStr(kDatasetCstrLen, metadata.dataset, output);
-  if (metadata.has_mixed_schema) {
-    EncodeAsBytes(kNullSchema, output);
+  if (metadata.schema.has_value()) {
+    EncodeAsBytes(*metadata.schema, output);
   } else {
-    EncodeAsBytes(metadata.schema, output);
+    EncodeAsBytes(kNullSchema, output);
   }
   EncodeAsBytes(metadata.start, output);
   EncodeAsBytes(metadata.end, output);
@@ -106,10 +106,10 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
     // backwards compatibility for record_count
     EncodeAsBytes(kNullRecordCount, output);
   }
-  if (metadata.has_mixed_stype_in) {
-    EncodeAsBytes(kNullSType, output);
+  if (metadata.stype_in.has_value()) {
+    EncodeAsBytes(*metadata.stype_in, output);
   } else {
-    EncodeAsBytes(metadata.stype_in, output);
+    EncodeAsBytes(kNullSType, output);
   }
   EncodeAsBytes(metadata.stype_out, output);
   EncodeAsBytes(static_cast<std::uint8_t>(metadata.ts_out), output);

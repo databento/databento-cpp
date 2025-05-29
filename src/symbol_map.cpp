@@ -14,8 +14,8 @@ using databento::TsSymbolMap;
 
 namespace {
 bool IsInverse(const databento::Metadata& metadata) {
-  if (!metadata.has_mixed_stype_in) {
-    if (metadata.stype_in == databento::SType::InstrumentId) {
+  if (metadata.stype_in.has_value()) {
+    if (*metadata.stype_in == databento::SType::InstrumentId) {
       return true;
     }
     if (metadata.stype_out == databento::SType::InstrumentId) {

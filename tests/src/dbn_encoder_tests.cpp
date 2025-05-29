@@ -18,12 +18,10 @@ TEST(DbnEncoderTests, TestEncodeDecodeMetadataIdentity) {
   const Metadata metadata{
       kDbnVersion,
       dataset::kGlbxMdp3,
-      false,
       Schema::Mbp10,
       UnixNanos{std::chrono::nanoseconds{1657230820000000000}},
       UnixNanos{std::chrono::nanoseconds{1658960170000000000}},
       0,
-      false,
       SType::RawSymbol,
       SType::InstrumentId,
       true,
