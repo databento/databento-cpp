@@ -8,11 +8,11 @@
 
 using databento::DbnFileStore;
 
-DbnFileStore::DbnFileStore(const std::string& file_path)
+DbnFileStore::DbnFileStore(const std::filesystem::path& file_path)
     : decoder_{ILogReceiver::Default(), InFileStream{file_path}} {}
 
 DbnFileStore::DbnFileStore(ILogReceiver* log_receiver,
-                           const std::string& file_path,
+                           const std::filesystem::path& file_path,
                            VersionUpgradePolicy upgrade_policy)
     : decoder_{log_receiver, std::make_unique<InFileStream>(file_path),
                upgrade_policy} {}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <map>  // multimap
 #include <string>
 #include <vector>
@@ -75,12 +76,12 @@ class Historical {
   // Lists all files associated with a batch job.
   std::vector<BatchFileDesc> BatchListFiles(const std::string& job_id);
   // Returns the paths of the downloaded files.
-  std::vector<std::string> BatchDownload(const std::string& output_dir,
-                                         const std::string& job_id);
+  std::vector<std::filesystem::path> BatchDownload(
+      const std::filesystem::path& output_dir, const std::string& job_id);
   // Returns the path of the downloaded file.
-  std::string BatchDownload(const std::string& output_dir,
-                            const std::string& job_id,
-                            const std::string& filename_to_download);
+  std::filesystem::path BatchDownload(const std::filesystem::path& output_dir,
+                                      const std::string& job_id,
+                                      const std::string& filename_to_download);
 
   /*
    * Metadata API
@@ -206,30 +207,33 @@ class Historical {
       const std::string& dataset,
       const DateTimeRange<UnixNanos>& datetime_range,
       const std::vector<std::string>& symbols, Schema schema,
-      const std::string& file_path);
+      const std::filesystem::path& file_path);
   DbnFileStore TimeseriesGetRangeToFile(
       const std::string& dataset,
       const DateTimeRange<std::string>& datetime_range,
       const std::vector<std::string>& symbols, Schema schema,
-      const std::string& file_path);
+      const std::filesystem::path& file_path);
   DbnFileStore TimeseriesGetRangeToFile(
       const std::string& dataset,
       const DateTimeRange<UnixNanos>& datetime_range,
       const std::vector<std::string>& symbols, Schema schema, SType stype_in,
-      SType stype_out, std::uint64_t limit, const std::string& file_path);
+      SType stype_out, std::uint64_t limit,
+      const std::filesystem::path& file_path);
   DbnFileStore TimeseriesGetRangeToFile(
       const std::string& dataset,
       const DateTimeRange<std::string>& datetime_range,
       const std::vector<std::string>& symbols, Schema schema, SType stype_in,
-      SType stype_out, std::uint64_t limit, const std::string& file_path);
+      SType stype_out, std::uint64_t limit,
+      const std::filesystem::path& file_path);
 
  private:
   using HttplibParams = std::multimap<std::string, std::string>;
 
   BatchJob BatchSubmitJob(const HttplibParams& params);
   void StreamToFile(const std::string& url_path, const HttplibParams& params,
-                    const std::string& file_path);
-  void DownloadFile(const std::string& url, const std::string& output_path);
+                    const std::filesystem::path& file_path);
+  void DownloadFile(const std::string& url,
+                    const std::filesystem::path& output_path);
   std::vector<BatchJob> BatchListJobs(const HttplibParams& params);
   std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const HttplibParams& params);
@@ -240,7 +244,7 @@ class Historical {
                           const MetadataCallback& metadata_callback,
                           const RecordCallback& record_callback);
   DbnFileStore TimeseriesGetRangeToFile(const HttplibParams& params,
-                                        const std::string& file_path);
+                                        const std::filesystem::path& file_path);
 
   ILogReceiver* log_receiver_;
   const std::string key_;

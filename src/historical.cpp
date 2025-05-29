@@ -117,16 +117,6 @@ void TryCreateDir(const std::filesystem::path& dir_name) {
   throw databento::Exception{"Unable to create directory "s +
                              dir_name.generic_string() + ": " + ec.message()};
 }
-
-std::string PathJoin(const std::string& dir, const std::string& path) {
-  if (dir.empty()) {
-    return path;
-  }
-  if (dir[dir.length() - 1] == '/') {
-    return dir + path;
-  }
-  return dir + '/' + path;
-}
 }  // namespace
 
 Historical::Historical(ILogReceiver* log_receiver, std::string key,
@@ -285,25 +275,25 @@ std::vector<databento::BatchFileDesc> Historical::BatchListFiles(
   return files;
 }
 
-std::vector<std::string> Historical::BatchDownload(
-    const std::string& output_dir, const std::string& job_id) {
+std::vector<std::filesystem::path> Historical::BatchDownload(
+    const std::filesystem::path& output_dir, const std::string& job_id) {
   TryCreateDir(output_dir);
-  const std::string job_dir = PathJoin(output_dir, job_id);
+  const std::filesystem::path job_dir = output_dir / job_id;
   TryCreateDir(job_dir);
   const auto file_descs = BatchListFiles(job_id);
-  std::vector<std::string> paths;
+  std::vector<std::filesystem::path> paths;
   for (const auto& file_desc : file_descs) {
-    std::string output_path = PathJoin(job_dir, file_desc.filename);
+    std::filesystem::path output_path = job_dir / file_desc.filename;
     DownloadFile(file_desc.https_url, output_path);
     paths.emplace_back(std::move(output_path));
   }
   return paths;
 }
-std::string Historical::BatchDownload(const std::string& output_dir,
-                                      const std::string& job_id,
-                                      const std::string& filename_to_download) {
+std::filesystem::path Historical::BatchDownload(
+    const std::filesystem::path& output_dir, const std::string& job_id,
+    const std::string& filename_to_download) {
   TryCreateDir(output_dir);
-  const std::string job_dir = PathJoin(output_dir, job_id);
+  const std::filesystem::path job_dir = output_dir / job_id;
   TryCreateDir(job_dir);
   const auto file_descs = BatchListFiles(job_id);
   const auto file_desc_it =
@@ -316,14 +306,14 @@ std::string Historical::BatchDownload(const std::string& output_dir,
                                "filename_to_download",
                                "Filename not found for batch job " + job_id};
   }
-  std::string output_path = PathJoin(job_dir, file_desc_it->filename);
+  std::filesystem::path output_path = job_dir / file_desc_it->filename;
   DownloadFile(file_desc_it->https_url, output_path);
   return output_path;
 }
 
 void Historical::StreamToFile(const std::string& url_path,
                               const HttplibParams& params,
-                              const std::string& file_path) {
+                              const std::filesystem::path& file_path) {
   OutFileStream out_file{file_path};
   this->client_.GetRawStream(
       url_path, params, [&out_file](const char* data, std::size_t length) {
@@ -333,7 +323,7 @@ void Historical::StreamToFile(const std::string& url_path,
 }
 
 void Historical::DownloadFile(const std::string& url,
-                              const std::string& output_path) {
+                              const std::filesystem::path& output_path) {
   static const std::string kEndpoint = "Historical::DownloadFile";
   // extract path from URL
   const auto protocol_divider = url.find("://");
@@ -870,7 +860,7 @@ static const std::string kTimeseriesGetRangeToFileEndpoint =
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema,
-    const std::string& file_path) {
+    const std::filesystem::path& file_path) {
   return this->TimeseriesGetRangeToFile(dataset, datetime_range, symbols,
                                         schema, kDefaultSTypeIn,
                                         kDefaultSTypeOut, {}, file_path);
@@ -879,7 +869,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
     const std::string& dataset,
     const DateTimeRange<std::string>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema,
-    const std::string& file_path) {
+    const std::filesystem::path& file_path) {
   return this->TimeseriesGetRangeToFile(dataset, datetime_range, symbols,
                                         schema, kDefaultSTypeIn,
                                         kDefaultSTypeOut, {}, file_path);
@@ -887,7 +877,8 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
-    SType stype_out, std::uint64_t limit, const std::string& file_path) {
+    SType stype_out, std::uint64_t limit,
+    const std::filesystem::path& file_path) {
   httplib::Params params{
       {"dataset", dataset},
       {"encoding", "dbn"},
@@ -906,7 +897,8 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
     const std::string& dataset,
     const DateTimeRange<std::string>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
-    SType stype_out, std::uint64_t limit, const std::string& file_path) {
+    SType stype_out, std::uint64_t limit,
+    const std::filesystem::path& file_path) {
   httplib::Params params{
       {"dataset", dataset},
       {"encoding", "dbn"},
@@ -922,7 +914,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
   return this->TimeseriesGetRangeToFile(params, file_path);
 }
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
-    const HttplibParams& params, const std::string& file_path) {
+    const HttplibParams& params, const std::filesystem::path& file_path) {
   StreamToFile(kTimeseriesGetRangePath, params, file_path);
   return DbnFileStore{log_receiver_, file_path,
                       VersionUpgradePolicy::UpgradeToV3};

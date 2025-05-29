@@ -244,19 +244,17 @@ TEST_F(HistoricalTests, TestBatchDownloadAll) {
                                static_cast<std::uint16_t>(port)};
   ASSERT_FALSE(temp_metadata_file.Exists());
   ASSERT_FALSE(temp_dbn_file.Exists());
-  const std::vector<std::string> paths =
-      target.BatchDownload(tmp_path_.string(), kJobId);
+  const std::vector<std::filesystem::path> paths =
+      target.BatchDownload(tmp_path_, kJobId);
   EXPECT_TRUE(temp_metadata_file.Exists());
   EXPECT_TRUE(temp_dbn_file.Exists());
   ASSERT_EQ(paths.size(), 2);
-  EXPECT_NE(
-      std::find_if(paths.begin(), paths.end(),
-                   [&temp_metadata_file](const auto& path) {
-                     return std::filesystem::path{path}.lexically_normal() ==
-                            std::filesystem::path{temp_metadata_file.Path()}
-                                .lexically_normal();
-                   }),
-      paths.end());
+  EXPECT_NE(std::find_if(paths.begin(), paths.end(),
+                         [&temp_metadata_file](const auto& path) {
+                           return path.lexically_normal() ==
+                                  temp_metadata_file.Path().lexically_normal();
+                         }),
+            paths.end());
   EXPECT_NE(
       std::find_if(paths.begin(), paths.end(),
                    [&temp_dbn_file](const auto& path) {
@@ -278,12 +276,11 @@ TEST_F(HistoricalTests, TestBatchDownloadSingle) {
   databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
   ASSERT_FALSE(temp_metadata_file.Exists());
-  const std::string path =
-      target.BatchDownload(tmp_path_.string(), kJobId, "test_metadata.json");
+  const std::filesystem::path path =
+      target.BatchDownload(tmp_path_, kJobId, "test_metadata.json");
   EXPECT_TRUE(temp_metadata_file.Exists());
-  EXPECT_EQ(
-      std::filesystem::path{path}.lexically_normal(),
-      std::filesystem::path{temp_metadata_file.Path()}.lexically_normal());
+  EXPECT_EQ(path.lexically_normal(),
+            temp_metadata_file.Path().lexically_normal());
 }
 
 TEST_F(HistoricalTests, TestBatchDownloadSingleInvalidFile) {
@@ -294,9 +291,8 @@ TEST_F(HistoricalTests, TestBatchDownloadSingleInvalidFile) {
 
   databento::Historical target{logger_.get(), kApiKey, "localhost",
                                static_cast<std::uint16_t>(port)};
-  ASSERT_THROW(
-      target.BatchDownload(tmp_path_.string(), kJobId, "test_metadata.js"),
-      InvalidArgumentError);
+  ASSERT_THROW(target.BatchDownload(tmp_path_, kJobId, "test_metadata.js"),
+               InvalidArgumentError);
 }
 
 TEST_F(HistoricalTests, TestMetadataListPublishers) {

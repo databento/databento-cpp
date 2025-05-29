@@ -16,14 +16,12 @@ namespace databento {
 // goes out of scope.
 class TempFile {
  public:
-  explicit TempFile(const std::filesystem::path& path)
-      : TempFile{path.string()} {}
-  explicit TempFile(std::string path) : path_{std::move(path)} {
+  explicit TempFile(std::filesystem::path path) : path_{std::move(path)} {
     std::ifstream f{path_};
     if (Exists()) {
       throw InvalidArgumentError{
           "TempFile::TempFile", "path",
-          "File at path " + path_ + " shouldn't already exist"};
+          "File at path " + path_.string() + " shouldn't already exist"};
     }
   }
   TempFile(const TempFile&) = delete;
@@ -36,7 +34,7 @@ class TempFile {
                       << ::strerror(errno);
   }
 
-  const std::string& Path() const { return path_; }
+  const std::filesystem::path& Path() const { return path_; }
 
   bool Exists() const {
     std::ifstream f{path_};
@@ -44,6 +42,6 @@ class TempFile {
   }
 
  private:
-  std::string path_;
+  std::filesystem::path path_;
 };
 }  // namespace databento
