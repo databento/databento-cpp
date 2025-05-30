@@ -23,13 +23,13 @@ int main() {
                     .SetLogReceiver(log_receiver.get())
                     .SetSendTsOut(true)
                     .SetKeyFromEnv()
-                    .SetDataset(databento::dataset::kGlbxMdp3)
+                    .SetDataset(databento::Dataset::GlbxMdp3)
                     .BuildThreaded();
 
   // Set up signal handler for Ctrl+C
   std::signal(SIGINT, [](int signal) { gSignal = signal; });
 
-  std::vector<std::string> symbols{"ESZ4", "ESZ4 C4200", "ESZ4 P4100"};
+  std::vector<std::string> symbols{"ESZ5", "ESZ5 C6200", "ESZ5 P5500"};
   client.Subscribe(symbols, databento::Schema::Definition,
                    databento::SType::RawSymbol);
   client.Subscribe(symbols, databento::Schema::Mbo,

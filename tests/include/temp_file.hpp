@@ -3,7 +3,6 @@
 #include <gtest/gtest.h>  // EXPECT_EQ
 
 #include <cassert>  // assert
-#include <cstdio>   // remove
 #include <filesystem>
 #include <fstream>  // ifstream
 #include <string>
@@ -29,9 +28,8 @@ class TempFile {
   TempFile(TempFile&&) = default;
   TempFile& operator=(TempFile&&) = default;
   ~TempFile() {
-    const int ret = std::remove(path_.c_str());
-    EXPECT_EQ(ret, 0) << "TempFile couldn't remove file at " << path_ << ": "
-                      << ::strerror(errno);
+    const bool ret = std::filesystem::remove(path_);
+    EXPECT_TRUE(ret) << "TempFile at " << path_ << " did not exist";
   }
 
   const std::filesystem::path& Path() const { return path_; }

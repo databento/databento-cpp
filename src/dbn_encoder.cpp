@@ -87,8 +87,15 @@ DbnEncoder::DbnEncoder(const Metadata& metadata, IWritable* output)
 }
 
 void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
-  const auto version = std::min<std::uint8_t>(
-      std::max<std::uint8_t>(1, metadata.version), kDbnVersion);
+  if (metadata.version > kDbnVersion) {
+    throw databento::InvalidArgumentError{
+        "EncodeMetadata", "metadata",
+        "Can't encode Metadata with version " +
+            std::to_string(+metadata.version) +
+            " which is greater than the maximum supported version " +
+            std::to_string(+kDbnVersion)};
+  }
+  const auto version = std::max<std::uint8_t>(1, metadata.version);
   EncodeChars(kDbnPrefix, kMagicSize - 1, output);
   EncodeAsBytes(version, output);
   const auto [length, end_padding] = CalcLength(metadata);

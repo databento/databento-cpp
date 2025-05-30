@@ -13,6 +13,9 @@
   `Metadata` is represented in other languages and removed the boolean
   `has_mixed_stype_in` and `has_mixed_schema` fields
 
+### Bug fixes
+- Fixed behavior where encoding metadata could lower the `version`
+
 ## 0.36.0 - 2025-05-27
 
 This version marks the release of DBN version 3 (DBNv3), which is the new default.
