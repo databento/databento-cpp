@@ -4,6 +4,7 @@
 
 #include <algorithm>  // copy
 #include <cstring>    // strncmp
+#include <optional>
 #include <vector>
 
 #include "databento/compat.hpp"
@@ -121,12 +122,9 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   res.dataset = Consume(buffer, kDatasetCstrLen, "dataset");
   const auto raw_schema = Consume<std::uint16_t>(buffer);
   if (raw_schema == kNullSchema) {
-    res.has_mixed_schema = true;
-    // must initialize
-    res.schema = Schema::Mbo;
+    res.schema = std::nullopt;
   } else {
-    res.has_mixed_schema = false;
-    res.schema = static_cast<Schema>(raw_schema);
+    res.schema = {static_cast<Schema>(raw_schema)};
   }
   res.start =
       UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(buffer)}};
@@ -138,12 +136,9 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   }
   const auto raw_stype_in = Consume<std::uint8_t>(buffer);
   if (raw_stype_in == kNullSType) {
-    res.has_mixed_stype_in = true;
-    // must initialize
-    res.stype_in = SType::InstrumentId;
+    res.stype_in = std::nullopt;
   } else {
-    res.has_mixed_stype_in = false;
-    res.stype_in = static_cast<SType>(raw_stype_in);
+    res.stype_in = {static_cast<SType>(raw_stype_in)};
   }
   res.stype_out = static_cast<SType>(Consume<std::uint8_t>(buffer));
   res.ts_out = static_cast<bool>(Consume<std::uint8_t>(buffer));

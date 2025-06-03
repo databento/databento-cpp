@@ -87,17 +87,24 @@ DbnEncoder::DbnEncoder(const Metadata& metadata, IWritable* output)
 }
 
 void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
-  const auto version = std::min<std::uint8_t>(
-      std::max<std::uint8_t>(1, metadata.version), kDbnVersion);
+  if (metadata.version > kDbnVersion) {
+    throw databento::InvalidArgumentError{
+        "EncodeMetadata", "metadata",
+        "Can't encode Metadata with version " +
+            std::to_string(+metadata.version) +
+            " which is greater than the maximum supported version " +
+            std::to_string(+kDbnVersion)};
+  }
+  const auto version = std::max<std::uint8_t>(1, metadata.version);
   EncodeChars(kDbnPrefix, kMagicSize - 1, output);
   EncodeAsBytes(version, output);
   const auto [length, end_padding] = CalcLength(metadata);
   EncodeAsBytes(length, output);
   EncodeFixedLenCStr(kDatasetCstrLen, metadata.dataset, output);
-  if (metadata.has_mixed_schema) {
-    EncodeAsBytes(kNullSchema, output);
+  if (metadata.schema.has_value()) {
+    EncodeAsBytes(*metadata.schema, output);
   } else {
-    EncodeAsBytes(metadata.schema, output);
+    EncodeAsBytes(kNullSchema, output);
   }
   EncodeAsBytes(metadata.start, output);
   EncodeAsBytes(metadata.end, output);
@@ -106,10 +113,10 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
     // backwards compatibility for record_count
     EncodeAsBytes(kNullRecordCount, output);
   }
-  if (metadata.has_mixed_stype_in) {
-    EncodeAsBytes(kNullSType, output);
+  if (metadata.stype_in.has_value()) {
+    EncodeAsBytes(*metadata.stype_in, output);
   } else {
-    EncodeAsBytes(metadata.stype_in, output);
+    EncodeAsBytes(kNullSType, output);
   }
   EncodeAsBytes(metadata.stype_out, output);
   EncodeAsBytes(static_cast<std::uint8_t>(metadata.ts_out), output);

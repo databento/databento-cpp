@@ -113,7 +113,7 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildThreaded();
   target.Start(
-      [](Metadata&& metadata) { EXPECT_TRUE(metadata.has_mixed_schema); },
+      [](Metadata&& metadata) { EXPECT_FALSE(metadata.schema.has_value()); },
       [&call_count, &kRec](const Record& rec) {
         ++call_count;
         EXPECT_TRUE(rec.Holds<MboMsg>());
@@ -162,7 +162,7 @@ TEST_F(LiveThreadedTests, TestStop) {
                             .SetAddress(kLocalhost, mock_server->Port())
                             .BuildThreaded();
   target.Start(
-      [](Metadata&& metadata) { EXPECT_TRUE(metadata.has_mixed_schema); },
+      [](Metadata&& metadata) { EXPECT_FALSE(metadata.schema.has_value()); },
       [&call_count, &kRec](const Record& rec) {
         ++call_count;
         EXPECT_EQ(call_count, 1) << "Record callback called more than once";
@@ -221,7 +221,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
   std::atomic<std::int32_t> metadata_calls{};
   const auto metadata_cb = [&metadata_calls](Metadata&& metadata) {
     ++metadata_calls;
-    EXPECT_TRUE(metadata.has_mixed_schema);
+    EXPECT_FALSE(metadata.schema.has_value());
   };
   std::atomic<std::int32_t> record_calls{};
   const auto record_cb = [&record_calls, kRec, &should_close_mutex,

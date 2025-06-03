@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cstddef>  // byte, size_t
-#include <fstream>  // ifstream, ofstream
-#include <string>
+#include <cstddef>     // byte, size_t
+#include <filesystem>  // path
+#include <fstream>     // ifstream, ofstream
 
 #include "databento/ireadable.hpp"
 #include "databento/iwritable.hpp"
@@ -10,7 +10,7 @@
 namespace databento {
 class InFileStream : public IReadable {
  public:
-  explicit InFileStream(const std::string& file_path);
+  explicit InFileStream(const std::filesystem::path& file_path);
 
   // Read exactly `length` bytes into `buffer`.
   void ReadExact(std::byte* buffer, std::size_t length) override;
@@ -24,7 +24,7 @@ class InFileStream : public IReadable {
 
 class OutFileStream : public IWritable {
  public:
-  explicit OutFileStream(const std::string& file_path);
+  explicit OutFileStream(const std::filesystem::path& file_path);
 
   void WriteAll(const std::byte* buffer, std::size_t length) override;
 

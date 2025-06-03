@@ -95,7 +95,6 @@ Here is a simple program that fetches 10 seconds of trades for all ES mini futur
 #include <databento/live.hpp>
 #include <databento/symbol_map.hpp>
 #include <iostream>
-#include <string>
 #include <thread>
 
 using namespace databento;
@@ -103,8 +102,10 @@ using namespace databento;
 int main() {
   PitSymbolMap symbol_mappings;
 
-  auto client =
-      LiveBuilder{}.SetKeyFromEnv().SetDataset("GLBX.MDP3").BuildThreaded();
+  auto client = LiveBuilder{}
+                    .SetKeyFromEnv()
+                    .SetDataset(Dataset::GlbxMdp3)
+                    .BuildThreaded();
 
   auto handler = [&symbol_mappings](const Record& rec) {
     symbol_mappings.OnRecord(rec);

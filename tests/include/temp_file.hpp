@@ -3,7 +3,6 @@
 #include <gtest/gtest.h>  // EXPECT_EQ
 
 #include <cassert>  // assert
-#include <cstdio>   // remove
 #include <filesystem>
 #include <fstream>  // ifstream
 #include <string>
@@ -16,14 +15,12 @@ namespace databento {
 // goes out of scope.
 class TempFile {
  public:
-  explicit TempFile(const std::filesystem::path& path)
-      : TempFile{path.string()} {}
-  explicit TempFile(std::string path) : path_{std::move(path)} {
+  explicit TempFile(std::filesystem::path path) : path_{std::move(path)} {
     std::ifstream f{path_};
     if (Exists()) {
       throw InvalidArgumentError{
           "TempFile::TempFile", "path",
-          "File at path " + path_ + " shouldn't already exist"};
+          "File at path " + path_.string() + " shouldn't already exist"};
     }
   }
   TempFile(const TempFile&) = delete;
@@ -31,12 +28,11 @@ class TempFile {
   TempFile(TempFile&&) = default;
   TempFile& operator=(TempFile&&) = default;
   ~TempFile() {
-    const int ret = std::remove(path_.c_str());
-    EXPECT_EQ(ret, 0) << "TempFile couldn't remove file at " << path_ << ": "
-                      << ::strerror(errno);
+    const bool ret = std::filesystem::remove(path_);
+    EXPECT_TRUE(ret) << "TempFile at " << path_ << " did not exist";
   }
 
-  const std::string& Path() const { return path_; }
+  const std::filesystem::path& Path() const { return path_; }
 
   bool Exists() const {
     std::ifstream f{path_};
@@ -44,6 +40,6 @@ class TempFile {
   }
 
  private:
-  std::string path_;
+  std::filesystem::path path_;
 };
 }  // namespace databento

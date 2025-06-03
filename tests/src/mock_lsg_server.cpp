@@ -171,14 +171,20 @@ void MockLsgServer::Start() {
   EXPECT_EQ(received, "start_session\n");
 
   SocketStream writable{conn_fd_.Get()};
-  Metadata metadata{1,     dataset_,
-                    true,  {},
-                    {},    UnixNanos{std::chrono::nanoseconds{kUndefTimestamp}},
-                    0,     true,
-                    {},    SType::InstrumentId,
-                    false, kSymbolCstrLenV1,
-                    {},    {},
-                    {},    {}};
+  Metadata metadata{1,
+                    dataset_,
+                    {},
+                    {},
+                    UnixNanos{std::chrono::nanoseconds{kUndefTimestamp}},
+                    0,
+                    {},
+                    SType::InstrumentId,
+                    false,
+                    kSymbolCstrLenV1,
+                    {},
+                    {},
+                    {},
+                    {}};
   DbnEncoder::EncodeMetadata(metadata, &writable);
 }
 

@@ -77,7 +77,7 @@ TEST_F(LiveBlockingTests, TestStartAndUpgrade) {
                               .BuildBlocking();
     const auto metadata = target.Start();
     EXPECT_EQ(metadata.version, exp_version);
-    EXPECT_TRUE(metadata.has_mixed_schema);
+    EXPECT_FALSE(metadata.schema.has_value());
     EXPECT_EQ(metadata.dataset, dataset::kGlbxMdp3);
   }
 }
@@ -557,7 +557,7 @@ TEST_F(LiveBlockingTests, TestReconnectAndResubscribe) {
   ASSERT_TRUE(std::holds_alternative<LiveSubscription::NoStart>(
       target.Subscriptions()[0].start));
   const auto metadata = target.Start();
-  EXPECT_TRUE(metadata.has_mixed_schema);
+  EXPECT_FALSE(metadata.schema.has_value());
   const auto rec2 = target.NextRecord();
   ASSERT_TRUE(rec2.Holds<TradeMsg>());
   ASSERT_EQ(rec2.Get<TradeMsg>(), kRec);

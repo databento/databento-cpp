@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <filesystem>  // path
 
 #include "databento/dbn.hpp"          // DecodeMetadata
 #include "databento/dbn_decoder.hpp"  // DbnDecoder
@@ -16,8 +16,9 @@ namespace databento {
 // used on a given instance.
 class DbnFileStore {
  public:
-  explicit DbnFileStore(const std::string& file_path);
-  DbnFileStore(ILogReceiver* log_receiver, const std::string& file_path,
+  explicit DbnFileStore(const std::filesystem::path& file_path);
+  DbnFileStore(ILogReceiver* log_receiver,
+               const std::filesystem::path& file_path,
                VersionUpgradePolicy upgrade_policy);
 
   // Callback API: calling Replay consumes the input.

@@ -5,6 +5,7 @@
 #include <cstring>  // strlen
 #include <iomanip>  // quoted
 #include <ios>      // boolalpha
+#include <optional>
 #include <ostream>  // ostream
 #include <sstream>  // stringstream
 #include <string>
@@ -55,6 +56,15 @@ class StreamOpHelper {
   void FmtToStream(const TimeDeltaNanos& val) { stream_ << ToString(val); }
 
   void FmtToStream(const std::ostringstream& val) { stream_ << val.str(); }
+
+  template <typename T>
+  void FmtToStream(const std::optional<T>& val) {
+    if (val.has_value()) {
+      stream_ << *val;
+    } else {
+      stream_ << "nullopt";
+    }
+  }
 
   template <std::size_t N>
   void FmtToStream(const std::array<char, N>& val) {

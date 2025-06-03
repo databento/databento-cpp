@@ -9,6 +9,7 @@
 #include "databento/dbn.hpp"
 #include "databento/dbn_decoder.hpp"
 #include "databento/dbn_encoder.hpp"
+#include "databento/exceptions.hpp"
 #include "databento/log.hpp"
 #include "mock/mock_io.hpp"
 
@@ -18,12 +19,10 @@ TEST(DbnEncoderTests, TestEncodeDecodeMetadataIdentity) {
   const Metadata metadata{
       kDbnVersion,
       dataset::kGlbxMdp3,
-      false,
       Schema::Mbp10,
       UnixNanos{std::chrono::nanoseconds{1657230820000000000}},
       UnixNanos{std::chrono::nanoseconds{1658960170000000000}},
       0,
-      false,
       SType::RawSymbol,
       SType::InstrumentId,
       true,
@@ -42,5 +41,26 @@ TEST(DbnEncoderTests, TestEncodeDecodeMetadataIdentity) {
                      std::make_unique<mock::MockIo>(std::move(io))};
   const auto res = decoder.DecodeMetadata();
   ASSERT_EQ(res, metadata);
+}
+
+TEST(DbnEncoderTests, TestEncodeNewerMetadataErrors) {
+  auto logger = std::make_unique<NullLogReceiver>();
+  const Metadata metadata{kDbnVersion + 1,
+                          dataset::kGlbxMdp3,
+                          Schema::Mbp10,
+                          {},
+                          UnixNanos{},
+                          0,
+                          SType::RawSymbol,
+                          SType::InstrumentId,
+                          true,
+                          kSymbolCstrLen,
+                          {},
+                          {},
+                          {},
+                          {}};
+  mock::MockIo io{};
+  ASSERT_THROW(DbnEncoder::EncodeMetadata(metadata, &io),
+               databento::InvalidArgumentError);
 }
 }  // namespace databento::tests

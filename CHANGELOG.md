@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.37.0 - 2025-06-03
+
+### Breaking changes
+- Changed the type of the `output_dir` parameter in ` HistoricalClient::BatchDownload()`
+  to a `std::filesystem::path` and the return type to `std::filesystem::path`
+- Changed the type of the `file_path` parameter in
+  `HistoricalClient::TimeseriesGetRangeToFile()` to a `std::filesystem::path`
+- Changed the type of the `file_path` parameter in the `DbnFileStore`, `InFileStream`,
+  and `OutFileStream` constructors to a `std::filesystem::path`
+- Made `stype_in` and `schema` optionals in `Metadata` to align with how
+  `Metadata` is represented in other languages and removed the boolean
+  `has_mixed_stype_in` and `has_mixed_schema` fields
+
+### Bug fixes
+- Fixed behavior where encoding metadata could lower the `version`
+
 ## 0.36.0 - 2025-05-27
 
 This version marks the release of DBN version 3 (DBNv3), which is the new default.
