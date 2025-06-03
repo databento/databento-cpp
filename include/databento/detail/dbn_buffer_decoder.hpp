@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <ostream>
 
 #include "databento/detail/buffer.hpp"
 #include "databento/detail/zstd_stream.hpp"
@@ -22,12 +23,31 @@ class DbnBufferDecoder {
 
   KeepGoing Process(const char* data, std::size_t length);
 
+  std::size_t UnreadBytes() const { return dbn_buffer_.ReadCapacity(); }
+  friend std::ostream& operator<<(std::ostream& stream,
+                                  const DbnBufferDecoder& buffer);
+
  private:
   enum class DecoderState : std::uint8_t {
     Init,
     Metadata,
     Records,
   };
+
+  friend std::ostream& operator<<(std::ostream& stream, DecoderState state) {
+    switch (state) {
+      case DbnBufferDecoder::DecoderState::Init:
+        stream << "init";
+        break;
+      case DbnBufferDecoder::DecoderState::Metadata:
+        stream << "metadata";
+        break;
+      case DbnBufferDecoder::DecoderState::Records:
+        stream << "records";
+        break;
+    }
+    return stream;
+  }
 
   const MetadataCallback& metadata_callback_;
   const RecordCallback& record_callback_;

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.37.1 - 2025-06-03
+
+### Bug fixes
+- Fixed issue where not all data was processed in `Historical::TimeseriesGetRange()`
+- Fixed issue with pointer arithmetic in `Buffer::Write()`
+- Fixed issue where more data than necessary was copied in `Buffer::Shift()`
+
 ## 0.37.0 - 2025-06-03
 
 ### Breaking changes
