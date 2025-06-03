@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.37.0 - TBD
+## 0.37.0 - 2025-06-03
 
 ### Breaking changes
 - Changed the type of the `output_dir` parameter in ` HistoricalClient::BatchDownload()`
