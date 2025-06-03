@@ -8,6 +8,7 @@
 #include <cstdlib>    // get_env
 #include <filesystem>
 #include <iterator>  // back_inserter
+#include <sstream>
 #include <string>
 #include <system_error>
 #include <utility>  // move
@@ -846,12 +847,23 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
                                     const RecordCallback& record_callback) {
   detail::DbnBufferDecoder decoder{metadata_callback, record_callback};
 
+  bool early_exit = false;
   this->client_.GetRawStream(
       kTimeseriesGetRangePath, params,
-      [&decoder](const char* data, std::size_t length) mutable {
-        return decoder.Process(data, length) == KeepGoing::Continue;
+      [&decoder, &early_exit](const char* data, std::size_t length) mutable {
+        if (decoder.Process(data, length) == KeepGoing::Continue) {
+          return true;
+        }
+        early_exit = true;
+        return false;
       });
-  // FIXME: check if remaining partial records
+  if (!early_exit && decoder.UnreadBytes() > 0) {
+    std::ostringstream ss;
+    ss << "[Historical::TimeseriesGetRange] Partial or incomplete record "
+          "remaining of "
+       << decoder.UnreadBytes() << " bytes";
+    log_receiver_->Receive(LogLevel::Warning, ss.str());
+  }
 }
 
 static const std::string kTimeseriesGetRangeToFileEndpoint =

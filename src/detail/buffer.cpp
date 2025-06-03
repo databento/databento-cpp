@@ -17,7 +17,7 @@ size_t Buffer::Write(const std::byte* data, std::size_t length) {
   }
   const auto write_size = std::min(WriteCapacity(), length);
   std::copy(data, data + write_size, WriteBegin());
-  Fill(length);
+  Fill(write_size);
   return write_size;
 }
 
@@ -67,7 +67,7 @@ void Buffer::Reserve(std::size_t capacity) {
 void Buffer::Shift() {
   const auto unread_bytes = ReadCapacity();
   if (unread_bytes) {
-    std::copy(read_pos_, end_, buf_.get());
+    std::copy(read_pos_, write_pos_, buf_.get());
   }
   read_pos_ = buf_.get();
   write_pos_ = read_pos_ + unread_bytes;
