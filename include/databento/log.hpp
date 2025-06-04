@@ -19,11 +19,13 @@ class ILogReceiver {
   virtual ~ILogReceiver() = default;
 
   virtual void Receive(databento::LogLevel level, const std::string& msg) = 0;
+  virtual bool ShouldLog(databento::LogLevel) const { return true; }
 };
 
 class NullLogReceiver : public ILogReceiver {
  public:
   void Receive(databento::LogLevel, const std::string&) override {}
+  bool ShouldLog(databento::LogLevel) const override { return false; }
 };
 
 class ConsoleLogReceiver : public ILogReceiver {
@@ -34,9 +36,15 @@ class ConsoleLogReceiver : public ILogReceiver {
   ConsoleLogReceiver(LogLevel min_level, std::ostream& stream);
 
   void Receive(LogLevel level, const std::string& msg) override;
+  bool ShouldLog(databento::LogLevel level) const override {
+    return level > min_level_;
+  }
 
  private:
   std::ostream& stream_;
   const databento::LogLevel min_level_;
 };
+
+std::ostream& operator<<(std::ostream& out, LogLevel level);
+const char* ToString(LogLevel level);
 }  // namespace databento

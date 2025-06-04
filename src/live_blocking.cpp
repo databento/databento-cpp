@@ -194,7 +194,11 @@ const databento::Record* LiveBlocking::NextRecord(
 void LiveBlocking::Stop() { client_.Close(); }
 
 void LiveBlocking::Reconnect() {
-  log_receiver_->Receive(LogLevel::Info, "Reconnecting");
+  if (log_receiver_->ShouldLog(LogLevel::Info)) {
+    std::ostringstream log_msg;
+    log_msg << "Reconnecting to " << gateway_ << ':' << port_;
+    log_receiver_->Receive(LogLevel::Info, log_msg.str());
+  }
   client_ = detail::TcpClient{gateway_, port_};
   sub_counter_ = 0;
   session_id_ = this->Authenticate();
@@ -227,7 +231,7 @@ std::string LiveBlocking::DecodeChallenge() {
   // first line is version
   std::string response{reinterpret_cast<const char*>(buffer_.ReadBegin()),
                        buffer_.ReadCapacity()};
-  {
+  if (log_receiver_->ShouldLog(LogLevel::Debug)) {
     std::ostringstream log_ss;
     log_ss << "[LiveBlocking::DecodeChallenge] Challenge: " << response;
     log_receiver_->Receive(LogLevel::Debug, log_ss.str());
@@ -283,12 +287,13 @@ std::uint64_t LiveBlocking::Authenticate() {
   client_.WriteAll(req);
   const std::uint64_t session_id = DecodeAuthResp();
 
-  std::ostringstream log_ss;
-  log_ss << "[LiveBlocking::Authenticate] Successfully authenticated with "
-            "session_id "
-         << session_id;
-  log_receiver_->Receive(LogLevel::Info, log_ss.str());
-
+  if (log_receiver_->ShouldLog(LogLevel::Info)) {
+    std::ostringstream log_ss;
+    log_ss << "[LiveBlocking::Authenticate] Successfully authenticated with "
+              "session_id "
+           << session_id;
+    log_receiver_->Receive(LogLevel::Info, log_ss.str());
+  }
   return session_id;
 }
 

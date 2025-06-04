@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.38.0 - TBD
+
+### Enhancements
+- Added log level prefix to `ConsoleLogReceiver` output
+
+### Breaking changes
+- Added new optional `ShouldLog` virtual method to `ILogReceiver` to
+  filter the levels of log messages that will be sent to the receiver
+
 ## 0.37.1 - 2025-06-03
 
 ### Bug fixes

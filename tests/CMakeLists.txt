@@ -18,7 +18,7 @@ verbose_message("Adding tests under ${CMAKE_PROJECT_NAME}Tests...")
 set(
   test_headers
   include/mock/mock_http_server.hpp
-  include/mock/mock_io.hpp
+  include/mock/mock_log_receiver.hpp
   include/mock/mock_lsg_server.hpp
   include/mock/mock_tcp_server.hpp
   include/temp_file.hpp
@@ -42,7 +42,6 @@ set(
   src/log_tests.cpp
   src/metadata_tests.cpp
   src/mock_http_server.cpp
-  src/mock_io.cpp
   src/mock_lsg_server.cpp
   src/mock_tcp_server.cpp
   src/record_tests.cpp

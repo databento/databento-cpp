@@ -21,7 +21,33 @@ ConsoleLogReceiver::ConsoleLogReceiver(LogLevel min_level, std::ostream& stream)
     : stream_{stream}, min_level_{min_level} {}
 
 void ConsoleLogReceiver::Receive(LogLevel level, const std::string& msg) {
-  if (level >= min_level_) {
-    stream_ << msg << '\n';
+  if (ShouldLog(level)) {
+    stream_ << level << ": " << msg << '\n';
   }
 }
+
+namespace databento {
+std::ostream& operator<<(std::ostream& out, LogLevel level) {
+  out << ToString(level);
+  return out;
+}
+const char* ToString(LogLevel level) {
+  switch (level) {
+    case LogLevel::Debug: {
+      return "DEBUG";
+    }
+    case LogLevel::Info: {
+      return "INFO";
+    }
+    case LogLevel::Warning: {
+      return "WARN";
+    }
+    case LogLevel::Error: {
+      return "ERROR";
+    }
+    default: {
+      return "UNKNOWN";
+    };
+  }
+}
+}  // namespace databento

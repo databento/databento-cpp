@@ -6,10 +6,10 @@
 #include <vector>
 
 #include "databento/compat.hpp"
+#include "databento/detail/buffer.hpp"
 #include "databento/detail/zstd_stream.hpp"
 #include "databento/enums.hpp"
 #include "databento/file_stream.hpp"
-#include "mock/mock_io.hpp"
 
 namespace databento::detail::tests {
 TEST(ZstdStreamTests, TestMultiFrameFiles) {
@@ -32,7 +32,7 @@ TEST(ZstdStreamTests, TestIdentity) {
     source_data.emplace_back(i);
   }
   auto size = source_data.size() * sizeof(std::int64_t);
-  databento::tests::mock::MockIo mock_io;
+  detail::Buffer mock_io;
   {
     ZstdCompressStream compressor{&mock_io};
     for (auto it = source_data.begin(); it != source_data.end(); it += 100) {
@@ -41,8 +41,7 @@ TEST(ZstdStreamTests, TestIdentity) {
     }
   }
   std::vector<std::byte> res(size);
-  ZstdDecodeStream decode{
-      std::make_unique<databento::tests::mock::MockIo>(std::move(mock_io))
+  ZstdDecodeStream decode{std::make_unique<detail::Buffer>(std::move(mock_io))
 
   };
   decode.ReadExact(res.data(), size);

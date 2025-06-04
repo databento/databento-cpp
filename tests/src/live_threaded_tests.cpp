@@ -1,10 +1,10 @@
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <exception>
-#include <iostream>
 #include <memory>
 #include <thread>  // this_thread
 #include <variant>
@@ -21,7 +21,7 @@
 #include "databento/record.hpp"
 #include "databento/symbology.hpp"
 #include "databento/timeseries.hpp"
-#include "gtest/gtest.h"
+#include "mock/mock_log_receiver.hpp"
 #include "mock/mock_lsg_server.hpp"
 
 namespace databento::tests {
@@ -37,9 +37,9 @@ class LiveThreadedTests : public testing::Test {
   static constexpr auto kTsOut = false;
   static constexpr auto kLocalhost = "127.0.0.1";
 
-  std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
-  LiveBuilder builder_{
-      LiveBuilder{}.SetLogReceiver(logger_.get()).SetKey(kKey)};
+  mock::MockLogReceiver logger_ =
+      mock::MockLogReceiver::AssertNoLogs(LogLevel::Warning);
+  LiveBuilder builder_{LiveBuilder{}.SetLogReceiver(&logger_).SetKey(kKey)};
 };
 
 TEST_F(LiveThreadedTests, TestBasic) {
@@ -214,6 +214,14 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
         self.Start();
         self.SendRecord(kRec);
       }};
+  logger_ = mock::MockLogReceiver{
+      LogLevel::Warning,
+      [](auto count, databento::LogLevel level, const std::string& msg) {
+        EXPECT_THAT(
+            msg,
+            testing::EndsWith(
+                "Gateway closed the session. Attempting to restart session."));
+      }};
   LiveThreaded target = builder_.SetDataset(dataset::kXnasItch)
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
@@ -264,6 +272,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
   EXPECT_EQ(metadata_calls, 2);
   EXPECT_EQ(exception_calls, 1);
   EXPECT_EQ(record_calls, 2);
+  EXPECT_EQ(logger_.CallCount(), 1);
 }
 
 TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
@@ -274,7 +283,14 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
   bool should_close{};
   std::mutex should_close_mutex;
   std::condition_variable should_close_cv;
-  testing::internal::CaptureStderr();
+  logger_ = mock::MockLogReceiver{
+      LogLevel::Warning,
+      [](auto count, databento::LogLevel level, const std::string& msg) {
+        if (count == 0) {
+          EXPECT_THAT(msg, testing::HasSubstr("which would cause a deadlock"))
+              << "Got unexpected log message " << level << ": " << msg;
+        }
+      }};
   const mock::MockLsgServer mock_server{
       dataset::kXnasItch, kTsOut,
       [&kSymbols, &should_close, &should_close_mutex, &should_close_cv, kSchema,
@@ -292,8 +308,7 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
         self.Authenticate();
         self.Subscribe(kSymbols, kSchema, kSType, true);
       }};
-  LiveThreaded target = builder_.SetLogReceiver(ILogReceiver::Default())
-                            .SetDataset(dataset::kXnasItch)
+  LiveThreaded target = builder_.SetDataset(dataset::kXnasItch)
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildThreaded();
@@ -326,10 +341,7 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
   };
   target.Start(metadata_cb, record_cb, exception_cb);
   target.BlockForStop();
-  std::clog.flush();
-  const std::string output = testing::internal::GetCapturedStderr();
-  EXPECT_NE(output.find("which would cause a deadlock"), std::string::npos)
-      << "Got unexpected output: " << output;
+  EXPECT_GE(logger_.CallCount(), 1);
 }
 
 TEST_F(LiveThreadedTests, TestBlockForStopTimeout) {
