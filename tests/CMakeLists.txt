@@ -44,6 +44,7 @@ set(
   src/mock_http_server.cpp
   src/mock_lsg_server.cpp
   src/mock_tcp_server.cpp
+  src/pretty_tests.cpp
   src/record_tests.cpp
   src/scoped_thread_tests.cpp
   src/stream_op_helper_tests.cpp

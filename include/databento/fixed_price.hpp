@@ -1,25 +1,16 @@
 #pragma once
 
 #include <cstdint>
-#include <sstream>
 #include <string>
 
-#include "databento/constants.hpp"
+#include "databento/pretty.hpp"
 
 namespace databento {
-// A fixed-precision price.
-struct FixPx {
-  bool IsUndefined() const { return val == databento::kUndefPrice; }
+// Has been renamed to pretty::Px
+using FixPx [[deprecated]] = pretty::Px;
 
-  std::int64_t val;
-};
-
-std::ostream& operator<<(std::ostream& stream, FixPx fix_px);
-
-// Convert a fixed-precision price to a formatted string.
-inline std::string PxToString(std::int64_t px) {
-  std::ostringstream ss;
-  ss << FixPx{px};
-  return ss.str();
+// Has been moved to the pretty namespace
+[[deprecated]] inline std::string PxToString(std::int64_t px) {
+  return pretty::PxToString(px);
 }
 }  // namespace databento

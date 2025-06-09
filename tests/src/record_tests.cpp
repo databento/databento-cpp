@@ -188,7 +188,7 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
     unit_of_measure_qty = 0.000000008,
     min_price_increment_amount = 0.000000009,
     price_ratio = 0.000000010,
-    strike_price = kUndefPrice,
+    strike_price = UNDEF_PRICE,
     raw_instrument_id = 11,
     leg_price = 0.000000012,
     leg_delta = 0.000000013,
