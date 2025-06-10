@@ -3,10 +3,17 @@
 #include <gtest/gtest.h>  // EXPECT_*
 #include <httplib.h>
 
+#include <cstddef>
 #include <fstream>   // ifstream
 #include <ios>       // streamsize
 #include <iostream>  // cerr
 #include <vector>
+
+#include "databento/constants.hpp"
+#include "databento/dbn.hpp"
+#include "databento/dbn_encoder.hpp"
+#include "databento/detail/zstd_stream.hpp"
+#include "databento/record.hpp"
 
 using databento::tests::mock::MockHttpServer;
 
@@ -84,8 +91,8 @@ void MockHttpServer::MockStreamDbn(
   input_file.read(buffer.data(), static_cast<std::streamsize>(size));
 
   // Serve
-  server_.Get(path, [buffer, kChunkSize, params](const httplib::Request& req,
-                                                 httplib::Response& resp) {
+  server_.Get(path, [buffer = std::move(buffer), kChunkSize, params](
+                        const httplib::Request& req, httplib::Response& resp) {
     if (!req.has_header("Authorization")) {
       resp.status = 401;
       return;
@@ -100,6 +107,64 @@ void MockHttpServer::MockStreamDbn(
           if (offset < buffer.size()) {
             sink.write(&buffer[offset],
                        std::min(kChunkSize, buffer.size() - offset));
+          } else {
+            sink.done();
+          }
+          return true;
+        });
+  });
+}
+
+void MockHttpServer::MockStreamDbn(
+    const std::string& path, const std::map<std::string, std::string>& params,
+    Record record, std::size_t count, std::size_t chunk_size) {
+  MockStreamDbn(path, params, record, count, 0, chunk_size);
+}
+
+void MockHttpServer::MockStreamDbn(
+    const std::string& path, const std::map<std::string, std::string>& params,
+    Record record, std::size_t count, std::size_t extra_bytes,
+    std::size_t chunk_size) {
+  // Needs to be copy-constructable for use in server
+  auto buffer = std::make_shared<detail::Buffer>();
+  {
+    detail::ZstdCompressStream zstd_stream{buffer.get()};
+    DbnEncoder encoder{Metadata{
+                           kDbnVersion,
+                           ToString(Dataset::IfusImpact),
+                           {Schema::Mbp1},
+                       },
+                       &zstd_stream};
+    for (std::size_t i = 0; i < count; ++i) {
+      encoder.EncodeRecord(record);
+    }
+    if (extra_bytes > sizeof(RecordHeader)) {
+      std::vector<std::byte> empty(extra_bytes - sizeof(RecordHeader));
+      // write the header so it looks like the start of a valid record
+      zstd_stream.WriteAll(reinterpret_cast<const std::byte*>(&record.Header()),
+                           sizeof(RecordHeader));
+      zstd_stream.WriteAll(empty.data(), empty.size());
+    }
+  }
+  server_.Get(path, [params, buffer, count, record, chunk_size](
+                        const httplib::Request& req, httplib::Response& resp) {
+    if (!req.has_header("Authorization")) {
+      resp.status = 401;
+      return;
+    }
+    CheckParams(params, req);
+    resp.status = 200;
+    resp.set_header("Content-Disposition", "attachment; filename=test.dbn.zst");
+    resp.set_content_provider(
+        "application/octet-stream",
+        [&buffer, chunk_size](const std::size_t offset,
+                              httplib::DataSink& sink) {
+          if (buffer->ReadCapacity() - offset) {
+            const auto write_size =
+                std::min(chunk_size, buffer->ReadCapacity() - offset);
+            sink.write(
+                reinterpret_cast<const char*>(&buffer->ReadBegin()[offset]),
+                write_size);
           } else {
             sink.done();
           }

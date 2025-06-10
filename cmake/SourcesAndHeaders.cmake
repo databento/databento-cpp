@@ -28,6 +28,7 @@ set(headers
   include/databento/live_threaded.hpp
   include/databento/log.hpp
   include/databento/metadata.hpp
+  include/databento/pretty.hpp
   include/databento/publishers.hpp
   include/databento/record.hpp
   include/databento/symbol_map.hpp
@@ -58,7 +59,6 @@ set(sources
   src/enums.cpp
   src/exceptions.cpp
   src/file_stream.cpp
-  src/fixed_price.cpp
   src/flag_set.cpp
   src/historical.cpp
   src/live.cpp
@@ -66,6 +66,7 @@ set(sources
   src/live_threaded.cpp
   src/log.cpp
   src/metadata.cpp
+  src/pretty.cpp
   src/publishers.cpp
   src/record.cpp
   src/symbol_map.cpp

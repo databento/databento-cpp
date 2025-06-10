@@ -4,12 +4,15 @@
 #include <utility>  // move
 
 #include "databento/constants.hpp"      // kApiKeyLength
+#include "databento/detail/buffer.hpp"  // kDefaultBufSize
 #include "databento/exceptions.hpp"     // InvalidArgumentError, LiveApiError
 #include "databento/live_blocking.hpp"  // LiveBlocking
 #include "databento/live_threaded.hpp"  // LiveThreaded
 #include "databento/log.hpp"
 
 using databento::LiveBuilder;
+
+LiveBuilder::LiveBuilder() : buffer_size_{detail::Buffer::kDefaultBufSize} {}
 
 LiveBuilder& LiveBuilder::SetKeyFromEnv() {
   char const* env_key = std::getenv("DATABENTO_API_KEY");
@@ -74,11 +77,13 @@ databento::LiveBlocking LiveBuilder::BuildBlocking() {
   if (gateway_.empty()) {
     return databento::LiveBlocking{log_receiver_,   key_,
                                    dataset_,        send_ts_out_,
-                                   upgrade_policy_, heartbeat_interval_};
+                                   upgrade_policy_, heartbeat_interval_,
+                                   buffer_size_};
   }
   return databento::LiveBlocking{
       log_receiver_, key_,         dataset_,        gateway_,
-      port_,         send_ts_out_, upgrade_policy_, heartbeat_interval_};
+      port_,         send_ts_out_, upgrade_policy_, heartbeat_interval_,
+      buffer_size_};
 }
 
 databento::LiveThreaded LiveBuilder::BuildThreaded() {
@@ -86,11 +91,13 @@ databento::LiveThreaded LiveBuilder::BuildThreaded() {
   if (gateway_.empty()) {
     return databento::LiveThreaded{log_receiver_,   key_,
                                    dataset_,        send_ts_out_,
-                                   upgrade_policy_, heartbeat_interval_};
+                                   upgrade_policy_, heartbeat_interval_,
+                                   buffer_size_};
   }
   return databento::LiveThreaded{
       log_receiver_, key_,         dataset_,        gateway_,
-      port_,         send_ts_out_, upgrade_policy_, heartbeat_interval_};
+      port_,         send_ts_out_, upgrade_policy_, heartbeat_interval_,
+      buffer_size_};
 }
 
 void LiveBuilder::Validate() {

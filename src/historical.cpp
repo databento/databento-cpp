@@ -1,5 +1,8 @@
 #include "databento/historical.hpp"
 
+#ifndef CPPHTTPLIB_OPENSSL_SUPPORT
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#endif
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 

@@ -18,6 +18,7 @@
 #include "databento/dbn.hpp"
 #include "databento/dbn_decoder.hpp"
 #include "databento/dbn_encoder.hpp"
+#include "databento/detail/buffer.hpp"
 #include "databento/detail/scoped_thread.hpp"
 #include "databento/detail/zstd_stream.hpp"
 #include "databento/enums.hpp"
@@ -30,14 +31,15 @@
 #include "databento/v2.hpp"
 #include "databento/v3.hpp"
 #include "databento/with_ts_out.hpp"
-#include "mock/mock_io.hpp"
+#include "mock/mock_log_receiver.hpp"
 
 namespace databento::tests {
 class DbnDecoderTests : public testing::Test {
  public:
   std::unique_ptr<DbnDecoder> target_;
   detail::ScopedThread write_thread_;
-  std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
+  mock::MockLogReceiver logger_ =
+      mock::MockLogReceiver::AssertNoLogs(LogLevel::Warning);
 
   void ReadFromFile(const std::string& schema_str, const std::string& extension,
                     std::uint8_t version) {
@@ -61,8 +63,7 @@ class DbnDecoderTests : public testing::Test {
     }};
     // File setup
     target_ = std::make_unique<DbnDecoder>(
-        logger_.get(), std::make_unique<InFileStream>(file_path),
-        upgrade_policy);
+        &logger_, std::make_unique<InFileStream>(file_path), upgrade_policy);
   }
 
   static void AssertMappings(const std::vector<SymbolMapping>& mappings) {
@@ -975,7 +976,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeStatistics) {
 class DbnIdentityTests : public testing::TestWithParam<
                              std::tuple<std::uint8_t, Schema, Compression>> {
  protected:
-  std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
+  mock::MockLogReceiver logger_ =
+      mock::MockLogReceiver::AssertNoLogs(LogLevel::Warning);
 };
 
 INSTANTIATE_TEST_SUITE_P(
@@ -1052,12 +1054,11 @@ TEST_P(DbnIdentityTests, TestIdentity) {
       std::string{TEST_DATA_DIR "/test_data."} + ToString(schema) + ".v" +
       std::to_string(+version) +
       (compression == Compression::Zstd ? ".dbn.zst" : ".dbn");
-  DbnDecoder file_decoder{logger_.get(),
-                          std::make_unique<InFileStream>(file_name),
+  DbnDecoder file_decoder{&logger_, std::make_unique<InFileStream>(file_name),
                           VersionUpgradePolicy::AsIs};
   const Metadata file_metadata = file_decoder.DecodeMetadata();
 
-  mock::MockIo buf_io;
+  detail::Buffer buf_io;
   {
     std::unique_ptr<detail::ZstdCompressStream> zstd_io;
     if (compression == Compression::Zstd) {
@@ -1072,12 +1073,12 @@ TEST_P(DbnIdentityTests, TestIdentity) {
     // Free zstd_io and flush
   }
 
-  file_decoder = {logger_.get(), std::make_unique<InFileStream>(file_name),
+  file_decoder = {&logger_, std::make_unique<InFileStream>(file_name),
                   VersionUpgradePolicy::AsIs};
   file_decoder.DecodeMetadata();
 
-  auto input = std::make_unique<mock::MockIo>(std::move(buf_io));
-  DbnDecoder buf_decoder{logger_.get(), std::move(input),
+  auto input = std::make_unique<detail::Buffer>(std::move(buf_io));
+  DbnDecoder buf_decoder{&logger_, std::move(input),
                          VersionUpgradePolicy::AsIs};
   const auto buf_metadata = buf_decoder.DecodeMetadata();
   EXPECT_EQ(file_metadata, buf_metadata);

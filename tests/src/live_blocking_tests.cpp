@@ -22,6 +22,7 @@
 #include "databento/record.hpp"
 #include "databento/symbology.hpp"
 #include "databento/with_ts_out.hpp"
+#include "mock/mock_log_receiver.hpp"
 #include "mock/mock_lsg_server.hpp"  // MockLsgServer
 
 namespace databento::tests {
@@ -36,9 +37,9 @@ class LiveBlockingTests : public testing::Test {
   static constexpr auto kKey = "32-character-with-lots-of-filler";
   static constexpr auto kLocalhost = "127.0.0.1";
 
-  std::unique_ptr<ILogReceiver> logger_{std::make_unique<NullLogReceiver>()};
-  LiveBuilder builder_{
-      LiveBuilder{}.SetLogReceiver(logger_.get()).SetKey(kKey)};
+  mock::MockLogReceiver logger_ =
+      mock::MockLogReceiver::AssertNoLogs(LogLevel::Warning);
+  LiveBuilder builder_{LiveBuilder{}.SetLogReceiver(&logger_).SetKey(kKey)};
 };
 
 TEST_F(LiveBlockingTests, TestAuthentication) {

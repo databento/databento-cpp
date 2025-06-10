@@ -55,22 +55,25 @@ LiveThreaded::~LiveThreaded() {
   }
 }
 
-LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
-                           std::string dataset, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy,
-                           std::chrono::seconds heartbeat_interval)
-    : impl_{std::make_unique<Impl>(log_receiver, std::move(key),
-                                   std::move(dataset), send_ts_out,
-                                   upgrade_policy, heartbeat_interval)} {}
+LiveThreaded::LiveThreaded(
+    ILogReceiver* log_receiver, std::string key, std::string dataset,
+    bool send_ts_out, VersionUpgradePolicy upgrade_policy,
+    std::optional<std::chrono::seconds> heartbeat_interval,
+    std::size_t buffer_size)
+    : impl_{std::make_unique<Impl>(
+          log_receiver, std::move(key), std::move(dataset), send_ts_out,
+          upgrade_policy, heartbeat_interval, buffer_size)} {}
 
-LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
-                           std::string dataset, std::string gateway,
-                           std::uint16_t port, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy,
-                           std::chrono::seconds heartbeat_interval)
+LiveThreaded::LiveThreaded(
+    ILogReceiver* log_receiver, std::string key, std::string dataset,
+    std::string gateway, std::uint16_t port, bool send_ts_out,
+    VersionUpgradePolicy upgrade_policy,
+    std::optional<std::chrono::seconds> heartbeat_interval,
+    std::size_t buffer_size)
     : impl_{std::make_unique<Impl>(
           log_receiver, std::move(key), std::move(dataset), std::move(gateway),
-          port, send_ts_out, upgrade_policy, heartbeat_interval)} {}
+          port, send_ts_out, upgrade_policy, heartbeat_interval, buffer_size)} {
+}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 
@@ -90,7 +93,7 @@ databento::VersionUpgradePolicy LiveThreaded::UpgradePolicy() const {
   return impl_->blocking.UpgradePolicy();
 }
 
-std::pair<bool, std::chrono::seconds> LiveThreaded::HeartbeatInterval() const {
+std::optional<std::chrono::seconds> LiveThreaded::HeartbeatInterval() const {
   return impl_->blocking.HeartbeatInterval();
 }
 
@@ -233,8 +236,8 @@ void LiveThreaded::ProcessingThread(Impl* impl,
 
 LiveThreaded::ExceptionAction LiveThreaded::ExceptionHandler(
     Impl* impl, const ExceptionCallback& exception_callback,
-    const std::exception& exc, const char* pretty_function_name,
-    const char* message) {
+    const std::exception& exc, std::string_view pretty_function_name,
+    std::string_view message) {
   if (exception_callback &&
       exception_callback(exc) == ExceptionAction::Restart) {
     std::ostringstream log_ss;

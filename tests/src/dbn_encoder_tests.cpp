@@ -9,13 +9,14 @@
 #include "databento/dbn.hpp"
 #include "databento/dbn_decoder.hpp"
 #include "databento/dbn_encoder.hpp"
+#include "databento/detail/buffer.hpp"
 #include "databento/exceptions.hpp"
 #include "databento/log.hpp"
-#include "mock/mock_io.hpp"
+#include "mock/mock_log_receiver.hpp"
 
 namespace databento::tests {
 TEST(DbnEncoderTests, TestEncodeDecodeMetadataIdentity) {
-  auto logger = std::make_unique<NullLogReceiver>();
+  auto logger = mock::MockLogReceiver::AssertNoLogs(LogLevel::Warning);
   const Metadata metadata{
       kDbnVersion,
       dataset::kGlbxMdp3,
@@ -35,16 +36,14 @@ TEST(DbnEncoderTests, TestEncodeDecodeMetadataIdentity) {
        {"NG.0",
         {{date::year{2022} / 7 / 26, date::year{2022} / 8 / 29, "NGU2"},
          {date::year{2022} / 8 / 29, date::year{2022} / 9 / 1, "NGV2"}}}}};
-  mock::MockIo io{};
+  detail::Buffer io{};
   DbnEncoder::EncodeMetadata(metadata, &io);
-  DbnDecoder decoder{logger.get(),
-                     std::make_unique<mock::MockIo>(std::move(io))};
+  DbnDecoder decoder{&logger, std::make_unique<detail::Buffer>(std::move(io))};
   const auto res = decoder.DecodeMetadata();
   ASSERT_EQ(res, metadata);
 }
 
 TEST(DbnEncoderTests, TestEncodeNewerMetadataErrors) {
-  auto logger = std::make_unique<NullLogReceiver>();
   const Metadata metadata{kDbnVersion + 1,
                           dataset::kGlbxMdp3,
                           Schema::Mbp10,
@@ -59,7 +58,7 @@ TEST(DbnEncoderTests, TestEncodeNewerMetadataErrors) {
                           {},
                           {},
                           {}};
-  mock::MockIo io{};
+  detail::Buffer io{};
   ASSERT_THROW(DbnEncoder::EncodeMetadata(metadata, &io),
                databento::InvalidArgumentError);
 }

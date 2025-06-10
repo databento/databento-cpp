@@ -18,7 +18,7 @@ verbose_message("Adding tests under ${CMAKE_PROJECT_NAME}Tests...")
 set(
   test_headers
   include/mock/mock_http_server.hpp
-  include/mock/mock_io.hpp
+  include/mock/mock_log_receiver.hpp
   include/mock/mock_lsg_server.hpp
   include/mock/mock_tcp_server.hpp
   include/temp_file.hpp
@@ -42,9 +42,9 @@ set(
   src/log_tests.cpp
   src/metadata_tests.cpp
   src/mock_http_server.cpp
-  src/mock_io.cpp
   src/mock_lsg_server.cpp
   src/mock_tcp_server.cpp
+  src/pretty_tests.cpp
   src/record_tests.cpp
   src/scoped_thread_tests.cpp
   src/stream_op_helper_tests.cpp
@@ -120,25 +120,16 @@ else()
     # Visual Studio by default links C runtimes dynamically but gtest by default links them statically
     set(gtest_force_shared_crt ON CACHE BOOL "Link dynamic CRT" FORCE)
   endif()
-  if(CMAKE_VERSION VERSION_LESS 3.24)
-    FetchContent_Declare(
-      googletest
-      URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
-    )
-  else()
-    # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
-    FetchContent_Declare(
-      googletest
-      URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    )
-  endif()
+  FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  )
   FetchContent_MakeAvailable(googletest)
   target_link_libraries(
     ${PROJECT_NAME}
     PUBLIC
-      gtest
-      gtest_main
+      gmock_main
       ${${CMAKE_PROJECT_NAME}_TEST_LIB}
   )
   # Ignore compiler warnings in headers

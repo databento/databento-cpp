@@ -5,7 +5,7 @@
 #include <limits>  // numeric_limits
 
 #include "databento/enums.hpp"
-#include "databento/fixed_price.hpp"  // FixedPx
+#include "databento/pretty.hpp"  // Px
 #include "databento/record.hpp"
 #include "databento/v2.hpp"
 #include "databento/v3.hpp"
@@ -347,19 +347,22 @@ std::ostream& operator<<(std::ostream& stream,
       .Build()
       .AddField("hd", instr_def_msg.hd)
       .AddField("ts_recv", instr_def_msg.ts_recv)
-      .AddField("min_price_increment", FixPx{instr_def_msg.min_price_increment})
-      .AddField("display_factor", FixPx{instr_def_msg.display_factor})
+      .AddField("min_price_increment",
+                pretty::Px{instr_def_msg.min_price_increment})
+      .AddField("display_factor", pretty::Px{instr_def_msg.display_factor})
       .AddField("expiration", instr_def_msg.expiration)
       .AddField("activation", instr_def_msg.activation)
-      .AddField("high_limit_price", FixPx{instr_def_msg.high_limit_price})
-      .AddField("low_limit_price", FixPx{instr_def_msg.low_limit_price})
-      .AddField("max_price_variation", FixPx{instr_def_msg.max_price_variation})
+      .AddField("high_limit_price", pretty::Px{instr_def_msg.high_limit_price})
+      .AddField("low_limit_price", pretty::Px{instr_def_msg.low_limit_price})
+      .AddField("max_price_variation",
+                pretty::Px{instr_def_msg.max_price_variation})
       .AddField("trading_reference_price",
-                FixPx{instr_def_msg.trading_reference_price})
-      .AddField("unit_of_measure_qty", FixPx{instr_def_msg.unit_of_measure_qty})
+                pretty::Px{instr_def_msg.trading_reference_price})
+      .AddField("unit_of_measure_qty",
+                pretty::Px{instr_def_msg.unit_of_measure_qty})
       .AddField("min_price_increment_amount",
-                FixPx{instr_def_msg.min_price_increment_amount})
-      .AddField("price_ratio", FixPx{instr_def_msg.price_ratio})
+                pretty::Px{instr_def_msg.min_price_increment_amount})
+      .AddField("price_ratio", pretty::Px{instr_def_msg.price_ratio})
       .AddField("inst_attrib_value", instr_def_msg.inst_attrib_value)
       .AddField("underlying_id", instr_def_msg.underlying_id)
       .AddField("raw_instrument_id", instr_def_msg.raw_instrument_id)
@@ -392,7 +395,7 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("underlying", instr_def_msg.underlying)
       .AddField("strike_price_currency", instr_def_msg.strike_price_currency)
       .AddField("instrument_class", instr_def_msg.instrument_class)
-      .AddField("strike_price", FixPx{instr_def_msg.strike_price})
+      .AddField("strike_price", pretty::Px{instr_def_msg.strike_price})
       .AddField("match_algorithm", instr_def_msg.match_algorithm)
       .AddField("md_security_trading_status",
                 instr_def_msg.md_security_trading_status)
@@ -423,7 +426,7 @@ std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg) {
       .AddField("hd", stat_msg.hd)
       .AddField("ts_recv", stat_msg.ts_recv)
       .AddField("ts_ref", stat_msg.ts_ref)
-      .AddField("price", FixPx{stat_msg.price})
+      .AddField("price", pretty::Px{stat_msg.price})
       .AddField("quantity", stat_msg.quantity)
       .AddField("sequence", stat_msg.sequence)
       .AddField("ts_in_delta", stat_msg.ts_in_delta)

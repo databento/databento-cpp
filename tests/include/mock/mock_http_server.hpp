@@ -3,10 +3,12 @@
 #include <httplib.h>
 #include <nlohmann/json.hpp>
 
+#include <cstddef>
 #include <map>
 #include <string>
 
 #include "databento/detail/scoped_thread.hpp"
+#include "databento/record.hpp"
 
 namespace databento::tests::mock {
 class MockHttpServer {
@@ -35,6 +37,13 @@ class MockHttpServer {
   void MockStreamDbn(const std::string& path,
                      const std::map<std::string, std::string>& params,
                      const std::string& dbn_path);
+  void MockStreamDbn(const std::string& path,
+                     const std::map<std::string, std::string>& params,
+                     Record record, std::size_t count, std::size_t chunk_size);
+  void MockStreamDbn(const std::string& path,
+                     const std::map<std::string, std::string>& params,
+                     Record record, std::size_t count, std::size_t extra_bytes,
+                     std::size_t chunk_size);
 
  private:
   static void CheckParams(const std::map<std::string, std::string>& params,

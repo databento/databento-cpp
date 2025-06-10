@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.38.0 - 2025-06-10
+
+### Enhancements
+- Made the buffer size used by the live clients when reading from the TCP socket
+  configurable through the `LiveBuilder::SetBufferSize()` method
+- Added log level prefix to `ConsoleLogReceiver` output
+- Added `iomanip` compatibility: fill, precision, and width to `pretty::Px` (formerly
+  `FixPx`)
+- Added new `pretty::Ts` helper type for human-readable formatting of `UnixNanos`
+
+### Breaking changes
+- Live client instances can only be created through the `LiveBuilder` class
+- Changed `HeartbeatInterval()` getters on `LiveBlocking` and `LiveThreaded` to return
+  an `std::optional`
+- Added new optional `ShouldLog` virtual method to `ILogReceiver` to
+  filter the levels of log messages that will be sent to the receiver
+
+### Deprecations
+- Deprecated `FixPx` in favor of `pretty::Px` which has consistent naming with the API
+  and the Python and Rust client libraries
+
+### Bug fixes
+- Ensure `CPPHTTPLIB_OPENSSL_SUPPORT` is defined at all locations where `cpp-httplib`
+  is included
+
 ## 0.37.1 - 2025-06-03
 
 ### Bug fixes

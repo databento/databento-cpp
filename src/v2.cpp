@@ -1,6 +1,6 @@
 #include "databento/v2.hpp"
 
-#include "databento/fixed_price.hpp"
+#include "databento/pretty.hpp"  // Px
 #include "databento/v3.hpp"
 #include "stream_op_helper.hpp"
 
@@ -168,20 +168,23 @@ std::ostream& operator<<(std::ostream& stream,
       .Build()
       .AddField("hd", instr_def_msg.hd)
       .AddField("ts_recv", instr_def_msg.ts_recv)
-      .AddField("min_price_increment", FixPx{instr_def_msg.min_price_increment})
-      .AddField("display_factor", FixPx{instr_def_msg.display_factor})
+      .AddField("min_price_increment",
+                pretty::Px{instr_def_msg.min_price_increment})
+      .AddField("display_factor", pretty::Px{instr_def_msg.display_factor})
       .AddField("expiration", instr_def_msg.expiration)
       .AddField("activation", instr_def_msg.activation)
-      .AddField("high_limit_price", FixPx{instr_def_msg.high_limit_price})
-      .AddField("low_limit_price", FixPx{instr_def_msg.low_limit_price})
-      .AddField("max_price_variation", FixPx{instr_def_msg.max_price_variation})
+      .AddField("high_limit_price", pretty::Px{instr_def_msg.high_limit_price})
+      .AddField("low_limit_price", pretty::Px{instr_def_msg.low_limit_price})
+      .AddField("max_price_variation",
+                pretty::Px{instr_def_msg.max_price_variation})
       .AddField("trading_reference_price",
-                FixPx{instr_def_msg.trading_reference_price})
-      .AddField("unit_of_measure_qty", FixPx{instr_def_msg.unit_of_measure_qty})
+                pretty::Px{instr_def_msg.trading_reference_price})
+      .AddField("unit_of_measure_qty",
+                pretty::Px{instr_def_msg.unit_of_measure_qty})
       .AddField("min_price_increment_amount",
-                FixPx{instr_def_msg.min_price_increment_amount})
-      .AddField("price_ratio", FixPx{instr_def_msg.price_ratio})
-      .AddField("strike_price", FixPx{instr_def_msg.strike_price})
+                pretty::Px{instr_def_msg.min_price_increment_amount})
+      .AddField("price_ratio", pretty::Px{instr_def_msg.price_ratio})
+      .AddField("strike_price", pretty::Px{instr_def_msg.strike_price})
       .AddField("inst_attrib_value", instr_def_msg.inst_attrib_value)
       .AddField("underlying_id", instr_def_msg.underlying_id)
       .AddField("raw_instrument_id", instr_def_msg.raw_instrument_id)

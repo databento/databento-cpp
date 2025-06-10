@@ -67,7 +67,7 @@ void Buffer::Reserve(std::size_t capacity) {
 void Buffer::Shift() {
   const auto unread_bytes = ReadCapacity();
   if (unread_bytes) {
-    std::copy(read_pos_, write_pos_, buf_.get());
+    std::copy(ReadBegin(), ReadEnd(), buf_.get());
   }
   read_pos_ = buf_.get();
   write_pos_ = read_pos_ + unread_bytes;

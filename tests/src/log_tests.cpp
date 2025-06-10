@@ -17,7 +17,7 @@ TEST_F(ConsoleLogReceiverTests, TestOutput) {
   target_.Receive(LogLevel::Warning, msg);
   const std::string output = stream_.str();
   // ConsoleLogReceiver adds newline
-  ASSERT_EQ(msg + '\n', output);
+  ASSERT_EQ("WARN: " + msg + '\n', output);
 }
 
 TEST_F(ConsoleLogReceiverTests, TestFilter) {
