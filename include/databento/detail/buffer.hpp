@@ -11,7 +11,9 @@
 namespace databento::detail {
 class Buffer : public IReadable, public IWritable {
  public:
-  Buffer() : Buffer(64 * std::size_t{1 << 10}) {}
+  static constexpr std::size_t kDefaultBufSize = 64 * std::size_t{1 << 10};
+
+  Buffer() : Buffer(kDefaultBufSize) {}
   explicit Buffer(std::size_t init_capacity)
       : buf_{AlignedNew(init_capacity), AlignedDelete},
         end_{buf_.get() + init_capacity},

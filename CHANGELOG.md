@@ -3,9 +3,14 @@
 ## 0.38.0 - TBD
 
 ### Enhancements
+- Made the buffer size used by the live clients when reading from the TCP socket
+  configurable through the `LiveBuilder::SetBufferSize()` method
 - Added log level prefix to `ConsoleLogReceiver` output
 
 ### Breaking changes
+- Live client instances can only be created through the `LiveBuilder` class
+- Changed `HeartbeatInterval()` getters on `LiveBlocking` and `LiveThreaded` to return
+  an `std::optional`
 - Added new optional `ShouldLog` virtual method to `ILogReceiver` to
   filter the levels of log messages that will be sent to the receiver
 

@@ -28,10 +28,11 @@ namespace {
 constexpr std::size_t kBucketIdLength = 5;
 }  // namespace
 
-LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
-                           std::string dataset, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy,
-                           std::chrono::seconds heartbeat_interval)
+LiveBlocking::LiveBlocking(
+    ILogReceiver* log_receiver, std::string key, std::string dataset,
+    bool send_ts_out, VersionUpgradePolicy upgrade_policy,
+    std::optional<std::chrono::seconds> heartbeat_interval,
+    std::size_t buffer_size)
 
     : log_receiver_{log_receiver},
       key_{std::move(key)},
@@ -42,13 +43,15 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       upgrade_policy_{upgrade_policy},
       heartbeat_interval_{heartbeat_interval},
       client_{gateway_, port_},
+      buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
-LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
-                           std::string dataset, std::string gateway,
-                           std::uint16_t port, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy,
-                           std::chrono::seconds heartbeat_interval)
+LiveBlocking::LiveBlocking(
+    ILogReceiver* log_receiver, std::string key, std::string dataset,
+    std::string gateway, std::uint16_t port, bool send_ts_out,
+    VersionUpgradePolicy upgrade_policy,
+    std::optional<std::chrono::seconds> heartbeat_interval,
+    std::size_t buffer_size)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
@@ -58,6 +61,7 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       upgrade_policy_{upgrade_policy},
       heartbeat_interval_{heartbeat_interval},
       client_{gateway_, port_},
+      buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
@@ -200,6 +204,7 @@ void LiveBlocking::Reconnect() {
     log_receiver_->Receive(LogLevel::Info, log_msg.str());
   }
   client_ = detail::TcpClient{gateway_, port_};
+  buffer_.Clear();
   sub_counter_ = 0;
   session_id_ = this->Authenticate();
 }
@@ -319,8 +324,8 @@ std::string LiveBlocking::EncodeAuthReq(std::string_view auth) {
   std::ostringstream req_stream;
   req_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
              << "ts_out=" << send_ts_out_ << "|client=C++ " DATABENTO_VERSION;
-  if (heartbeat_interval_.count() > 0) {
-    req_stream << "|heartbeat_interval_s=" << heartbeat_interval_.count();
+  if (heartbeat_interval_.has_value()) {
+    req_stream << "|heartbeat_interval_s=" << heartbeat_interval_->count();
   }
   req_stream << '\n';
   return req_stream.str();
