@@ -21,6 +21,10 @@
 - Deprecated `FixPx` in favor of `pretty::Px` which has consistent naming with the API
   and the Python and Rust client libraries
 
+### Bug fixes
+- Ensure `CPPHTTPLIB_OPENSSL_SUPPORT` is defined at all locations where `cpp-httplib`
+  is included
+
 ## 0.37.1 - 2025-06-03
 
 ### Bug fixes
