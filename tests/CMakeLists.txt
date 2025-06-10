@@ -120,25 +120,16 @@ else()
     # Visual Studio by default links C runtimes dynamically but gtest by default links them statically
     set(gtest_force_shared_crt ON CACHE BOOL "Link dynamic CRT" FORCE)
   endif()
-  if(CMAKE_VERSION VERSION_LESS 3.24)
-    FetchContent_Declare(
-      googletest
-      URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
-    )
-  else()
-    # DOWNLOAD_EXTRACT_TIMESTAMP added in 3.24
-    FetchContent_Declare(
-      googletest
-      URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
-      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    )
-  endif()
+  FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  )
   FetchContent_MakeAvailable(googletest)
   target_link_libraries(
     ${PROJECT_NAME}
     PUBLIC
-      gtest
-      gtest_main
+      gmock_main
       ${${CMAKE_PROJECT_NAME}_TEST_LIB}
   )
   # Ignore compiler warnings in headers

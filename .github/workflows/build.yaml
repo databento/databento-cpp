@@ -32,13 +32,12 @@ jobs:
             -DHAVE_RULES=ON
           cmake --build build --config Release --parallel
           sudo cmake --install build --prefix /usr
-      - name: Install gtest
-        uses: MarkusJx/googletest-installer@v1.1
       - name: CMake configure
         run: |
           cmake -S . -B build \
             -GNinja \
             -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} \
+            -DDATABENTO_USE_EXTERNAL_GTEST=0 \
             -DDATABENTO_ENABLE_UNIT_TESTING=1 \
             -DDATABENTO_ENABLE_EXAMPLES=1 \
             -DDATABENTO_ENABLE_CLANG_TIDY=1 \
