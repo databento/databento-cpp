@@ -84,7 +84,7 @@ class Historical {
    * Metadata API
    */
 
-  // Retrievs a mapping of publisher name to publisher ID.
+  // Retrieves a mapping of publisher name to publisher ID.
   std::vector<PublisherDetail> MetadataListPublishers();
   std::vector<std::string> MetadataListDatasets();
   std::vector<std::string> MetadataListDatasets(const DateRange& date_range);
