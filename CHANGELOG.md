@@ -161,7 +161,7 @@ upgrading data to version 3.
 ## 0.31.0 - 2025-03-18
 
 ### Enhancements
-- Added new venues, datasets, and publishers for ICE US, ICE Europe Financials
+- Added new venues, datasets, and publishers for ICE Futures US, ICE Europe Financials
   products, Eurex, and European Energy Exchange (EEX)
 
 ## 0.30.0 - 2025-02-11
