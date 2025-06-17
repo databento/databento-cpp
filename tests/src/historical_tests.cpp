@@ -464,8 +464,22 @@ TEST_F(HistoricalTests, TestMetadataListUnitPrices) {
 }
 
 TEST_F(HistoricalTests, TestMetadataGetDatasetRange) {
-  const nlohmann::json kResp = {{"start", "2017-05-21T00:00:00.000000000Z"},
-                                {"end", "2022-12-01T00:00:00.000000000Z"}};
+  const nlohmann::json kResp = {
+      {"start", "2017-05-21T00:00:00.000000000Z"},
+      {"end", "2022-12-01T00:00:00.000000000Z"},
+      {"schema",
+       {
+           {"bbo-1m",
+            {{"start", "2020-08-02T00:00:00.000000000Z"},
+             {"end", "2023-03-23T00:00:00.000000000Z"}}},
+           {"ohlcv-1s",
+            {{"start", "2020-08-02T00:00:00.000000000Z"},
+             {"end", "2023-03-23T00:00:00.000000000Z"}}},
+           {"ohlcv-1m",
+            {{"start", "2020-08-02T00:00:00.000000000Z"},
+             {"end", "2023-03-23T00:00:00.000000000Z"}}},
+
+       }}};
   mock_server_.MockGetJson("/v0/metadata.get_dataset_range",
                            {{"dataset", dataset::kXnasItch}}, kResp);
   const auto port = mock_server_.ListenOnThread();

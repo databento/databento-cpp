@@ -32,4 +32,22 @@ struct DateTimeRange {
   T end;
 };
 using DateRange = DateTimeRange<std::string>;
+
+template <typename T>
+inline bool operator==(const DateTimeRange<T>& lhs,
+                       const DateTimeRange<T>& rhs) {
+  return lhs.start == rhs.start && lhs.end == rhs.end;
+}
+template <typename T>
+inline bool operator!=(const DateTimeRange<T>& lhs,
+                       const DateTimeRange<T>& rhs) {
+  return !(lhs == rhs);
+}
+
+std::string ToString(const DateTimeRange<std::string>& dt_range);
+std::ostream& operator<<(std::ostream& stream,
+                         const DateTimeRange<std::string>& dt_range);
+std::string ToString(const DateTimeRange<UnixNanos>& dt_range);
+std::ostream& operator<<(std::ostream& stream,
+                         const DateTimeRange<UnixNanos>& dt_range);
 }  // namespace databento

@@ -1,5 +1,14 @@
 # Changelog
 
+
+## 0.38.1 - TBD
+
+### Enhancements
+- Added `range_by_schema` field to `DatasetRange` struct
+- Changed the following Venue, Publisher, and Dataset descriptions:
+  - "ICE Futures Europe (Financials)" renamed to "ICE Europe Financials"
+  - "ICE Futures Europe (Commodities)" renamed to "ICE Europe Commodities"
+
 ## 0.38.0 - 2025-06-10
 
 ### Enhancements

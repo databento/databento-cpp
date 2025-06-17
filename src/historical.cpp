@@ -1,5 +1,9 @@
 #include "databento/historical.hpp"
 
+#include <unordered_map>
+
+#include "databento/publishers.hpp"
+
 #ifndef CPPHTTPLIB_OPENSSL_SUPPORT
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #endif
@@ -529,8 +533,27 @@ databento::DatasetRange Historical::MetadataGetDatasetRange(
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
   }
+  const auto& schema_json = detail::CheckedAt(kEndpoint, json, "schema");
+  if (!schema_json.is_object()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "schema object", json);
+  }
+  std::unordered_map<Schema, DateTimeRange<std::string>> range_by_schema;
+  for (const auto& schema_item : schema_json.items()) {
+    if (!schema_item.value().is_object()) {
+      throw JsonResponseError::TypeMismatch(kEndpoint, "nested schema object",
+                                            json);
+    }
+    auto start =
+        detail::ParseAt<std::string>(kEndpoint, schema_item.value(), "start");
+    auto end =
+        detail::ParseAt<std::string>(kEndpoint, schema_item.value(), "end");
+    range_by_schema.emplace(
+        FromString<Schema>(schema_item.key()),
+        DateTimeRange<std::string>{std::move(start), std::move(end)});
+  }
   return DatasetRange{detail::ParseAt<std::string>(kEndpoint, json, "start"),
-                      detail::ParseAt<std::string>(kEndpoint, json, "end")};
+                      detail::ParseAt<std::string>(kEndpoint, json, "end"),
+                      std::move(range_by_schema)};
 }
 
 static const std::string kMetadataGetRecordCountEndpoint =

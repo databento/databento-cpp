@@ -109,6 +109,19 @@ class StreamOpHelper {
     return *this;
   }
 
+  template <typename K, typename V>
+  StreamOpHelper& AddKeyVal(const K& key, const V& val) {
+    if (!is_first_) {
+      stream_ << ',';
+    }
+    stream_ << spacer_ << indent_;
+    FmtToStream(key);
+    stream_ << ": ";
+    FmtToStream(val);
+    is_first_ = false;
+    return *this;
+  }
+
   std::ostream& Finish() {
     if (spacer_.find('\n') == std::string::npos) {
       // no spacing required if empty
