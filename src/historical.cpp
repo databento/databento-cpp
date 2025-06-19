@@ -1,9 +1,5 @@
 #include "databento/historical.hpp"
 
-#include <unordered_map>
-
-#include "databento/publishers.hpp"
-
 #ifndef CPPHTTPLIB_OPENSSL_SUPPORT
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #endif
@@ -18,6 +14,7 @@
 #include <sstream>
 #include <string>
 #include <system_error>
+#include <unordered_map>
 #include <utility>  // move
 
 #include "databento/constants.hpp"
@@ -332,25 +329,36 @@ void Historical::StreamToFile(const std::string& url_path,
 
 void Historical::DownloadFile(const std::string& url,
                               const std::filesystem::path& output_path) {
-  static const std::string kEndpoint = "Historical::DownloadFile";
+  static const std::string kMethod = "Historical::DownloadFile";
   // extract path from URL
   const auto protocol_divider = url.find("://");
   std::string path;
+
   if (protocol_divider == std::string::npos) {
     const auto slash = url.find_first_of('/');
     if (slash == std::string::npos) {
-      throw InvalidArgumentError{kEndpoint, "url", "No slashes"};
+      throw InvalidArgumentError{kMethod, "url", "No slashes"};
     }
     path = url.substr(slash);
   } else {
     const auto slash = url.find('/', protocol_divider + 3);
     if (slash == std::string::npos) {
-      throw InvalidArgumentError{kEndpoint, "url", "No slashes"};
+      throw InvalidArgumentError{kMethod, "url", "No slashes"};
     }
     path = url.substr(slash);
   }
+  std::ostringstream ss;
+  ss << '[' << kMethod << "] Downloading batch file " << path << " to "
+     << output_path;
+  log_receiver_->Receive(LogLevel::Info, ss.str());
 
   StreamToFile(path, {}, output_path);
+
+  if (log_receiver_->ShouldLog(LogLevel::Debug)) {
+    ss.str("");
+    ss << '[' << kMethod << ']' << " Completed download of " << path;
+    log_receiver_->Receive(LogLevel::Debug, ss.str());
+  }
 }
 
 std::vector<databento::PublisherDetail> Historical::MetadataListPublishers() {

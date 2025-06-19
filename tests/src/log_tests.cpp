@@ -1,9 +1,10 @@
-#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <sstream>
 #include <string>
 
 #include "databento/log.hpp"
+#include "gmock/gmock.h"
 
 namespace databento::tests {
 class ConsoleLogReceiverTests : public testing::Test {
@@ -24,7 +25,9 @@ TEST_F(ConsoleLogReceiverTests, TestFilter) {
   const std::string msg = "Something happened";
   target_.Receive(LogLevel::Debug, msg);
   const std::string output = stream_.str();
-  ASSERT_TRUE(output.empty());
+  EXPECT_TRUE(output.empty());
+  target_.Receive(LogLevel::Info, msg);
+  EXPECT_THAT(stream_.str(), testing::HasSubstr(msg));
 }
 
 TEST(ILogReceiverTests, TestDefault) {

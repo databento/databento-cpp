@@ -5,9 +5,13 @@
 
 ### Enhancements
 - Added `range_by_schema` field to `DatasetRange` struct
+- Added logging around `Historical::BatchDownload`
 - Changed the following Venue, Publisher, and Dataset descriptions:
   - "ICE Futures Europe (Financials)" renamed to "ICE Europe Financials"
   - "ICE Futures Europe (Commodities)" renamed to "ICE Europe Commodities"
+
+### Bug fixes
+- Fixed default `ShouldLog` implementation
 
 ## 0.38.0 - 2025-06-10
 
