@@ -316,17 +316,6 @@ std::filesystem::path Historical::BatchDownload(
   return output_path;
 }
 
-void Historical::StreamToFile(const std::string& url_path,
-                              const HttplibParams& params,
-                              const std::filesystem::path& file_path) {
-  OutFileStream out_file{file_path};
-  this->client_.GetRawStream(
-      url_path, params, [&out_file](const char* data, std::size_t length) {
-        out_file.WriteAll(reinterpret_cast<const std::byte*>(data), length);
-        return true;
-      });
-}
-
 void Historical::DownloadFile(const std::string& url,
                               const std::filesystem::path& output_path) {
   static const std::string kMethod = "Historical::DownloadFile";
@@ -352,7 +341,12 @@ void Historical::DownloadFile(const std::string& url,
      << output_path;
   log_receiver_->Receive(LogLevel::Info, ss.str());
 
-  StreamToFile(path, {}, output_path);
+  OutFileStream out_file{output_path};
+  this->client_.GetRawStream(
+      path, {}, [&out_file](const char* data, std::size_t length) {
+        out_file.WriteAll(reinterpret_cast<const std::byte*>(data), length);
+        return true;
+      });
 
   if (log_receiver_->ShouldLog(LogLevel::Debug)) {
     ss.str("");
@@ -880,7 +874,7 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
   detail::DbnBufferDecoder decoder{metadata_callback, record_callback};
 
   bool early_exit = false;
-  this->client_.GetRawStream(
+  this->client_.PostRawStream(
       kTimeseriesGetRangePath, params,
       [&decoder, &early_exit](const char* data, std::size_t length) mutable {
         if (decoder.Process(data, length) == KeepGoing::Continue) {
@@ -959,7 +953,15 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
 }
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
     const HttplibParams& params, const std::filesystem::path& file_path) {
-  StreamToFile(kTimeseriesGetRangePath, params, file_path);
+  {
+    OutFileStream out_file{file_path};
+    this->client_.PostRawStream(
+        kTimeseriesGetRangePath, params,
+        [&out_file](const char* data, std::size_t length) {
+          out_file.WriteAll(reinterpret_cast<const std::byte*>(data), length);
+          return true;
+        });
+  }  // Flush out_file
   return DbnFileStore{log_receiver_, file_path,
                       VersionUpgradePolicy::UpgradeToV3};
 }

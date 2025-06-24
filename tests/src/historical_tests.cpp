@@ -241,8 +241,8 @@ TEST_F(HistoricalTests, TestBatchDownloadAll) {
   const TempFile temp_dbn_file{tmp_path_ / "job123/test.dbn"};
   mock_server_.MockGetJson("/v0/batch.list_files", {{"job_id", kJobId}},
                            kListFilesResp);
-  mock_server_.MockStreamDbn("/v0/job_id/test.dbn", {},
-                             TEST_DATA_DIR "/test_data.mbo.v3.dbn");
+  mock_server_.MockGetDbn("/v0/job_id/test.dbn", {},
+                          TEST_DATA_DIR "/test_data.mbo.v3.dbn");
   mock_server_.MockGetJson("/v0/job_id/test_metadata.json", {{"key", "value"}});
   const auto port = mock_server_.ListenOnThread();
 
@@ -640,17 +640,17 @@ TEST_F(HistoricalTests, TestSymbologyResolve) {
 }
 
 TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
-  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
-                             {{"dataset", dataset::kGlbxMdp3},
-                              {"symbols", "ESH1"},
-                              {"schema", "mbo"},
-                              {"start", "1609160400000711344"},
-                              {"end", "1609160800000711344"},
-                              {"encoding", "dbn"},
-                              {"stype_in", "raw_symbol"},
-                              {"stype_out", "instrument_id"},
-                              {"limit", "2"}},
-                             TEST_DATA_DIR "/test_data.mbo.v3.dbn.zst");
+  mock_server_.MockPostDbn("/v0/timeseries.get_range",
+                           {{"dataset", dataset::kGlbxMdp3},
+                            {"symbols", "ESH1"},
+                            {"schema", "mbo"},
+                            {"start", "1609160400000711344"},
+                            {"end", "1609160800000711344"},
+                            {"encoding", "dbn"},
+                            {"stype_in", "raw_symbol"},
+                            {"stype_out", "instrument_id"},
+                            {"limit", "2"}},
+                           TEST_DATA_DIR "/test_data.mbo.v3.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{&logger_, kApiKey, "localhost",
@@ -676,16 +676,16 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_Basic) {
 }
 
 TEST_F(HistoricalTests, TestTimeseriesGetRange_NoMetadataCallback) {
-  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
-                             {{"dataset", dataset::kGlbxMdp3},
-                              {"start", "2022-10-21T13:30"},
-                              {"end", "2022-10-21T20:00"},
-                              {"symbols", "CYZ2"},
-                              {"schema", "tbbo"},
-                              {"encoding", "dbn"},
-                              {"stype_in", "raw_symbol"},
-                              {"stype_out", "instrument_id"}},
-                             TEST_DATA_DIR "/test_data.tbbo.v3.dbn.zst");
+  mock_server_.MockPostDbn("/v0/timeseries.get_range",
+                           {{"dataset", dataset::kGlbxMdp3},
+                            {"start", "2022-10-21T13:30"},
+                            {"end", "2022-10-21T20:00"},
+                            {"symbols", "CYZ2"},
+                            {"schema", "tbbo"},
+                            {"encoding", "dbn"},
+                            {"stype_in", "raw_symbol"},
+                            {"stype_out", "instrument_id"}},
+                           TEST_DATA_DIR "/test_data.tbbo.v3.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{&logger_, kApiKey, "localhost",
@@ -704,7 +704,7 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_NoMetadataCallback) {
 TEST_F(HistoricalTests, TestTimeseriesGetRange_BadRequest) {
   const nlohmann::json resp{
       {"detail", "Authorization failed: illegal chars in username."}};
-  mock_server_.MockBadRequest("/v0/timeseries.get_range", resp);
+  mock_server_.MockBadPostRequest("/v0/timeseries.get_range", resp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{&logger_, kApiKey, "localhost",
@@ -729,8 +729,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_BadRequest) {
 }
 
 TEST_F(HistoricalTests, TestTimeseriesGetRange_CallbackException) {
-  mock_server_.MockStreamDbn("/v0/timeseries.get_range", {},
-                             TEST_DATA_DIR "/test_data.mbo.v3.dbn.zst");
+  mock_server_.MockPostDbn("/v0/timeseries.get_range", {},
+                           TEST_DATA_DIR "/test_data.mbo.v3.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{&logger_, kApiKey, "localhost",
@@ -747,8 +747,8 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_CallbackException) {
 }
 
 TEST_F(HistoricalTests, TestTimeseriesGetRange_Cancellation) {
-  mock_server_.MockStreamDbn("/v0/timeseries.get_range", {},
-                             TEST_DATA_DIR "/test_data.mbo.v3.dbn.zst");
+  mock_server_.MockPostDbn("/v0/timeseries.get_range", {},
+                           TEST_DATA_DIR "/test_data.mbo.v3.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{&logger_, kApiKey, "localhost",
@@ -777,9 +777,9 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_LargeChunks) {
                    10005,
                    {}}};
   constexpr auto kRecordCount = 50'000;
-  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
-                             {{"dataset", ToString(Dataset::IfusImpact)}},
-                             Record{&mbp1.hd}, kRecordCount, 75'000);
+  mock_server_.MockPostDbn("/v0/timeseries.get_range",
+                           {{"dataset", ToString(Dataset::IfusImpact)}},
+                           Record{&mbp1.hd}, kRecordCount, 75'000);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{&logger_, kApiKey, "localhost",
@@ -804,9 +804,9 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_UnreadBytes) {
                    10005,
                    {}}};
   constexpr auto kRecordCount = 1'000;
-  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
-                             {{"dataset", ToString(Dataset::IfusImpact)}},
-                             Record{&mbp1.hd}, kRecordCount, 20, 75'000);
+  mock_server_.MockPostDbn("/v0/timeseries.get_range",
+                           {{"dataset", ToString(Dataset::IfusImpact)}},
+                           Record{&mbp1.hd}, kRecordCount, 20, 75'000);
   const auto port = mock_server_.ListenOnThread();
 
   logger_ = mock::MockLogReceiver{[](auto count, LogLevel level,
@@ -830,16 +830,16 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_UnreadBytes) {
 }
 
 TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
-  mock_server_.MockStreamDbn("/v0/timeseries.get_range",
-                             {{"dataset", dataset::kGlbxMdp3},
-                              {"start", "2022-10-21T13:30"},
-                              {"end", "2022-10-21T20:00"},
-                              {"symbols", "CYZ2"},
-                              {"schema", "tbbo"},
-                              {"encoding", "dbn"},
-                              {"stype_in", "raw_symbol"},
-                              {"stype_out", "instrument_id"}},
-                             TEST_DATA_DIR "/test_data.tbbo.v3.dbn.zst");
+  mock_server_.MockPostDbn("/v0/timeseries.get_range",
+                           {{"dataset", dataset::kGlbxMdp3},
+                            {"start", "2022-10-21T13:30"},
+                            {"end", "2022-10-21T20:00"},
+                            {"symbols", "CYZ2"},
+                            {"schema", "tbbo"},
+                            {"encoding", "dbn"},
+                            {"stype_in", "raw_symbol"},
+                            {"stype_out", "instrument_id"}},
+                           TEST_DATA_DIR "/test_data.tbbo.v3.dbn.zst");
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target{&logger_, kApiKey, "localhost",

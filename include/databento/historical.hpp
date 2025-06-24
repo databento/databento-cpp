@@ -230,8 +230,6 @@ class Historical {
   using HttplibParams = std::multimap<std::string, std::string>;
 
   BatchJob BatchSubmitJob(const HttplibParams& params);
-  void StreamToFile(const std::string& url_path, const HttplibParams& params,
-                    const std::filesystem::path& file_path);
   void DownloadFile(const std::string& url,
                     const std::filesystem::path& output_path);
   std::vector<BatchJob> BatchListJobs(const HttplibParams& params);

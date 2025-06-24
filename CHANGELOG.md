@@ -5,6 +5,8 @@
 
 ### Enhancements
 - Added `range_by_schema` field to `DatasetRange` struct
+- Changed historical `TimeseriesGetRange` and `TimeseriesGetRangeToFile` methods to use
+  a `POST` request to allow for requesting supported maximum of 2000 symbols
 - Added logging around `Historical::BatchDownload`
 - Changed the following Venue, Publisher, and Dataset descriptions:
   - "ICE Futures Europe (Financials)" renamed to "ICE Europe Financials"
