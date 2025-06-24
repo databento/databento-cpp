@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
+#include <optional>
 #include <stdexcept>  // logic_error
 #include <utility>    // move
 
@@ -424,7 +425,7 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
                               {"last_modified_date", "2023-03-01"}},
                              {{"date", "2022-11-10"},
                               {"condition", "missing"},
-                              {"last_modified_date", "2023-03-01"}}};
+                              {"last_modified_date", nullptr}}};
   mock_server_.MockGetJson("/v0/metadata.get_dataset_condition",
                            {{"dataset", dataset::kXnasItch},
                             {"start_date", "2022-11-06"},
@@ -440,7 +441,7 @@ TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
       {"2022-11-07", DatasetCondition::Available, "2023-03-01"},
       {"2022-11-08", DatasetCondition::Degraded, "2023-03-01"},
       {"2022-11-09", DatasetCondition::Pending, "2023-03-01"},
-      {"2022-11-10", DatasetCondition::Missing, "2023-03-01"},
+      {"2022-11-10", DatasetCondition::Missing, std::nullopt},
   };
   EXPECT_EQ(res, kExp);
 }

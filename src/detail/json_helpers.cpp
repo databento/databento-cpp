@@ -1,6 +1,7 @@
 #include "databento/detail/json_helpers.hpp"
 
 #include <numeric>  // accumulate
+#include <optional>
 #include <sstream>  // istringstream
 #include <string>
 
@@ -49,6 +50,17 @@ bool ParseAt(std::string_view endpoint, const nlohmann::json& json,
 template <>
 std::string ParseAt(std::string_view endpoint, const nlohmann::json& json,
                     std::string_view key) {
+  const auto s = ParseAt<std::optional<std::string>>(endpoint, json, key);
+  if (s) {
+    return *s;
+  }
+  return {};
+}
+
+template <>
+std::optional<std::string> ParseAt(std::string_view endpoint,
+                                   const nlohmann::json& json,
+                                   std::string_view key) {
   const auto& val_json = CheckedAt(endpoint, json, key);
   if (val_json.is_null()) {
     return {};

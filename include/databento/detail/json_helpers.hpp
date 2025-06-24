@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 
 #include <map>  // multimap
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -78,6 +79,10 @@ bool ParseAt(std::string_view endpoint, const nlohmann::json& json,
 template <>
 std::string ParseAt(std::string_view endpoint, const nlohmann::json& json,
                     std::string_view key);
+template <>
+std::optional<std::string> ParseAt(std::string_view endpoint,
+                                   const nlohmann::json& json,
+                                   std::string_view key);
 template <>
 std::uint64_t ParseAt(std::string_view endpoint, const nlohmann::json& json,
                       std::string_view key);

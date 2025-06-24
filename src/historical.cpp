@@ -520,12 +520,10 @@ Historical::MetadataGetDatasetCondition(const httplib::Params& params) {
     if (!detail_json.is_object()) {
       throw JsonResponseError::TypeMismatch(kEndpoint, "object", detail_json);
     }
-    std::string date =
-        detail::ParseAt<std::string>(kEndpoint, detail_json, "date");
-    const DatasetCondition condition =
-        detail::FromCheckedAtString<DatasetCondition>(kEndpoint, detail_json,
-                                                      "condition");
-    std::string last_modified_date = detail::ParseAt<std::string>(
+    auto date = detail::ParseAt<std::string>(kEndpoint, detail_json, "date");
+    const auto condition = detail::FromCheckedAtString<DatasetCondition>(
+        kEndpoint, detail_json, "condition");
+    auto last_modified_date = detail::ParseAt<std::optional<std::string>>(
         kEndpoint, detail_json, "last_modified_date");
     details.emplace_back(DatasetConditionDetail{std::move(date), condition,
                                                 std::move(last_modified_date)});

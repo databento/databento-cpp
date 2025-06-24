@@ -11,6 +11,8 @@
   - "ICE Futures Europe (Commodities)" renamed to "ICE Europe Commodities"
 
 ### Bug fixes
+- Fixed handling of `null` `last_modified_date` in `MetadataGetDatasetCondition`
+  response
 - Fixed default `ShouldLog` implementation
 
 ## 0.38.0 - 2025-06-10

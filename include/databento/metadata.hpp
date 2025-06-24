@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <unordered_map>
@@ -30,7 +31,7 @@ struct UnitPricesForMode {
 struct DatasetConditionDetail {
   std::string date;
   DatasetCondition condition;
-  std::string last_modified_date;
+  std::optional<std::string> last_modified_date;
 };
 
 struct DatasetRange {

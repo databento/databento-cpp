@@ -60,7 +60,7 @@ class StreamOpHelper {
   template <typename T>
   void FmtToStream(const std::optional<T>& val) {
     if (val.has_value()) {
-      stream_ << *val;
+      FmtToStream(*val);
     } else {
       stream_ << "nullopt";
     }
