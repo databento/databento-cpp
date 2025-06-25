@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 0.38.1 - TBD
+## 0.38.1 - 2025-06-25
 
 ### Enhancements
 - Added `range_by_schema` field to `DatasetRange` struct

@@ -37,7 +37,7 @@ struct DatasetConditionDetail {
 struct DatasetRange {
   std::string start;
   std::string end;
-  std::unordered_map<Schema, DateTimeRange<std::string>> range_by_schema;
+  std::map<Schema, DateTimeRange<std::string>> range_by_schema;
 };
 
 inline bool operator==(const PublisherDetail& lhs, const PublisherDetail& rhs) {

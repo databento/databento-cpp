@@ -14,7 +14,6 @@
 #include <sstream>
 #include <string>
 #include <system_error>
-#include <unordered_map>
 #include <utility>  // move
 
 #include "databento/constants.hpp"
@@ -537,7 +536,7 @@ databento::DatasetRange Historical::MetadataGetDatasetRange(
   if (!schema_json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "schema object", json);
   }
-  std::unordered_map<Schema, DateTimeRange<std::string>> range_by_schema;
+  std::map<Schema, DateTimeRange<std::string>> range_by_schema;
   for (const auto& schema_item : schema_json.items()) {
     if (!schema_item.value().is_object()) {
       throw JsonResponseError::TypeMismatch(kEndpoint, "nested schema object",
