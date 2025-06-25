@@ -5,8 +5,10 @@
 
 #include <cstddef>
 #include <map>
+#include <memory>
 #include <string>
 
+#include "databento/detail/buffer.hpp"
 #include "databento/detail/scoped_thread.hpp"
 #include "databento/record.hpp"
 
@@ -23,7 +25,7 @@ class MockHttpServer {
   ~MockHttpServer() { server_.stop(); }
 
   int ListenOnThread();
-  void MockBadRequest(const std::string& path, const nlohmann::json& json);
+  void MockBadPostRequest(const std::string& path, const nlohmann::json& json);
   void MockGetJson(const std::string& path, const nlohmann::json& json);
   void MockGetJson(const std::string& path,
                    const std::map<std::string, std::string>& params,
@@ -34,22 +36,31 @@ class MockHttpServer {
   void MockPostJson(const std::string& path,
                     const std::map<std::string, std::string>& params,
                     const nlohmann::json& json);
-  void MockStreamDbn(const std::string& path,
-                     const std::map<std::string, std::string>& params,
-                     const std::string& dbn_path);
-  void MockStreamDbn(const std::string& path,
-                     const std::map<std::string, std::string>& params,
-                     Record record, std::size_t count, std::size_t chunk_size);
-  void MockStreamDbn(const std::string& path,
-                     const std::map<std::string, std::string>& params,
-                     Record record, std::size_t count, std::size_t extra_bytes,
-                     std::size_t chunk_size);
+  void MockGetDbn(const std::string& path,
+                  const std::map<std::string, std::string>& params,
+                  const std::string& dbn_path);
+  void MockPostDbn(const std::string& path,
+                   const std::map<std::string, std::string>& params,
+                   const std::string& dbn_path);
+  void MockPostDbn(const std::string& path,
+                   const std::map<std::string, std::string>& params,
+                   Record record, std::size_t count, std::size_t chunk_size);
+  void MockPostDbn(const std::string& path,
+                   const std::map<std::string, std::string>& params,
+                   Record record, std::size_t count, std::size_t extra_bytes,
+                   std::size_t chunk_size);
 
  private:
+  using SharedConstBuffer = std::shared_ptr<const detail::Buffer>;
+
   static void CheckParams(const std::map<std::string, std::string>& params,
                           const httplib::Request& req);
   static void CheckFormParams(const std::map<std::string, std::string>& params,
                               const httplib::Request& req);
+  static SharedConstBuffer EncodeToBuffer(const std::string& dbn_path);
+  static httplib::Server::Handler MakeDbnStreamHandler(
+      const std::map<std::string, std::string>& params,
+      SharedConstBuffer&& buffer, std::size_t chunk_size);
 
   httplib::Server server_{};
   const int port_{};

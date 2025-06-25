@@ -81,7 +81,7 @@ enum class Venue : std::uint16_t {
   Bato = 36,
   // MEMX Options
   Mxop = 37,
-  // ICE Futures Europe (Commodities)
+  // ICE Europe Commodities
   Ifeu = 38,
   // ICE Endex
   Ndex = 39,
@@ -103,7 +103,7 @@ enum class Venue : std::uint16_t {
   Equs = 47,
   // ICE Futures US
   Ifus = 48,
-  // ICE Futures Europe (Financials)
+  // ICE Europe Financials
   Ifll = 49,
   // Eurex Exchange
   Xeur = 50,
@@ -167,7 +167,7 @@ enum class Dataset : std::uint16_t {
   XnasQbbo = 26,
   // Nasdaq NLS
   XnasNls = 27,
-  // ICE Futures Europe (Commodities) iMpact
+  // ICE Europe Commodities iMpact
   IfeuImpact = 28,
   // ICE Endex iMpact
   NdexImpact = 29,
@@ -185,7 +185,7 @@ enum class Dataset : std::uint16_t {
   EqusMini = 35,
   // ICE Futures US iMpact
   IfusImpact = 36,
-  // ICE Futures Europe (Financials) iMpact
+  // ICE Europe Financials iMpact
   IfllImpact = 37,
   // Eurex EOBI
   XeurEobi = 38,
@@ -307,7 +307,7 @@ enum class Publisher : std::uint16_t {
   EqusPlusFiny = 55,
   // Databento US Equities Plus - FINRA/Nasdaq TRF Chicago
   EqusPlusFinc = 56,
-  // ICE Futures Europe (Commodities)
+  // ICE Europe Commodities
   IfeuImpactIfeu = 57,
   // ICE Endex
   NdexImpactNdex = 58,
@@ -361,7 +361,7 @@ enum class Publisher : std::uint16_t {
   XnasBasicFinn = 82,
   // Nasdaq Basic - FINRA/Nasdaq TRF Chicago
   XnasBasicFinc = 83,
-  // ICE Futures Europe - Off-Market Trades
+  // ICE Europe - Off-Market Trades
   IfeuImpactXoff = 84,
   // ICE Endex - Off-Market Trades
   NdexImpactXoff = 85,
@@ -391,9 +391,9 @@ enum class Publisher : std::uint16_t {
   IfusImpactIfus = 97,
   // ICE Futures US - Off-Market Trades
   IfusImpactXoff = 98,
-  // ICE Futures Europe (Financials)
+  // ICE Europe Financials
   IfllImpactIfll = 99,
-  // ICE Futures Europe (Financials) - Off-Market Trades
+  // ICE Europe Financials - Off-Market Trades
   IfllImpactXoff = 100,
   // Eurex EOBI
   XeurEobiXeur = 101,

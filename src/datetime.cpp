@@ -10,6 +10,7 @@
 #include <sstream>  // ostringstream
 
 #include "databento/constants.hpp"  // kUndefTimestamp
+#include "stream_op_helper.hpp"
 
 namespace databento {
 std::string ToIso8601(UnixNanos unix_nanos) {
@@ -60,5 +61,33 @@ std::string DateFromIso8601Int(std::uint32_t date_int) {
   out_ss << year << '-' << std::setfill('0') << std::setw(2) << month << '-'
          << std::setfill('0') << std::setw(2) << day;
   return out_ss.str();
+}
+
+std::string ToString(const DateTimeRange<std::string>& dt_range) {
+  return MakeString(dt_range);
+}
+std::ostream& operator<<(std::ostream& stream,
+                         const DateTimeRange<std::string>& dt_range) {
+  return StreamOpBuilder{stream}
+      .SetSpacer(" ")
+      .SetTypeName("DateTimeRange")
+      .Build()
+      .AddField("start", dt_range.start)
+      .AddField("end", dt_range.end)
+      .Finish();
+}
+
+std::string ToString(const DateTimeRange<UnixNanos>& dt_range) {
+  return MakeString(dt_range);
+}
+std::ostream& operator<<(std::ostream& stream,
+                         const DateTimeRange<UnixNanos>& dt_range) {
+  return StreamOpBuilder{stream}
+      .SetSpacer(" ")
+      .SetTypeName("DateTimeRange")
+      .Build()
+      .AddField("start", dt_range.start)
+      .AddField("end", dt_range.end)
+      .Finish();
 }
 }  // namespace databento

@@ -1,5 +1,22 @@
 # Changelog
 
+
+## 0.38.1 - 2025-06-25
+
+### Enhancements
+- Added `range_by_schema` field to `DatasetRange` struct
+- Changed historical `TimeseriesGetRange` and `TimeseriesGetRangeToFile` methods to use
+  a `POST` request to allow for requesting supported maximum of 2000 symbols
+- Added logging around `Historical::BatchDownload`
+- Changed the following Venue, Publisher, and Dataset descriptions:
+  - "ICE Futures Europe (Financials)" renamed to "ICE Europe Financials"
+  - "ICE Futures Europe (Commodities)" renamed to "ICE Europe Commodities"
+
+### Bug fixes
+- Fixed handling of `null` `last_modified_date` in `MetadataGetDatasetCondition`
+  response
+- Fixed default `ShouldLog` implementation
+
 ## 0.38.0 - 2025-06-10
 
 ### Enhancements
@@ -161,8 +178,8 @@ upgrading data to version 3.
 ## 0.31.0 - 2025-03-18
 
 ### Enhancements
-- Added new venues, datasets, and publishers for ICE Futures US, ICE Futures Europe
-  (Financial products), Eurex, and European Energy Exchange (EEX)
+- Added new venues, datasets, and publishers for ICE Futures US, ICE Europe Financials
+  products, Eurex, and European Energy Exchange (EEX)
 
 ## 0.30.0 - 2025-02-11
 

@@ -60,7 +60,7 @@ class StreamOpHelper {
   template <typename T>
   void FmtToStream(const std::optional<T>& val) {
     if (val.has_value()) {
-      stream_ << *val;
+      FmtToStream(*val);
     } else {
       stream_ << "nullopt";
     }
@@ -105,6 +105,19 @@ class StreamOpHelper {
     }
     stream_ << spacer_ << indent_;
     FmtToStream(item);
+    is_first_ = false;
+    return *this;
+  }
+
+  template <typename K, typename V>
+  StreamOpHelper& AddKeyVal(const K& key, const V& val) {
+    if (!is_first_) {
+      stream_ << ',';
+    }
+    stream_ << spacer_ << indent_;
+    FmtToStream(key);
+    stream_ << ": ";
+    FmtToStream(val);
     is_first_ = false;
     return *this;
   }

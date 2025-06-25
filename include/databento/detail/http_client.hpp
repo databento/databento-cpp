@@ -24,15 +24,23 @@ class HttpClient {
   nlohmann::json GetJson(const std::string& path,
                          const httplib::Params& params);
   nlohmann::json PostJson(const std::string& path,
-                          const httplib::Params& params);
+                          const httplib::Params& form_params);
   void GetRawStream(const std::string& path, const httplib::Params& params,
                     const httplib::ContentReceiver& callback);
+  void PostRawStream(const std::string& path,
+                     const httplib::Params& form_params,
+                     const httplib::ContentReceiver& callback);
 
  private:
+  static bool IsErrorStatus(int status_code);
+  static httplib::ResponseHandler MakeStreamResponseHandler(int& out_status);
+  static void CheckStatusAndStreamRes(const std::string& path, int status_code,
+                                      std::string&& err_body,
+                                      const httplib::Result& res);
+
   nlohmann::json CheckAndParseResponse(const std::string& path,
                                        httplib::Result&& res) const;
   void CheckWarnings(const httplib::Response& response) const;
-  static bool IsErrorStatus(int status_code);
 
   static const httplib::Headers kHeaders;
 

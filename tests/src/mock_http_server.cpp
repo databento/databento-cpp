@@ -4,15 +4,14 @@
 #include <httplib.h>
 
 #include <cstddef>
-#include <fstream>   // ifstream
-#include <ios>       // streamsize
-#include <iostream>  // cerr
 #include <vector>
 
 #include "databento/constants.hpp"
 #include "databento/dbn.hpp"
 #include "databento/dbn_encoder.hpp"
+#include "databento/detail/buffer.hpp"
 #include "databento/detail/zstd_stream.hpp"
+#include "databento/file_stream.hpp"
 #include "databento/record.hpp"
 
 using databento::tests::mock::MockHttpServer;
@@ -23,9 +22,9 @@ int MockHttpServer::ListenOnThread() {
   return port_;
 }
 
-void MockHttpServer::MockBadRequest(const std::string& path,
-                                    const nlohmann::json& json) {
-  server_.Get(path, [json](const httplib::Request&, httplib::Response& resp) {
+void MockHttpServer::MockBadPostRequest(const std::string& path,
+                                        const nlohmann::json& json) {
+  server_.Post(path, [json](const httplib::Request&, httplib::Response& resp) {
     resp.status = 400;
     resp.body = json.dump();
   });
@@ -78,50 +77,39 @@ void MockHttpServer::MockPostJson(
   });
 }
 
-void MockHttpServer::MockStreamDbn(
+void MockHttpServer::MockGetDbn(
     const std::string& path, const std::map<std::string, std::string>& params,
     const std::string& dbn_path) {
   constexpr std::size_t kChunkSize = 32;
 
   // Read contents into buffer
-  std::ifstream input_file{dbn_path, std::ios::binary | std::ios::ate};
-  const auto size = static_cast<std::size_t>(input_file.tellg());
-  input_file.seekg(0, std::ios::beg);
-  std::vector<char> buffer(size);
-  input_file.read(buffer.data(), static_cast<std::streamsize>(size));
+  auto buffer = EncodeToBuffer(dbn_path);
 
   // Serve
-  server_.Get(path, [buffer = std::move(buffer), kChunkSize, params](
-                        const httplib::Request& req, httplib::Response& resp) {
-    if (!req.has_header("Authorization")) {
-      resp.status = 401;
-      return;
-    }
-    CheckParams(params, req);
-    resp.status = 200;
-    resp.set_header("Content-Disposition", "attachment; filename=test.dbn.zst");
-    resp.set_content_provider(
-        "application/octet-stream",
-        [buffer, kChunkSize](const std::size_t offset,
-                             httplib::DataSink& sink) {
-          if (offset < buffer.size()) {
-            sink.write(&buffer[offset],
-                       std::min(kChunkSize, buffer.size() - offset));
-          } else {
-            sink.done();
-          }
-          return true;
-        });
-  });
+  server_.Get(path,
+              MakeDbnStreamHandler(params, std::move(buffer), kChunkSize));
 }
 
-void MockHttpServer::MockStreamDbn(
+void MockHttpServer::MockPostDbn(
+    const std::string& path, const std::map<std::string, std::string>& params,
+    const std::string& dbn_path) {
+  constexpr std::size_t kChunkSize = 32;
+
+  // Read contents into buffer
+  auto buffer = EncodeToBuffer(dbn_path);
+
+  // Serve
+  server_.Post(path,
+               MakeDbnStreamHandler(params, std::move(buffer), kChunkSize));
+}
+
+void MockHttpServer::MockPostDbn(
     const std::string& path, const std::map<std::string, std::string>& params,
     Record record, std::size_t count, std::size_t chunk_size) {
-  MockStreamDbn(path, params, record, count, 0, chunk_size);
+  MockPostDbn(path, params, record, count, 0, chunk_size);
 }
 
-void MockHttpServer::MockStreamDbn(
+void MockHttpServer::MockPostDbn(
     const std::string& path, const std::map<std::string, std::string>& params,
     Record record, std::size_t count, std::size_t extra_bytes,
     std::size_t chunk_size) {
@@ -146,31 +134,8 @@ void MockHttpServer::MockStreamDbn(
       zstd_stream.WriteAll(empty.data(), empty.size());
     }
   }
-  server_.Get(path, [params, buffer, count, record, chunk_size](
-                        const httplib::Request& req, httplib::Response& resp) {
-    if (!req.has_header("Authorization")) {
-      resp.status = 401;
-      return;
-    }
-    CheckParams(params, req);
-    resp.status = 200;
-    resp.set_header("Content-Disposition", "attachment; filename=test.dbn.zst");
-    resp.set_content_provider(
-        "application/octet-stream",
-        [&buffer, chunk_size](const std::size_t offset,
-                              httplib::DataSink& sink) {
-          if (buffer->ReadCapacity() - offset) {
-            const auto write_size =
-                std::min(chunk_size, buffer->ReadCapacity() - offset);
-            sink.write(
-                reinterpret_cast<const char*>(&buffer->ReadBegin()[offset]),
-                write_size);
-          } else {
-            sink.done();
-          }
-          return true;
-        });
-  });
+  server_.Post(path,
+               MakeDbnStreamHandler(params, std::move(buffer), chunk_size));
 }
 
 void MockHttpServer::CheckParams(
@@ -204,4 +169,46 @@ void MockHttpServer::CheckFormParams(
           << param.second << ", found " << param_it->second;
     }
   }
+}
+
+MockHttpServer::SharedConstBuffer MockHttpServer::EncodeToBuffer(
+    const std::string& dbn_path) {
+  detail::Buffer buffer{};
+  InFileStream input_file{dbn_path};
+  while (auto read_size =
+             input_file.ReadSome(buffer.WriteBegin(), buffer.WriteCapacity())) {
+    buffer.Fill(read_size);
+    if (buffer.WriteCapacity() < 1024) {
+      buffer.Reserve(buffer.Capacity() * 2);
+    }
+  }
+  return std::make_shared<const databento::detail::Buffer>(std::move(buffer));
+}
+
+httplib::Server::Handler MockHttpServer::MakeDbnStreamHandler(
+    const std::map<std::string, std::string>& params,
+    SharedConstBuffer&& buffer, std::size_t chunk_size) {
+  return [buffer = std::move(buffer), chunk_size, params](
+             const httplib::Request& req, httplib::Response& resp) {
+    if (!req.has_header("Authorization")) {
+      resp.status = 401;
+      return;
+    }
+    CheckParams(params, req);
+    resp.status = 200;
+    resp.set_header("Content-Disposition", "attachment; filename=test.dbn.zst");
+    resp.set_content_provider(
+        "application/octet-stream",
+        [buffer, chunk_size](const std::size_t offset,
+                             httplib::DataSink& sink) {
+          if (offset < buffer->ReadCapacity()) {
+            sink.write(
+                reinterpret_cast<const char*>(&buffer->ReadBegin()[offset]),
+                std::min(chunk_size, buffer->ReadCapacity() - offset));
+          } else {
+            sink.done();
+          }
+          return true;
+        });
+  };
 }

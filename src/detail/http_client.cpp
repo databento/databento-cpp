@@ -53,25 +53,64 @@ void HttpClient::GetRawStream(const std::string& path,
   const std::string full_path = httplib::append_query_params(path, params);
   std::string err_body{};
   int err_status{};
-  const httplib::Result res = client_.Get(
-      full_path,
-      [&err_status](const httplib::Response& resp) {
-        if (HttpClient::IsErrorStatus(resp.status)) {
-          err_status = resp.status;
-        }
-        return true;
-      },
-      [&callback, &err_body, &err_status](const char* data,
-                                          std::size_t length) {
-        // if an error response was received, read all content into err_status
-        if (err_status > 0) {
-          err_body.append(data, length);
-          return true;
-        }
-        return callback(data, length);
-      });
-  if (err_status > 0) {
-    throw HttpResponseError{path, err_status, std::move(err_body)};
+  const httplib::Result res =
+      client_.Get(full_path, MakeStreamResponseHandler(err_status),
+                  [&callback, &err_body, &err_status](const char* data,
+                                                      std::size_t length) {
+                    // if an error response was received, read all content into
+                    // err_body
+                    if (err_status > 0) {
+                      err_body.append(data, length);
+                      return true;
+                    }
+                    return callback(data, length);
+                  });
+  CheckStatusAndStreamRes(path, err_status, std::move(err_body), res);
+}
+
+void HttpClient::PostRawStream(const std::string& path,
+                               const httplib::Params& form_params,
+                               const httplib::ContentReceiver& callback) {
+  std::string err_body{};
+  int err_status{};
+  httplib::Request req;
+  req.method = "POST";
+  req.set_header("Content-Type", "application/x-www-form-urlencoded");
+  req.path = path;
+  req.body = httplib::detail::params_to_query_str(form_params);
+  req.response_handler = MakeStreamResponseHandler(err_status);
+  req.content_receiver = [&callback, &err_body, &err_status](
+                             const char* data, std::size_t length,
+                             std::uint64_t, std::uint64_t) {
+    // if an error response was received, read all content into
+    // err_body
+    if (err_status > 0) {
+      err_body.append(data, length);
+      return true;
+    }
+    return callback(data, length);
+  };
+  // NOLINTNEXTLINE(clang-analyzer-unix.BlockInCriticalSection): dependency code
+  const httplib::Result res = client_.send(req);
+  CheckStatusAndStreamRes(path, err_status, std::move(err_body), res);
+}
+
+httplib::ResponseHandler HttpClient::MakeStreamResponseHandler(
+    int& out_status) {
+  return [&out_status](const httplib::Response& resp) {
+    if (HttpClient::IsErrorStatus(resp.status)) {
+      out_status = resp.status;
+    }
+    return true;
+  };
+}
+
+void HttpClient::CheckStatusAndStreamRes(const std::string& path,
+                                         int status_code,
+                                         std::string&& err_body,
+                                         const httplib::Result& res) {
+  if (status_code > 0) {
+    throw HttpResponseError{path, status_code, std::move(err_body)};
   }
   if (res.error() != httplib::Error::Success &&
       // canceled happens if `callback` returns false, which is based on the

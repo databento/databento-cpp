@@ -1,6 +1,7 @@
 #include "databento/metadata.hpp"
 
 #include <ostream>
+#include <sstream>
 
 #include "stream_op_helper.hpp"
 
@@ -55,12 +56,22 @@ std::string ToString(const DatasetRange& dataset_range) {
 }
 std::ostream& operator<<(std::ostream& stream,
                          const DatasetRange& dataset_range) {
+  std::ostringstream range_by_schema_ss;
+  auto range_by_schema_helper = StreamOpBuilder{range_by_schema_ss}
+                                    .SetSpacer("\n    ")
+                                    .SetIndent("    ")
+                                    .Build();
+  for (const auto& [schema, range] : dataset_range.range_by_schema) {
+    range_by_schema_helper.AddKeyVal(schema, range);
+  }
+  range_by_schema_helper.Finish();
   return StreamOpBuilder{stream}
-      .SetSpacer(" ")
+      .SetSpacer("\n    ")
       .SetTypeName("DatasetRange")
       .Build()
       .AddField("start", dataset_range.start)
       .AddField("end", dataset_range.end)
+      .AddField("range_by_schema", range_by_schema_ss)
       .Finish();
 }
 }  // namespace databento

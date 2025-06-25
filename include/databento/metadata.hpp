@@ -2,9 +2,12 @@
 
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <ostream>
 #include <string>
+#include <unordered_map>
 
+#include "databento/datetime.hpp"
 #include "databento/enums.hpp"  // FeedMode, DatasetCondition, Schema
 
 namespace databento {
@@ -28,12 +31,13 @@ struct UnitPricesForMode {
 struct DatasetConditionDetail {
   std::string date;
   DatasetCondition condition;
-  std::string last_modified_date;
+  std::optional<std::string> last_modified_date;
 };
 
 struct DatasetRange {
   std::string start;
   std::string end;
+  std::map<Schema, DateTimeRange<std::string>> range_by_schema;
 };
 
 inline bool operator==(const PublisherDetail& lhs, const PublisherDetail& rhs) {
@@ -71,7 +75,8 @@ inline bool operator!=(const DatasetConditionDetail& lhs,
 }
 
 inline bool operator==(const DatasetRange& lhs, const DatasetRange& rhs) {
-  return lhs.start == rhs.start && lhs.end == rhs.end;
+  return lhs.start == rhs.start && lhs.end == rhs.end &&
+         lhs.range_by_schema == rhs.range_by_schema;
 }
 inline bool operator!=(const DatasetRange& lhs, const DatasetRange& rhs) {
   return !(lhs == rhs);

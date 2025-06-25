@@ -37,7 +37,7 @@ class ConsoleLogReceiver : public ILogReceiver {
 
   void Receive(LogLevel level, const std::string& msg) override;
   bool ShouldLog(databento::LogLevel level) const override {
-    return level > min_level_;
+    return level >= min_level_;
   }
 
  private:

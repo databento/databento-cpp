@@ -315,38 +315,43 @@ std::filesystem::path Historical::BatchDownload(
   return output_path;
 }
 
-void Historical::StreamToFile(const std::string& url_path,
-                              const HttplibParams& params,
-                              const std::filesystem::path& file_path) {
-  OutFileStream out_file{file_path};
-  this->client_.GetRawStream(
-      url_path, params, [&out_file](const char* data, std::size_t length) {
-        out_file.WriteAll(reinterpret_cast<const std::byte*>(data), length);
-        return true;
-      });
-}
-
 void Historical::DownloadFile(const std::string& url,
                               const std::filesystem::path& output_path) {
-  static const std::string kEndpoint = "Historical::DownloadFile";
+  static const std::string kMethod = "Historical::DownloadFile";
   // extract path from URL
   const auto protocol_divider = url.find("://");
   std::string path;
+
   if (protocol_divider == std::string::npos) {
     const auto slash = url.find_first_of('/');
     if (slash == std::string::npos) {
-      throw InvalidArgumentError{kEndpoint, "url", "No slashes"};
+      throw InvalidArgumentError{kMethod, "url", "No slashes"};
     }
     path = url.substr(slash);
   } else {
     const auto slash = url.find('/', protocol_divider + 3);
     if (slash == std::string::npos) {
-      throw InvalidArgumentError{kEndpoint, "url", "No slashes"};
+      throw InvalidArgumentError{kMethod, "url", "No slashes"};
     }
     path = url.substr(slash);
   }
+  std::ostringstream ss;
+  ss << '[' << kMethod << "] Downloading batch file " << path << " to "
+     << output_path;
+  log_receiver_->Receive(LogLevel::Info, ss.str());
 
-  StreamToFile(path, {}, output_path);
+  OutFileStream out_file{output_path};
+  this->client_.GetRawStream(
+      path, {}, [&out_file](const char* data, std::size_t length) {
+        out_file.WriteAll(reinterpret_cast<const std::byte*>(data), length);
+        return true;
+      });
+
+  if (log_receiver_->ShouldLog(LogLevel::Debug)) {
+    ss.str("");
+    ss << '[' << kMethod << ']' << " Completed download of " << path;
+    log_receiver_->Receive(LogLevel::Debug, ss.str());
+  }
 }
 
 std::vector<databento::PublisherDetail> Historical::MetadataListPublishers() {
@@ -508,12 +513,10 @@ Historical::MetadataGetDatasetCondition(const httplib::Params& params) {
     if (!detail_json.is_object()) {
       throw JsonResponseError::TypeMismatch(kEndpoint, "object", detail_json);
     }
-    std::string date =
-        detail::ParseAt<std::string>(kEndpoint, detail_json, "date");
-    const DatasetCondition condition =
-        detail::FromCheckedAtString<DatasetCondition>(kEndpoint, detail_json,
-                                                      "condition");
-    std::string last_modified_date = detail::ParseAt<std::string>(
+    auto date = detail::ParseAt<std::string>(kEndpoint, detail_json, "date");
+    const auto condition = detail::FromCheckedAtString<DatasetCondition>(
+        kEndpoint, detail_json, "condition");
+    auto last_modified_date = detail::ParseAt<std::optional<std::string>>(
         kEndpoint, detail_json, "last_modified_date");
     details.emplace_back(DatasetConditionDetail{std::move(date), condition,
                                                 std::move(last_modified_date)});
@@ -529,8 +532,27 @@ databento::DatasetRange Historical::MetadataGetDatasetRange(
   if (!json.is_object()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "object", json);
   }
+  const auto& schema_json = detail::CheckedAt(kEndpoint, json, "schema");
+  if (!schema_json.is_object()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "schema object", json);
+  }
+  std::map<Schema, DateTimeRange<std::string>> range_by_schema;
+  for (const auto& schema_item : schema_json.items()) {
+    if (!schema_item.value().is_object()) {
+      throw JsonResponseError::TypeMismatch(kEndpoint, "nested schema object",
+                                            json);
+    }
+    auto start =
+        detail::ParseAt<std::string>(kEndpoint, schema_item.value(), "start");
+    auto end =
+        detail::ParseAt<std::string>(kEndpoint, schema_item.value(), "end");
+    range_by_schema.emplace(
+        FromString<Schema>(schema_item.key()),
+        DateTimeRange<std::string>{std::move(start), std::move(end)});
+  }
   return DatasetRange{detail::ParseAt<std::string>(kEndpoint, json, "start"),
-                      detail::ParseAt<std::string>(kEndpoint, json, "end")};
+                      detail::ParseAt<std::string>(kEndpoint, json, "end"),
+                      std::move(range_by_schema)};
 }
 
 static const std::string kMetadataGetRecordCountEndpoint =
@@ -851,7 +873,7 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
   detail::DbnBufferDecoder decoder{metadata_callback, record_callback};
 
   bool early_exit = false;
-  this->client_.GetRawStream(
+  this->client_.PostRawStream(
       kTimeseriesGetRangePath, params,
       [&decoder, &early_exit](const char* data, std::size_t length) mutable {
         if (decoder.Process(data, length) == KeepGoing::Continue) {
@@ -930,7 +952,15 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
 }
 databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
     const HttplibParams& params, const std::filesystem::path& file_path) {
-  StreamToFile(kTimeseriesGetRangePath, params, file_path);
+  {
+    OutFileStream out_file{file_path};
+    this->client_.PostRawStream(
+        kTimeseriesGetRangePath, params,
+        [&out_file](const char* data, std::size_t length) {
+          out_file.WriteAll(reinterpret_cast<const std::byte*>(data), length);
+          return true;
+        });
+  }  // Flush out_file
   return DbnFileStore{log_receiver_, file_path,
                       VersionUpgradePolicy::UpgradeToV3};
 }
