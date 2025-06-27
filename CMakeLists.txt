@@ -60,12 +60,17 @@ if(IS_BIG_ENDIAN)
 endif()
 
 #
-# Add version header
+# Add templated headers
 #
 
 configure_file(
   ${CMAKE_CURRENT_LIST_DIR}/cmake/version.hpp.in
   include/${PROJECT_NAME}/version.hpp
+  @ONLY
+)
+configure_file(
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/system.hpp.in
+  include/${PROJECT_NAME}/system.hpp
   @ONLY
 )
 
@@ -237,7 +242,7 @@ target_include_directories(
   PUBLIC
     $<INSTALL_INTERFACE:include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>   # for generated version.hpp
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>   # for generated version.hpp and system.hpp
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
@@ -310,6 +315,7 @@ install(
 )
 install(
   FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/system.hpp
     ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/version.hpp
   DESTINATION
     ${INCLUDE_INSTALL_DIR}

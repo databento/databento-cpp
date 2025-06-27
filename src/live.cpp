@@ -72,18 +72,28 @@ LiveBuilder& LiveBuilder::SetAddress(std::string gateway, std::uint16_t port) {
   return *this;
 }
 
+LiveBuilder& LiveBuilder::SetBufferSize(std::size_t size) {
+  buffer_size_ = size;
+  return *this;
+}
+
+LiveBuilder& LiveBuilder::ExtendUserAgent(std::string extension) {
+  user_agent_ext_ = std::move(extension);
+  return *this;
+}
+
 databento::LiveBlocking LiveBuilder::BuildBlocking() {
   Validate();
   if (gateway_.empty()) {
     return databento::LiveBlocking{log_receiver_,   key_,
                                    dataset_,        send_ts_out_,
                                    upgrade_policy_, heartbeat_interval_,
-                                   buffer_size_};
+                                   buffer_size_,    user_agent_ext_};
   }
   return databento::LiveBlocking{
-      log_receiver_, key_,         dataset_,        gateway_,
-      port_,         send_ts_out_, upgrade_policy_, heartbeat_interval_,
-      buffer_size_};
+      log_receiver_, key_,           dataset_,        gateway_,
+      port_,         send_ts_out_,   upgrade_policy_, heartbeat_interval_,
+      buffer_size_,  user_agent_ext_};
 }
 
 databento::LiveThreaded LiveBuilder::BuildThreaded() {
@@ -92,12 +102,12 @@ databento::LiveThreaded LiveBuilder::BuildThreaded() {
     return databento::LiveThreaded{log_receiver_,   key_,
                                    dataset_,        send_ts_out_,
                                    upgrade_policy_, heartbeat_interval_,
-                                   buffer_size_};
+                                   buffer_size_,    user_agent_ext_};
   }
   return databento::LiveThreaded{
-      log_receiver_, key_,         dataset_,        gateway_,
-      port_,         send_ts_out_, upgrade_policy_, heartbeat_interval_,
-      buffer_size_};
+      log_receiver_, key_,           dataset_,        gateway_,
+      port_,         send_ts_out_,   upgrade_policy_, heartbeat_interval_,
+      buffer_size_,  user_agent_ext_};
 }
 
 void LiveBuilder::Validate() {

@@ -1,4 +1,4 @@
-#include <iostream>  // setw
+#include <iostream>
 
 #include "databento/constants.hpp"
 #include "databento/enums.hpp"

@@ -128,13 +128,29 @@ Historical::Historical(ILogReceiver* log_receiver, std::string key,
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       gateway_{UrlFromGateway(gateway)},
+      upgrade_policy_{VersionUpgradePolicy::UpgradeToV3},
       client_{log_receiver, key_, gateway_} {}
 
 Historical::Historical(ILogReceiver* log_receiver, std::string key,
-                       std::string gateway, std::uint16_t port)
+                       HistoricalGateway gateway,
+                       VersionUpgradePolicy upgrade_policy,
+                       std::string user_agent_ext)
+    : log_receiver_{log_receiver},
+      key_{std::move(key)},
+      gateway_{UrlFromGateway(gateway)},
+      user_agent_ext_{std::move(user_agent_ext)},
+      upgrade_policy_{upgrade_policy},
+      client_{log_receiver, key_, gateway_} {}
+
+Historical::Historical(ILogReceiver* log_receiver, std::string key,
+                       std::string gateway, std::uint16_t port,
+                       VersionUpgradePolicy upgrade_policy,
+                       std::string user_agent_ext)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       gateway_{std::move(gateway)},
+      user_agent_ext_{std::move(user_agent_ext)},
+      upgrade_policy_{upgrade_policy},
       client_{log_receiver, key_, gateway_, port} {}
 
 static const std::string kBatchSubmitJobEndpoint = "Historical::BatchSubmitJob";
@@ -870,7 +886,8 @@ enum class DecoderState : std::uint8_t {
 void Historical::TimeseriesGetRange(const HttplibParams& params,
                                     const MetadataCallback& metadata_callback,
                                     const RecordCallback& record_callback) {
-  detail::DbnBufferDecoder decoder{metadata_callback, record_callback};
+  detail::DbnBufferDecoder decoder{upgrade_policy_, metadata_callback,
+                                   record_callback};
 
   bool early_exit = false;
   this->client_.PostRawStream(
@@ -961,8 +978,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
           return true;
         });
   }  // Flush out_file
-  return DbnFileStore{log_receiver_, file_path,
-                      VersionUpgradePolicy::UpgradeToV3};
+  return DbnFileStore{log_receiver_, file_path, upgrade_policy_};
 }
 
 using databento::HistoricalBuilder;
@@ -992,6 +1008,24 @@ HistoricalBuilder& HistoricalBuilder::SetLogReceiver(
   return *this;
 }
 
+HistoricalBuilder& HistoricalBuilder::SetUpgradePolicy(
+    VersionUpgradePolicy upgrade_policy) {
+  upgrade_policy_ = upgrade_policy;
+  return *this;
+}
+
+HistoricalBuilder& HistoricalBuilder::SetAddress(std::string gateway,
+                                                 std::uint16_t port) {
+  gateway_override_ = std::move(gateway);
+  port_ = port;
+  return *this;
+}
+
+HistoricalBuilder& HistoricalBuilder::ExtendUserAgent(std::string extension) {
+  user_agent_ext_ = std::move(extension);
+  return *this;
+}
+
 Historical HistoricalBuilder::Build() {
   if (key_.empty()) {
     throw Exception{"'key' is unset"};
@@ -999,5 +1033,10 @@ Historical HistoricalBuilder::Build() {
   if (log_receiver_ == nullptr) {
     log_receiver_ = databento::ILogReceiver::Default();
   }
-  return Historical{log_receiver_, key_, gateway_};
+  if (gateway_override_.empty()) {
+    return Historical{log_receiver_, key_, gateway_, upgrade_policy_,
+                      user_agent_ext_};
+  }
+  return Historical{log_receiver_,   key_,           gateway_override_, port_,
+                    upgrade_policy_, user_agent_ext_};
 }

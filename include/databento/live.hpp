@@ -20,7 +20,7 @@ class LiveBuilder {
   LiveBuilder();
 
   /*
-   * Required settters
+   * Required setters
    */
 
   // Sets `key_` based on the environment variable DATABENTO_API_KEY.
@@ -33,13 +33,13 @@ class LiveBuilder {
   LiveBuilder& SetDataset(std::string dataset);
 
   /*
-   * Optional settters
+   * Optional setters
    */
 
   // Whether to append the gateway send timestamp after each DBN message.
   LiveBuilder& SetSendTsOut(bool send_ts_out);
   // Set the version upgrade policy for when receiving DBN data from a prior
-  // version. Defaults to upgrading to DBNv2 (if not already).
+  // version. Defaults to upgrading to DBNv3 (if not already).
   LiveBuilder& SetUpgradePolicy(VersionUpgradePolicy upgrade_policy);
   // Sets the receiver of the logs to be used by the client.
   LiveBuilder& SetLogReceiver(ILogReceiver* log_receiver);
@@ -49,13 +49,15 @@ class LiveBuilder {
   LiveBuilder& SetAddress(std::string gateway, std::uint16_t port);
   // Overrides the size of the buffer used for reading data from the TCP socket.
   LiveBuilder& SetBufferSize(std::size_t size);
+  // Appends to the default user agent.
+  LiveBuilder& ExtendUserAgent(std::string extension);
 
   /*
    * Build a live client instance
    */
 
-  // Attempts to construct an instance of a blocking live client or throws an
-  // exception.
+  // Attempts to construct an instance of a blocking live client or throws
+  // an exception.
   LiveBlocking BuildBlocking();
   // Attempts to construct an instance of a threaded live client or throws an
   // exception.
@@ -74,5 +76,6 @@ class LiveBuilder {
   VersionUpgradePolicy upgrade_policy_{VersionUpgradePolicy::UpgradeToV3};
   std::optional<std::chrono::seconds> heartbeat_interval_{};
   std::size_t buffer_size_;
+  std::string user_agent_ext_;
 };
 }  // namespace databento

@@ -2,6 +2,11 @@
 
 #include <iostream>
 #include <memory>
+#include <sstream>
+
+#include "databento/system.hpp"
+#include "databento/version.hpp"
+#include "stream_op_helper.hpp"
 
 databento::ILogReceiver* databento::ILogReceiver::Default() {
   static const std::unique_ptr<ILogReceiver> gDefaultLogger{
@@ -49,5 +54,21 @@ const char* ToString(LogLevel level) {
       return "UNKNOWN";
     };
   }
+}
+
+void LogPlatformInfo() { LogPlatformInfo(ILogReceiver::Default()); }
+
+void LogPlatformInfo(ILogReceiver* log_receiver) {
+  std::ostringstream ss;
+  StreamOpBuilder{ss}
+      .SetSpacer(" ")
+      .Build()
+      .AddField("client_version", DATABENTO_VERSION)
+      .AddField("compiler", DATABENTO_CXX_COMPILER_ID)
+      .AddField("compiler_version", DATABENTO_CXX_COMPILER_VERSION)
+      .AddField("os", DATABENTO_SYSTEM_ID)
+      .AddField("os_version", DATABENTO_SYSTEM_VERSION)
+      .Finish();
+  log_receiver->Receive(LogLevel::Info, ss.str());
 }
 }  // namespace databento

@@ -47,4 +47,7 @@ class ConsoleLogReceiver : public ILogReceiver {
 
 std::ostream& operator<<(std::ostream& out, LogLevel level);
 const char* ToString(LogLevel level);
+
+void LogPlatformInfo();
+void LogPlatformInfo(ILogReceiver* log_receiver);
 }  // namespace databento

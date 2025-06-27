@@ -19,7 +19,6 @@
 #include "databento/log.hpp"         // ILogReceiver
 #include "databento/record.hpp"      // Record
 #include "databento/symbology.hpp"   // JoinSymbolStrings
-#include "databento/version.hpp"     // DATABENTO_VERSION
 #include "dbn_constants.hpp"         // kMetadataPreludeSize
 
 using databento::LiveBlocking;
@@ -32,12 +31,13 @@ LiveBlocking::LiveBlocking(
     ILogReceiver* log_receiver, std::string key, std::string dataset,
     bool send_ts_out, VersionUpgradePolicy upgrade_policy,
     std::optional<std::chrono::seconds> heartbeat_interval,
-    std::size_t buffer_size)
+    std::size_t buffer_size, std::string user_agent_ext)
 
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
       gateway_{DetermineGateway()},
+      user_agent_ext_{std::move(user_agent_ext)},
       port_{13000},
       send_ts_out_{send_ts_out},
       upgrade_policy_{upgrade_policy},
@@ -51,11 +51,12 @@ LiveBlocking::LiveBlocking(
     std::string gateway, std::uint16_t port, bool send_ts_out,
     VersionUpgradePolicy upgrade_policy,
     std::optional<std::chrono::seconds> heartbeat_interval,
-    std::size_t buffer_size)
+    std::size_t buffer_size, std::string user_agent_ext)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
       gateway_{std::move(gateway)},
+      user_agent_ext_{std::move(user_agent_ext)},
       port_{port},
       send_ts_out_{send_ts_out},
       upgrade_policy_{upgrade_policy},
@@ -323,7 +324,10 @@ std::string LiveBlocking::GenerateCramReply(std::string_view challenge_key) {
 std::string LiveBlocking::EncodeAuthReq(std::string_view auth) {
   std::ostringstream req_stream;
   req_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
-             << "ts_out=" << send_ts_out_ << "|client=C++ " DATABENTO_VERSION;
+             << "ts_out=" << send_ts_out_ << "|client=" << kUserAgent;
+  if (!user_agent_ext_.empty()) {
+    req_stream << ' ' << user_agent_ext_;
+  }
   if (heartbeat_interval_.has_value()) {
     req_stream << "|heartbeat_interval_s=" << heartbeat_interval_->count();
   }
