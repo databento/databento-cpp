@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.38.2 - TBD
+## 0.38.2 - 2025-07-01
 
 ### Enhancements
 - Added `LogPlatformInfo()` function which logs the client version, compiler, and
