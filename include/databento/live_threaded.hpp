@@ -109,12 +109,12 @@ class LiveThreaded {
   LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
                bool send_ts_out, VersionUpgradePolicy upgrade_policy,
                std::optional<std::chrono::seconds> heartbeat_interval,
-               std::size_t buffer_size);
+               std::size_t buffer_size, std::string user_agent_ext);
   LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
                std::string gateway, std::uint16_t port, bool send_ts_out,
                VersionUpgradePolicy upgrade_policy,
                std::optional<std::chrono::seconds> heartbeat_interval,
-               std::size_t buffer_size);
+               std::size_t buffer_size, std::string user_agent_ext);
 
   // unique_ptr to be movable
   std::unique_ptr<Impl> impl_;

@@ -7,6 +7,7 @@
 
 #include "databento/detail/buffer.hpp"
 #include "databento/detail/zstd_stream.hpp"
+#include "databento/enums.hpp"
 #include "databento/record.hpp"
 #include "databento/timeseries.hpp"
 
@@ -14,9 +15,11 @@ namespace databento::detail {
 class DbnBufferDecoder {
  public:
   // The instance cannot outlive the lifetime of these references.
-  DbnBufferDecoder(const MetadataCallback& metadata_callback,
+  DbnBufferDecoder(VersionUpgradePolicy upgrade_policy,
+                   const MetadataCallback& metadata_callback,
                    const RecordCallback& record_callback)
-      : metadata_callback_{metadata_callback},
+      : upgrade_policy_{upgrade_policy},
+        metadata_callback_{metadata_callback},
         record_callback_{record_callback},
         zstd_stream_{std::make_unique<Buffer>()},
         zstd_buffer_{static_cast<Buffer*>(zstd_stream_.Input())} {}
@@ -49,6 +52,7 @@ class DbnBufferDecoder {
     return stream;
   }
 
+  const VersionUpgradePolicy upgrade_policy_;
   const MetadataCallback& metadata_callback_;
   const RecordCallback& record_callback_;
   ZstdDecodeStream zstd_stream_;

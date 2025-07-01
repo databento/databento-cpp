@@ -59,21 +59,22 @@ LiveThreaded::LiveThreaded(
     ILogReceiver* log_receiver, std::string key, std::string dataset,
     bool send_ts_out, VersionUpgradePolicy upgrade_policy,
     std::optional<std::chrono::seconds> heartbeat_interval,
-    std::size_t buffer_size)
-    : impl_{std::make_unique<Impl>(
-          log_receiver, std::move(key), std::move(dataset), send_ts_out,
-          upgrade_policy, heartbeat_interval, buffer_size)} {}
+    std::size_t buffer_size, std::string user_agent_ext)
+    : impl_{std::make_unique<Impl>(log_receiver, std::move(key),
+                                   std::move(dataset), send_ts_out,
+                                   upgrade_policy, heartbeat_interval,
+                                   buffer_size, std::move(user_agent_ext))} {}
 
 LiveThreaded::LiveThreaded(
     ILogReceiver* log_receiver, std::string key, std::string dataset,
     std::string gateway, std::uint16_t port, bool send_ts_out,
     VersionUpgradePolicy upgrade_policy,
     std::optional<std::chrono::seconds> heartbeat_interval,
-    std::size_t buffer_size)
+    std::size_t buffer_size, std::string user_agent_ext)
     : impl_{std::make_unique<Impl>(
           log_receiver, std::move(key), std::move(dataset), std::move(gateway),
-          port, send_ts_out, upgrade_policy, heartbeat_interval, buffer_size)} {
-}
+          port, send_ts_out, upgrade_policy, heartbeat_interval, buffer_size,
+          std::move(user_agent_ext))} {}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 

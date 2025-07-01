@@ -1,12 +1,25 @@
 # Changelog
 
+## 0.38.2 - 2025-07-01
+
+### Enhancements
+- Added `LogPlatformInfo()` function which logs the client version, compiler, and
+  operating system info to aid troubleshooting
+- Added compiler and operating system info to the user agent to aid troubleshooting
+- Standardized `client` info sent by live clients to match historical
+- Added methods to the client builders to extend the user agents with a custom string
+
+### Bug fixes
+- Fixed missing implementation for `LiveBuilder::SetBufferSize()`
+- Fixed checking of warnings from server in Historical API in `TimeseriesGetRange()` and
+  `TimeseriesGetRangeToFile()`
 
 ## 0.38.1 - 2025-06-25
 
 ### Enhancements
 - Added `range_by_schema` field to `DatasetRange` struct
-- Changed historical `TimeseriesGetRange` and `TimeseriesGetRangeToFile` methods to use
-  a `POST` request to allow for requesting supported maximum of 2000 symbols
+- Changed historical `TimeseriesGetRange()` and `TimeseriesGetRangeToFile()` methods to
+  use a `POST` request to allow for requesting supported maximum of 2000 symbols
 - Added logging around `Historical::BatchDownload`
 - Changed the following Venue, Publisher, and Dataset descriptions:
   - "ICE Futures Europe (Financials)" renamed to "ICE Europe Financials"

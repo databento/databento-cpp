@@ -96,12 +96,12 @@ class LiveBlocking {
   LiveBlocking(ILogReceiver* log_receiver, std::string key, std::string dataset,
                bool send_ts_out, VersionUpgradePolicy upgrade_policy,
                std::optional<std::chrono::seconds> heartbeat_interval,
-               std::size_t buffer_size);
+               std::size_t buffer_size, std::string user_agent_ext);
   LiveBlocking(ILogReceiver* log_receiver, std::string key, std::string dataset,
                std::string gateway, std::uint16_t port, bool send_ts_out,
                VersionUpgradePolicy upgrade_policy,
                std::optional<std::chrono::seconds> heartbeat_interval,
-               std::size_t buffer_size);
+               std::size_t buffer_size, std::string user_agent_ext);
 
   std::string DetermineGateway() const;
   std::uint64_t Authenticate();
@@ -118,14 +118,15 @@ class LiveBlocking {
   static constexpr std::size_t kMaxStrLen = 24L * 1024;
 
   ILogReceiver* log_receiver_;
-  std::string key_;
-  std::string dataset_;
-  std::string gateway_;
-  std::uint16_t port_;
-  bool send_ts_out_;
+  const std::string key_;
+  const std::string dataset_;
+  const std::string gateway_;
+  const std::string user_agent_ext_;
+  const std::uint16_t port_;
+  const bool send_ts_out_;
   std::uint8_t version_{};
-  VersionUpgradePolicy upgrade_policy_;
-  std::optional<std::chrono::seconds> heartbeat_interval_;
+  const VersionUpgradePolicy upgrade_policy_;
+  const std::optional<std::chrono::seconds> heartbeat_interval_;
   detail::TcpClient client_;
   std::uint32_t sub_counter_{};
   std::vector<LiveSubscription> subscriptions_;

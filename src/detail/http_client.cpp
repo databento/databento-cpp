@@ -3,16 +3,16 @@
 #include <chrono>   // seconds
 #include <sstream>  // ostringstream
 
+#include "databento/constants.hpp"  // kUserAgent
 #include "databento/exceptions.hpp"  // HttpResponseError, HttpRequestError, JsonResponseError
-#include "databento/log.hpp"      // ILogReceiver, LogLevel
-#include "databento/version.hpp"  // DATABENTO_VERSION
+#include "databento/log.hpp"  // ILogReceiver, LogLevel
 
 using databento::detail::HttpClient;
 
 constexpr std::chrono::seconds kTimeout{100};
 const httplib::Headers HttpClient::kHeaders{
     {"accept", "application/json"},
-    {"user-agent", "Databento/" DATABENTO_VERSION " C++"},
+    {"user-agent", kUserAgent},
 };
 
 HttpClient::HttpClient(databento::ILogReceiver* log_receiver,
@@ -97,10 +97,11 @@ void HttpClient::PostRawStream(const std::string& path,
 
 httplib::ResponseHandler HttpClient::MakeStreamResponseHandler(
     int& out_status) {
-  return [&out_status](const httplib::Response& resp) {
+  return [this, &out_status](const httplib::Response& resp) {
     if (HttpClient::IsErrorStatus(resp.status)) {
       out_status = resp.status;
     }
+    CheckWarnings(resp);
     return true;
   };
 }

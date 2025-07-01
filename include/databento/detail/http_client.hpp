@@ -33,11 +33,11 @@ class HttpClient {
 
  private:
   static bool IsErrorStatus(int status_code);
-  static httplib::ResponseHandler MakeStreamResponseHandler(int& out_status);
   static void CheckStatusAndStreamRes(const std::string& path, int status_code,
                                       std::string&& err_body,
                                       const httplib::Result& res);
 
+  httplib::ResponseHandler MakeStreamResponseHandler(int& out_status);
   nlohmann::json CheckAndParseResponse(const std::string& path,
                                        httplib::Result&& res) const;
   void CheckWarnings(const httplib::Response& response) const;

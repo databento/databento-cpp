@@ -10,22 +10,22 @@
 #include "databento/datetime.hpp"  // DateRange, DateTimeRange, UnixNanos
 #include "databento/dbn_file_store.hpp"
 #include "databento/detail/http_client.hpp"  // HttpClient
-#include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Schema, SType
+#include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Schema, SType, VersionUpgradePolicy
 #include "databento/metadata.hpp"  // DatasetConditionDetail, DatasetRange, FieldDetail, PublisherDetail, UnitPricesForMode
 #include "databento/symbology.hpp"  // SymbologyResolution
 #include "databento/timeseries.hpp"  // KeepGoing, MetadataCallback, RecordCallback
 
 namespace databento {
+// Forward declarations
+class HistoricalBuilder;
 class ILogReceiver;
 
 // A client for interfacing with Databento's historical market data API.
 class Historical {
  public:
+  // WARNING: Will be deprecated in the future in favor of the builder
   Historical(ILogReceiver* log_receiver, std::string key,
              HistoricalGateway gateway);
-  // Primarily for unit tests
-  Historical(ILogReceiver* log_receiver, std::string key, std::string gateway,
-             std::uint16_t port);
 
   /*
    * Getters
@@ -227,7 +227,16 @@ class Historical {
       const std::filesystem::path& file_path);
 
  private:
+  friend HistoricalBuilder;
+
   using HttplibParams = std::multimap<std::string, std::string>;
+
+  Historical(ILogReceiver* log_receiver, std::string key,
+             HistoricalGateway gateway, VersionUpgradePolicy upgrade_policy,
+             std::string user_agent_ext);
+  Historical(ILogReceiver* log_receiver, std::string key, std::string gateway,
+             std::uint16_t port, VersionUpgradePolicy upgrade_policy,
+             std::string user_agent_ext);
 
   BatchJob BatchSubmitJob(const HttplibParams& params);
   void DownloadFile(const std::string& url,
@@ -247,6 +256,8 @@ class Historical {
   ILogReceiver* log_receiver_;
   const std::string key_;
   const std::string gateway_;
+  const std::string user_agent_ext_;
+  const VersionUpgradePolicy upgrade_policy_;
   detail::HttpClient client_;
 };
 
@@ -255,22 +266,43 @@ class HistoricalBuilder {
  public:
   HistoricalBuilder() = default;
 
+  /*
+   * Required setters
+   */
+
   // Sets `key_` based on the environment variable DATABENTO_API_KEY.
   //
   // NOTE: This is not thread-safe if `std::setenv` is used elsewhere in the
   // program.
   HistoricalBuilder& SetKeyFromEnv();
   HistoricalBuilder& SetKey(std::string key);
-  HistoricalBuilder& SetGateway(HistoricalGateway gateway);
+
+  /*
+   * Optional setters
+   */
+
+  // Set the version upgrade policy for when streaming DBN data from a prior
+  // version. Defaults to upgrading to DBNv3 (if not already).
+  HistoricalBuilder& SetUpgradePolicy(VersionUpgradePolicy upgrade_policy);
   // Sets the receiver of the logs to be used by the client.
   HistoricalBuilder& SetLogReceiver(ILogReceiver* log_receiver);
+  HistoricalBuilder& SetGateway(HistoricalGateway gateway);
+  // Overrides the gateway and port. This is an advanced method.
+  HistoricalBuilder& SetAddress(std::string gateway, std::uint16_t port);
+  // Appends to the default user agent.
+  HistoricalBuilder& ExtendUserAgent(std::string extension);
+
   // Attempts to construct an instance of Historical or throws an exception if
   // no key has been set.
   Historical Build();
 
  private:
   ILogReceiver* log_receiver_{};
-  std::string key_;
   HistoricalGateway gateway_{HistoricalGateway::Bo1};
+  std::string gateway_override_{};
+  std::uint16_t port_{};
+  std::string key_;
+  VersionUpgradePolicy upgrade_policy_{VersionUpgradePolicy::UpgradeToV3};
+  std::string user_agent_ext_;
 };
 }  // namespace databento

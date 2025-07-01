@@ -3,6 +3,9 @@
 #include <cstdint>
 #include <limits>
 
+#include "databento/system.hpp"  // DATABENTO_CXX_COMPILER_*, DATABENTO_SYSTEM_*
+#include "databento/version.hpp"  // DATABENTO_VERSION
+
 namespace databento {
 static constexpr auto kApiVersion = 0;
 static constexpr auto kApiVersionStr = "0";
@@ -28,6 +31,11 @@ static constexpr auto kSymbolCstrLen = 71;
 static constexpr auto kAssetCstrLen = 11;
 // The multiplier for converting the `length` field in `RecordHeader` to bytes.
 static constexpr std::size_t kRecordHeaderLengthMultiplier = 4;
+
+static constexpr auto kUserAgent =
+    "Databento/" DATABENTO_VERSION " C++/" DATABENTO_CXX_COMPILER_ID
+    "/" DATABENTO_CXX_COMPILER_VERSION " " DATABENTO_SYSTEM_ID
+    "/" DATABENTO_SYSTEM_VERSION;
 
 // This is not a comprehensive list of datasets, for that see the `Dataset`
 // enum.
