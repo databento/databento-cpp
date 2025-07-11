@@ -4,6 +4,7 @@
 
 ### Bug fixes
 - Removed `Intraday` variant from `DatasetCondition` enum
+- Fixed potential corrupted records when upgrading DBN versions in live clients
 
 ## 0.38.2 - 2025-07-01
 
