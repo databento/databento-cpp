@@ -1,10 +1,17 @@
 # Changelog
 
-## 0.38.3 - TBD
+## 0.39.0 - TBD
 
 ### Bug fixes
 - Removed `Intraday` variant from `DatasetCondition` enum
 - Fixed potential corrupted records when upgrading DBN versions in live clients
+
+### Breaking changes
+- Renamed the following Venue, Dataset, and Publishers:
+    - `XEER` to `XEEE`
+    - `XEER.EOBI` to `XEEE.EOBI`
+    - `XEER.EOBI.XEER` to `XEEE.EOBI.XEEE`
+    - `XEER.EOBI.XOFF` to `XEEE.EOBI.XOFF`
 
 ## 0.38.2 - 2025-07-01
 

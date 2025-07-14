@@ -108,7 +108,7 @@ enum class Venue : std::uint16_t {
   // Eurex Exchange
   Xeur = 50,
   // European Energy Exchange
-  Xeer = 51,
+  Xeee = 51,
 };
 
 // A source of data.
@@ -190,7 +190,7 @@ enum class Dataset : std::uint16_t {
   // Eurex EOBI
   XeurEobi = 38,
   // European Energy Exchange EOBI
-  XeerEobi = 39,
+  XeeeEobi = 39,
 };
 
 // A specific Venue from a specific data source.
@@ -398,11 +398,11 @@ enum class Publisher : std::uint16_t {
   // Eurex EOBI
   XeurEobiXeur = 101,
   // European Energy Exchange EOBI
-  XeerEobiXeer = 102,
+  XeeeEobiXeee = 102,
   // Eurex EOBI - Off-Market Trades
   XeurEobiXoff = 103,
   // European Energy Exchange EOBI - Off-Market Trades
-  XeerEobiXoff = 104,
+  XeeeEobiXoff = 104,
 };
 
 // Get a Publisher's Venue.
