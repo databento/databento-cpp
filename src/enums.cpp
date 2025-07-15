@@ -234,9 +234,6 @@ const char* ToString(DatasetCondition condition) {
     case DatasetCondition::Missing: {
       return "missing";
     }
-    case DatasetCondition::Intraday: {
-      return "intraday";
-    }
     default: {
       return "unknown";
     }
@@ -1134,9 +1131,6 @@ DatasetCondition FromString(const std::string& str) {
   }
   if (str == "missing") {
     return DatasetCondition::Missing;
-  }
-  if (str == "intraday") {
-    return DatasetCondition::Intraday;
   }
   throw InvalidArgumentError{"FromString<DatasetCondition>", "str",
                              "unknown value '" + str + '\''};

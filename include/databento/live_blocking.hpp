@@ -7,7 +7,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <utility>  // pair
 #include <vector>
 
 #include "databento/datetime.hpp"  // UnixNanos
@@ -40,8 +39,6 @@ class LiveBlocking {
   std::uint16_t Port() const { return port_; }
   bool SendTsOut() const { return send_ts_out_; }
   VersionUpgradePolicy UpgradePolicy() const { return upgrade_policy_; }
-  // The the first member of the pair will be true, when the heartbeat interval
-  // was overridden.
   std::optional<std::chrono::seconds> HeartbeatInterval() const {
     return heartbeat_interval_;
   }

@@ -189,10 +189,12 @@ const databento::Record* LiveBlocking::NextRecord(
     }
   }
   current_record_ = Record{BufferRecordHeader()};
-  buffer_.Consume(current_record_.Size());
+  const auto bytes_to_consume = current_record_.Size();
   current_record_ =
       DbnDecoder::DecodeRecordCompat(version_, upgrade_policy_, send_ts_out_,
                                      &compat_buffer_, current_record_);
+  // Can't consume til after upgrade as Consume may shift
+  buffer_.Consume(bytes_to_consume);
   return &current_record_;
 }
 
