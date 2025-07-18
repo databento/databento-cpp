@@ -12,7 +12,6 @@ namespace databento {
 struct BatchJob {
   std::string id;
   std::string user_id;
-  std::string bill_id;
   // Cost in US dollars
   double cost_usd;
   std::string dataset;

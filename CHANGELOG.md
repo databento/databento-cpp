@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.42.0 - TBD
+
+### Breaking changes
+- Removed `bill_id` field from `BatchJob` struct
+
 ## 0.41.0 - 2025-08-12
 
 ### Enhancements

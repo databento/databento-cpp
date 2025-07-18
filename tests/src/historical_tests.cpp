@@ -63,7 +63,6 @@ class HistoricalTests : public ::testing::Test {
 TEST_F(HistoricalTests, TestBatchSubmitJob) {
   const nlohmann::json kResp{
       {"actual_size", 2022690},
-      {"bill_id", "73186317471eb623d161a1"},
       {"billed_size", 5156064},
       {"compression", nullptr},
       {"cost_usd", 0.119089},
@@ -125,7 +124,6 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
 
 TEST_F(HistoricalTests, TestBatchListJobs) {
   const nlohmann::json kResp{{{"actual_size", 2022690},
-                              {"bill_id", "a670"},
                               {"billed_size", 5156064},
                               {"compression", "zstd"},
                               {"cost_usd", 0.119089},
@@ -158,7 +156,6 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
                               {"ts_received", "2022-10-31 15:26:58.112496+00:00"},
                               {"user_id", "A_USER"}},
                              {{"actual_size", 2022690},
-                              {"bill_id", "a1b7"},
                               {"billed_size", 5156064},
                               {"compression", "zstd"},
                               {"cost_usd", 0.119089},
