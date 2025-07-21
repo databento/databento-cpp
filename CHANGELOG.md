@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.40.0 - TBD
+
+### Enhancements
+- Added `OhlcvEod` variant to `RType`
+- Added documentation to more enums and record structs
+- Aligned string representation of `RType` with Rust
+
+### Breaking changes
+- Switched to `std::byte` for most padding fields in record structs. These fields are
+  now initialized by default
+- Hidden padding fields now begin with `_`
+
+### Bug fixes
+- Added missing `IndexTs()` method to `v1::InstrumentDefMsg`, `v2::InstrumentDefMsg`,
+  and `v1::SymbolMappingMsg`
+
 ## 0.39.1 - 2025-07-22
 
 ### Bug fixes

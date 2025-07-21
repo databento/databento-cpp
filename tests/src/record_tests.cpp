@@ -27,8 +27,8 @@ TEST(RecordTests, TestRecordToString) {
                   126239};
   const Record rec{&target.hd};
   EXPECT_EQ(ToString(rec),
-            "Record { ptr = RecordHeader { length = 12, rtype = Mbp0, publisher_id = "
-            "24, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z } }");
+            "Record { ptr = RecordHeader { length = 12, rtype = mbp-0, publisher_id "
+            "= 24, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z } }");
 }
 TEST(RecordTests, TestPublisher) {
   const TradeMsg target{
@@ -73,7 +73,7 @@ TEST(RecordTests, TestMbp10MsgToString) {
   }
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(Mbp10Msg {
-    hd = RecordHeader { length = 92, rtype = Mbp10, publisher_id = 1, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z },
+    hd = RecordHeader { length = 92, rtype = mbp-10, publisher_id = 1, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z },
     price = 0.100000000,
     size = 10,
     action = Add,
@@ -173,7 +173,7 @@ TEST(RecordTests, TestInstrumentDefMsgToString) {
       Side::Bid};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(InstrumentDefMsg {
-    hd = RecordHeader { length = 130, rtype = InstrumentDef, publisher_id = 1, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z },
+    hd = RecordHeader { length = 130, rtype = instrument-def, publisher_id = 1, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z },
     ts_recv = 1970-01-01T00:00:00.000000000Z,
     min_price_increment = 0.000000001,
     display_factor = 0.000000002,
@@ -273,7 +273,7 @@ TEST(RecordTests, TestImbalanceMsgToString) {
       {}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(ImbalanceMsg {
-    hd = RecordHeader { length = 28, rtype = Imbalance, publisher_id = 1, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z },
+    hd = RecordHeader { length = 28, rtype = imbalance, publisher_id = 1, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z },
     ts_recv = 1970-01-01T00:00:00.000000000Z,
     ref_price = 0.000000001,
     auction_time = UNDEF_TIMESTAMP,

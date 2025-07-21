@@ -45,7 +45,7 @@ void ProcessRecords(LiveBlocking& client, Schema schema, bool start_from_epoch) 
   // outside trading hours
   auto expected_rtype = Record::RTypeFromSchema(schema);
   if (!start_from_epoch) {
-    expected_rtype = databento::rtype::SymbolMapping;
+    expected_rtype = databento::RType::SymbolMapping;
   }
 
   constexpr auto timeout = std::chrono::seconds{30};

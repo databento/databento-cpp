@@ -213,6 +213,7 @@ std::ostream& operator<<(std::ostream& stream, const RecordHeader& header) {
       .AddField("ts_event", header.ts_event)
       .Finish();
 }
+
 std::string ToString(const MboMsg& mbo_msg) { return MakeString(mbo_msg); }
 std::ostream& operator<<(std::ostream& stream, const MboMsg& mbo_msg) {
   return StreamOpBuilder{stream}
@@ -232,128 +233,42 @@ std::ostream& operator<<(std::ostream& stream, const MboMsg& mbo_msg) {
       .AddField("sequence", mbo_msg.sequence)
       .Finish();
 }
-std::string ToString(const BidAskPair& ba_pair) { return MakeString(ba_pair); }
-std::ostream& operator<<(std::ostream& stream, const BidAskPair& ba_pair) {
+
+std::string ToString(const BidAskPair& bid_ask_pair) {
+  return MakeString(bid_ask_pair);
+}
+std::ostream& operator<<(std::ostream& stream, const BidAskPair& bid_ask_pair) {
   return StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("BidAskPair")
       .Build()
-      .AddField("bid_px", pretty::Px{ba_pair.bid_px})
-      .AddField("ask_px", pretty::Px{ba_pair.ask_px})
-      .AddField("bid_sz", ba_pair.bid_sz)
-      .AddField("ask_sz", ba_pair.ask_sz)
-      .AddField("bid_ct", ba_pair.bid_ct)
-      .AddField("ask_ct", ba_pair.ask_ct)
+      .AddField("bid_px", pretty::Px{bid_ask_pair.bid_px})
+      .AddField("ask_px", pretty::Px{bid_ask_pair.ask_px})
+      .AddField("bid_sz", bid_ask_pair.bid_sz)
+      .AddField("ask_sz", bid_ask_pair.ask_sz)
+      .AddField("bid_ct", bid_ask_pair.bid_ct)
+      .AddField("ask_ct", bid_ask_pair.ask_ct)
       .Finish();
 }
-std::string ToString(const ConsolidatedBidAskPair& ba_pair) {
-  return MakeString(ba_pair);
+
+std::string ToString(const ConsolidatedBidAskPair& consolidated_bid_ask_pair) {
+  return MakeString(consolidated_bid_ask_pair);
 }
-std::ostream& operator<<(std::ostream& stream, const ConsolidatedBidAskPair& ba_pair) {
+std::ostream& operator<<(std::ostream& stream,
+                         const ConsolidatedBidAskPair& consolidated_bid_ask_pair) {
   return StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("ConsolidatedBidAskPair")
       .Build()
-      .AddField("bid_px", pretty::Px{ba_pair.bid_px})
-      .AddField("ask_px", pretty::Px{ba_pair.ask_px})
-      .AddField("bid_sz", ba_pair.bid_sz)
-      .AddField("ask_sz", ba_pair.ask_sz)
-      .AddField("bid_pb", ba_pair.bid_pb)
-      .AddField("ask_pb", ba_pair.ask_pb)
+      .AddField("bid_px", pretty::Px{consolidated_bid_ask_pair.bid_px})
+      .AddField("ask_px", pretty::Px{consolidated_bid_ask_pair.ask_px})
+      .AddField("bid_sz", consolidated_bid_ask_pair.bid_sz)
+      .AddField("ask_sz", consolidated_bid_ask_pair.ask_sz)
+      .AddField("bid_pb", consolidated_bid_ask_pair.bid_pb)
+      .AddField("ask_pb", consolidated_bid_ask_pair.ask_pb)
       .Finish();
 }
-std::string ToString(const Mbp1Msg& mbp_msg) { return MakeString(mbp_msg); }
-std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp_msg) {
-  return StreamOpBuilder{stream}
-      .SetTypeName("Mbp1Msg")
-      .SetSpacer("\n    ")
-      .Build()
-      .AddField("hd", mbp_msg.hd)
-      .AddField("price", pretty::Px{mbp_msg.price})
-      .AddField("size", mbp_msg.size)
-      .AddField("action", mbp_msg.action)
-      .AddField("side", mbp_msg.side)
-      .AddField("flags", mbp_msg.flags)
-      .AddField("depth", mbp_msg.depth)
-      .AddField("ts_recv", mbp_msg.ts_recv)
-      .AddField("ts_in_delta", mbp_msg.ts_in_delta)
-      .AddField("sequence", mbp_msg.sequence)
-      .AddField("levels", std::get<0>(mbp_msg.levels))
-      .Finish();
-}
-std::string ToString(const Mbp10Msg& mbp_msg) { return MakeString(mbp_msg); }
-std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp_msg) {
-  std::ostringstream levelss;
-  auto levels_helper =
-      StreamOpBuilder{levelss}.SetSpacer("\n    ").SetIndent("    ").Build();
-  for (const auto& levels : mbp_msg.levels) {
-    levels_helper.AddItem(levels);
-  }
-  return StreamOpBuilder{stream}
-      .SetTypeName("Mbp10Msg")
-      .SetSpacer("\n    ")
-      .Build()
-      .AddField("hd", mbp_msg.hd)
-      .AddField("price", pretty::Px{mbp_msg.price})
-      .AddField("size", mbp_msg.size)
-      .AddField("action", mbp_msg.action)
-      .AddField("side", mbp_msg.side)
-      .AddField("flags", mbp_msg.flags)
-      .AddField("depth", mbp_msg.depth)
-      .AddField("ts_recv", mbp_msg.ts_recv)
-      .AddField("ts_in_delta", mbp_msg.ts_in_delta)
-      .AddField("sequence", mbp_msg.sequence)
-      .AddField("levels", static_cast<std::ostringstream&>(levels_helper.Finish()))
-      .Finish();
-}
-std::string ToString(const BboMsg& bbo_msg) { return MakeString(bbo_msg); }
-std::ostream& operator<<(std::ostream& stream, const BboMsg& bbo_msg) {
-  return StreamOpBuilder{stream}
-      .SetTypeName("BboMsg")
-      .SetSpacer("\n    ")
-      .Build()
-      .AddField("hd", bbo_msg.hd)
-      .AddField("price", pretty::Px{bbo_msg.price})
-      .AddField("size", bbo_msg.size)
-      .AddField("side", bbo_msg.side)
-      .AddField("flags", bbo_msg.flags)
-      .AddField("ts_recv", bbo_msg.ts_recv)
-      .AddField("sequence", bbo_msg.sequence)
-      .AddField("levels", std::get<0>(bbo_msg.levels))
-      .Finish();
-}
-std::string ToString(const Cmbp1Msg& cbbo_msg) { return MakeString(cbbo_msg); }
-std::ostream& operator<<(std::ostream& stream, const Cmbp1Msg& cmbp1_msg) {
-  return StreamOpBuilder{stream}
-      .SetTypeName("Cmbp1Msg")
-      .SetSpacer("\n    ")
-      .Build()
-      .AddField("hd", cmbp1_msg.hd)
-      .AddField("price", pretty::Px{cmbp1_msg.price})
-      .AddField("size", cmbp1_msg.size)
-      .AddField("action", cmbp1_msg.action)
-      .AddField("side", cmbp1_msg.side)
-      .AddField("flags", cmbp1_msg.flags)
-      .AddField("ts_recv", cmbp1_msg.ts_recv)
-      .AddField("ts_in_delta", cmbp1_msg.ts_in_delta)
-      .AddField("levels", std::get<0>(cmbp1_msg.levels))
-      .Finish();
-}
-std::string ToString(const CbboMsg& cbbo_msg) { return MakeString(cbbo_msg); }
-std::ostream& operator<<(std::ostream& stream, const CbboMsg& cbbo_msg) {
-  return StreamOpBuilder{stream}
-      .SetTypeName("CbboMsg")
-      .SetSpacer("\n    ")
-      .Build()
-      .AddField("hd", cbbo_msg.hd)
-      .AddField("price", pretty::Px{cbbo_msg.price})
-      .AddField("size", cbbo_msg.size)
-      .AddField("side", cbbo_msg.side)
-      .AddField("flags", cbbo_msg.flags)
-      .AddField("ts_recv", cbbo_msg.ts_recv)
-      .AddField("levels", std::get<0>(cbbo_msg.levels))
-      .Finish();
-}
+
 std::string ToString(const TradeMsg& trade_msg) { return MakeString(trade_msg); }
 std::ostream& operator<<(std::ostream& stream, const TradeMsg& trade_msg) {
   return StreamOpBuilder{stream}
@@ -372,6 +287,108 @@ std::ostream& operator<<(std::ostream& stream, const TradeMsg& trade_msg) {
       .AddField("sequence", trade_msg.sequence)
       .Finish();
 }
+
+std::string ToString(const Mbp1Msg& mbp1_msg) { return MakeString(mbp1_msg); }
+std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp1_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("Mbp1Msg")
+      .Build()
+      .AddField("hd", mbp1_msg.hd)
+      .AddField("price", pretty::Px{mbp1_msg.price})
+      .AddField("size", mbp1_msg.size)
+      .AddField("action", mbp1_msg.action)
+      .AddField("side", mbp1_msg.side)
+      .AddField("flags", mbp1_msg.flags)
+      .AddField("depth", mbp1_msg.depth)
+      .AddField("ts_recv", mbp1_msg.ts_recv)
+      .AddField("ts_in_delta", mbp1_msg.ts_in_delta)
+      .AddField("sequence", mbp1_msg.sequence)
+
+      .AddField("levels", std::get<0>(mbp1_msg.levels))
+      .Finish();
+}
+
+std::string ToString(const Mbp10Msg& mbp10_msg) { return MakeString(mbp10_msg); }
+std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp10_msg) {
+  std::ostringstream sub_ss;
+  auto helper = StreamOpBuilder{sub_ss}.SetSpacer("\n    ").SetIndent("    ").Build();
+  for (const auto& level : mbp10_msg.levels) {
+    helper.AddItem(level);
+  }
+
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("Mbp10Msg")
+      .Build()
+      .AddField("hd", mbp10_msg.hd)
+      .AddField("price", pretty::Px{mbp10_msg.price})
+      .AddField("size", mbp10_msg.size)
+      .AddField("action", mbp10_msg.action)
+      .AddField("side", mbp10_msg.side)
+      .AddField("flags", mbp10_msg.flags)
+      .AddField("depth", mbp10_msg.depth)
+      .AddField("ts_recv", mbp10_msg.ts_recv)
+      .AddField("ts_in_delta", mbp10_msg.ts_in_delta)
+      .AddField("sequence", mbp10_msg.sequence)
+      .AddField("levels", static_cast<std::ostringstream&>(helper.Finish()))
+      .Finish();
+}
+
+std::string ToString(const BboMsg& bbo_msg) { return MakeString(bbo_msg); }
+std::ostream& operator<<(std::ostream& stream, const BboMsg& bbo_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("BboMsg")
+      .Build()
+      .AddField("hd", bbo_msg.hd)
+      .AddField("price", pretty::Px{bbo_msg.price})
+      .AddField("size", bbo_msg.size)
+      .AddField("side", bbo_msg.side)
+      .AddField("flags", bbo_msg.flags)
+      .AddField("ts_recv", bbo_msg.ts_recv)
+      .AddField("sequence", bbo_msg.sequence)
+
+      .AddField("levels", std::get<0>(bbo_msg.levels))
+      .Finish();
+}
+
+std::string ToString(const Cmbp1Msg& cmbp1_msg) { return MakeString(cmbp1_msg); }
+std::ostream& operator<<(std::ostream& stream, const Cmbp1Msg& cmbp1_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("Cmbp1Msg")
+      .Build()
+      .AddField("hd", cmbp1_msg.hd)
+      .AddField("price", pretty::Px{cmbp1_msg.price})
+      .AddField("size", cmbp1_msg.size)
+      .AddField("action", cmbp1_msg.action)
+      .AddField("side", cmbp1_msg.side)
+      .AddField("flags", cmbp1_msg.flags)
+      .AddField("ts_recv", cmbp1_msg.ts_recv)
+      .AddField("ts_in_delta", cmbp1_msg.ts_in_delta)
+
+      .AddField("levels", std::get<0>(cmbp1_msg.levels))
+      .Finish();
+}
+
+std::string ToString(const CbboMsg& cbbo_msg) { return MakeString(cbbo_msg); }
+std::ostream& operator<<(std::ostream& stream, const CbboMsg& cbbo_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("CbboMsg")
+      .Build()
+      .AddField("hd", cbbo_msg.hd)
+      .AddField("price", pretty::Px{cbbo_msg.price})
+      .AddField("size", cbbo_msg.size)
+      .AddField("side", cbbo_msg.side)
+      .AddField("flags", cbbo_msg.flags)
+      .AddField("ts_recv", cbbo_msg.ts_recv)
+
+      .AddField("levels", std::get<0>(cbbo_msg.levels))
+      .Finish();
+}
+
 std::string ToString(const OhlcvMsg& ohlcv_msg) { return MakeString(ohlcv_msg); }
 std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg) {
   return StreamOpBuilder{stream}
@@ -386,6 +403,7 @@ std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg) {
       .AddField("volume", ohlcv_msg.volume)
       .Finish();
 }
+
 std::string ToString(const StatusMsg& status_msg) { return MakeString(status_msg); }
 std::ostream& operator<<(std::ostream& stream, const StatusMsg& status_msg) {
   return StreamOpBuilder{stream}
@@ -402,86 +420,93 @@ std::ostream& operator<<(std::ostream& stream, const StatusMsg& status_msg) {
       .AddField("is_short_sell_restricted", status_msg.is_short_sell_restricted)
       .Finish();
 }
-std::string ToString(const InstrumentDefMsg& instr_def_msg) {
-  return MakeString(instr_def_msg);
+
+std::string ToString(const InstrumentDefMsg& instrument_def_msg) {
+  return MakeString(instrument_def_msg);
 }
-std::ostream& operator<<(std::ostream& stream, const InstrumentDefMsg& instr_def_msg) {
+std::ostream& operator<<(std::ostream& stream,
+                         const InstrumentDefMsg& instrument_def_msg) {
   return StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("InstrumentDefMsg")
       .Build()
-      .AddField("hd", instr_def_msg.hd)
-      .AddField("ts_recv", instr_def_msg.ts_recv)
-      .AddField("min_price_increment", pretty::Px{instr_def_msg.min_price_increment})
-      .AddField("display_factor", pretty::Px{instr_def_msg.display_factor})
-      .AddField("expiration", instr_def_msg.expiration)
-      .AddField("activation", instr_def_msg.activation)
-      .AddField("high_limit_price", pretty::Px{instr_def_msg.high_limit_price})
-      .AddField("low_limit_price", pretty::Px{instr_def_msg.low_limit_price})
-      .AddField("max_price_variation", pretty::Px{instr_def_msg.max_price_variation})
-      .AddField("unit_of_measure_qty", pretty::Px{instr_def_msg.unit_of_measure_qty})
+      .AddField("hd", instrument_def_msg.hd)
+      .AddField("ts_recv", instrument_def_msg.ts_recv)
+      .AddField("min_price_increment",
+                pretty::Px{instrument_def_msg.min_price_increment})
+      .AddField("display_factor", pretty::Px{instrument_def_msg.display_factor})
+      .AddField("expiration", instrument_def_msg.expiration)
+      .AddField("activation", instrument_def_msg.activation)
+      .AddField("high_limit_price", pretty::Px{instrument_def_msg.high_limit_price})
+      .AddField("low_limit_price", pretty::Px{instrument_def_msg.low_limit_price})
+      .AddField("max_price_variation",
+                pretty::Px{instrument_def_msg.max_price_variation})
+      .AddField("unit_of_measure_qty",
+                pretty::Px{instrument_def_msg.unit_of_measure_qty})
       .AddField("min_price_increment_amount",
-                pretty::Px{instr_def_msg.min_price_increment_amount})
-      .AddField("price_ratio", pretty::Px{instr_def_msg.price_ratio})
-      .AddField("strike_price", pretty::Px{instr_def_msg.strike_price})
-      .AddField("raw_instrument_id", instr_def_msg.raw_instrument_id)
-      .AddField("leg_price", pretty::Px{instr_def_msg.leg_price})
-      .AddField("leg_delta", pretty::Px{instr_def_msg.leg_delta})
-      .AddField("inst_attrib_value", instr_def_msg.inst_attrib_value)
-      .AddField("underlying_id", instr_def_msg.underlying_id)
-      .AddField("market_depth_implied", instr_def_msg.market_depth_implied)
-      .AddField("market_depth", instr_def_msg.market_depth)
-      .AddField("market_segment_id", instr_def_msg.market_segment_id)
-      .AddField("max_trade_vol", instr_def_msg.max_trade_vol)
-      .AddField("min_lot_size", instr_def_msg.min_lot_size)
-      .AddField("min_lot_size_block", instr_def_msg.min_lot_size_block)
-      .AddField("min_lot_size_round_lot", instr_def_msg.min_lot_size_round_lot)
-      .AddField("min_trade_vol", instr_def_msg.min_trade_vol)
-      .AddField("contract_multiplier", instr_def_msg.contract_multiplier)
-      .AddField("decay_quantity", instr_def_msg.decay_quantity)
-      .AddField("original_contract_size", instr_def_msg.original_contract_size)
-      .AddField("leg_instrument_id", instr_def_msg.leg_instrument_id)
-      .AddField("leg_ratio_price_numerator", instr_def_msg.leg_ratio_price_numerator)
+                pretty::Px{instrument_def_msg.min_price_increment_amount})
+      .AddField("price_ratio", pretty::Px{instrument_def_msg.price_ratio})
+      .AddField("strike_price", pretty::Px{instrument_def_msg.strike_price})
+      .AddField("raw_instrument_id", instrument_def_msg.raw_instrument_id)
+      .AddField("leg_price", pretty::Px{instrument_def_msg.leg_price})
+      .AddField("leg_delta", pretty::Px{instrument_def_msg.leg_delta})
+      .AddField("inst_attrib_value", instrument_def_msg.inst_attrib_value)
+      .AddField("underlying_id", instrument_def_msg.underlying_id)
+      .AddField("market_depth_implied", instrument_def_msg.market_depth_implied)
+      .AddField("market_depth", instrument_def_msg.market_depth)
+      .AddField("market_segment_id", instrument_def_msg.market_segment_id)
+      .AddField("max_trade_vol", instrument_def_msg.max_trade_vol)
+      .AddField("min_lot_size", instrument_def_msg.min_lot_size)
+      .AddField("min_lot_size_block", instrument_def_msg.min_lot_size_block)
+      .AddField("min_lot_size_round_lot", instrument_def_msg.min_lot_size_round_lot)
+      .AddField("min_trade_vol", instrument_def_msg.min_trade_vol)
+      .AddField("contract_multiplier", instrument_def_msg.contract_multiplier)
+      .AddField("decay_quantity", instrument_def_msg.decay_quantity)
+      .AddField("original_contract_size", instrument_def_msg.original_contract_size)
+      .AddField("leg_instrument_id", instrument_def_msg.leg_instrument_id)
+      .AddField("leg_ratio_price_numerator",
+                instrument_def_msg.leg_ratio_price_numerator)
       .AddField("leg_ratio_price_denominator",
-                instr_def_msg.leg_ratio_price_denominator)
-      .AddField("leg_ratio_qty_numerator", instr_def_msg.leg_ratio_qty_numerator)
-      .AddField("leg_ratio_qty_denominator", instr_def_msg.leg_ratio_qty_denominator)
-      .AddField("leg_underlying_id", instr_def_msg.leg_underlying_id)
-      .AddField("appl_id", instr_def_msg.appl_id)
-      .AddField("maturity_year", instr_def_msg.maturity_year)
-      .AddField("decay_start_date", instr_def_msg.decay_start_date)
-      .AddField("channel_id", instr_def_msg.channel_id)
-      .AddField("leg_count", instr_def_msg.leg_count)
-      .AddField("leg_index", instr_def_msg.leg_index)
-      .AddField("currency", instr_def_msg.currency)
-      .AddField("settl_currency", instr_def_msg.settl_currency)
-      .AddField("secsubtype", instr_def_msg.secsubtype)
-      .AddField("raw_symbol", instr_def_msg.raw_symbol)
-      .AddField("group", instr_def_msg.group)
-      .AddField("exchange", instr_def_msg.exchange)
-      .AddField("asset", instr_def_msg.asset)
-      .AddField("cfi", instr_def_msg.cfi)
-      .AddField("security_type", instr_def_msg.security_type)
-      .AddField("unit_of_measure", instr_def_msg.unit_of_measure)
-      .AddField("underlying", instr_def_msg.underlying)
-      .AddField("strike_price_currency", instr_def_msg.strike_price_currency)
-      .AddField("leg_raw_symbol", instr_def_msg.leg_raw_symbol)
-      .AddField("instrument_class", instr_def_msg.instrument_class)
-      .AddField("match_algorithm", instr_def_msg.match_algorithm)
-      .AddField("main_fraction", instr_def_msg.main_fraction)
-      .AddField("price_display_format", instr_def_msg.price_display_format)
-      .AddField("sub_fraction", instr_def_msg.sub_fraction)
-      .AddField("underlying_product", instr_def_msg.underlying_product)
-      .AddField("security_update_action", instr_def_msg.security_update_action)
-      .AddField("maturity_month", instr_def_msg.maturity_month)
-      .AddField("maturity_day", instr_def_msg.maturity_day)
-      .AddField("maturity_week", instr_def_msg.maturity_week)
-      .AddField("user_defined_instrument", instr_def_msg.user_defined_instrument)
-      .AddField("contract_multiplier_unit", instr_def_msg.contract_multiplier_unit)
-      .AddField("flow_schedule_type", instr_def_msg.flow_schedule_type)
-      .AddField("tick_rule", instr_def_msg.tick_rule)
-      .AddField("leg_instrument_class", instr_def_msg.leg_instrument_class)
-      .AddField("leg_side", instr_def_msg.leg_side)
+                instrument_def_msg.leg_ratio_price_denominator)
+      .AddField("leg_ratio_qty_numerator", instrument_def_msg.leg_ratio_qty_numerator)
+      .AddField("leg_ratio_qty_denominator",
+                instrument_def_msg.leg_ratio_qty_denominator)
+      .AddField("leg_underlying_id", instrument_def_msg.leg_underlying_id)
+      .AddField("appl_id", instrument_def_msg.appl_id)
+      .AddField("maturity_year", instrument_def_msg.maturity_year)
+      .AddField("decay_start_date", instrument_def_msg.decay_start_date)
+      .AddField("channel_id", instrument_def_msg.channel_id)
+      .AddField("leg_count", instrument_def_msg.leg_count)
+      .AddField("leg_index", instrument_def_msg.leg_index)
+      .AddField("currency", instrument_def_msg.currency)
+      .AddField("settl_currency", instrument_def_msg.settl_currency)
+      .AddField("secsubtype", instrument_def_msg.secsubtype)
+      .AddField("raw_symbol", instrument_def_msg.raw_symbol)
+      .AddField("group", instrument_def_msg.group)
+      .AddField("exchange", instrument_def_msg.exchange)
+      .AddField("asset", instrument_def_msg.asset)
+      .AddField("cfi", instrument_def_msg.cfi)
+      .AddField("security_type", instrument_def_msg.security_type)
+      .AddField("unit_of_measure", instrument_def_msg.unit_of_measure)
+      .AddField("underlying", instrument_def_msg.underlying)
+      .AddField("strike_price_currency", instrument_def_msg.strike_price_currency)
+      .AddField("leg_raw_symbol", instrument_def_msg.leg_raw_symbol)
+      .AddField("instrument_class", instrument_def_msg.instrument_class)
+      .AddField("match_algorithm", instrument_def_msg.match_algorithm)
+      .AddField("main_fraction", instrument_def_msg.main_fraction)
+      .AddField("price_display_format", instrument_def_msg.price_display_format)
+      .AddField("sub_fraction", instrument_def_msg.sub_fraction)
+      .AddField("underlying_product", instrument_def_msg.underlying_product)
+      .AddField("security_update_action", instrument_def_msg.security_update_action)
+      .AddField("maturity_month", instrument_def_msg.maturity_month)
+      .AddField("maturity_day", instrument_def_msg.maturity_day)
+      .AddField("maturity_week", instrument_def_msg.maturity_week)
+      .AddField("user_defined_instrument", instrument_def_msg.user_defined_instrument)
+      .AddField("contract_multiplier_unit", instrument_def_msg.contract_multiplier_unit)
+      .AddField("flow_schedule_type", instrument_def_msg.flow_schedule_type)
+      .AddField("tick_rule", instrument_def_msg.tick_rule)
+      .AddField("leg_instrument_class", instrument_def_msg.leg_instrument_class)
+      .AddField("leg_side", instrument_def_msg.leg_side)
       .Finish();
 }
 
@@ -538,28 +563,16 @@ std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg) {
       .Finish();
 }
 
-std::string ToString(const ErrorMsg& err_msg) { return MakeString(err_msg); }
-std::ostream& operator<<(std::ostream& stream, const ErrorMsg& err_msg) {
+std::string ToString(const ErrorMsg& error_msg) { return MakeString(error_msg); }
+std::ostream& operator<<(std::ostream& stream, const ErrorMsg& error_msg) {
   return StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("ErrorMsg")
       .Build()
-      .AddField("hd", err_msg.hd)
-      .AddField("err", err_msg.err)
-      .AddField("code", err_msg.code)
-      .AddField("is_last", err_msg.is_last)
-      .Finish();
-}
-
-std::string ToString(const SystemMsg& system_msg) { return MakeString(system_msg); }
-std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg) {
-  return StreamOpBuilder{stream}
-      .SetSpacer("\n    ")
-      .SetTypeName("SystemMsg")
-      .Build()
-      .AddField("hd", system_msg.hd)
-      .AddField("msg", system_msg.msg)
-      .AddField("code", system_msg.code)
+      .AddField("hd", error_msg.hd)
+      .AddField("err", error_msg.err)
+      .AddField("code", error_msg.code)
+      .AddField("is_last", error_msg.is_last)
       .Finish();
 }
 
@@ -581,4 +594,17 @@ std::ostream& operator<<(std::ostream& stream,
       .AddField("end_ts", symbol_mapping_msg.end_ts)
       .Finish();
 }
+
+std::string ToString(const SystemMsg& system_msg) { return MakeString(system_msg); }
+std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg) {
+  return StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("SystemMsg")
+      .Build()
+      .AddField("hd", system_msg.hd)
+      .AddField("msg", system_msg.msg)
+      .AddField("code", system_msg.code)
+      .Finish();
+}
+
 }  // namespace databento

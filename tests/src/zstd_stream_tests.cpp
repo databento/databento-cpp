@@ -21,7 +21,7 @@ TEST(ZstdStreamTests, TestMultiFrameFiles) {
   for (std::size_t i = 0; i < kRecordCount; ++i) {
     databento::InstrumentDefMsgV1 def_msg;
     target.ReadExact(reinterpret_cast<std::byte*>(&def_msg), sizeof(def_msg));
-    EXPECT_EQ(def_msg.hd.rtype, databento::rtype::InstrumentDef);
+    EXPECT_EQ(def_msg.hd.rtype, databento::RType::InstrumentDef);
   }
 }
 
