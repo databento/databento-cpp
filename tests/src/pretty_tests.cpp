@@ -15,12 +15,11 @@ namespace databento::pretty::tests {
 
 TEST(PrettyTests, TestPrettyPx) {
   std::ostringstream ss;
-  std::vector<std::pair<int64_t, std::string>> cases{
-      {-100'000, "-0.000100000"},
-      {32'500'000'000, "32.500000000"},
-      {101'005'000'000, "101.005000000"},
-      {0, "0.000000000"},
-      {kUndefPrice, "UNDEF_PRICE"}};
+  std::vector<std::pair<int64_t, std::string>> cases{{-100'000, "-0.000100000"},
+                                                     {32'500'000'000, "32.500000000"},
+                                                     {101'005'000'000, "101.005000000"},
+                                                     {0, "0.000000000"},
+                                                     {kUndefPrice, "UNDEF_PRICE"}};
   for (const auto& [num, exp] : cases) {
     ss << Px{num};
     ASSERT_EQ(ss.str(), exp);
@@ -56,13 +55,11 @@ TEST(PrettyTests, TestDefaultFill) {
     ASSERT_EQ(ss.str(), exp_right);
     ss.str("");
     // Left
-    ss << std::setw(width) << std::left << std::setprecision(precision)
-       << Px{num};
+    ss << std::setw(width) << std::left << std::setprecision(precision) << Px{num};
     ASSERT_EQ(ss.str(), exp_left);
     ss.str("");
     // Right
-    ss << std::setw(width) << std::right << std::setprecision(precision)
-       << Px{num};
+    ss << std::setw(width) << std::right << std::setprecision(precision) << Px{num};
     ASSERT_EQ(ss.str(), exp_right);
     ss.str("");
   }

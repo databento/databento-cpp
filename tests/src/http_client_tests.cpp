@@ -16,19 +16,17 @@ class HttpClientTests : public ::testing::Test {
 };
 
 TEST_F(HttpClientTests, TestLogWarnings) {
-  const nlohmann::json warnings{
-      "DeprecationWarning: stype product_id is deprecated",
-      "Warning: Large request"};
+  const nlohmann::json warnings{"DeprecationWarning: stype product_id is deprecated",
+                                "Warning: Large request"};
   mock_server_.MockGetJson("/warn", {}, {}, warnings);
   const auto port = mock_server_.ListenOnThread();
   databento::tests::mock::MockLogReceiver mock_logger{
       [](auto call_count, databento::LogLevel level, const std::string& msg) {
         EXPECT_EQ(level, LogLevel::Warning);
         if (call_count == 0) {
-          EXPECT_THAT(
-              msg,
-              testing::EndsWith(
-                  "Server DeprecationWarning: stype product_id is deprecated"));
+          EXPECT_THAT(msg,
+                      testing::EndsWith(
+                          "Server DeprecationWarning: stype product_id is deprecated"));
         } else {
           EXPECT_THAT(msg, testing::EndsWith("Server Warning: Large request"));
         }

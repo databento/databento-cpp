@@ -16,8 +16,8 @@ static std::sig_atomic_t volatile gSignal;
 
 int main() {
   databento::PitSymbolMap symbol_mappings;
-  auto log_receiver = std::make_unique<databento::ConsoleLogReceiver>(
-      databento::LogLevel::Debug);
+  auto log_receiver =
+      std::make_unique<databento::ConsoleLogReceiver>(databento::LogLevel::Debug);
 
   auto client = databento::LiveBuilder{}
                     .SetLogReceiver(log_receiver.get())
@@ -30,10 +30,8 @@ int main() {
   std::signal(SIGINT, [](int signal) { gSignal = signal; });
 
   std::vector<std::string> symbols{"ESZ5", "ESZ5 C6200", "ESZ5 P5500"};
-  client.Subscribe(symbols, databento::Schema::Definition,
-                   databento::SType::RawSymbol);
-  client.Subscribe(symbols, databento::Schema::Mbo,
-                   databento::SType::RawSymbol);
+  client.Subscribe(symbols, databento::Schema::Definition, databento::SType::RawSymbol);
+  client.Subscribe(symbols, databento::Schema::Mbo, databento::SType::RawSymbol);
 
   auto metadata_callback = [](databento::Metadata&& metadata) {
     std::cout << metadata << '\n';
@@ -43,15 +41,14 @@ int main() {
     switch (rec.RType()) {
       case RType::Mbo: {
         auto ohlcv = rec.Get<databento::WithTsOut<databento::MboMsg>>();
-        std::cout << "Received tick for "
-                  << symbol_mappings[ohlcv.rec.hd.instrument_id]
-                  << " with ts_out " << ohlcv.ts_out.time_since_epoch().count()
-                  << ": " << ohlcv.rec << '\n';
+        std::cout << "Received tick for " << symbol_mappings[ohlcv.rec.hd.instrument_id]
+                  << " with ts_out " << ohlcv.ts_out.time_since_epoch().count() << ": "
+                  << ohlcv.rec << '\n';
         break;
       }
       case RType::InstrumentDef: {
-        std::cout << "Received definition: "
-                  << rec.Get<databento::InstrumentDefMsg>() << '\n';
+        std::cout << "Received definition: " << rec.Get<databento::InstrumentDefMsg>()
+                  << '\n';
         break;
       }
       case RType::SymbolMapping: {

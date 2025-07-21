@@ -11,26 +11,24 @@
 
 namespace databento::tests {
 TEST(RecordTests, TestRecordToString) {
-  TradeMsg target{
-      RecordHeader{sizeof(TradeMsg) / RecordHeader::kLengthMultiplier,
-                   RType::Mbp0,
-                   static_cast<std::uint16_t>(Publisher::OpraPillarEdgo),
-                   1,
-                   {}},
-      55000000000,
-      500,
-      Action::Add,
-      Side::Bid,
-      {},
-      0,
-      {},
-      {},
-      126239};
+  TradeMsg target{RecordHeader{sizeof(TradeMsg) / RecordHeader::kLengthMultiplier,
+                               RType::Mbp0,
+                               static_cast<std::uint16_t>(Publisher::OpraPillarEdgo),
+                               1,
+                               {}},
+                  55000000000,
+                  500,
+                  Action::Add,
+                  Side::Bid,
+                  {},
+                  0,
+                  {},
+                  {},
+                  126239};
   const Record rec{&target.hd};
-  EXPECT_EQ(
-      ToString(rec),
-      "Record { ptr = RecordHeader { length = 12, rtype = Mbp0, publisher_id = "
-      "24, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z } }");
+  EXPECT_EQ(ToString(rec),
+            "Record { ptr = RecordHeader { length = 12, rtype = Mbp0, publisher_id = "
+            "24, instrument_id = 1, ts_event = 1970-01-01T00:00:00.000000000Z } }");
 }
 TEST(RecordTests, TestPublisher) {
   const TradeMsg target{
@@ -53,19 +51,18 @@ TEST(RecordTests, TestPublisher) {
   EXPECT_EQ(PublisherDataset(target.hd.Publisher()), Dataset::OpraPillar);
 }
 TEST(RecordTests, TestMbp10MsgToString) {
-  Mbp10Msg target{
-      RecordHeader{sizeof(Mbp10Msg) / RecordHeader::kLengthMultiplier,
-                   RType::Mbp10, 1, 1, UnixNanos{}},
-      100000000,
-      10,
-      Action::Add,
-      Side::Bid,
-      {},
-      0,
-      UnixNanos{std::chrono::nanoseconds{1'696'957'072'000'020'500}},
-      TimeDeltaNanos{100},
-      50,
-      {}};
+  Mbp10Msg target{RecordHeader{sizeof(Mbp10Msg) / RecordHeader::kLengthMultiplier,
+                               RType::Mbp10, 1, 1, UnixNanos{}},
+                  100000000,
+                  10,
+                  Action::Add,
+                  Side::Bid,
+                  {},
+                  0,
+                  UnixNanos{std::chrono::nanoseconds{1'696'957'072'000'020'500}},
+                  TimeDeltaNanos{100},
+                  50,
+                  {}};
   for (std::uint32_t i = 0; i < 10; ++i) {
     target.levels[i].ask_ct = i;
     target.levels[i].bid_ct = i * 2;

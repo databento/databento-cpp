@@ -28,8 +28,8 @@ void SocketStream::WriteAll(const std::byte* buffer, std::size_t length) {
   constexpr int MSG_NOSIGNAL = {};
 #endif
   // Don't send a SIGPIPE if the connection is closed
-  last_write_size_ = ::send(socket_, reinterpret_cast<const char*>(buffer),
-                            length, MSG_NOSIGNAL);
+  last_write_size_ =
+      ::send(socket_, reinterpret_cast<const char*>(buffer), length, MSG_NOSIGNAL);
 }
 
 using databento::tests::mock::MockLsgServer;
@@ -98,8 +98,7 @@ void MockLsgServer::Authenticate() {
   Send("cram=t7kNhwj4xqR0QYjzFKtBEG2ec2pXJ4FK\n");
   const auto received = Receive();
   const auto auth_start = received.find('=') + 1;
-  const auto auth =
-      received.substr(auth_start, received.find('-') - auth_start);
+  const auto auth = received.substr(auth_start, received.find('-') - auth_start);
   EXPECT_EQ(auth.length(), SHA256_DIGEST_LENGTH * 2);
   for (const char c : auth) {
     EXPECT_TRUE((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))
@@ -107,8 +106,7 @@ void MockLsgServer::Authenticate() {
   }
   EXPECT_NE(received.find("dataset=" + dataset_), std::string::npos);
   EXPECT_NE(received.find("encoding=dbn"), std::string::npos);
-  EXPECT_NE(received.find("ts_out=" + std::to_string(ts_out_)),
-            std::string::npos);
+  EXPECT_NE(received.find("ts_out=" + std::to_string(ts_out_)), std::string::npos);
   if (heartbeat_interval_.count() > 0) {
     EXPECT_NE(received.find("heartbeat_interval_s=" +
                             std::to_string(heartbeat_interval_.count())),
@@ -119,19 +117,17 @@ void MockLsgServer::Authenticate() {
   Send("success=1|session_id=5|\n");
 }
 
-void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
-                              Schema schema, SType stype, bool is_last) {
+void MockLsgServer::Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                              SType stype, bool is_last) {
   Subscribe(symbols, schema, stype, "", is_last);
 }
 
-void MockLsgServer::SubscribeWithSnapshot(
-    const std::vector<std::string>& symbols, Schema schema, SType stype,
-    bool is_last) {
+void MockLsgServer::SubscribeWithSnapshot(const std::vector<std::string>& symbols,
+                                          Schema schema, SType stype, bool is_last) {
   const auto received = Receive();
-  EXPECT_NE(
-      received.find("symbols=" +
-                    JoinSymbolStrings("MockLsgServer::Subscribe", symbols)),
-      std::string::npos);
+  EXPECT_NE(received.find("symbols=" +
+                          JoinSymbolStrings("MockLsgServer::Subscribe", symbols)),
+            std::string::npos);
   EXPECT_NE(received.find(std::string{"schema="} + ToString(schema)),
             std::string::npos);
   EXPECT_NE(received.find(std::string{"stype_in="} + ToString(stype)),
@@ -143,14 +139,12 @@ void MockLsgServer::SubscribeWithSnapshot(
             std::string::npos);
 }
 
-void MockLsgServer::Subscribe(const std::vector<std::string>& symbols,
-                              Schema schema, SType stype,
-                              const std::string& start, bool is_last) {
+void MockLsgServer::Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                              SType stype, const std::string& start, bool is_last) {
   const auto received = Receive();
-  EXPECT_NE(
-      received.find("symbols=" +
-                    JoinSymbolStrings("MockLsgServer::Subscribe", symbols)),
-      std::string::npos);
+  EXPECT_NE(received.find("symbols=" +
+                          JoinSymbolStrings("MockLsgServer::Subscribe", symbols)),
+            std::string::npos);
   EXPECT_NE(received.find(std::string{"schema="} + ToString(schema)),
             std::string::npos);
   EXPECT_NE(received.find(std::string{"stype_in="} + ToString(stype)),

@@ -18,9 +18,9 @@ std::string ToIso8601(UnixNanos unix_nanos) {
     return "UNDEF_TIMESTAMP";
   }
   std::array<char, 80> buf{};
-  const std::time_t time = std::chrono::duration_cast<std::chrono::seconds>(
-                               unix_nanos.time_since_epoch())
-                               .count();
+  const std::time_t time =
+      std::chrono::duration_cast<std::chrono::seconds>(unix_nanos.time_since_epoch())
+          .count();
   std::tm tm = {};
 #ifdef _WIN32
   if (::gmtime_s(&tm, &time) != 0) {
@@ -33,11 +33,10 @@ std::string ToIso8601(UnixNanos unix_nanos) {
     return ToString(unix_nanos);
   }
 #endif
-  const auto nanos = std::chrono::nanoseconds{
-      unix_nanos.time_since_epoch() %
-      std::chrono::nanoseconds{std::chrono::seconds{1}}};
-  const size_t count =
-      std::strftime(buf.data(), sizeof(buf), "%Y-%m-%dT%H:%M:%S", &tm);
+  const auto nanos =
+      std::chrono::nanoseconds{unix_nanos.time_since_epoch() %
+                               std::chrono::nanoseconds{std::chrono::seconds{1}}};
+  const size_t count = std::strftime(buf.data(), sizeof(buf), "%Y-%m-%dT%H:%M:%S", &tm);
   std::ostringstream time_ss;
   time_ss.write(buf.data(), static_cast<std::streamsize>(count));
   time_ss << '.' << std::setw(9) << std::setfill('0') << nanos.count() << 'Z';

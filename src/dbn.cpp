@@ -19,8 +19,7 @@ void Metadata::Upgrade(VersionUpgradePolicy upgrade_policy) {
   if (upgrade_policy == VersionUpgradePolicy::UpgradeToV2 && version < 2) {
     version = 2;
     symbol_cstr_len = kSymbolCstrLen;
-  } else if (upgrade_policy == VersionUpgradePolicy::UpgradeToV3 &&
-             version < 3) {
+  } else if (upgrade_policy == VersionUpgradePolicy::UpgradeToV3 && version < 3) {
     version = kDbnVersion;
     symbol_cstr_len = kSymbolCstrLen;
   }
@@ -45,10 +44,10 @@ std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
 
   // format symbols, partial, and not_found
   constexpr auto kVecCount = 3;
-  constexpr std::array<std::vector<std::string> Metadata::*, kVecCount>
-      kStrVecs{&Metadata::symbols, &Metadata::partial, &Metadata::not_found};
-  constexpr std::array<char const*, kVecCount> kStrVecNames{
-      "symbols", "partial", "not_found"};
+  constexpr std::array<std::vector<std::string> Metadata::*, kVecCount> kStrVecs{
+      &Metadata::symbols, &Metadata::partial, &Metadata::not_found};
+  constexpr std::array<char const*, kVecCount> kStrVecNames{"symbols", "partial",
+                                                            "not_found"};
   for (std::size_t i = 0; i < kVecCount; ++i) {
     std::ostringstream vec_stream;
     auto vec_helper = StreamOpBuilder{vec_stream}.SetSpacer(" ").Build();
@@ -67,14 +66,11 @@ std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
     mappings_helper.AddItem(mapping);
   }
   return helper
-      .AddField("mappings",
-                static_cast<std::ostringstream&>(mappings_helper.Finish()))
+      .AddField("mappings", static_cast<std::ostringstream&>(mappings_helper.Finish()))
       .Finish();
 }
 
-std::string ToString(const SymbolMapping& mapping) {
-  return MakeString(mapping);
-}
+std::string ToString(const SymbolMapping& mapping) { return MakeString(mapping); }
 std::ostream& operator<<(std::ostream& stream, const SymbolMapping& mapping) {
   std::ostringstream intervals;
   auto intervals_helper = StreamOpBuilder{intervals}.SetSpacer(" ").Build();
@@ -91,11 +87,8 @@ std::ostream& operator<<(std::ostream& stream, const SymbolMapping& mapping) {
       .Finish();
 }
 
-std::string ToString(const MappingInterval& interval) {
-  return MakeString(interval);
-}
-std::ostream& operator<<(std::ostream& stream,
-                         const MappingInterval& interval) {
+std::string ToString(const MappingInterval& interval) { return MakeString(interval); }
+std::ostream& operator<<(std::ostream& stream, const MappingInterval& interval) {
   return StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("MappingInterval")

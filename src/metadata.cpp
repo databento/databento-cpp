@@ -25,8 +25,7 @@ std::ostream& operator<<(std::ostream& stream,
 std::string ToString(const FieldDetail& field_detail) {
   return MakeString(field_detail);
 }
-std::ostream& operator<<(std::ostream& stream,
-                         const FieldDetail& field_detail) {
+std::ostream& operator<<(std::ostream& stream, const FieldDetail& field_detail) {
   return StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("FieldDetail")
@@ -54,13 +53,10 @@ std::ostream& operator<<(std::ostream& stream,
 std::string ToString(const DatasetRange& dataset_range) {
   return MakeString(dataset_range);
 }
-std::ostream& operator<<(std::ostream& stream,
-                         const DatasetRange& dataset_range) {
+std::ostream& operator<<(std::ostream& stream, const DatasetRange& dataset_range) {
   std::ostringstream range_by_schema_ss;
-  auto range_by_schema_helper = StreamOpBuilder{range_by_schema_ss}
-                                    .SetSpacer("\n    ")
-                                    .SetIndent("    ")
-                                    .Build();
+  auto range_by_schema_helper =
+      StreamOpBuilder{range_by_schema_ss}.SetSpacer("\n    ").SetIndent("    ").Build();
   for (const auto& [schema, range] : dataset_range.range_by_schema) {
     range_by_schema_helper.AddKeyVal(schema, range);
   }

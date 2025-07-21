@@ -25,8 +25,7 @@ TsSymbolMap SymbologyResolution::CreateSymbolMap() const {
     for (const auto& [orig_symbol, intervals] : mappings) {
       auto symbol = std::make_shared<std::string>(orig_symbol);
       for (const auto& interval : intervals) {
-        const auto iid =
-            static_cast<std::uint32_t>(std::stoul(interval.symbol));
+        const auto iid = static_cast<std::uint32_t>(std::stoul(interval.symbol));
         res.Insert(iid, interval.start_date, interval.end_date, symbol);
       }
     }
@@ -34,17 +33,15 @@ TsSymbolMap SymbologyResolution::CreateSymbolMap() const {
   return res;
 }
 
-std::string JoinSymbolStrings(
-    const std::string& method_name,
-    std::vector<std::string>::const_iterator symbols_begin,
-    std::vector<std::string>::const_iterator symbols_end) {
+std::string JoinSymbolStrings(const std::string& method_name,
+                              std::vector<std::string>::const_iterator symbols_begin,
+                              std::vector<std::string>::const_iterator symbols_end) {
   if (symbols_begin == symbols_end) {
     throw InvalidArgumentError{method_name, "symbols", "Cannot be empty"};
   }
   return std::accumulate(symbols_begin, symbols_end, std::string{},
                          [](std::string acc, const std::string& sym) {
-                           return acc.empty() ? sym
-                                              : std::move(acc) + ',' + sym;
+                           return acc.empty() ? sym : std::move(acc) + ',' + sym;
                          });
 }
 
@@ -56,12 +53,9 @@ std::string JoinSymbolStrings(const std::string& method_name,
   return JoinSymbolStrings(method_name, symbols.begin(), symbols.end());
 }
 
-std::string ToString(const SymbologyResolution& sym_res) {
-  return MakeString(sym_res);
-}
+std::string ToString(const SymbologyResolution& sym_res) { return MakeString(sym_res); }
 
-std::ostream& operator<<(std::ostream& stream,
-                         const SymbologyResolution& sym_res) {
+std::ostream& operator<<(std::ostream& stream, const SymbologyResolution& sym_res) {
   auto stream_helper = StreamOpBuilder{stream}
                            .SetSpacer("\n    ")
                            .SetTypeName("SymbologyResolution")
@@ -86,17 +80,16 @@ std::ostream& operator<<(std::ostream& stream,
             .AddItem(static_cast<std::ostringstream&>(interval_helper.Finish()))
             .Finish()));
   }
-  stream_helper.AddField(
-      "mappings", static_cast<std::ostringstream&>(mappings_helper.Finish()));
+  stream_helper.AddField("mappings",
+                         static_cast<std::ostringstream&>(mappings_helper.Finish()));
 
   intermediate.str("");
-  auto partial_helper =
-      intermediate_builder.SetIndent("").SetSpacer(" ").Build();
+  auto partial_helper = intermediate_builder.SetIndent("").SetSpacer(" ").Build();
   for (const auto& symbol : sym_res.partial) {
     partial_helper.AddItem(symbol);
   }
-  stream_helper.AddField(
-      "partial", static_cast<std::ostringstream&>(partial_helper.Finish()));
+  stream_helper.AddField("partial",
+                         static_cast<std::ostringstream&>(partial_helper.Finish()));
 
   intermediate.str("");
   auto not_found_helper = intermediate_builder.Build();

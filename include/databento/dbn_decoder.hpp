@@ -26,15 +26,15 @@ class DbnDecoder {
 
   static std::pair<std::uint8_t, std::size_t> DecodeMetadataVersionAndSize(
       const std::byte* buffer, std::size_t size);
-  static Metadata DecodeMetadataFields(std::uint8_t version,
-                                       const std::byte* buffer,
+  static Metadata DecodeMetadataFields(std::uint8_t version, const std::byte* buffer,
                                        const std::byte* buffer_end);
   // Decodes a record possibly applying upgrading the data according to the
   // given version and upgrade policy. If an upgrade is applied,
   // compat_buffer is modified.
-  static Record DecodeRecordCompat(
-      std::uint8_t version, VersionUpgradePolicy upgrade_policy, bool ts_out,
-      std::array<std::byte, kMaxRecordLen>* compat_buffer, Record rec);
+  static Record DecodeRecordCompat(std::uint8_t version,
+                                   VersionUpgradePolicy upgrade_policy, bool ts_out,
+                                   std::array<std::byte, kMaxRecordLen>* compat_buffer,
+                                   Record rec);
 
   // Should be called exactly once.
   Metadata DecodeMetadata();
@@ -45,12 +45,12 @@ class DbnDecoder {
  private:
   static std::string DecodeSymbol(std::size_t symbol_cstr_len,
                                   const std::byte*& buffer);
-  static std::vector<std::string> DecodeRepeatedSymbol(
-      std::size_t symbol_cstr_len, const std::byte*& buffer,
-      const std::byte* buffer_end);
-  static std::vector<SymbolMapping> DecodeSymbolMappings(
-      std::size_t symbol_cstr_len, const std::byte*& buffer,
-      const std::byte* buffer_end);
+  static std::vector<std::string> DecodeRepeatedSymbol(std::size_t symbol_cstr_len,
+                                                       const std::byte*& buffer,
+                                                       const std::byte* buffer_end);
+  static std::vector<SymbolMapping> DecodeSymbolMappings(std::size_t symbol_cstr_len,
+                                                         const std::byte*& buffer,
+                                                         const std::byte* buffer_end);
   static SymbolMapping DecodeSymbolMapping(std::size_t symbol_cstr_len,
                                            const std::byte*& buffer,
                                            const std::byte* buffer_end);

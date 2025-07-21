@@ -27,11 +27,11 @@ namespace {
 constexpr std::size_t kBucketIdLength = 5;
 }  // namespace
 
-LiveBlocking::LiveBlocking(
-    ILogReceiver* log_receiver, std::string key, std::string dataset,
-    bool send_ts_out, VersionUpgradePolicy upgrade_policy,
-    std::optional<std::chrono::seconds> heartbeat_interval,
-    std::size_t buffer_size, std::string user_agent_ext)
+LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
+                           std::string dataset, bool send_ts_out,
+                           VersionUpgradePolicy upgrade_policy,
+                           std::optional<std::chrono::seconds> heartbeat_interval,
+                           std::size_t buffer_size, std::string user_agent_ext)
 
     : log_receiver_{log_receiver},
       key_{std::move(key)},
@@ -46,12 +46,11 @@ LiveBlocking::LiveBlocking(
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
-LiveBlocking::LiveBlocking(
-    ILogReceiver* log_receiver, std::string key, std::string dataset,
-    std::string gateway, std::uint16_t port, bool send_ts_out,
-    VersionUpgradePolicy upgrade_policy,
-    std::optional<std::chrono::seconds> heartbeat_interval,
-    std::size_t buffer_size, std::string user_agent_ext)
+LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
+                           std::string dataset, std::string gateway, std::uint16_t port,
+                           bool send_ts_out, VersionUpgradePolicy upgrade_policy,
+                           std::optional<std::chrono::seconds> heartbeat_interval,
+                           std::size_t buffer_size, std::string user_agent_ext)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
@@ -65,13 +64,13 @@ LiveBlocking::LiveBlocking(
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
-void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in) {
+void LiveBlocking::Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                             SType stype_in) {
   Subscribe(symbols, schema, stype_in, std::string{""});
 }
 
-void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in, UnixNanos start) {
+void LiveBlocking::Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                             SType stype_in, UnixNanos start) {
   IncrementSubCounter();
   std::ostringstream sub_msg;
   sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
@@ -82,9 +81,8 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
       LiveSubscription{symbols, schema, stype_in, start, sub_counter_});
 }
 
-void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in,
-                             const std::string& start) {
+void LiveBlocking::Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                             SType stype_in, const std::string& start) {
   IncrementSubCounter();
   std::ostringstream sub_msg;
   sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
@@ -102,8 +100,8 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols,
   }
 }
 
-void LiveBlocking::SubscribeWithSnapshot(
-    const std::vector<std::string>& symbols, Schema schema, SType stype_in) {
+void LiveBlocking::SubscribeWithSnapshot(const std::vector<std::string>& symbols,
+                                         Schema schema, SType stype_in) {
   IncrementSubCounter();
   std::ostringstream sub_msg;
   sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
@@ -152,8 +150,8 @@ databento::Metadata LiveBlocking::Start() {
   buffer_.Reserve(size);
   client_.ReadExact(buffer_.WriteBegin(), size);
   buffer_.Fill(size);
-  auto metadata = DbnDecoder::DecodeMetadataFields(version, buffer_.ReadBegin(),
-                                                   buffer_.ReadEnd());
+  auto metadata =
+      DbnDecoder::DecodeMetadataFields(version, buffer_.ReadBegin(), buffer_.ReadEnd());
   buffer_.Consume(size);
   // Metadata may leave buffer misaligned. Shift records to ensure 8-byte
   // alignment
@@ -165,8 +163,7 @@ databento::Metadata LiveBlocking::Start() {
 
 const databento::Record& LiveBlocking::NextRecord() { return *NextRecord({}); }
 
-const databento::Record* LiveBlocking::NextRecord(
-    std::chrono::milliseconds timeout) {
+const databento::Record* LiveBlocking::NextRecord(std::chrono::milliseconds timeout) {
   // need some unread_bytes
   const auto unread_bytes = buffer_.ReadCapacity();
   if (unread_bytes == 0) {
@@ -191,9 +188,8 @@ const databento::Record* LiveBlocking::NextRecord(
   current_record_ = Record{BufferRecordHeader()};
   const auto bytes_to_consume = current_record_.Size();
   buffer_.ConsumeNoShift(bytes_to_consume);
-  current_record_ =
-      DbnDecoder::DecodeRecordCompat(version_, upgrade_policy_, send_ts_out_,
-                                     &compat_buffer_, current_record_);
+  current_record_ = DbnDecoder::DecodeRecordCompat(
+      version_, upgrade_policy_, send_ts_out_, &compat_buffer_, current_record_);
   return &current_record_;
 }
 
@@ -222,9 +218,8 @@ void LiveBlocking::Resubscribe() {
     sub_msg << "schema=" << ToString(subscription.schema)
             << "|stype_in=" << ToString(subscription.stype_in)
             << "|id=" << std::to_string(sub_counter_);
-    Subscribe(
-        sub_msg.str(), subscription.symbols,
-        std::holds_alternative<LiveSubscription::Snapshot>(subscription.start));
+    Subscribe(sub_msg.str(), subscription.symbols,
+              std::holds_alternative<LiveSubscription::Snapshot>(subscription.start));
   }
 }
 
@@ -245,17 +240,15 @@ std::string LiveBlocking::DecodeChallenge() {
   }
   auto first_nl_pos = response.find('\n');
   if (first_nl_pos == std::string::npos) {
-    throw LiveApiError::UnexpectedMsg("Received malformed initial message",
-                                      response);
+    throw LiveApiError::UnexpectedMsg("Received malformed initial message", response);
   }
   const auto find_start = first_nl_pos + 1;
-  auto next_nl_pos = find_start == response.length()
-                         ? std::string::npos
-                         : response.find('\n', find_start);
+  auto next_nl_pos = find_start == response.length() ? std::string::npos
+                                                     : response.find('\n', find_start);
   while (next_nl_pos == std::string::npos) {
     // read more
-    buffer_.Fill(client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity())
-                     .read_size);
+    buffer_.Fill(
+        client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size);
     if (buffer_.ReadCapacity() == 0) {
       throw LiveApiError{"Gateway closed socket during authentication"};
     }
@@ -263,11 +256,10 @@ std::string LiveBlocking::DecodeChallenge() {
                 buffer_.ReadCapacity()};
     next_nl_pos = response.find('\n', find_start);
   }
-  const auto challenge_line =
-      response.substr(find_start, next_nl_pos - find_start);
+  const auto challenge_line = response.substr(find_start, next_nl_pos - find_start);
   if (challenge_line.compare(0, 4, "cram") != 0) {
-    throw LiveApiError::UnexpectedMsg(
-        "Did not receive CRAM challenge when expected", challenge_line);
+    throw LiveApiError::UnexpectedMsg("Did not receive CRAM challenge when expected",
+                                      challenge_line);
   }
   const auto equal_pos = challenge_line.find('=');
   if (equal_pos == std::string::npos || equal_pos + 1 > challenge_line.size()) {
@@ -342,24 +334,22 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
   buffer_.Clear();
   do {
     const auto read_size =
-        client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity())
-            .read_size;
+        client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size;
     if (read_size == 0) {
       throw LiveApiError{
           "Unexpected end of message received from server after replying to "
           "CRAM"};
     }
     buffer_.Fill(read_size);
-    newline_ptr = std::find(buffer_.ReadBegin(), buffer_.ReadEnd(),
-                            static_cast<std::byte>('\n'));
+    newline_ptr =
+        std::find(buffer_.ReadBegin(), buffer_.ReadEnd(), static_cast<std::byte>('\n'));
   } while (newline_ptr == buffer_.ReadEnd());
   const std::string response{
       reinterpret_cast<const char*>(buffer_.ReadBegin()),
       static_cast<std::size_t>(newline_ptr - buffer_.ReadBegin())};
   {
     std::ostringstream log_ss;
-    log_ss << "[LiveBlocking::DecodeAuthResp] Authentication response: "
-           << response;
+    log_ss << "[LiveBlocking::DecodeAuthResp] Authentication response: " << response;
     log_receiver_->Receive(LogLevel::Debug, log_ss.str());
   }
   // set in case Read call also read records. One beyond newline
@@ -379,8 +369,7 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
     const std::string kv_pair = response.substr(pos, count - pos);
     const std::size_t eq_pos = kv_pair.find('=');
     if (eq_pos == std::string::npos) {
-      throw LiveApiError::UnexpectedMsg("Malformed authentication response",
-                                        response);
+      throw LiveApiError::UnexpectedMsg("Malformed authentication response", response);
     }
     const std::string key = kv_pair.substr(0, eq_pos);
     if (key == "success") {
@@ -400,8 +389,7 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
     pos = count + 1;
   }
   if (!found_success) {
-    throw LiveApiError{
-        "Did not receive success indicator from authentication attempt"};
+    throw LiveApiError{"Did not receive success indicator from authentication attempt"};
   }
   if (is_error) {
     throw InvalidArgumentError{"LiveBlocking::LiveBlocking", "key",
@@ -412,9 +400,8 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
 
 void LiveBlocking::IncrementSubCounter() {
   if (sub_counter_ == std::numeric_limits<uint32_t>::max()) {
-    log_receiver_->Receive(
-        LogLevel::Warning,
-        "[LiveBlocking::Subscribe] Exhausted all subscription IDs");
+    log_receiver_->Receive(LogLevel::Warning,
+                           "[LiveBlocking::Subscribe] Exhausted all subscription IDs");
   } else {
     ++sub_counter_;
   }

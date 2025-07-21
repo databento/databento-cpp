@@ -51,9 +51,7 @@ struct InstrumentDefMsg {
   const char* SecurityType() const { return security_type.data(); }
   const char* UnitOfMeasure() const { return unit_of_measure.data(); }
   const char* Underlying() const { return underlying.data(); }
-  const char* StrikePriceCurrency() const {
-    return strike_price_currency.data();
-  }
+  const char* StrikePriceCurrency() const { return strike_price_currency.data(); }
 
   RecordHeader hd;
   UnixNanos ts_recv;
@@ -120,17 +118,14 @@ struct InstrumentDefMsg {
 };
 template <>
 databento::InstrumentDefMsg InstrumentDefMsg::Upgrade() const;
-static_assert(sizeof(InstrumentDefMsg) == 400,
-              "InstrumentDefMsg size must match Rust");
+static_assert(sizeof(InstrumentDefMsg) == 400, "InstrumentDefMsg size must match Rust");
 static_assert(alignof(InstrumentDefMsg) == 8, "Must have 8-byte alignment");
 
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs);
-inline bool operator!=(const InstrumentDefMsg& lhs,
-                       const InstrumentDefMsg& rhs) {
+inline bool operator!=(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
   return !(lhs == rhs);
 }
 
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
-std::ostream& operator<<(std::ostream& stream,
-                         const InstrumentDefMsg& instr_def_msg);
+std::ostream& operator<<(std::ostream& stream, const InstrumentDefMsg& instr_def_msg);
 }  // namespace databento::v2

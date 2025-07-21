@@ -15,6 +15,5 @@ constexpr std::size_t kMetadataReservedLen = 53;
 constexpr std::size_t kMetadataReservedLenV1 = 47;
 constexpr std::uint16_t kNullSchema = std::numeric_limits<std::uint16_t>::max();
 constexpr std::uint8_t kNullSType = std::numeric_limits<std::uint8_t>::max();
-constexpr std::uint64_t kNullRecordCount =
-    std::numeric_limits<std::uint64_t>::max();
+constexpr std::uint64_t kNullRecordCount = std::numeric_limits<std::uint64_t>::max();
 }  // namespace databento

@@ -31,16 +31,16 @@ int main() {
   }
   std::cout << '\n';
 
-  const auto fields = client.MetadataListFields(databento::Encoding::Dbn,
-                                                databento::Schema::Trades);
+  const auto fields =
+      client.MetadataListFields(databento::Encoding::Dbn, databento::Schema::Trades);
   std::cout << "Fields:\n";
   for (const auto& field_detail : fields) {
     std::cout << "- " << field_detail << '\n';
   }
   std::cout << '\n';
 
-  const auto dataset_conditions = client.MetadataGetDatasetCondition(
-      "GLBX.MDP3", {"2019-06-01", "2019-08-01"});
+  const auto dataset_conditions =
+      client.MetadataGetDatasetCondition("GLBX.MDP3", {"2019-06-01", "2019-08-01"});
   std::cout << "Conditions:\n";
   for (const auto& dataset_condition : dataset_conditions) {
     std::cout << "- " << dataset_condition << "\n";
@@ -52,26 +52,22 @@ int main() {
   for (const auto& [mode, unit_prices] : all_unit_prices) {
     const auto* mode_str = ToString(mode);
     for (const auto [schema, price] : unit_prices) {
-      std::cout << "- (" << mode_str << ", " << schema << "): " << price
-                << '\n';
+      std::cout << "- (" << mode_str << ", " << schema << "): " << price << '\n';
     }
   }
   std::cout << '\n';
 
-  const auto record_count =
-      client.MetadataGetRecordCount(kGlbxMdp3, {"2020-12-28", "2020-12-29"},
-                                    {"ESH1"}, databento::Schema::Mbo);
+  const auto record_count = client.MetadataGetRecordCount(
+      kGlbxMdp3, {"2020-12-28", "2020-12-29"}, {"ESH1"}, databento::Schema::Mbo);
   std::cout << "Record count: " << record_count << "\n\n";
 
   const std::size_t billable_size = client.MetadataGetBillableSize(
       kGlbxMdp3, {"2020-12-28", "2020-12-29"}, {"ESH1"}, databento::Schema::Mbo,
       databento::SType::RawSymbol, {});
-  std::cout << "Billable size (uncompressed binary bytes): " << billable_size
-            << "\n\n";
+  std::cout << "Billable size (uncompressed binary bytes): " << billable_size << "\n\n";
 
-  const auto cost =
-      client.MetadataGetCost(kGlbxMdp3, {"2020-12-28", "2020-12-29"}, {"ESH1"},
-                             databento::Schema::Mbo);
+  const auto cost = client.MetadataGetCost(kGlbxMdp3, {"2020-12-28", "2020-12-29"},
+                                           {"ESH1"}, databento::Schema::Mbo);
   std::cout << "Cost (in cents): " << cost << '\n';
 
   return 0;

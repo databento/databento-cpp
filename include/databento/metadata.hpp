@@ -55,12 +55,10 @@ inline bool operator!=(const FieldDetail& lhs, const FieldDetail& rhs) {
   return !(lhs == rhs);
 }
 
-inline bool operator==(const UnitPricesForMode& lhs,
-                       const UnitPricesForMode& rhs) {
+inline bool operator==(const UnitPricesForMode& lhs, const UnitPricesForMode& rhs) {
   return lhs.mode == rhs.mode && lhs.unit_prices == rhs.unit_prices;
 }
-inline bool operator!=(const UnitPricesForMode& lhs,
-                       const UnitPricesForMode& rhs) {
+inline bool operator!=(const UnitPricesForMode& lhs, const UnitPricesForMode& rhs) {
   return !(lhs == rhs);
 }
 
@@ -83,14 +81,12 @@ inline bool operator!=(const DatasetRange& lhs, const DatasetRange& rhs) {
 }
 
 std::string ToString(const PublisherDetail& publisher_detail);
-std::ostream& operator<<(std::ostream& stream,
-                         const PublisherDetail& publisher_detail);
+std::ostream& operator<<(std::ostream& stream, const PublisherDetail& publisher_detail);
 std::string ToString(const FieldDetail& field_detail);
 std::ostream& operator<<(std::ostream& stream, const FieldDetail& field_detail);
 std::string ToString(const DatasetConditionDetail& condition_detail);
 std::ostream& operator<<(std::ostream& stream,
                          const DatasetConditionDetail& condition_detail);
 std::string ToString(const DatasetRange& dataset_range);
-std::ostream& operator<<(std::ostream& stream,
-                         const DatasetRange& dataset_range);
+std::ostream& operator<<(std::ostream& stream, const DatasetRange& dataset_range);
 }  // namespace databento

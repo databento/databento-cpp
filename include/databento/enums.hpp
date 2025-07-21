@@ -534,17 +534,14 @@ std::ostream& operator<<(std::ostream& out, Side side);
 std::ostream& operator<<(std::ostream& out, InstrumentClass instrument_class);
 std::ostream& operator<<(std::ostream& out, MatchAlgorithm match_algorithm);
 std::ostream& operator<<(std::ostream& out, SecurityUpdateAction update_action);
-std::ostream& operator<<(std::ostream& out,
-                         UserDefinedInstrument user_def_instr);
+std::ostream& operator<<(std::ostream& out, UserDefinedInstrument user_def_instr);
 std::ostream& operator<<(std::ostream& out, StatType stat_type);
-std::ostream& operator<<(std::ostream& out,
-                         StatUpdateAction stat_update_action);
+std::ostream& operator<<(std::ostream& out, StatUpdateAction stat_update_action);
 std::ostream& operator<<(std::ostream& out, StatusAction status_action);
 std::ostream& operator<<(std::ostream& out, StatusReason status_reason);
 std::ostream& operator<<(std::ostream& out, TradingEvent trading_event);
 std::ostream& operator<<(std::ostream& out, TriState tri_state);
-std::ostream& operator<<(std::ostream& out,
-                         VersionUpgradePolicy upgrade_policy);
+std::ostream& operator<<(std::ostream& out, VersionUpgradePolicy upgrade_policy);
 std::ostream& operator<<(std::ostream& out, ErrorCode error_code);
 std::ostream& operator<<(std::ostream& out, SystemCode system_code);
 

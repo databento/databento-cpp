@@ -5,13 +5,12 @@
 
 namespace databento::tests {
 TEST(MetadataTests, TestDatasetConditionDetailToString) {
-  const DatasetConditionDetail available{
-      "2022-11-10", DatasetCondition::Available, "2023-03-01"};
+  const DatasetConditionDetail available{"2022-11-10", DatasetCondition::Available,
+                                         "2023-03-01"};
   EXPECT_EQ(
       ToString(available),
       R"(DatasetConditionDetail { date = "2022-11-10", condition = available, last_modified_date = "2023-03-01" })");
-  const DatasetConditionDetail missing{
-      "2022-11-11", DatasetCondition::Missing, {}};
+  const DatasetConditionDetail missing{"2022-11-11", DatasetCondition::Missing, {}};
   EXPECT_EQ(
       ToString(missing),
       R"(DatasetConditionDetail { date = "2022-11-11", condition = missing, last_modified_date = nullopt })");

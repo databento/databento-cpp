@@ -10,9 +10,8 @@ using databento::InFileStream;
 InFileStream::InFileStream(const std::filesystem::path& file_path)
     : stream_{file_path, std::ios::binary} {
   if (stream_.fail()) {
-    throw InvalidArgumentError{
-        "InFileStream", "file_path",
-        "Non-existent or invalid file at " + file_path.string()};
+    throw InvalidArgumentError{"InFileStream", "file_path",
+                               "Non-existent or invalid file at " + file_path.string()};
   }
 }
 
@@ -20,8 +19,7 @@ void InFileStream::ReadExact(std::byte* buffer, std::size_t length) {
   const auto size = ReadSome(buffer, length);
   if (size != length) {
     std::ostringstream err_msg;
-    err_msg << "Unexpected end of file, expected " << length << " bytes, got "
-            << size;
+    err_msg << "Unexpected end of file, expected " << length << " bytes, got " << size;
     throw DbnResponseError{err_msg.str()};
   }
 }

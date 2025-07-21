@@ -36,8 +36,7 @@ std::pair<bool, UnixNanos> TryConvertToUnixNanos(const char* start) {
   return std::make_pair(true, UnixNanos{std::chrono::nanoseconds(result)});
 }
 
-void ProcessRecords(LiveBlocking& client, Schema schema,
-                    bool start_from_epoch) {
+void ProcessRecords(LiveBlocking& client, Schema schema, bool start_from_epoch) {
   client.Start();
 
   std::cout << "Starting client...\n";
@@ -112,9 +111,9 @@ class ArgParser {
   void Parse(int argc, char* argv[]) {
     for (auto i = 1; i < argc;) {
       const auto cur_arg = argv[i];
-      auto it = std::find_if(
-          args.begin(), args.end(),
-          [&cur_arg](const auto& arg) { return cur_arg == arg.arg; });
+      auto it = std::find_if(args.begin(), args.end(), [&cur_arg](const auto& arg) {
+        return cur_arg == arg.arg;
+      });
       if (it != args.end()) {
         it->value = argv[i + 1];
       }
@@ -123,9 +122,9 @@ class ArgParser {
   }
 
   const char* Get(const std::string& arg_name) const {
-    auto it = std::find_if(
-        args.begin(), args.end(),
-        [&arg_name](const auto& arg) { return arg_name == arg.name; });
+    auto it = std::find_if(args.begin(), args.end(), [&arg_name](const auto& arg) {
+      return arg_name == arg.name;
+    });
 
     if (it == args.end()) {
       return nullptr;
@@ -144,8 +143,8 @@ ArgParser ParseArgs(int argc, char* argv[]
   ArgParser parser;
   parser.Add(ArgParser::Arg{"gateway", "--gateway"});
   parser.Add(ArgParser::Arg{"port", "--port", "13000"});
-  parser.Add(ArgParser::Arg{"api_key_env_var", "--api-key-env-var",
-                            "DATABENTO_API_KEY"});
+  parser.Add(
+      ArgParser::Arg{"api_key_env_var", "--api-key-env-var", "DATABENTO_API_KEY"});
   parser.Add(ArgParser::Arg{"dataset", "--dataset"});
   parser.Add(ArgParser::Arg{"schema", "--schema"});
   parser.Add(ArgParser::Arg{"stype", "--stype"});

@@ -8,10 +8,8 @@ namespace databento::tests {
 TEST(SymbologyTests, TestSymbologyResolutionToString) {
   const SymbologyResolution target{
       {
-          {"ESM2",
-           {{date::year{2022} / 6 / 1, date::year{2022} / 6 / 17, "12344"}}},
-          {"ESU2",
-           {{date::year{2022} / 6 / 1, date::year{2022} / 7 / 1, "12345"}}},
+          {"ESM2", {{date::year{2022} / 6 / 1, date::year{2022} / 6 / 17, "12344"}}},
+          {"ESU2", {{date::year{2022} / 6 / 1, date::year{2022} / 7 / 1, "12345"}}},
       },
       {"ESM2"},
       {"EEES"},

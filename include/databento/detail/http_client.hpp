@@ -21,14 +21,11 @@ class HttpClient {
   HttpClient(ILogReceiver* log_receiver, const std::string& key,
              const std::string& gateway, std::uint16_t port);
 
-  nlohmann::json GetJson(const std::string& path,
-                         const httplib::Params& params);
-  nlohmann::json PostJson(const std::string& path,
-                          const httplib::Params& form_params);
+  nlohmann::json GetJson(const std::string& path, const httplib::Params& params);
+  nlohmann::json PostJson(const std::string& path, const httplib::Params& form_params);
   void GetRawStream(const std::string& path, const httplib::Params& params,
                     const httplib::ContentReceiver& callback);
-  void PostRawStream(const std::string& path,
-                     const httplib::Params& form_params,
+  void PostRawStream(const std::string& path, const httplib::Params& form_params,
                      const httplib::ContentReceiver& callback);
 
  private:

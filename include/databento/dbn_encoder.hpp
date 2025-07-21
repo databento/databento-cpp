@@ -17,23 +17,20 @@ class DbnEncoder {
 
   template <typename R>
   void EncodeRecord(const R& record) {
-    static_assert(
-        has_header<R>::value,
-        "must be a DBN record struct with an `hd` RecordHeader field");
+    static_assert(has_header<R>::value,
+                  "must be a DBN record struct with an `hd` RecordHeader field");
     EncodeRecord(Record{&record.hd});
   }
   template <typename R>
   void EncodeRecord(const WithTsOut<R> record) {
-    static_assert(
-        has_header<R>::value,
-        "must be a DBN record struct with an `hd` RecordHeader field");
+    static_assert(has_header<R>::value,
+                  "must be a DBN record struct with an `hd` RecordHeader field");
     EncodeRecord(Record{&record.rec.hd});
   }
   void EncodeRecord(const Record& record);
 
  private:
-  static std::pair<std::uint32_t, std::uint32_t> CalcLength(
-      const Metadata& metadata);
+  static std::pair<std::uint32_t, std::uint32_t> CalcLength(const Metadata& metadata);
 
   IWritable* output_;
 };

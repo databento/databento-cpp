@@ -18,8 +18,7 @@ using databento::LiveThreaded;
 struct LiveThreaded::Impl {
   template <typename... A>
   explicit Impl(ILogReceiver* log_recv, A&&... args)
-      : log_receiver{log_recv},
-        blocking{log_receiver, std::forward<A>(args)...} {}
+      : log_receiver{log_recv}, blocking{log_receiver, std::forward<A>(args)...} {}
 
   void NotifyOfStop() {
     const std::lock_guard<std::mutex> lock{last_cb_ret_mutex};
@@ -55,36 +54,30 @@ LiveThreaded::~LiveThreaded() {
   }
 }
 
-LiveThreaded::LiveThreaded(
-    ILogReceiver* log_receiver, std::string key, std::string dataset,
-    bool send_ts_out, VersionUpgradePolicy upgrade_policy,
-    std::optional<std::chrono::seconds> heartbeat_interval,
-    std::size_t buffer_size, std::string user_agent_ext)
-    : impl_{std::make_unique<Impl>(log_receiver, std::move(key),
-                                   std::move(dataset), send_ts_out,
-                                   upgrade_policy, heartbeat_interval,
+LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
+                           std::string dataset, bool send_ts_out,
+                           VersionUpgradePolicy upgrade_policy,
+                           std::optional<std::chrono::seconds> heartbeat_interval,
+                           std::size_t buffer_size, std::string user_agent_ext)
+    : impl_{std::make_unique<Impl>(log_receiver, std::move(key), std::move(dataset),
+                                   send_ts_out, upgrade_policy, heartbeat_interval,
                                    buffer_size, std::move(user_agent_ext))} {}
 
-LiveThreaded::LiveThreaded(
-    ILogReceiver* log_receiver, std::string key, std::string dataset,
-    std::string gateway, std::uint16_t port, bool send_ts_out,
-    VersionUpgradePolicy upgrade_policy,
-    std::optional<std::chrono::seconds> heartbeat_interval,
-    std::size_t buffer_size, std::string user_agent_ext)
-    : impl_{std::make_unique<Impl>(
-          log_receiver, std::move(key), std::move(dataset), std::move(gateway),
-          port, send_ts_out, upgrade_policy, heartbeat_interval, buffer_size,
-          std::move(user_agent_ext))} {}
+LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
+                           std::string dataset, std::string gateway, std::uint16_t port,
+                           bool send_ts_out, VersionUpgradePolicy upgrade_policy,
+                           std::optional<std::chrono::seconds> heartbeat_interval,
+                           std::size_t buffer_size, std::string user_agent_ext)
+    : impl_{std::make_unique<Impl>(log_receiver, std::move(key), std::move(dataset),
+                                   std::move(gateway), port, send_ts_out,
+                                   upgrade_policy, heartbeat_interval, buffer_size,
+                                   std::move(user_agent_ext))} {}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 
-const std::string& LiveThreaded::Dataset() const {
-  return impl_->blocking.Dataset();
-}
+const std::string& LiveThreaded::Dataset() const { return impl_->blocking.Dataset(); }
 
-const std::string& LiveThreaded::Gateway() const {
-  return impl_->blocking.Gateway();
-}
+const std::string& LiveThreaded::Gateway() const { return impl_->blocking.Gateway(); }
 
 std::uint16_t LiveThreaded::Port() const { return impl_->blocking.Port(); }
 
@@ -98,8 +91,7 @@ std::optional<std::chrono::seconds> LiveThreaded::HeartbeatInterval() const {
   return impl_->blocking.HeartbeatInterval();
 }
 
-const std::vector<databento::LiveSubscription>& LiveThreaded::Subscriptions()
-    const {
+const std::vector<databento::LiveSubscription>& LiveThreaded::Subscriptions() const {
   return impl_->blocking.Subscriptions();
 }
 
@@ -107,24 +99,23 @@ std::vector<databento::LiveSubscription>& LiveThreaded::Subscriptions() {
   return impl_->blocking.Subscriptions();
 }
 
-void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in) {
+void LiveThreaded::Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                             SType stype_in) {
   impl_->blocking.Subscribe(symbols, schema, stype_in);
 }
 
-void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in, UnixNanos start) {
+void LiveThreaded::Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                             SType stype_in, UnixNanos start) {
   impl_->blocking.Subscribe(symbols, schema, stype_in, start);
 }
 
-void LiveThreaded::Subscribe(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in,
-                             const std::string& start) {
+void LiveThreaded::Subscribe(const std::vector<std::string>& symbols, Schema schema,
+                             SType stype_in, const std::string& start) {
   impl_->blocking.Subscribe(symbols, schema, stype_in, start);
 }
 
-void LiveThreaded::SubscribeWithSnapshot(
-    const std::vector<std::string>& symbols, Schema schema, SType stype_in) {
+void LiveThreaded::SubscribeWithSnapshot(const std::vector<std::string>& symbols,
+                                         Schema schema, SType stype_in) {
   impl_->blocking.SubscribeWithSnapshot(symbols, schema, stype_in);
 }
 
@@ -149,10 +140,9 @@ void LiveThreaded::Start(MetadataCallback metadata_callback,
     return;
   }
   // Safe to pass raw pointer because `thread_` cannot outlive `impl_`
-  thread_ = detail::ScopedThread{&LiveThreaded::ProcessingThread, impl_.get(),
-                                 std::move(metadata_callback),
-                                 std::move(record_callback),
-                                 std::move(exception_callback)};
+  thread_ = detail::ScopedThread{
+      &LiveThreaded::ProcessingThread, impl_.get(), std::move(metadata_callback),
+      std::move(record_callback), std::move(exception_callback)};
 }
 
 void LiveThreaded::Reconnect() { impl_->blocking.Reconnect(); }
@@ -163,25 +153,22 @@ void LiveThreaded::BlockForStop() {
   std::unique_lock<std::mutex> lock{impl_->last_cb_ret_mutex};
   auto* impl = impl_.get();
   // wait for stop
-  impl_->last_cb_ret_cv.wait(
-      lock, [impl] { return impl->last_cb_ret == KeepGoing::Stop; });
+  impl_->last_cb_ret_cv.wait(lock,
+                             [impl] { return impl->last_cb_ret == KeepGoing::Stop; });
 }
 
-databento::KeepGoing LiveThreaded::BlockForStop(
-    std::chrono::milliseconds timeout) {
+databento::KeepGoing LiveThreaded::BlockForStop(std::chrono::milliseconds timeout) {
   std::unique_lock<std::mutex> lock{impl_->last_cb_ret_mutex};
   auto* impl = impl_.get();
   // wait for stop
-  if (impl_->last_cb_ret_cv.wait_for(lock, timeout, [impl] {
-        return impl->last_cb_ret == KeepGoing::Stop;
-      })) {
+  if (impl_->last_cb_ret_cv.wait_for(
+          lock, timeout, [impl] { return impl->last_cb_ret == KeepGoing::Stop; })) {
     return KeepGoing::Stop;
   }
   return KeepGoing::Continue;
 }
 
-void LiveThreaded::ProcessingThread(Impl* impl,
-                                    MetadataCallback&& metadata_callback,
+void LiveThreaded::ProcessingThread(Impl* impl, MetadataCallback&& metadata_callback,
                                     RecordCallback&& record_callback,
                                     ExceptionCallback&& exception_callback) {
   // Thread safety: non-const calls to `blocking` are only performed from this
@@ -236,11 +223,9 @@ void LiveThreaded::ProcessingThread(Impl* impl,
 }
 
 LiveThreaded::ExceptionAction LiveThreaded::ExceptionHandler(
-    Impl* impl, const ExceptionCallback& exception_callback,
-    const std::exception& exc, std::string_view pretty_function_name,
-    std::string_view message) {
-  if (exception_callback &&
-      exception_callback(exc) == ExceptionAction::Restart) {
+    Impl* impl, const ExceptionCallback& exception_callback, const std::exception& exc,
+    std::string_view pretty_function_name, std::string_view message) {
+  if (exception_callback && exception_callback(exc) == ExceptionAction::Restart) {
     std::ostringstream log_ss;
     log_ss << pretty_function_name << ' ' << message << exc.what()
            << ". Attempting to restart session.";

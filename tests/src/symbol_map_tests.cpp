@@ -181,8 +181,7 @@ TEST(TsSymbolMapTests, TestBasic) {
       {},
       {},
       {},
-      UnixNanos{date::sys_days{date::year{2023} / 7 / 25}} +
-          std::chrono::minutes{155},
+      UnixNanos{date::sys_days{date::year{2023} / 7 / 25}} + std::chrono::minutes{155},
       {},
       {}};
   EXPECT_EQ(target.At(record), "TSLA");
@@ -223,8 +222,7 @@ TEST(PitSymbolMapTests, TestFromMetadata) {
   EXPECT_EQ(target.Find(7298), target.Map().end());
   EXPECT_EQ(target[10163], "TSLA");
   EXPECT_EQ(target[6803], "MSFT");
-  auto inverse_target =
-      GenMetadata().CreateSymbolMapForDate(date::year{2023} / 7 / 31);
+  auto inverse_target = GenMetadata().CreateSymbolMapForDate(date::year{2023} / 7 / 31);
   EXPECT_EQ(inverse_target.Map(), target.Map());
 }
 
@@ -232,19 +230,15 @@ TEST(PitSymbolMapTests, TestFromMetadataOutOfRange) {
   auto metadata = GenMetadata();
   ASSERT_EQ(metadata.start, UnixNanos{std::chrono::seconds{1688169600}});
   ASSERT_EQ(metadata.end, UnixNanos{std::chrono::seconds{1690848000}});
-  ASSERT_THROW(PitSymbolMap(metadata, date::year{2023} / 8 / 1),
-               InvalidArgumentError);
-  ASSERT_THROW(PitSymbolMap(metadata, date::year{2023} / 6 / 30),
-               InvalidArgumentError);
-  metadata.end = UnixNanos{date::sys_days{date::year{2023} / 7 / 1}} +
-                 std::chrono::hours{8};
+  ASSERT_THROW(PitSymbolMap(metadata, date::year{2023} / 8 / 1), InvalidArgumentError);
+  ASSERT_THROW(PitSymbolMap(metadata, date::year{2023} / 6 / 30), InvalidArgumentError);
+  metadata.end =
+      UnixNanos{date::sys_days{date::year{2023} / 7 / 1}} + std::chrono::hours{8};
   ASSERT_NE(metadata.end, UnixNanos{date::sys_days{date::year{2023} / 7 / 1}});
   ASSERT_NO_THROW(PitSymbolMap(metadata, date::year{2023} / 7 / 1));
-  ASSERT_THROW(PitSymbolMap(metadata, date::year{2023} / 7 / 2),
-               InvalidArgumentError);
+  ASSERT_THROW(PitSymbolMap(metadata, date::year{2023} / 7 / 2), InvalidArgumentError);
   metadata.end = UnixNanos{date::sys_days{date::year{2023} / 7 / 2}};
-  ASSERT_THROW(PitSymbolMap(metadata, date::year{2023} / 7 / 2),
-               InvalidArgumentError);
+  ASSERT_THROW(PitSymbolMap(metadata, date::year{2023} / 7 / 2), InvalidArgumentError);
   metadata.end += std::chrono::nanoseconds{1};
   ASSERT_NO_THROW(PitSymbolMap(metadata, date::year{2023} / 7 / 2));
 }

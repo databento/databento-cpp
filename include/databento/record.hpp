@@ -19,8 +19,7 @@
 namespace databento {
 // Common data for all Databento Records.
 struct RecordHeader {
-  static constexpr std::size_t kLengthMultiplier =
-      kRecordHeaderLengthMultiplier;
+  static constexpr std::size_t kLengthMultiplier = kRecordHeaderLengthMultiplier;
 
   // The length of the message in 32-bit words.
   std::uint8_t length;
@@ -36,9 +35,7 @@ struct RecordHeader {
 
   std::size_t Size() const;
   // Retrieve the publisher based on the publisher ID.
-  enum Publisher Publisher() const {
-    return static_cast<enum Publisher>(publisher_id);
-  }
+  enum Publisher Publisher() const { return static_cast<enum Publisher>(publisher_id); }
 };
 
 // Type trait helper for templated functions accepting DBN records.
@@ -144,8 +141,7 @@ struct ConsolidatedBidAskPair {
 };
 static_assert(sizeof(ConsolidatedBidAskPair) == 32,
               "ConsolidatedBidAskPair size must match Rust");
-static_assert(alignof(ConsolidatedBidAskPair) == 8,
-              "Must have 8-byte alignment");
+static_assert(alignof(ConsolidatedBidAskPair) == 8, "Must have 8-byte alignment");
 
 struct TradeMsg {
   static bool HasRType(RType rtype) { return rtype == RType::Mbp0; }
@@ -278,8 +274,7 @@ struct Cmbp1Msg {
 };
 using TcbboMsg = Cmbp1Msg;
 static_assert(alignof(Cmbp1Msg) == 8, "Must have 8-byte alignment");
-static_assert(sizeof(Cmbp1Msg) ==
-                  sizeof(TradeMsg) + sizeof(ConsolidatedBidAskPair),
+static_assert(sizeof(Cmbp1Msg) == sizeof(TradeMsg) + sizeof(ConsolidatedBidAskPair),
               "Cmbp1Msg size must match Rust");
 
 struct CbboMsg {
@@ -294,8 +289,7 @@ struct CbboMsg {
     };
   }
   static_assert(alignof(Cmbp1Msg) == 8, "Must have 8-byte alignment");
-  static_assert(sizeof(Cmbp1Msg) ==
-                    sizeof(TradeMsg) + sizeof(ConsolidatedBidAskPair),
+  static_assert(sizeof(Cmbp1Msg) == sizeof(TradeMsg) + sizeof(ConsolidatedBidAskPair),
                 "Cmbp1Msg size must match Rust");
 
   UnixNanos IndexTs() const { return ts_recv; }
@@ -315,8 +309,7 @@ struct CbboMsg {
 using Cbbo1SMsg = CbboMsg;
 using Cbbo1MMsg = CbboMsg;
 static_assert(alignof(CbboMsg) == 8, "Must have 8-byte alignment");
-static_assert(sizeof(CbboMsg) ==
-                  sizeof(TradeMsg) + sizeof(ConsolidatedBidAskPair),
+static_assert(sizeof(CbboMsg) == sizeof(TradeMsg) + sizeof(ConsolidatedBidAskPair),
               "CbboMsg size must match Rust");
 
 // Aggregate of open, high, low, and close prices with volume.
@@ -385,9 +378,7 @@ struct InstrumentDefMsg {
   const char* SecurityType() const { return security_type.data(); }
   const char* UnitOfMeasure() const { return unit_of_measure.data(); }
   const char* Underlying() const { return underlying.data(); }
-  const char* StrikePriceCurrency() const {
-    return strike_price_currency.data();
-  }
+  const char* StrikePriceCurrency() const { return strike_price_currency.data(); }
   const char* LegRawSymbol() const { return leg_raw_symbol.data(); }
 
   RecordHeader hd;
@@ -463,8 +454,7 @@ struct InstrumentDefMsg {
   // padding for alignment
   std::array<char, 17> reserved;
 };
-static_assert(sizeof(InstrumentDefMsg) == 520,
-              "InstrumentDefMsg size must match Rust");
+static_assert(sizeof(InstrumentDefMsg) == 520, "InstrumentDefMsg size must match Rust");
 static_assert(alignof(InstrumentDefMsg) == 8, "Must have 8-byte alignment");
 
 // An order imbalance message.
@@ -556,8 +546,7 @@ struct SymbolMappingMsg {
   UnixNanos start_ts;
   UnixNanos end_ts;
 };
-static_assert(sizeof(SymbolMappingMsg) == 176,
-              "SymbolMappingMsg size must match Rust");
+static_assert(sizeof(SymbolMappingMsg) == 176, "SymbolMappingMsg size must match Rust");
 static_assert(alignof(SymbolMappingMsg) == 8, "Must have 8-byte alignment");
 
 struct SystemMsg {
@@ -567,8 +556,7 @@ struct SystemMsg {
   const char* Msg() const { return msg.data(); }
   bool IsHeartbeat() const {
     // Check if code is unset
-    if (static_cast<std::uint8_t>(code) ==
-        std::numeric_limits<std::uint8_t>::max()) {
+    if (static_cast<std::uint8_t>(code) == std::numeric_limits<std::uint8_t>::max()) {
       return std::strncmp(msg.data(), "Heartbeat", 9) == 0;
     }
     return code == SystemCode::Heartbeat;
@@ -591,16 +579,13 @@ inline bool operator!=(const RecordHeader& lhs, const RecordHeader& rhs) {
 }
 
 inline bool operator==(const MboMsg& lhs, const MboMsg& rhs) {
-  return lhs.hd == rhs.hd && lhs.order_id == rhs.order_id &&
-         lhs.price == rhs.price && lhs.size == rhs.size &&
-         lhs.flags == rhs.flags && lhs.channel_id == rhs.channel_id &&
-         lhs.action == rhs.action && lhs.side == rhs.side &&
-         lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
-         lhs.sequence == rhs.sequence;
+  return lhs.hd == rhs.hd && lhs.order_id == rhs.order_id && lhs.price == rhs.price &&
+         lhs.size == rhs.size && lhs.flags == rhs.flags &&
+         lhs.channel_id == rhs.channel_id && lhs.action == rhs.action &&
+         lhs.side == rhs.side && lhs.ts_recv == rhs.ts_recv &&
+         lhs.ts_in_delta == rhs.ts_in_delta && lhs.sequence == rhs.sequence;
 }
-inline bool operator!=(const MboMsg& lhs, const MboMsg& rhs) {
-  return !(lhs == rhs);
-}
+inline bool operator!=(const MboMsg& lhs, const MboMsg& rhs) { return !(lhs == rhs); }
 
 inline bool operator==(const BidAskPair& lhs, const BidAskPair& rhs) {
   return lhs.bid_px == rhs.bid_px && lhs.ask_px == rhs.ask_px &&
@@ -624,21 +609,19 @@ inline bool operator!=(const ConsolidatedBidAskPair& lhs,
 
 inline bool operator==(const Mbp1Msg& lhs, const Mbp1Msg& rhs) {
   return lhs.hd == rhs.hd && lhs.price == rhs.price && lhs.size == rhs.size &&
-         lhs.action == rhs.action && lhs.side == rhs.side &&
-         lhs.flags == rhs.flags && lhs.depth == rhs.depth &&
-         lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
-         lhs.sequence == rhs.sequence && lhs.levels == rhs.levels;
+         lhs.action == rhs.action && lhs.side == rhs.side && lhs.flags == rhs.flags &&
+         lhs.depth == rhs.depth && lhs.ts_recv == rhs.ts_recv &&
+         lhs.ts_in_delta == rhs.ts_in_delta && lhs.sequence == rhs.sequence &&
+         lhs.levels == rhs.levels;
 }
-inline bool operator!=(const Mbp1Msg& lhs, const Mbp1Msg& rhs) {
-  return !(lhs == rhs);
-}
+inline bool operator!=(const Mbp1Msg& lhs, const Mbp1Msg& rhs) { return !(lhs == rhs); }
 
 inline bool operator==(const Mbp10Msg& lhs, const Mbp10Msg& rhs) {
   return lhs.hd == rhs.hd && lhs.price == rhs.price && lhs.size == rhs.size &&
-         lhs.action == rhs.action && lhs.side == rhs.side &&
-         lhs.flags == rhs.flags && lhs.depth == rhs.depth &&
-         lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
-         lhs.sequence == rhs.sequence && lhs.levels == rhs.levels;
+         lhs.action == rhs.action && lhs.side == rhs.side && lhs.flags == rhs.flags &&
+         lhs.depth == rhs.depth && lhs.ts_recv == rhs.ts_recv &&
+         lhs.ts_in_delta == rhs.ts_in_delta && lhs.sequence == rhs.sequence &&
+         lhs.levels == rhs.levels;
 }
 inline bool operator!=(const Mbp10Msg& lhs, const Mbp10Msg& rhs) {
   return !(lhs == rhs);
@@ -650,15 +633,13 @@ inline bool operator==(const BboMsg& lhs, const BboMsg& rhs) {
          std::tie(rhs.hd, rhs.price, rhs.size, rhs.side, rhs.flags, rhs.ts_recv,
                   rhs.sequence, rhs.levels);
 }
-inline bool operator!=(const BboMsg& lhs, const BboMsg& rhs) {
-  return !(lhs == rhs);
-}
+inline bool operator!=(const BboMsg& lhs, const BboMsg& rhs) { return !(lhs == rhs); }
 
 inline bool operator==(const Cmbp1Msg& lhs, const Cmbp1Msg& rhs) {
   return lhs.hd == rhs.hd && lhs.price == rhs.price && lhs.size == rhs.size &&
-         lhs.action == rhs.action && lhs.side == rhs.side &&
-         lhs.flags == rhs.flags && lhs.ts_recv == rhs.ts_recv &&
-         lhs.ts_in_delta == rhs.ts_in_delta && lhs.levels == rhs.levels;
+         lhs.action == rhs.action && lhs.side == rhs.side && lhs.flags == rhs.flags &&
+         lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
+         lhs.levels == rhs.levels;
 }
 inline bool operator!=(const Cmbp1Msg& lhs, const Cmbp1Msg& rhs) {
   return !(lhs == rhs);
@@ -666,19 +647,16 @@ inline bool operator!=(const Cmbp1Msg& lhs, const Cmbp1Msg& rhs) {
 
 inline bool operator==(const CbboMsg& lhs, const CbboMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.price == rhs.price && lhs.size == rhs.size &&
-         lhs.side == rhs.side && lhs.flags == rhs.flags &&
-         lhs.ts_recv == rhs.ts_recv && lhs.levels == rhs.levels;
+         lhs.side == rhs.side && lhs.flags == rhs.flags && lhs.ts_recv == rhs.ts_recv &&
+         lhs.levels == rhs.levels;
 }
-inline bool operator!=(const CbboMsg& lhs, const CbboMsg& rhs) {
-  return !(lhs == rhs);
-}
+inline bool operator!=(const CbboMsg& lhs, const CbboMsg& rhs) { return !(lhs == rhs); }
 
 inline bool operator==(const TradeMsg& lhs, const TradeMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.price == rhs.price && lhs.size == rhs.size &&
-         lhs.action == rhs.action && lhs.side == rhs.side &&
-         lhs.flags == rhs.flags && lhs.depth == rhs.depth &&
-         lhs.ts_recv == rhs.ts_recv && lhs.ts_in_delta == rhs.ts_in_delta &&
-         lhs.sequence == rhs.sequence;
+         lhs.action == rhs.action && lhs.side == rhs.side && lhs.flags == rhs.flags &&
+         lhs.depth == rhs.depth && lhs.ts_recv == rhs.ts_recv &&
+         lhs.ts_in_delta == rhs.ts_in_delta && lhs.sequence == rhs.sequence;
 }
 inline bool operator!=(const TradeMsg& lhs, const TradeMsg& rhs) {
   return !(lhs == rhs);
@@ -686,28 +664,24 @@ inline bool operator!=(const TradeMsg& lhs, const TradeMsg& rhs) {
 
 inline bool operator==(const OhlcvMsg& lhs, const OhlcvMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.open == rhs.open && lhs.high == rhs.high &&
-         lhs.low == rhs.low && lhs.close == rhs.close &&
-         lhs.volume == rhs.volume;
+         lhs.low == rhs.low && lhs.close == rhs.close && lhs.volume == rhs.volume;
 }
 inline bool operator!=(const OhlcvMsg& lhs, const OhlcvMsg& rhs) {
   return !(lhs == rhs);
 }
 
 inline bool operator==(const StatusMsg& lhs, const StatusMsg& rhs) {
-  return std::tie(lhs.hd, lhs.ts_recv, lhs.action, lhs.reason,
-                  lhs.trading_event, lhs.is_trading, lhs.is_quoting,
-                  lhs.is_short_sell_restricted) ==
-         std::tie(rhs.hd, rhs.ts_recv, rhs.action, rhs.reason,
-                  rhs.trading_event, rhs.is_trading, rhs.is_quoting,
-                  rhs.is_short_sell_restricted);
+  return std::tie(lhs.hd, lhs.ts_recv, lhs.action, lhs.reason, lhs.trading_event,
+                  lhs.is_trading, lhs.is_quoting, lhs.is_short_sell_restricted) ==
+         std::tie(rhs.hd, rhs.ts_recv, rhs.action, rhs.reason, rhs.trading_event,
+                  rhs.is_trading, rhs.is_quoting, rhs.is_short_sell_restricted);
 }
 inline bool operator!=(const StatusMsg& lhs, const StatusMsg& rhs) {
   return !(lhs == rhs);
 }
 
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs);
-inline bool operator!=(const InstrumentDefMsg& lhs,
-                       const InstrumentDefMsg& rhs) {
+inline bool operator!=(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
   return !(lhs == rhs);
 }
 
@@ -724,9 +698,7 @@ inline bool operator==(const StatMsg& lhs, const StatMsg& rhs) {
                   rhs.sequence, rhs.ts_in_delta, rhs.stat_type, rhs.channel_id,
                   rhs.update_action, rhs.stat_flags);
 }
-inline bool operator!=(const StatMsg& lhs, const StatMsg& rhs) {
-  return !(lhs == rhs);
-}
+inline bool operator!=(const StatMsg& lhs, const StatMsg& rhs) { return !(lhs == rhs); }
 
 inline bool operator==(const ErrorMsg& lhs, const ErrorMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.err == rhs.err && lhs.code == rhs.code &&
@@ -743,16 +715,13 @@ inline bool operator!=(const SystemMsg& lhs, const SystemMsg& rhs) {
   return !(lhs == rhs);
 }
 
-inline bool operator==(const SymbolMappingMsg& lhs,
-                       const SymbolMappingMsg& rhs) {
+inline bool operator==(const SymbolMappingMsg& lhs, const SymbolMappingMsg& rhs) {
   return lhs.hd == rhs.hd && lhs.stype_in == rhs.stype_in &&
-         lhs.stype_in_symbol == rhs.stype_in_symbol &&
-         lhs.stype_out == rhs.stype_out &&
-         lhs.stype_out_symbol == rhs.stype_out_symbol &&
-         lhs.start_ts == rhs.start_ts && lhs.end_ts == rhs.end_ts;
+         lhs.stype_in_symbol == rhs.stype_in_symbol && lhs.stype_out == rhs.stype_out &&
+         lhs.stype_out_symbol == rhs.stype_out_symbol && lhs.start_ts == rhs.start_ts &&
+         lhs.end_ts == rhs.end_ts;
 }
-inline bool operator!=(const SymbolMappingMsg& lhs,
-                       const SymbolMappingMsg& rhs) {
+inline bool operator!=(const SymbolMappingMsg& lhs, const SymbolMappingMsg& rhs) {
   return !(lhs == rhs);
 }
 
@@ -765,8 +734,7 @@ std::ostream& operator<<(std::ostream& stream, const MboMsg& mbo_msg);
 std::string ToString(const BidAskPair& ba_pair);
 std::ostream& operator<<(std::ostream& stream, const BidAskPair& ba_pair);
 std::string ToString(const ConsolidatedBidAskPair& ba_pair);
-std::ostream& operator<<(std::ostream& stream,
-                         const ConsolidatedBidAskPair& ba_pair);
+std::ostream& operator<<(std::ostream& stream, const ConsolidatedBidAskPair& ba_pair);
 std::string ToString(const Mbp1Msg& mbp_msg);
 std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp_msg);
 std::string ToString(const Mbp10Msg& mbp_msg);
@@ -784,11 +752,9 @@ std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg);
 std::string ToString(const StatusMsg& status_msg);
 std::ostream& operator<<(std::ostream& stream, const StatusMsg& status_msg);
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
-std::ostream& operator<<(std::ostream& stream,
-                         const InstrumentDefMsg& instr_def_msg);
+std::ostream& operator<<(std::ostream& stream, const InstrumentDefMsg& instr_def_msg);
 std::string ToString(const ImbalanceMsg& imbalance_msg);
-std::ostream& operator<<(std::ostream& stream,
-                         const ImbalanceMsg& imbalance_msg);
+std::ostream& operator<<(std::ostream& stream, const ImbalanceMsg& imbalance_msg);
 std::string ToString(const StatMsg& stat_msg);
 std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg);
 std::string ToString(const ErrorMsg& err_msg);

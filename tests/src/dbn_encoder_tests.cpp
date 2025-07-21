@@ -31,8 +31,7 @@ TEST(DbnEncoderTests, TestEncodeDecodeMetadataIdentity) {
       {"ES", "NG"},
       {"ESM2"},
       {"QQQQQ"},
-      {{"ES.0",
-        {{date::year{2022} / 7 / 26, date::year{2022} / 9 / 1, "ESU2"}}},
+      {{"ES.0", {{date::year{2022} / 7 / 26, date::year{2022} / 9 / 1, "ESU2"}}},
        {"NG.0",
         {{date::year{2022} / 7 / 26, date::year{2022} / 8 / 29, "NGU2"},
          {date::year{2022} / 8 / 29, date::year{2022} / 9 / 1, "NGV2"}}}}};

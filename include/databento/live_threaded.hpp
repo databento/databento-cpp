@@ -33,8 +33,7 @@ class LiveThreaded {
     // Close the connection and stop the callback thread.
     Stop,
   };
-  using ExceptionCallback =
-      std::function<ExceptionAction(const std::exception&)>;
+  using ExceptionCallback = std::function<ExceptionAction(const std::exception&)>;
 
   LiveThreaded(const LiveThreaded&) = delete;
   LiveThreaded& operator=(const LiveThreaded&) = delete;
@@ -65,12 +64,12 @@ class LiveThreaded {
   // when the client disconnects when it's destroyed.
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype_in);
-  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
-                 SType stype_in, UnixNanos start);
-  void Subscribe(const std::vector<std::string>& symbols, Schema schema,
-                 SType stype_in, const std::string& start);
-  void SubscribeWithSnapshot(const std::vector<std::string>& symbols,
-                             Schema schema, SType stype_in);
+  void Subscribe(const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+                 UnixNanos start);
+  void Subscribe(const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+                 const std::string& start);
+  void SubscribeWithSnapshot(const std::vector<std::string>& symbols, Schema schema,
+                             SType stype_in);
   // Notifies the gateway to start sending messages for all subscriptions.
   // `metadata_callback` will be called exactly once, before any calls to
   // `record_callback`. `record_callback` will be called for records from all
@@ -78,8 +77,7 @@ class LiveThreaded {
   //
   // This method should only be called once per instance.
   void Start(RecordCallback record_callback);
-  void Start(MetadataCallback metadata_callback,
-             RecordCallback record_callback);
+  void Start(MetadataCallback metadata_callback, RecordCallback record_callback);
   void Start(MetadataCallback metadata_callback, RecordCallback record_callback,
              ExceptionCallback exception_callback);
   // Closes the current connection, and attempts to reconnect to the gateway.
@@ -98,10 +96,11 @@ class LiveThreaded {
   static void ProcessingThread(Impl* impl, MetadataCallback&& metadata_callback,
                                RecordCallback&& record_callback,
                                ExceptionCallback&& exception_callback);
-  static ExceptionAction ExceptionHandler(
-      Impl* impl, const ExceptionCallback& exception_callback,
-      const std::exception& exc, std::string_view pretty_function_name,
-      std::string_view message);
+  static ExceptionAction ExceptionHandler(Impl* impl,
+                                          const ExceptionCallback& exception_callback,
+                                          const std::exception& exc,
+                                          std::string_view pretty_function_name,
+                                          std::string_view message);
 
   LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
                bool send_ts_out, VersionUpgradePolicy upgrade_policy,

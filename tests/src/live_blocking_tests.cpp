@@ -30,8 +30,7 @@ class LiveBlockingTests : public testing::Test {
  protected:
   template <typename T>
   static constexpr RecordHeader DummyHeader(RType rtype) {
-    return {sizeof(T) / RecordHeader::kLengthMultiplier, rtype, 1, 1,
-            UnixNanos{}};
+    return {sizeof(T) / RecordHeader::kLengthMultiplier, rtype, 1, 1, UnixNanos{}};
   }
 
   static constexpr auto kKey = "32-character-with-lots-of-filler";
@@ -45,8 +44,7 @@ class LiveBlockingTests : public testing::Test {
 TEST_F(LiveBlockingTests, TestAuthentication) {
   constexpr auto kTsOut = false;
   constexpr auto kHeartbeatInterval = std::chrono::seconds{10};
-  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut,
-                                        kHeartbeatInterval,
+  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut, kHeartbeatInterval,
                                         [](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
@@ -91,8 +89,7 @@ TEST_F(LiveBlockingTests, TestSubscribe) {
   const auto kSType = SType::RawSymbol;
 
   const mock::MockLsgServer mock_server{
-      kDataset, kTsOut,
-      [&kSymbols, kSchema, kSType](mock::MockLsgServer& self) {
+      kDataset, kTsOut, [&kSymbols, kSchema, kSType](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Subscribe(kSymbols, kSchema, kSType, true);
@@ -172,8 +169,7 @@ TEST_F(LiveBlockingTests, TestSubscriptionChunkingStringStart) {
 
   const mock::MockLsgServer mock_server{
       kDataset, kTsOut,
-      [kSymbol, kSymbolCount, kSchema, kSType,
-       kStart](mock::MockLsgServer& self) {
+      [kSymbol, kSymbolCount, kSchema, kSType, kStart](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         std::size_t i{};
@@ -255,14 +251,14 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
   constexpr auto kTsOut = false;
   const auto kRecCount = 12;
   constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
-  const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, kTsOut, [kRec, kRecCount](mock::MockLsgServer& self) {
-        self.Accept();
-        self.Authenticate();
-        for (size_t i = 0; i < kRecCount; ++i) {
-          self.SendRecord(kRec);
-        }
-      }};
+  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut,
+                                        [kRec, kRecCount](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          for (size_t i = 0; i < kRecCount; ++i) {
+                                            self.SendRecord(kRec);
+                                          }
+                                        }};
 
   LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
                             .SetSendTsOut(kTsOut)
@@ -310,8 +306,7 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
         {
           // wait for client to read first record
           std::unique_lock<std::mutex> lock{receive_mutex};
-          receive_cv.wait(lock,
-                          [&received_first_msg] { return received_first_msg; });
+          receive_cv.wait(lock, [&received_first_msg] { return received_first_msg; });
         }
         self.SendRecord(kRec);
       }};
@@ -409,8 +404,7 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
        2},
       UnixNanos{std::chrono::seconds{1678910279000000000}}};
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, kTsOut,
-      [send_rec, kRecCount](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut, [send_rec, kRecCount](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         for (size_t i = 0; i < kRecCount; ++i) {
@@ -448,8 +442,7 @@ TEST_F(LiveBlockingTests, TestStop) {
       UnixNanos{std::chrono::seconds{1678910279000000000}}};
   std::atomic<bool> has_stopped{false};
   auto mock_server = std::make_unique<mock::MockLsgServer>(
-      dataset::kXnasItch, kTsOut,
-      [send_rec, &has_stopped](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut, [send_rec, &has_stopped](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.SendRecord(send_rec);
@@ -458,8 +451,7 @@ TEST_F(LiveBlockingTests, TestStop) {
         }
         const std::string rec_str{reinterpret_cast<const char*>(&send_rec),
                                   sizeof(send_rec)};
-        while (self.UncheckedSend(rec_str) ==
-               static_cast<::ssize_t>(rec_str.size())) {
+        while (self.UncheckedSend(rec_str) == static_cast<::ssize_t>(rec_str.size())) {
         }
       });
 
@@ -505,8 +497,7 @@ TEST_F(LiveBlockingTests, TestReconnectAndResubscribe) {
        &should_close_cv, &should_close_mutex](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
-        self.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol, "0",
-                       true);
+        self.Subscribe(kAllSymbols, Schema::Trades, SType::RawSymbol, "0", true);
         self.Start();
         self.SendRecord(kRec);
         {

@@ -36,22 +36,19 @@ class TsSymbolMap {
   }
   template <typename R>
   Store::const_iterator Find(const R& rec) const {
-    static_assert(
-        has_header<R>::value,
-        "must be a DBN record struct with an `hd` RecordHeader field");
+    static_assert(has_header<R>::value,
+                  "must be a DBN record struct with an `hd` RecordHeader field");
     date::year_month_day index_date{
         date::sys_days{date::floor<date::days>(rec.IndexTs())}};
     return map_.find(std::make_pair(index_date, rec.hd.instrument_id));
   }
-  const std::string& At(date::year_month_day date,
-                        std::uint32_t instrument_id) const {
+  const std::string& At(date::year_month_day date, std::uint32_t instrument_id) const {
     return *map_.at(std::make_pair(date, instrument_id));
   }
   template <typename R>
   const std::string& At(const R& rec) const {
-    static_assert(
-        has_header<R>::value,
-        "must be a DBN record struct with an `hd` RecordHeader field");
+    static_assert(has_header<R>::value,
+                  "must be a DBN record struct with an `hd` RecordHeader field");
     date::year_month_day index_date{
         date::sys_days{date::floor<date::days>(rec.IndexTs())}};
     return *map_.at(std::make_pair(index_date, rec.hd.instrument_id));
@@ -87,9 +84,8 @@ class PitSymbolMap {
   }
   template <typename R>
   const std::string& At(const R& rec) const {
-    static_assert(
-        has_header<R>::value,
-        "must be a DBN record struct with an `hd` RecordHeader field");
+    static_assert(has_header<R>::value,
+                  "must be a DBN record struct with an `hd` RecordHeader field");
     return map_.at(rec.hd.instrument_id);
   }
   const std::string& At(const Record& rec) const {

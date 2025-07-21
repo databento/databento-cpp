@@ -153,8 +153,8 @@ TEST_F(DbnDecoderTests, TestDecodeStatUpgrade) {
 
   const auto record1 = target_->DecodeRecord();
   ASSERT_NE(record1, nullptr);
-  AssertStatHas<v3::StatMsg>(record1, StatType::LowestOffer,
-                             100 * kFixedPriceScale, v3::kUndefStatQuantity);
+  AssertStatHas<v3::StatMsg>(record1, StatType::LowestOffer, 100 * kFixedPriceScale,
+                             v3::kUndefStatQuantity);
 
   const auto record2 = target_->DecodeRecord();
   ASSERT_NE(record2, nullptr);
@@ -171,12 +171,11 @@ TEST_F(DbnDecoderTests, TestUpgradeSymbolMappingWithTsOut) {
       {},
       {},
       {}};
-  WithTsOut<SymbolMappingMsgV1> orig{
-      sym_map, UnixNanos{std::chrono::system_clock::now()}};
+  WithTsOut<SymbolMappingMsgV1> orig{sym_map,
+                                     UnixNanos{std::chrono::system_clock::now()}};
   std::array<std::byte, kMaxRecordLen> compat_buffer{};
-  const auto res =
-      DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::UpgradeToV2, true,
-                                     &compat_buffer, Record{&orig.rec.hd});
+  const auto res = DbnDecoder::DecodeRecordCompat(
+      1, VersionUpgradePolicy::UpgradeToV2, true, &compat_buffer, Record{&orig.rec.hd});
   const auto& upgraded = res.Get<WithTsOut<SymbolMappingMsgV2>>();
   EXPECT_EQ(orig.rec.hd.rtype, upgraded.rec.hd.rtype);
   EXPECT_EQ(orig.rec.hd.instrument_id, upgraded.rec.hd.instrument_id);
@@ -192,32 +191,27 @@ TEST_F(DbnDecoderTests, TestUpgradeSymbolMappingWithTsOut) {
   // `length` properly set
   EXPECT_EQ(upgraded.rec.hd.Size(), sizeof(upgraded));
   // used compat buffer
-  EXPECT_EQ(reinterpret_cast<const std::byte*>(&upgraded),
-            compat_buffer.data());
+  EXPECT_EQ(reinterpret_cast<const std::byte*>(&upgraded), compat_buffer.data());
 }
 
 TEST_F(DbnDecoderTests, TestUpgradeMbp1WithTsOut) {
   WithTsOut<Mbp1Msg> orig{
-      Mbp1Msg{{sizeof(Mbp1Msg) / RecordHeader::kLengthMultiplier,
-               RType::Mbp1,
-               {},
-               {},
-               {}},
-              1'250'000'000,
-              {},
-              {},
-              Side::Ask,
-              {},
-              {},
-              {},
-              {},
-              {},
-              {}},
+      Mbp1Msg{
+          {sizeof(Mbp1Msg) / RecordHeader::kLengthMultiplier, RType::Mbp1, {}, {}, {}},
+          1'250'000'000,
+          {},
+          {},
+          Side::Ask,
+          {},
+          {},
+          {},
+          {},
+          {},
+          {}},
       {std::chrono::system_clock::now()}};
   std::array<std::byte, kMaxRecordLen> compat_buffer{};
-  const auto res =
-      DbnDecoder::DecodeRecordCompat(1, VersionUpgradePolicy::UpgradeToV2, true,
-                                     &compat_buffer, Record{&orig.rec.hd});
+  const auto res = DbnDecoder::DecodeRecordCompat(
+      1, VersionUpgradePolicy::UpgradeToV2, true, &compat_buffer, Record{&orig.rec.hd});
   const auto& upgraded = res.Get<WithTsOut<Mbp1Msg>>();
   // compat buffer unused and pointer unchanged
   ASSERT_EQ(&orig, &upgraded);
@@ -225,20 +219,18 @@ TEST_F(DbnDecoderTests, TestUpgradeMbp1WithTsOut) {
 
 class DbnDecoderSchemaTests
     : public DbnDecoderTests,
-      public testing::WithParamInterface<std::pair<const char*, std::uint8_t>> {
-};
+      public testing::WithParamInterface<std::pair<const char*, std::uint8_t>> {};
 
-INSTANTIATE_TEST_SUITE_P(TestFiles, DbnDecoderSchemaTests,
-                         testing::Values(std::make_pair(".dbn.zst", 1),
-                                         std::make_pair(".dbn.zst", 2),
-                                         std::make_pair(".dbn.zst", 3)),
-                         [](const testing::TestParamInfo<
-                             std::pair<const char*, std::uint8_t>>& test_info) {
-                           const auto extension = test_info.param.first;
-                           const auto version = test_info.param.second;
-                           const auto size = ::strlen(extension);
-                           return "ZstdDBNv" + std::to_string(version);
-                         });
+INSTANTIATE_TEST_SUITE_P(
+    TestFiles, DbnDecoderSchemaTests,
+    testing::Values(std::make_pair(".dbn.zst", 1), std::make_pair(".dbn.zst", 2),
+                    std::make_pair(".dbn.zst", 3)),
+    [](const testing::TestParamInfo<std::pair<const char*, std::uint8_t>>& test_info) {
+      const auto extension = test_info.param.first;
+      const auto version = test_info.param.second;
+      const auto size = ::strlen(extension);
+      return "ZstdDBNv" + std::to_string(version);
+    });
 
 // Expected data for these tests obtained using the `dbn` CLI tool
 
@@ -956,11 +948,11 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeStatistics) {
 
   const auto record1 = target_->DecodeRecord();
   if (version < 3) {
-    AssertStatHas<v1::StatMsg>(record1, StatType::LowestOffer,
-                               100 * kFixedPriceScale, v1::kUndefStatQuantity);
+    AssertStatHas<v1::StatMsg>(record1, StatType::LowestOffer, 100 * kFixedPriceScale,
+                               v1::kUndefStatQuantity);
   } else {
-    AssertStatHas<v3::StatMsg>(record1, StatType::LowestOffer,
-                               100 * kFixedPriceScale, v3::kUndefStatQuantity);
+    AssertStatHas<v3::StatMsg>(record1, StatType::LowestOffer, 100 * kFixedPriceScale,
+                               v3::kUndefStatQuantity);
   }
 
   const auto record2 = target_->DecodeRecord();
@@ -973,8 +965,8 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeStatistics) {
   }
 }
 
-class DbnIdentityTests : public testing::TestWithParam<
-                             std::tuple<std::uint8_t, Schema, Compression>> {
+class DbnIdentityTests
+    : public testing::TestWithParam<std::tuple<std::uint8_t, Schema, Compression>> {
  protected:
   mock::MockLogReceiver logger_ =
       mock::MockLogReceiver::AssertNoLogs(LogLevel::Warning);
@@ -1031,8 +1023,8 @@ INSTANTIATE_TEST_SUITE_P(
                     std::make_tuple(3, Schema::Cmbp1, Compression::Zstd),
                     std::make_tuple(3, Schema::Cbbo1S, Compression::Zstd),
                     std::make_tuple(3, Schema::Status, Compression::Zstd)),
-    [](const testing::TestParamInfo<
-        std::tuple<std::uint8_t, Schema, Compression>>& test_info) {
+    [](const testing::TestParamInfo<std::tuple<std::uint8_t, Schema, Compression>>&
+           test_info) {
       const auto version = std::get<0>(test_info.param);
       const auto schema = std::get<1>(test_info.param);
       const auto compression = std::get<2>(test_info.param);
@@ -1050,10 +1042,9 @@ TEST_P(DbnIdentityTests, TestIdentity) {
   const auto version = std::get<0>(GetParam());
   const auto schema = std::get<1>(GetParam());
   const auto compression = std::get<2>(GetParam());
-  const auto file_name =
-      std::string{TEST_DATA_DIR "/test_data."} + ToString(schema) + ".v" +
-      std::to_string(+version) +
-      (compression == Compression::Zstd ? ".dbn.zst" : ".dbn");
+  const auto file_name = std::string{TEST_DATA_DIR "/test_data."} + ToString(schema) +
+                         ".v" + std::to_string(+version) +
+                         (compression == Compression::Zstd ? ".dbn.zst" : ".dbn");
   DbnDecoder file_decoder{&logger_, std::make_unique<InFileStream>(file_name),
                           VersionUpgradePolicy::AsIs};
   const Metadata file_metadata = file_decoder.DecodeMetadata();
@@ -1064,9 +1055,8 @@ TEST_P(DbnIdentityTests, TestIdentity) {
     if (compression == Compression::Zstd) {
       zstd_io = std::make_unique<detail::ZstdCompressStream>(&buf_io);
     }
-    DbnEncoder encoder{
-        file_metadata,
-        zstd_io ? static_cast<IWritable*>(zstd_io.get()) : &buf_io};
+    DbnEncoder encoder{file_metadata,
+                       zstd_io ? static_cast<IWritable*>(zstd_io.get()) : &buf_io};
     while (auto* record = file_decoder.DecodeRecord()) {
       encoder.EncodeRecord(*record);
     }
@@ -1078,8 +1068,7 @@ TEST_P(DbnIdentityTests, TestIdentity) {
   file_decoder.DecodeMetadata();
 
   auto input = std::make_unique<detail::Buffer>(std::move(buf_io));
-  DbnDecoder buf_decoder{&logger_, std::move(input),
-                         VersionUpgradePolicy::AsIs};
+  DbnDecoder buf_decoder{&logger_, std::move(input), VersionUpgradePolicy::AsIs};
   const auto buf_metadata = buf_decoder.DecodeMetadata();
   EXPECT_EQ(file_metadata, buf_metadata);
   while (auto* buf_record = buf_decoder.DecodeRecord()) {
@@ -1122,11 +1111,9 @@ TEST_P(DbnIdentityTests, TestIdentity) {
       }
     } else if (buf_record->Header().rtype == RType::Statistics) {
       if (buf_record->Size() == sizeof(v1::StatMsg)) {
-        EXPECT_EQ(buf_record->Get<v1::StatMsg>(),
-                  file_record->Get<v1::StatMsg>());
+        EXPECT_EQ(buf_record->Get<v1::StatMsg>(), file_record->Get<v1::StatMsg>());
       } else if (buf_record->Size() == sizeof(v3::StatMsg)) {
-        EXPECT_EQ(buf_record->Get<v3::StatMsg>(),
-                  file_record->Get<v3::StatMsg>());
+        EXPECT_EQ(buf_record->Get<v3::StatMsg>(), file_record->Get<v3::StatMsg>());
       } else {
         FAIL() << "Unknown stats size";
       }

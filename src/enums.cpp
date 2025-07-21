@@ -15,8 +15,7 @@ const char* UrlFromGateway(HistoricalGateway gateway) {
     default: {
       throw InvalidArgumentError{
           "UrlFromGateway", "gateway",
-          "unknown value " +
-              std::to_string(static_cast<std::uint8_t>(gateway))};
+          "unknown value " + std::to_string(static_cast<std::uint8_t>(gateway))};
     }
   }
 }
@@ -879,14 +878,12 @@ std::ostream& operator<<(std::ostream& out, MatchAlgorithm match_algorithm) {
   return out;
 }
 
-std::ostream& operator<<(std::ostream& out,
-                         SecurityUpdateAction update_action) {
+std::ostream& operator<<(std::ostream& out, SecurityUpdateAction update_action) {
   out << ToString(update_action);
   return out;
 }
 
-std::ostream& operator<<(std::ostream& out,
-                         UserDefinedInstrument user_def_instr) {
+std::ostream& operator<<(std::ostream& out, UserDefinedInstrument user_def_instr) {
   out << ToString(user_def_instr);
   return out;
 }
@@ -896,8 +893,7 @@ std::ostream& operator<<(std::ostream& out, StatType stat_type) {
   return out;
 }
 
-std::ostream& operator<<(std::ostream& out,
-                         StatUpdateAction stat_update_action) {
+std::ostream& operator<<(std::ostream& out, StatUpdateAction stat_update_action) {
   out << ToString(stat_update_action);
   return out;
 }
@@ -919,8 +915,7 @@ std::ostream& operator<<(std::ostream& out, TriState tri_state) {
   return out;
 }
 
-std::ostream& operator<<(std::ostream& out,
-                         VersionUpgradePolicy upgrade_policy) {
+std::ostream& operator<<(std::ostream& out, VersionUpgradePolicy upgrade_policy) {
   out << ToString(upgrade_policy);
   return out;
 }

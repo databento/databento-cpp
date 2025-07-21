@@ -14,8 +14,7 @@ namespace v1 {
 static constexpr std::uint8_t kDbnVersion = 1;
 static constexpr std::size_t kSymbolCstrLen = 22;
 static constexpr std::size_t kAssetCstrLen = 7;
-static constexpr auto kUndefStatQuantity =
-    std::numeric_limits<std::int32_t>::max();
+static constexpr auto kUndefStatQuantity = std::numeric_limits<std::int32_t>::max();
 
 using MboMsg = databento::MboMsg;
 using TradeMsg = databento::TradeMsg;
@@ -52,9 +51,7 @@ struct InstrumentDefMsg {
   const char* SecurityType() const { return security_type.data(); }
   const char* UnitOfMeasure() const { return unit_of_measure.data(); }
   const char* Underlying() const { return underlying.data(); }
-  const char* StrikePriceCurrency() const {
-    return strike_price_currency.data();
-  }
+  const char* StrikePriceCurrency() const { return strike_price_currency.data(); }
 
   RecordHeader hd;
   UnixNanos ts_recv;
@@ -210,9 +207,7 @@ struct SystemMsg {
   T Upgrade() const;
   UnixNanos IndexTs() const { return hd.ts_event; }
   const char* Msg() const { return msg.data(); }
-  bool IsHeartbeat() const {
-    return std::strncmp(msg.data(), "Heartbeat", 9) == 0;
-  }
+  bool IsHeartbeat() const { return std::strncmp(msg.data(), "Heartbeat", 9) == 0; }
 
   RecordHeader hd;
   std::array<char, 64> msg;
@@ -223,8 +218,7 @@ static_assert(sizeof(SystemMsg) == 80, "SystemMsg size must match Rust");
 static_assert(alignof(SystemMsg) == 8, "Must have 8-byte alignment");
 
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs);
-inline bool operator!=(const InstrumentDefMsg& lhs,
-                       const InstrumentDefMsg& rhs) {
+inline bool operator!=(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
   return !(lhs == rhs);
 }
 inline bool operator==(const StatMsg& lhs, const StatMsg& rhs) {
@@ -235,24 +229,20 @@ inline bool operator==(const StatMsg& lhs, const StatMsg& rhs) {
                   rhs.sequence, rhs.ts_in_delta, rhs.stat_type, rhs.channel_id,
                   rhs.update_action, rhs.stat_flags);
 }
-inline bool operator!=(const StatMsg& lhs, const StatMsg& rhs) {
-  return !(lhs == rhs);
-}
+inline bool operator!=(const StatMsg& lhs, const StatMsg& rhs) { return !(lhs == rhs); }
 inline bool operator==(const ErrorMsg& lhs, const ErrorMsg& rhs) {
   return std::tie(lhs.hd, lhs.err) == std::tie(rhs.hd, rhs.err);
 }
 inline bool operator!=(const ErrorMsg& lhs, const ErrorMsg& rhs) {
   return !(lhs == rhs);
 }
-inline bool operator==(const SymbolMappingMsg& lhs,
-                       const SymbolMappingMsg& rhs) {
-  return std::tie(lhs.hd, lhs.stype_in_symbol, lhs.stype_out_symbol,
-                  lhs.start_ts, lhs.end_ts) ==
-         std::tie(rhs.hd, rhs.stype_in_symbol, rhs.stype_out_symbol,
-                  rhs.start_ts, rhs.end_ts);
+inline bool operator==(const SymbolMappingMsg& lhs, const SymbolMappingMsg& rhs) {
+  return std::tie(lhs.hd, lhs.stype_in_symbol, lhs.stype_out_symbol, lhs.start_ts,
+                  lhs.end_ts) == std::tie(rhs.hd, rhs.stype_in_symbol,
+                                          rhs.stype_out_symbol, rhs.start_ts,
+                                          rhs.end_ts);
 }
-inline bool operator!=(const SymbolMappingMsg& lhs,
-                       const SymbolMappingMsg& rhs) {
+inline bool operator!=(const SymbolMappingMsg& lhs, const SymbolMappingMsg& rhs) {
   return !(lhs == rhs);
 }
 inline bool operator==(const SystemMsg& lhs, const SystemMsg& rhs) {
@@ -262,8 +252,7 @@ inline bool operator!=(const SystemMsg& lhs, const SystemMsg& rhs) {
   return !(lhs == rhs);
 }
 std::string ToString(const InstrumentDefMsg& instr_def_msg);
-std::ostream& operator<<(std::ostream& stream,
-                         const InstrumentDefMsg& instr_def_msg);
+std::ostream& operator<<(std::ostream& stream, const InstrumentDefMsg& instr_def_msg);
 std::string ToString(const StatMsg& stat_msg);
 std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg);
 std::string ToString(const ErrorMsg& err_msg);
