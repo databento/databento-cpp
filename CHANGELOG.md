@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.39.1 - TBD
+
+### Bug fixes
+- Fixed potential corrupted data in `DbnFileStore::Replay`
+
 ## 0.39.0 - 2025-07-15
 
 ### Breaking changes
