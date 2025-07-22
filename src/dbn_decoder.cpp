@@ -311,7 +311,7 @@ const databento::Record* DbnDecoder::DecodeRecord() {
     }
   }
   current_record_ = Record{BufferRecordHeader()};
-  buffer_.Consume(current_record_.Size());
+  buffer_.ConsumeNoShift(current_record_.Size());
   current_record_ = DbnDecoder::DecodeRecordCompat(
       version_, upgrade_policy_, ts_out_, &compat_buffer_, current_record_);
   return &current_record_;
