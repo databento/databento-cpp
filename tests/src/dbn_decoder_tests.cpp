@@ -235,8 +235,7 @@ INSTANTIATE_TEST_SUITE_P(
 // Expected data for these tests obtained using the `dbn` CLI tool
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("mbo", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -293,8 +292,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbo) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("mbp-1", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -361,8 +359,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp1) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("mbp-10", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -452,8 +449,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeMbp10) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeCmbp1) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("cmbp-1", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -514,8 +510,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeCmbp1) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeCbbo) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("cbbo-1s", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -572,8 +567,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeCbbo) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("tbbo", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -638,8 +632,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTbbo) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("trades", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -692,8 +685,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeTrades) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1D) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("ohlcv-1d", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -712,8 +704,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1D) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("ohlcv-1h", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -758,8 +749,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1H) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("ohlcv-1m", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -804,8 +794,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1M) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("ohlcv-1s", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -850,8 +839,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeOhlcv1S) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("definition", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -895,8 +883,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeDefinition) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeImbalance) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("imbalance", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -928,8 +915,7 @@ TEST_P(DbnDecoderSchemaTests, TestDecodeImbalance) {
 }
 
 TEST_P(DbnDecoderSchemaTests, TestDecodeStatistics) {
-  const auto extension = GetParam().first;
-  const auto version = GetParam().second;
+  const auto [extension, version] = GetParam();
   ReadFromFile("statistics", extension, version);
 
   const Metadata metadata = target_->DecodeMetadata();
@@ -1039,9 +1025,7 @@ INSTANTIATE_TEST_SUITE_P(
     });
 
 TEST_P(DbnIdentityTests, TestIdentity) {
-  const auto version = std::get<0>(GetParam());
-  const auto schema = std::get<1>(GetParam());
-  const auto compression = std::get<2>(GetParam());
+  const auto [version, schema, compression] = GetParam();
   const auto file_name = std::string{TEST_DATA_DIR "/test_data."} + ToString(schema) +
                          ".v" + std::to_string(+version) +
                          (compression == Compression::Zstd ? ".dbn.zst" : ".dbn");
@@ -1124,6 +1108,4 @@ TEST_P(DbnIdentityTests, TestIdentity) {
   }
   ASSERT_EQ(file_decoder.DecodeRecord(), nullptr);
 }
-
-TEST_F(DbnDecoderTests, TestDbnIdentityWithTsOut) {}
 }  // namespace databento::tests
