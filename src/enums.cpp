@@ -62,12 +62,6 @@ const char* ToString(Delivery delivery) {
     case Delivery::Download: {
       return "download";
     }
-    case Delivery::S3: {
-      return "s3";
-    }
-    case Delivery::Disk: {
-      return "disk";
-    }
     default: {
       return "unknown";
     }
@@ -956,12 +950,6 @@ template <>
 Delivery FromString(const std::string& str) {
   if (str == "download") {
     return Delivery::Download;
-  }
-  if (str == "s3") {
-    return Delivery::S3;
-  }
-  if (str == "disk") {
-    return Delivery::Disk;
   }
   throw InvalidArgumentError{"FromString<Delivery>", "str",
                              "unknown value '" + str + '\''};

@@ -30,8 +30,6 @@ enum class SplitDuration : std::uint8_t {
 // Represents how a batch job will be delivered.
 enum class Delivery : std::uint8_t {
   Download,
-  S3,
-  Disk,
 };
 
 // The current state of a batch job.

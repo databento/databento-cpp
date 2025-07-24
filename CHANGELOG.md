@@ -16,6 +16,7 @@
 - Added missing `IndexTs()` method to `v1::InstrumentDefMsg`, `v2::InstrumentDefMsg`,
   and `v1::SymbolMappingMsg`
 - Fixed error in templated overload of `DbnDecoder::EncodeRecord()`
+- Removed unused `Disk` and `S3` variants from `Delivery` enum
 
 ## 0.39.1 - 2025-07-22
 
