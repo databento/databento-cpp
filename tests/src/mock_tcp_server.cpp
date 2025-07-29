@@ -19,8 +19,7 @@ MockTcpServer::MockTcpServer()
     : MockTcpServer([](MockTcpServer& self) { self.Serve(); }) {}
 
 MockTcpServer::MockTcpServer(std::function<void(MockTcpServer&)> serve_fn)
-    : socket_{InitSocketAndSetPort()},
-      thread_{std::move(serve_fn), std::ref(*this)} {}
+    : socket_{InitSocketAndSetPort()}, thread_{std::move(serve_fn), std::ref(*this)} {}
 
 void MockTcpServer::SetSend(std::string send) {
   const std::lock_guard<std::mutex> lock{send_mutex_};
@@ -57,8 +56,8 @@ void MockTcpServer::Accept() {
 #endif
   // Disable Nagle's algorithm for finer control over when packets are sent
   // during testing
-  const auto res = ::setsockopt(socket_.Get(), IPPROTO_TCP, TCP_NODELAY,
-                                flag_ptr, sizeof(int));
+  const auto res =
+      ::setsockopt(socket_.Get(), IPPROTO_TCP, TCP_NODELAY, flag_ptr, sizeof(int));
   if (res < 0) {
     throw TcpError{errno, "Failed to disable Nagle's algorithm"};
   }
@@ -76,15 +75,13 @@ void MockTcpServer::Receive() {
 
 void MockTcpServer::Send() {
   const std::lock_guard<std::mutex> send_guard{send_mutex_};
-  const auto write_size =
-      ::send(conn_fd_.Get(), send_.data(), send_.length(), {});
+  const auto write_size = ::send(conn_fd_.Get(), send_.data(), send_.length(), {});
   ASSERT_EQ(write_size, send_.length());
 }
 
 void MockTcpServer::Close() { conn_fd_.Close(); }
 
-std::pair<std::uint16_t, databento::detail::Socket>
-MockTcpServer::InitSocket() {
+std::pair<std::uint16_t, databento::detail::Socket> MockTcpServer::InitSocket() {
   return InitSocket(0);  // port will be assigned
 }
 
@@ -98,14 +95,12 @@ std::pair<std::uint16_t, databento::detail::Socket> MockTcpServer::InitSocket(
   addr_in.sin_family = AF_INET;
   addr_in.sin_port = port;
   addr_in.sin_addr.s_addr = INADDR_ANY;
-  if (::bind(fd, reinterpret_cast<const sockaddr*>(&addr_in),
-             sizeof(addr_in)) != 0) {
+  if (::bind(fd, reinterpret_cast<const sockaddr*>(&addr_in), sizeof(addr_in)) != 0) {
     throw TcpError{errno, "Failed to bind to port"};
   }
   sockaddr_in addr_actual{};
   auto addr_size = static_cast<socklen_t>(sizeof(addr_actual));
-  if (::getsockname(fd, reinterpret_cast<sockaddr*>(&addr_actual),
-                    &addr_size) == -1) {
+  if (::getsockname(fd, reinterpret_cast<sockaddr*>(&addr_actual), &addr_size) == -1) {
     throw TcpError{errno, "Error fetching port"};
   }
   const auto actual_port = ntohs(addr_actual.sin_port);

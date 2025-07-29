@@ -28,8 +28,7 @@ class TcpClient {
   };
 
   TcpClient(const std::string& gateway, std::uint16_t port);
-  TcpClient(const std::string& gateway, std::uint16_t port,
-            RetryConf retry_conf);
+  TcpClient(const std::string& gateway, std::uint16_t port, RetryConf retry_conf);
 
   void WriteAll(std::string_view str);
   void WriteAll(const std::byte* buffer, std::size_t size);

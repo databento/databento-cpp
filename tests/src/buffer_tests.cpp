@@ -44,8 +44,7 @@ TEST(BufferTests, TestWriteRead) {
   ASSERT_EQ(write_len, 10);
   std::array<std::byte, 10> read_buf{};
   target.ReadExact(read_buf.data(), read_buf.size());
-  std::string_view res{reinterpret_cast<const char*>(read_buf.data()),
-                       read_buf.size()};
+  std::string_view res{reinterpret_cast<const char*>(read_buf.data()), read_buf.size()};
   ASSERT_EQ(res, "BufferTest"sv);
 }
 

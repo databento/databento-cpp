@@ -15,9 +15,7 @@ namespace databento::tests {
 class TcpClientTests : public testing::Test {
  protected:
   TcpClientTests()
-      : testing::Test(),
-        mock_server_{},
-        target_{"127.0.0.1", mock_server_.Port()} {}
+      : testing::Test(), mock_server_{}, target_{"127.0.0.1", mock_server_.Port()} {}
 
   mock::MockTcpServer mock_server_;
   detail::TcpClient target_;
@@ -91,26 +89,26 @@ TEST_F(TcpClientTests, TestReadSomeTimeout) {
   bool has_timed_out{};
   std::mutex has_timed_out_mutex;
   std::condition_variable has_timed_out_cv;
-  const mock::MockTcpServer mock_server{[&has_timed_out, &has_timed_out_mutex,
-                                         &has_timed_out_cv](
-                                            mock::MockTcpServer& server) {
-    // simulate slow or delayed send
-    server.Accept();
-    server.SetSend("hello");
-    // wait for timeout
-    {
-      std::unique_lock<std::mutex> lock{has_timed_out_mutex};
-      has_timed_out_cv.wait(lock, [&has_timed_out] { return has_timed_out; });
-    }
-    // then send
-    server.Send();
-    server.Close();
-  }};
+  const mock::MockTcpServer mock_server{
+      [&has_timed_out, &has_timed_out_mutex,
+       &has_timed_out_cv](mock::MockTcpServer& server) {
+        // simulate slow or delayed send
+        server.Accept();
+        server.SetSend("hello");
+        // wait for timeout
+        {
+          std::unique_lock<std::mutex> lock{has_timed_out_mutex};
+          has_timed_out_cv.wait(lock, [&has_timed_out] { return has_timed_out; });
+        }
+        // then send
+        server.Send();
+        server.Close();
+      }};
   target_ = {"127.0.0.1", mock_server.Port()};
 
   std::array<std::byte, 10> buffer{};
-  const auto res = target_.ReadSome(buffer.data(), buffer.size(),
-                                    std::chrono::milliseconds{5});
+  const auto res =
+      target_.ReadSome(buffer.data(), buffer.size(), std::chrono::milliseconds{5});
   {
     const std::lock_guard<std::mutex> lock{has_timed_out_mutex};
     has_timed_out = true;
@@ -151,7 +149,6 @@ TEST_F(TcpClientTests, ReadAfterClose) {
   EXPECT_EQ(res.status, detail::TcpClient::Status::Ok);
   EXPECT_GT(res.read_size, 0);
   target_.Close();
-  ASSERT_THROW(target_.ReadSome(buffer.data(), buffer.size()),
-               databento::TcpError);
+  ASSERT_THROW(target_.ReadSome(buffer.data(), buffer.size()), databento::TcpError);
 }
 }  // namespace databento::tests

@@ -16,8 +16,7 @@ class MockTcpServer {
   explicit MockTcpServer(std::function<void(MockTcpServer&)> serve_fn);
 
   static std::pair<std::uint16_t, detail::Socket> InitSocket();
-  static std::pair<std::uint16_t, detail::Socket> InitSocket(
-      std::uint16_t port);
+  static std::pair<std::uint16_t, detail::Socket> InitSocket(std::uint16_t port);
 
   std::uint16_t Port() const { return port_; }
   // Set the data the server will send to its client.

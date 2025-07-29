@@ -23,12 +23,10 @@ TEST(LiveBuilderTests, TestMissingKey) {
 }
 
 TEST(LiveBuilderTests, TestMissingDataset) {
-  ASSERT_THROW(databento::LiveBuilder().SetKey(kKey).BuildThreaded(),
-               Exception);
+  ASSERT_THROW(databento::LiveBuilder().SetKey(kKey).BuildThreaded(), Exception);
 }
 
 TEST(LiveBuilderTests, TestSetKeyFromEnvMissing) {
-  ASSERT_THROW(databento::LiveBuilder().SetKeyFromEnv().BuildThreaded(),
-               Exception);
+  ASSERT_THROW(databento::LiveBuilder().SetKeyFromEnv().BuildThreaded(), Exception);
 }
 }  // namespace databento::tests

@@ -1,5 +1,6 @@
 ---
 BasedOnStyle: Google
+ColumnLimit: 88
 IncludeCategories:
 - Regex: '^<(httplib|nlohmann)'
   Priority: 1

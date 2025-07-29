@@ -68,8 +68,7 @@ TcpClient::Result TcpClient::ReadSome(std::byte* buffer, std::size_t max_size) {
   if (res < 0) {
     throw TcpError{::GetErrNo(), "Error reading from socket"};
   }
-  return {static_cast<std::size_t>(res),
-          res == 0 ? Status::Closed : Status::Ok};
+  return {static_cast<std::size_t>(res), res == 0 ? Status::Closed : Status::Ok};
 }
 
 TcpClient::Result TcpClient::ReadSome(std::byte* buffer, std::size_t max_size,
@@ -77,8 +76,7 @@ TcpClient::Result TcpClient::ReadSome(std::byte* buffer, std::size_t max_size,
   pollfd fds{socket_.Get(), POLLIN, {}};
   // passing a timeout of -1 blocks indefinitely, which is the equivalent of
   // having no timeout
-  const auto timeout_ms =
-      timeout.count() ? static_cast<int>(timeout.count()) : -1;
+  const auto timeout_ms = timeout.count() ? static_cast<int>(timeout.count()) : -1;
   while (true) {
     const int poll_status =
 #ifdef _WIN32
@@ -117,14 +115,12 @@ databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = IPPROTO_TCP;
   ::addrinfo* out;
-  const auto ret = ::getaddrinfo(gateway.c_str(), std::to_string(port).c_str(),
-                                 &hints, &out);
+  const auto ret =
+      ::getaddrinfo(gateway.c_str(), std::to_string(port).c_str(), &hints, &out);
   if (ret != 0) {
-    throw InvalidArgumentError{"TcpClient::TcpClient", "addr",
-                               ::gai_strerror(ret)};
+    throw InvalidArgumentError{"TcpClient::TcpClient", "addr", ::gai_strerror(ret)};
   }
-  std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> res{out,
-                                                           &::freeaddrinfo};
+  std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> res{out, &::freeaddrinfo};
   const auto max_attempts = std::max<std::uint32_t>(retry_conf.max_attempts, 1);
   std::chrono::seconds backoff{1};
   for (std::uint32_t attempt = 0; attempt < max_attempts; ++attempt) {
@@ -132,8 +128,7 @@ databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
       break;
     } else if (attempt + 1 == max_attempts) {
       std::ostringstream err_msg;
-      err_msg << "Socket failed to connect after " << max_attempts
-              << " attempts";
+      err_msg << "Socket failed to connect after " << max_attempts << " attempts";
       throw TcpError{::GetErrNo(), err_msg.str()};
     }
     // TODO(cg): Log

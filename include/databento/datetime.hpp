@@ -8,9 +8,8 @@
 
 namespace databento {
 // Nanoseconds since the UNIX epoch.
-using UnixNanos =
-    std::chrono::time_point<std::chrono::system_clock,
-                            std::chrono::duration<uint64_t, std::nano>>;
+using UnixNanos = std::chrono::time_point<std::chrono::system_clock,
+                                          std::chrono::duration<uint64_t, std::nano>>;
 // A representation of the difference between two timestamps.
 using TimeDeltaNanos = std::chrono::duration<int32_t, std::nano>;
 std::string ToString(UnixNanos unix_nanos);
@@ -25,8 +24,7 @@ template <typename T>
 struct DateTimeRange {
   explicit DateTimeRange(T start_) : DateTimeRange{std::move(start_), {}} {}
   // underscore to prevent shadowing
-  DateTimeRange(T start_, T end_)
-      : start{std::move(start_)}, end{std::move(end_)} {}
+  DateTimeRange(T start_, T end_) : start{std::move(start_)}, end{std::move(end_)} {}
 
   T start;
   T end;
@@ -34,13 +32,11 @@ struct DateTimeRange {
 using DateRange = DateTimeRange<std::string>;
 
 template <typename T>
-inline bool operator==(const DateTimeRange<T>& lhs,
-                       const DateTimeRange<T>& rhs) {
+inline bool operator==(const DateTimeRange<T>& lhs, const DateTimeRange<T>& rhs) {
   return lhs.start == rhs.start && lhs.end == rhs.end;
 }
 template <typename T>
-inline bool operator!=(const DateTimeRange<T>& lhs,
-                       const DateTimeRange<T>& rhs) {
+inline bool operator!=(const DateTimeRange<T>& lhs, const DateTimeRange<T>& rhs) {
   return !(lhs == rhs);
 }
 

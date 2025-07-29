@@ -16,8 +16,7 @@ TEST(InFileStreamTests, TestReadExactInsufficient) {
     target.ReadExact(buffer.data(), buffer.size());
     FAIL() << "Expected throw";
   } catch (const databento::Exception& exc) {
-    ASSERT_STREQ(exc.what(),
-                 "Unexpected end of file, expected 1024 bytes, got 472");
+    ASSERT_STREQ(exc.what(), "Unexpected end of file, expected 1024 bytes, got 472");
   }
 }
 

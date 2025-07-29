@@ -29,8 +29,7 @@ class LiveThreadedTests : public testing::Test {
  protected:
   template <typename T>
   static constexpr RecordHeader DummyHeader(RType rtype) {
-    return {sizeof(T) / RecordHeader::kLengthMultiplier, rtype, 1, 1,
-            UnixNanos{}};
+    return {sizeof(T) / RecordHeader::kLengthMultiplier, rtype, 1, 1, UnixNanos{}};
   }
 
   static constexpr auto kKey = "32-character-with-lots-of-filler";
@@ -55,8 +54,7 @@ TEST_F(LiveThreadedTests, TestBasic) {
                     TimeDeltaNanos{},
                     100};
   constexpr auto kHeartbeatInterval = std::chrono::seconds{5};
-  const mock::MockLsgServer mock_server{dataset::kGlbxMdp3, kTsOut,
-                                        kHeartbeatInterval,
+  const mock::MockLsgServer mock_server{dataset::kGlbxMdp3, kTsOut, kHeartbeatInterval,
                                         [&kRec](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
@@ -94,8 +92,7 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
                     100};
   std::atomic<std::uint32_t> call_count{};
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, kTsOut,
-      [&kRec, &call_count](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut, [&kRec, &call_count](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Start();
@@ -112,14 +109,13 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildThreaded();
-  target.Start(
-      [](Metadata&& metadata) { EXPECT_FALSE(metadata.schema.has_value()); },
-      [&call_count, &kRec](const Record& rec) {
-        ++call_count;
-        EXPECT_TRUE(rec.Holds<MboMsg>());
-        EXPECT_EQ(rec.Get<MboMsg>(), kRec);
-        return databento::KeepGoing::Continue;
-      });
+  target.Start([](Metadata&& metadata) { EXPECT_FALSE(metadata.schema.has_value()); },
+               [&call_count, &kRec](const Record& rec) {
+                 ++call_count;
+                 EXPECT_TRUE(rec.Holds<MboMsg>());
+                 EXPECT_EQ(rec.Get<MboMsg>(), kRec);
+                 return databento::KeepGoing::Continue;
+               });
   while (call_count < 2) {
     std::this_thread::yield();
   }
@@ -139,8 +135,7 @@ TEST_F(LiveThreadedTests, TestStop) {
                     100};
   std::atomic<std::uint32_t> call_count{};
   auto mock_server = std::make_unique<mock::MockLsgServer>(
-      dataset::kXnasItch, kTsOut,
-      [&kRec, &call_count](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut, [&kRec, &call_count](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Start();
@@ -149,10 +144,8 @@ TEST_F(LiveThreadedTests, TestStop) {
         while (call_count < 1) {
           std::this_thread::yield();
         }
-        const std::string rec_str{reinterpret_cast<const char*>(&kRec),
-                                  sizeof(kRec)};
-        while (self.UncheckedSend(rec_str) ==
-               static_cast<::ssize_t>(rec_str.size())) {
+        const std::string rec_str{reinterpret_cast<const char*>(&kRec), sizeof(kRec)};
+        while (self.UncheckedSend(rec_str) == static_cast<::ssize_t>(rec_str.size())) {
           std::this_thread::yield();
         }
       });
@@ -161,15 +154,14 @@ TEST_F(LiveThreadedTests, TestStop) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server->Port())
                             .BuildThreaded();
-  target.Start(
-      [](Metadata&& metadata) { EXPECT_FALSE(metadata.schema.has_value()); },
-      [&call_count, &kRec](const Record& rec) {
-        ++call_count;
-        EXPECT_EQ(call_count, 1) << "Record callback called more than once";
-        EXPECT_TRUE(rec.Holds<MboMsg>());
-        EXPECT_EQ(rec.Get<MboMsg>(), kRec);
-        return databento::KeepGoing::Stop;
-      });
+  target.Start([](Metadata&& metadata) { EXPECT_FALSE(metadata.schema.has_value()); },
+               [&call_count, &kRec](const Record& rec) {
+                 ++call_count;
+                 EXPECT_EQ(call_count, 1) << "Record callback called more than once";
+                 EXPECT_TRUE(rec.Holds<MboMsg>());
+                 EXPECT_EQ(rec.Get<MboMsg>(), kRec);
+                 return databento::KeepGoing::Stop;
+               });
   // kill mock server and join thread before client goes out of scope
   // to ensure Stop is killing the connection, not the client's destructor
   mock_server.reset();
@@ -195,8 +187,8 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
   std::condition_variable should_close_cv;
   const mock::MockLsgServer mock_server{
       dataset::kXnasItch, kTsOut,
-      [&should_close, &should_close_mutex, &should_close_cv, kRec, kSchema,
-       kSType, kUseSnapshot](mock::MockLsgServer& self) {
+      [&should_close, &should_close_mutex, &should_close_cv, kRec, kSchema, kSType,
+       kUseSnapshot](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Subscribe(kAllSymbols, kSchema, kSType, "0", true);
@@ -204,8 +196,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
         self.SendRecord(kRec);
         {
           std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
-          should_close_cv.wait(shutdown_lock,
-                               [&should_close] { return should_close; });
+          should_close_cv.wait(shutdown_lock, [&should_close] { return should_close; });
         }
         self.Close();
         self.Accept();
@@ -217,10 +208,9 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
   logger_ = mock::MockLogReceiver{
       LogLevel::Warning,
       [](auto count, databento::LogLevel level, const std::string& msg) {
-        EXPECT_THAT(
-            msg,
-            testing::EndsWith(
-                "Gateway closed the session. Attempting to restart session."));
+        EXPECT_THAT(msg,
+                    testing::EndsWith(
+                        "Gateway closed the session. Attempting to restart session."));
       }};
   LiveThreaded target = builder_.SetDataset(dataset::kXnasItch)
                             .SetSendTsOut(kTsOut)
@@ -232,8 +222,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
     EXPECT_FALSE(metadata.schema.has_value());
   };
   std::atomic<std::int32_t> record_calls{};
-  const auto record_cb = [&record_calls, kRec, &should_close_mutex,
-                          &should_close,
+  const auto record_cb = [&record_calls, kRec, &should_close_mutex, &should_close,
                           &should_close_cv](const Record& record) {
     ++record_calls;
     EXPECT_EQ(record.Get<TradeMsg>(), kRec);
@@ -300,8 +289,7 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
         self.Start();
         {
           std::unique_lock<std::mutex> shutdown_lock{should_close_mutex};
-          should_close_cv.wait(shutdown_lock,
-                               [&should_close] { return should_close; });
+          should_close_cv.wait(shutdown_lock, [&should_close] { return should_close; });
         }
         self.Close();
         self.Accept();
@@ -326,8 +314,8 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
     ++record_calls;
     return KeepGoing::Continue;
   };
-  const auto exception_cb = [&target, &metadata_cb, &record_cb, &kSymbols,
-                             kSchema, kSType](const std::exception& exc) {
+  const auto exception_cb = [&target, &metadata_cb, &record_cb, &kSymbols, kSchema,
+                             kSType](const std::exception& exc) {
     EXPECT_NE(dynamic_cast<const databento::DbnResponseError*>(&exc), nullptr)
         << "Unexpected exception type";
     target.Reconnect();
@@ -358,7 +346,6 @@ TEST_F(LiveThreadedTests, TestBlockForStopTimeout) {
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildThreaded();
   target.Start([](const Record&) { return KeepGoing::Continue; });
-  ASSERT_EQ(target.BlockForStop(std::chrono::milliseconds{100}),
-            KeepGoing::Continue);
+  ASSERT_EQ(target.BlockForStop(std::chrono::milliseconds{100}), KeepGoing::Continue);
 }
 }  // namespace databento::tests

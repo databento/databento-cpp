@@ -28,13 +28,11 @@ struct SymbologyResolution {
 //
 // Throws InvalidArgumentError if symbols is empty or the iterator range is
 // empty.
-std::string JoinSymbolStrings(
-    const std::string& method_name,
-    std::vector<std::string>::const_iterator symbols_begin,
-    std::vector<std::string>::const_iterator symbols_end);
+std::string JoinSymbolStrings(const std::string& method_name,
+                              std::vector<std::string>::const_iterator symbols_begin,
+                              std::vector<std::string>::const_iterator symbols_end);
 std::string JoinSymbolStrings(const std::string& method_name,
                               const std::vector<std::string>& symbols);
 std::string ToString(const SymbologyResolution& sym_res);
-std::ostream& operator<<(std::ostream& stream,
-                         const SymbologyResolution& sym_res);
+std::ostream& operator<<(std::ostream& stream, const SymbologyResolution& sym_res);
 }  // namespace databento

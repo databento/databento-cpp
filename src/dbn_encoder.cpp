@@ -17,8 +17,7 @@
 using databento::DbnEncoder;
 
 namespace {
-void EncodeChars(const char* bytes, std::size_t length,
-                 databento::IWritable* output) {
+void EncodeChars(const char* bytes, std::size_t length, databento::IWritable* output) {
   output->WriteAll(reinterpret_cast<const std::byte*>(bytes), length);
 }
 
@@ -31,8 +30,7 @@ void EncodeFixedLenCStr(std::size_t cstr_len, const std::string& str,
         std::string{"String is too long to encode, maximum length of "} +
             std::to_string(cstr_len - 1)};
   }
-  output->WriteAll(reinterpret_cast<const std::byte*>(str.data()),
-                   str.length());
+  output->WriteAll(reinterpret_cast<const std::byte*>(str.data()), str.length());
   // Null padding
   std::vector<std::byte> filler(cstr_len - str.length());
   output->WriteAll(filler.data(), filler.size());
@@ -60,12 +58,10 @@ void EncodeRepeatedSymbolCStr(std::size_t cstr_len,
   }
 }
 
-void EncodeSymbolMappings(
-    std::size_t cstr_len,
-    const std::vector<databento::SymbolMapping>& symbol_mappings,
-    databento::IWritable* output) {
-  const auto mappings_length =
-      static_cast<std::uint32_t>(symbol_mappings.size());
+void EncodeSymbolMappings(std::size_t cstr_len,
+                          const std::vector<databento::SymbolMapping>& symbol_mappings,
+                          databento::IWritable* output) {
+  const auto mappings_length = static_cast<std::uint32_t>(symbol_mappings.size());
   EncodeAsBytes(mappings_length, output);
   for (const auto& symbol_mapping : symbol_mappings) {
     EncodeFixedLenCStr(cstr_len, symbol_mapping.raw_symbol, output);
@@ -81,8 +77,7 @@ void EncodeSymbolMappings(
 }
 }  // namespace
 
-DbnEncoder::DbnEncoder(const Metadata& metadata, IWritable* output)
-    : output_{output} {
+DbnEncoder::DbnEncoder(const Metadata& metadata, IWritable* output) : output_{output} {
   EncodeMetadata(metadata, output_);
 }
 
@@ -90,8 +85,7 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
   if (metadata.version > kDbnVersion) {
     throw databento::InvalidArgumentError{
         "EncodeMetadata", "metadata",
-        "Can't encode Metadata with version " +
-            std::to_string(+metadata.version) +
+        "Can't encode Metadata with version " + std::to_string(+metadata.version) +
             " which is greater than the maximum supported version " +
             std::to_string(+kDbnVersion)};
   }
@@ -121,21 +115,18 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
   EncodeAsBytes(metadata.stype_out, output);
   EncodeAsBytes(static_cast<std::uint8_t>(metadata.ts_out), output);
   if (version > 1) {
-    const auto symbol_cstr_len =
-        static_cast<std::uint16_t>(metadata.symbol_cstr_len);
+    const auto symbol_cstr_len = static_cast<std::uint16_t>(metadata.symbol_cstr_len);
     EncodeAsBytes(symbol_cstr_len, output);
   }
   // padding + schema definition length
-  auto reserved_length =
-      version == 1 ? kMetadataReservedLenV1 : kMetadataReservedLen;
+  auto reserved_length = version == 1 ? kMetadataReservedLenV1 : kMetadataReservedLen;
   const std::vector<std::byte> padding(reserved_length + sizeof(std::uint32_t));
   output->WriteAll(padding.data(), padding.size());
 
   // variable-length data
   EncodeRepeatedSymbolCStr(metadata.symbol_cstr_len, metadata.symbols, output);
   EncodeRepeatedSymbolCStr(metadata.symbol_cstr_len, metadata.partial, output);
-  EncodeRepeatedSymbolCStr(metadata.symbol_cstr_len, metadata.not_found,
-                           output);
+  EncodeRepeatedSymbolCStr(metadata.symbol_cstr_len, metadata.not_found, output);
   EncodeSymbolMappings(metadata.symbol_cstr_len, metadata.mappings, output);
   if (end_padding > 0) {
     std::array<std::byte, 7> end_padding_buf{};
@@ -144,13 +135,10 @@ void DbnEncoder::EncodeMetadata(const Metadata& metadata, IWritable* output) {
 }
 
 void DbnEncoder::EncodeRecord(const Record& record, IWritable* output) {
-  output->WriteAll(reinterpret_cast<const std::byte*>(&record.Header()),
-                   record.Size());
+  output->WriteAll(reinterpret_cast<const std::byte*>(&record.Header()), record.Size());
 }
 
-void DbnEncoder::EncodeRecord(const Record& record) {
-  EncodeRecord(record, output_);
-}
+void DbnEncoder::EncodeRecord(const Record& record) { EncodeRecord(record, output_); }
 
 std::pair<std::uint32_t, std::uint32_t> DbnEncoder::CalcLength(
     const Metadata& metadata) {
@@ -160,12 +148,11 @@ std::pair<std::uint32_t, std::uint32_t> DbnEncoder::CalcLength(
   // mappings_count
   const auto var_len_counts_size = sizeof(std::uint32_t) * 5;
 
-  const auto c_str_count = metadata.symbols.size() + metadata.partial.size() +
-                           metadata.not_found.size();
+  const auto c_str_count =
+      metadata.symbols.size() + metadata.partial.size() + metadata.not_found.size();
   const auto mappings_len = std::accumulate(
       metadata.mappings.begin(), metadata.mappings.end(), std::size_t{0},
-      [symbol_cstr_len, mapping_interval_len](std::size_t acc,
-                                              const SymbolMapping& m) {
+      [symbol_cstr_len, mapping_interval_len](std::size_t acc, const SymbolMapping& m) {
         return acc + symbol_cstr_len + sizeof(std::uint32_t) +
                m.intervals.size() * mapping_interval_len;
       });

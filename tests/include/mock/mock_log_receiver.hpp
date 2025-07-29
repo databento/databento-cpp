@@ -20,12 +20,11 @@ class MockLogReceiver : public databento::ILogReceiver {
       : callback_{std::move(callback)}, min_level_{min_level} {}
 
   static MockLogReceiver AssertNoLogs(databento::LogLevel min_level) {
-    return MockLogReceiver{
-        min_level,
-        [min_level](auto, databento::LogLevel level, const std::string& msg) {
-          FAIL() << "Received unexpected log message with level " << level
-                 << ": " << msg;
-        }};
+    return MockLogReceiver{min_level, [min_level](auto, databento::LogLevel level,
+                                                  const std::string& msg) {
+                             FAIL() << "Received unexpected log message with level "
+                                    << level << ": " << msg;
+                           }};
   }
 
   void Receive(databento::LogLevel level, const std::string& msg) override {

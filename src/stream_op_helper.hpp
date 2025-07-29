@@ -69,17 +69,14 @@ class StreamOpHelper {
   template <std::size_t N>
   void FmtToStream(const std::array<char, N>& val) {
     stream_ << '"';
-    stream_.write(val.data(),
-                  static_cast<std::streamsize>(::strlen(val.data())));
+    stream_.write(val.data(), static_cast<std::streamsize>(::strlen(val.data())));
     stream_ << '"';
   }
 
  public:
-  StreamOpHelper(std::ostream& stream, std::string_view type_name,
-                 std::string spacer, std::string indent)
-      : stream_{stream},
-        spacer_{std::move(spacer)},
-        indent_{std::move(indent)} {
+  StreamOpHelper(std::ostream& stream, std::string_view type_name, std::string spacer,
+                 std::string indent)
+      : stream_{stream}, spacer_{std::move(spacer)}, indent_{std::move(indent)} {
     if (type_name.empty()) {
       stream_ << '{';
     } else {

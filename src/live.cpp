@@ -17,8 +17,7 @@ LiveBuilder::LiveBuilder() : buffer_size_{detail::Buffer::kDefaultBufSize} {}
 LiveBuilder& LiveBuilder::SetKeyFromEnv() {
   char const* env_key = std::getenv("DATABENTO_API_KEY");
   if (env_key == nullptr) {
-    throw Exception{
-        "Expected environment variable DATABENTO_API_KEY to be set"};
+    throw Exception{"Expected environment variable DATABENTO_API_KEY to be set"};
   }
   return this->SetKey(env_key);
 }
@@ -48,14 +47,12 @@ LiveBuilder& LiveBuilder::SetSendTsOut(bool send_ts_out) {
   return *this;
 }
 
-LiveBuilder& LiveBuilder::SetUpgradePolicy(
-    VersionUpgradePolicy upgrade_policy) {
+LiveBuilder& LiveBuilder::SetUpgradePolicy(VersionUpgradePolicy upgrade_policy) {
   upgrade_policy_ = upgrade_policy;
   return *this;
 }
 
-LiveBuilder& LiveBuilder::SetLogReceiver(
-    databento::ILogReceiver* log_receiver) {
+LiveBuilder& LiveBuilder::SetLogReceiver(databento::ILogReceiver* log_receiver) {
   log_receiver_ = log_receiver;
   return *this;
 }

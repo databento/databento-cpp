@@ -73,8 +73,7 @@ class HttpResponseError : public Exception {
 class TcpError : public Exception {
  public:
   explicit TcpError(int err_num, std::string message)
-      : Exception{BuildMessage(err_num, std::move(message))},
-        err_num_{err_num} {};
+      : Exception{BuildMessage(err_num, std::move(message))}, err_num_{err_num} {};
 
   int ErrNum() const { return err_num_; }
 
@@ -111,8 +110,8 @@ class InvalidArgumentError : public Exception {
 // Exception indicating an error parsing a JSON response from the Databento API.
 class JsonResponseError : public Exception {
  public:
-  static JsonResponseError ParseError(
-      std::string_view path, const nlohmann::detail::parse_error& parse_error);
+  static JsonResponseError ParseError(std::string_view path,
+                                      const nlohmann::detail::parse_error& parse_error);
   static JsonResponseError MissingKey(std::string_view method_name,
                                       const nlohmann::json& key);
   static JsonResponseError TypeMismatch(std::string_view method_name,
@@ -124,15 +123,13 @@ class JsonResponseError : public Exception {
                                         const nlohmann::json& value);
 
  private:
-  explicit JsonResponseError(std::string message)
-      : Exception{std::move(message)} {}
+  explicit JsonResponseError(std::string message) : Exception{std::move(message)} {}
 };
 
 // Exception indicating an error parsing a DBN response from the Databento API.
 class DbnResponseError : public Exception {
  public:
-  explicit DbnResponseError(std::string message)
-      : Exception{std::move(message)} {}
+  explicit DbnResponseError(std::string message) : Exception{std::move(message)} {}
 };
 
 // Exception indicating something internal to the live API, but unrelated to TCP

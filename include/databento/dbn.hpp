@@ -101,13 +101,12 @@ inline bool operator!=(const SymbolMapping& lhs, const SymbolMapping& rhs) {
 
 inline bool operator==(const Metadata& lhs, const Metadata& rhs) {
   return lhs.version == rhs.version && lhs.dataset == rhs.dataset &&
-         lhs.schema == rhs.schema && lhs.start == rhs.start &&
-         lhs.end == rhs.end && lhs.limit == rhs.limit &&
-         lhs.stype_in == rhs.stype_in && lhs.stype_out == rhs.stype_out &&
-         lhs.ts_out == rhs.ts_out &&
-         lhs.symbol_cstr_len == rhs.symbol_cstr_len &&
-         lhs.symbols == rhs.symbols && lhs.partial == rhs.partial &&
-         lhs.not_found == rhs.not_found && lhs.mappings == rhs.mappings;
+         lhs.schema == rhs.schema && lhs.start == rhs.start && lhs.end == rhs.end &&
+         lhs.limit == rhs.limit && lhs.stype_in == rhs.stype_in &&
+         lhs.stype_out == rhs.stype_out && lhs.ts_out == rhs.ts_out &&
+         lhs.symbol_cstr_len == rhs.symbol_cstr_len && lhs.symbols == rhs.symbols &&
+         lhs.partial == rhs.partial && lhs.not_found == rhs.not_found &&
+         lhs.mappings == rhs.mappings;
 }
 inline bool operator!=(const Metadata& lhs, const Metadata& rhs) {
   return !(lhs == rhs);

@@ -31,14 +31,15 @@ using ErrorMsg = databento::ErrorMsg;
 using SymbolMappingMsg = databento::SymbolMappingMsg;
 using SystemMsg = databento::SystemMsg;
 
-// An instrument definition message in DBN version 2.
+// A definition of an instrument in DBN version 2. The record of the definition schema.
 struct InstrumentDefMsg {
   static bool HasRType(RType rtype) { return rtype == RType::InstrumentDef; }
+
+  UnixNanos IndexTs() const { return ts_recv; }
 
   databento::InstrumentDefMsg ToV3() const;
   template <typename T>
   T Upgrade() const;
-  UnixNanos IndexTs() const { return ts_recv; }
 
   const char* Currency() const { return currency.data(); }
   const char* SettlCurrency() const { return settl_currency.data(); }
@@ -51,9 +52,7 @@ struct InstrumentDefMsg {
   const char* SecurityType() const { return security_type.data(); }
   const char* UnitOfMeasure() const { return unit_of_measure.data(); }
   const char* Underlying() const { return underlying.data(); }
-  const char* StrikePriceCurrency() const {
-    return strike_price_currency.data();
-  }
+  const char* StrikePriceCurrency() const { return strike_price_currency.data(); }
 
   RecordHeader hd;
   UnixNanos ts_recv;
@@ -116,21 +115,21 @@ struct InstrumentDefMsg {
   std::int8_t contract_multiplier_unit;
   std::int8_t flow_schedule_type;
   std::uint8_t tick_rule;
-  std::array<char, 10> reserved;
+  std::array<std::byte, 10> _reserved{};
 };
+static_assert(sizeof(InstrumentDefMsg) == 400, "InstrumentDefMsg size must match Rust");
+static_assert(alignof(InstrumentDefMsg) == 8,
+              "InstrumentDefMsg must have 8-byte alignment");
 template <>
 databento::InstrumentDefMsg InstrumentDefMsg::Upgrade() const;
-static_assert(sizeof(InstrumentDefMsg) == 400,
-              "InstrumentDefMsg size must match Rust");
-static_assert(alignof(InstrumentDefMsg) == 8, "Must have 8-byte alignment");
 
 bool operator==(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs);
-inline bool operator!=(const InstrumentDefMsg& lhs,
-                       const InstrumentDefMsg& rhs) {
+inline bool operator!=(const InstrumentDefMsg& lhs, const InstrumentDefMsg& rhs) {
   return !(lhs == rhs);
 }
 
-std::string ToString(const InstrumentDefMsg& instr_def_msg);
+std::string ToString(const InstrumentDefMsg& instrument_def_msg);
 std::ostream& operator<<(std::ostream& stream,
-                         const InstrumentDefMsg& instr_def_msg);
+                         const InstrumentDefMsg& instrument_def_msg);
+
 }  // namespace databento::v2

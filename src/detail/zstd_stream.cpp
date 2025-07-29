@@ -35,22 +35,20 @@ void ZstdDecodeStream::ReadExact(std::byte* buffer, std::size_t length) {
   // check for end of stream without obtaining `length` bytes
   if (size < length) {
     std::ostringstream err_msg;
-    err_msg << "Reached end of Zstd stream without " << length
-            << " bytes, only " << size << " bytes available";
+    err_msg << "Reached end of Zstd stream without " << length << " bytes, only "
+            << size << " bytes available";
     throw DbnResponseError{err_msg.str()};
   }
 }
 
-std::size_t ZstdDecodeStream::ReadSome(std::byte* buffer,
-                                       std::size_t max_length) {
+std::size_t ZstdDecodeStream::ReadSome(std::byte* buffer, std::size_t max_length) {
   ZSTD_outBuffer z_out_buffer{buffer, max_length, 0};
   std::size_t read_size = 0;
   do {
     const auto unread_input = z_in_buffer_.size - z_in_buffer_.pos;
     if (unread_input > 0) {
-      std::copy(
-          in_buffer_.cbegin() + static_cast<std::ptrdiff_t>(z_in_buffer_.pos),
-          in_buffer_.cend(), in_buffer_.begin());
+      std::copy(in_buffer_.cbegin() + static_cast<std::ptrdiff_t>(z_in_buffer_.pos),
+                in_buffer_.cend(), in_buffer_.begin());
     }
     if (read_suggestion_ == 0) {
       // next frame
@@ -79,8 +77,7 @@ using databento::detail::ZstdCompressStream;
 
 ZstdCompressStream::ZstdCompressStream(IWritable* output)
     : ZstdCompressStream{ILogReceiver::Default(), output} {}
-ZstdCompressStream::ZstdCompressStream(ILogReceiver* log_receiver,
-                                       IWritable* output)
+ZstdCompressStream::ZstdCompressStream(ILogReceiver* log_receiver, IWritable* output)
     : log_receiver_{log_receiver},
       output_{output},
       z_cstream_{::ZSTD_createCStream(), ::ZSTD_freeCStream},
@@ -103,10 +100,9 @@ ZstdCompressStream::~ZstdCompressStream() {
       break;
     }
     if (::ZSTD_isError(remaining) && log_receiver_) {
-      log_receiver_->Receive(
-          LogLevel::Error,
-          std::string{"Zstd error compressing end of stream: "} +
-              ::ZSTD_getErrorName(remaining));
+      log_receiver_->Receive(LogLevel::Error,
+                             std::string{"Zstd error compressing end of stream: "} +
+                                 ::ZSTD_getErrorName(remaining));
       break;
     }
   }
@@ -132,9 +128,8 @@ void ZstdCompressStream::WriteAll(const std::byte* buffer, std::size_t length) {
     // Shift unread input to front
     const auto unread_input = z_in_buffer_.size - z_in_buffer_.pos;
     if (unread_input > 0) {
-      std::copy(
-          in_buffer_.cbegin() + static_cast<std::ptrdiff_t>(z_in_buffer_.pos),
-          in_buffer_.cend(), in_buffer_.begin());
+      std::copy(in_buffer_.cbegin() + static_cast<std::ptrdiff_t>(z_in_buffer_.pos),
+                in_buffer_.cend(), in_buffer_.begin());
     }
     in_buffer_.resize(unread_input);
     if (z_out_buffer.pos > 0) {

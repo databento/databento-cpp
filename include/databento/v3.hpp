@@ -10,8 +10,7 @@ namespace databento::v3 {
 static constexpr std::uint8_t kDbnVersion = 3;
 static constexpr std::size_t kSymbolCstrLen = databento::kSymbolCstrLen;
 static constexpr std::size_t kAssetCstrLen = databento::kAssetCstrLen;
-static constexpr std::int64_t kUndefStatQuantity =
-    databento::kUndefStatQuantity;
+static constexpr std::int64_t kUndefStatQuantity = databento::kUndefStatQuantity;
 
 using MboMsg = databento::MboMsg;
 using TradeMsg = databento::TradeMsg;

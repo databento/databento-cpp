@@ -8,9 +8,7 @@
 
 using databento::detail::ScopedFd;
 
-ScopedFd::ScopedFd(ScopedFd&& other) noexcept : fd_{other.fd_} {
-  other.fd_ = kUnset;
-}
+ScopedFd::ScopedFd(ScopedFd&& other) noexcept : fd_{other.fd_} { other.fd_ = kUnset; }
 
 ScopedFd& ScopedFd::operator=(ScopedFd&& other) noexcept {
   std::swap(fd_, other.fd_);

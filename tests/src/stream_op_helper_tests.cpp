@@ -19,8 +19,7 @@ TEST(StreamOpHelperTests, TestEmpty) {
 
 TEST(StreamOpHelperTests, TestSingleLine) {
   std::ostringstream stream;
-  auto target =
-      StreamOpBuilder{stream}.SetTypeName("TestClass").SetSpacer(" ").Build();
+  auto target = StreamOpBuilder{stream}.SetTypeName("TestClass").SetSpacer(" ").Build();
   target.AddField("schema", Schema::Ohlcv1D)
       .AddField("dataset", std::string{dataset::kXnasItch})
       .AddField("size", 10)
@@ -34,10 +33,8 @@ TEST(StreamOpHelperTests, TestSingleLine) {
 
 TEST(StreamOpHelperTests, TestMultiLine) {
   std::ostringstream stream;
-  auto target = StreamOpBuilder{stream}
-                    .SetTypeName("TestClass")
-                    .SetSpacer("\n    ")
-                    .Build();
+  auto target =
+      StreamOpBuilder{stream}.SetTypeName("TestClass").SetSpacer("\n    ").Build();
   target.AddField("schema", Schema::Ohlcv1D)
       .AddField("dataset", std::string{dataset::kXnasItch})
       .AddField("size", 10)
@@ -55,8 +52,7 @@ TEST(StreamOpHelperTests, TestMultiLine) {
 }
 
 TEST(StreamOpHelperTests, TestWithVector) {
-  const std::vector<Schema> test_data{Schema::Ohlcv1D, Schema::Mbp10,
-                                      Schema::Ohlcv1M};
+  const std::vector<Schema> test_data{Schema::Ohlcv1D, Schema::Mbp10, Schema::Ohlcv1M};
 
   std::ostringstream stream;
   auto target = StreamOpBuilder{stream}.SetSpacer(" ").Build();
@@ -68,12 +64,10 @@ TEST(StreamOpHelperTests, TestWithVector) {
 }
 
 TEST(StreamOpHelperTests, TestIndent) {
-  const std::vector<Encoding> test_data{Encoding::Csv, Encoding::Dbn,
-                                        Encoding::Json};
+  const std::vector<Encoding> test_data{Encoding::Csv, Encoding::Dbn, Encoding::Json};
 
   std::ostringstream stream;
-  auto target =
-      StreamOpBuilder{stream}.SetSpacer("\n    ").SetIndent("    ").Build();
+  auto target = StreamOpBuilder{stream}.SetSpacer("\n    ").SetIndent("    ").Build();
   for (const auto schema : test_data) {
     target.AddItem(schema);
   }

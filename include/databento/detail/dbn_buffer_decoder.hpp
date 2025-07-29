@@ -27,8 +27,7 @@ class DbnBufferDecoder {
   KeepGoing Process(const char* data, std::size_t length);
 
   std::size_t UnreadBytes() const { return dbn_buffer_.ReadCapacity(); }
-  friend std::ostream& operator<<(std::ostream& stream,
-                                  const DbnBufferDecoder& buffer);
+  friend std::ostream& operator<<(std::ostream& stream, const DbnBufferDecoder& buffer);
 
  private:
   enum class DecoderState : std::uint8_t {

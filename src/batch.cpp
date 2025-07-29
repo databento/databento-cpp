@@ -5,9 +5,7 @@
 #include "stream_op_helper.hpp"
 
 namespace databento {
-std::string ToString(const BatchJob& batch_job) {
-  return MakeString(batch_job);
-}
+std::string ToString(const BatchJob& batch_job) { return MakeString(batch_job); }
 
 std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
   std::ostringstream symbol_stream;
@@ -24,8 +22,7 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .AddField("bill_id", batch_job.bill_id)
       .AddField("cost_usd", batch_job.cost_usd)
       .AddField("dataset", batch_job.dataset)
-      .AddField("symbols",
-                static_cast<std::ostringstream&>(symbol_helper.Finish()))
+      .AddField("symbols", static_cast<std::ostringstream&>(symbol_helper.Finish()))
       .AddField("stype_in", batch_job.stype_in)
       .AddField("stype_out", batch_job.stype_out)
       .AddField("schema", batch_job.schema)
@@ -54,9 +51,7 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .Finish();
 }
 
-std::string ToString(const BatchFileDesc& file_desc) {
-  return MakeString(file_desc);
-}
+std::string ToString(const BatchFileDesc& file_desc) { return MakeString(file_desc); }
 
 std::ostream& operator<<(std::ostream& stream, const BatchFileDesc& file_desc) {
   return StreamOpBuilder{stream}

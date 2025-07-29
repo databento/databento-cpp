@@ -17,8 +17,7 @@ namespace databento {
 class DbnFileStore {
  public:
   explicit DbnFileStore(const std::filesystem::path& file_path);
-  DbnFileStore(ILogReceiver* log_receiver,
-               const std::filesystem::path& file_path,
+  DbnFileStore(ILogReceiver* log_receiver, const std::filesystem::path& file_path,
                VersionUpgradePolicy upgrade_policy);
 
   // Callback API: calling Replay consumes the input.

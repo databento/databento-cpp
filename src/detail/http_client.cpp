@@ -5,7 +5,7 @@
 
 #include "databento/constants.hpp"  // kUserAgent
 #include "databento/exceptions.hpp"  // HttpResponseError, HttpRequestError, JsonResponseError
-#include "databento/log.hpp"  // ILogReceiver, LogLevel
+#include "databento/log.hpp"         // ILogReceiver, LogLevel
 
 using databento::detail::HttpClient;
 
@@ -15,8 +15,8 @@ const httplib::Headers HttpClient::kHeaders{
     {"user-agent", kUserAgent},
 };
 
-HttpClient::HttpClient(databento::ILogReceiver* log_receiver,
-                       const std::string& key, const std::string& gateway)
+HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string& key,
+                       const std::string& gateway)
     : log_receiver_{log_receiver}, client_{gateway} {
   client_.set_default_headers(HttpClient::kHeaders);
   client_.set_basic_auth(key, "");
@@ -24,9 +24,8 @@ HttpClient::HttpClient(databento::ILogReceiver* log_receiver,
   client_.set_write_timeout(kTimeout);
 }
 
-HttpClient::HttpClient(databento::ILogReceiver* log_receiver,
-                       const std::string& key, const std::string& gateway,
-                       std::uint16_t port)
+HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string& key,
+                       const std::string& gateway, std::uint16_t port)
     : log_receiver_{log_receiver}, client_{gateway, port} {
   client_.set_default_headers(HttpClient::kHeaders);
   client_.set_basic_auth(key, "");
@@ -47,24 +46,22 @@ nlohmann::json HttpClient::PostJson(const std::string& path,
   return HttpClient::CheckAndParseResponse(path, std::move(res));
 }
 
-void HttpClient::GetRawStream(const std::string& path,
-                              const httplib::Params& params,
+void HttpClient::GetRawStream(const std::string& path, const httplib::Params& params,
                               const httplib::ContentReceiver& callback) {
   const std::string full_path = httplib::append_query_params(path, params);
   std::string err_body{};
   int err_status{};
-  const httplib::Result res =
-      client_.Get(full_path, MakeStreamResponseHandler(err_status),
-                  [&callback, &err_body, &err_status](const char* data,
-                                                      std::size_t length) {
-                    // if an error response was received, read all content into
-                    // err_body
-                    if (err_status > 0) {
-                      err_body.append(data, length);
-                      return true;
-                    }
-                    return callback(data, length);
-                  });
+  const httplib::Result res = client_.Get(
+      full_path, MakeStreamResponseHandler(err_status),
+      [&callback, &err_body, &err_status](const char* data, std::size_t length) {
+        // if an error response was received, read all content into
+        // err_body
+        if (err_status > 0) {
+          err_body.append(data, length);
+          return true;
+        }
+        return callback(data, length);
+      });
   CheckStatusAndStreamRes(path, err_status, std::move(err_body), res);
 }
 
@@ -80,8 +77,8 @@ void HttpClient::PostRawStream(const std::string& path,
   req.body = httplib::detail::params_to_query_str(form_params);
   req.response_handler = MakeStreamResponseHandler(err_status);
   req.content_receiver = [&callback, &err_body, &err_status](
-                             const char* data, std::size_t length,
-                             std::uint64_t, std::uint64_t) {
+                             const char* data, std::size_t length, std::uint64_t,
+                             std::uint64_t) {
     // if an error response was received, read all content into
     // err_body
     if (err_status > 0) {
@@ -95,8 +92,7 @@ void HttpClient::PostRawStream(const std::string& path,
   CheckStatusAndStreamRes(path, err_status, std::move(err_body), res);
 }
 
-httplib::ResponseHandler HttpClient::MakeStreamResponseHandler(
-    int& out_status) {
+httplib::ResponseHandler HttpClient::MakeStreamResponseHandler(int& out_status) {
   return [this, &out_status](const httplib::Response& resp) {
     if (HttpClient::IsErrorStatus(resp.status)) {
       out_status = resp.status;
@@ -106,8 +102,7 @@ httplib::ResponseHandler HttpClient::MakeStreamResponseHandler(
   };
 }
 
-void HttpClient::CheckStatusAndStreamRes(const std::string& path,
-                                         int status_code,
+void HttpClient::CheckStatusAndStreamRes(const std::string& path, int status_code,
                                          std::string&& err_body,
                                          const httplib::Result& res) {
   if (status_code > 0) {

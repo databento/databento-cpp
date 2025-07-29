@@ -55,9 +55,7 @@ class Buffer : public IReadable, public IWritable {
     return static_cast<std::size_t>(write_pos_ - read_pos_);
   }
 
-  std::size_t Capacity() const {
-    return static_cast<std::size_t>(end_ - buf_.get());
-  }
+  std::size_t Capacity() const { return static_cast<std::size_t>(end_ - buf_.get()); }
   void Clear() {
     read_pos_ = buf_.get();
     write_pos_ = buf_.get();

@@ -22,8 +22,8 @@ using databento::TcpError;
 std::string TcpError::BuildMessage(int err_num, std::string message) {
 #ifdef _WIN32
   char errbuf[300];
-  ::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, {}, err_num, {}, errbuf,
-                  sizeof(errbuf), {});
+  ::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, {}, err_num, {}, errbuf, sizeof(errbuf),
+                  {});
   return std::move(message) + ": " + errbuf;
 #else
   return std::move(message) + ": " + std::strerror(err_num);
@@ -37,8 +37,7 @@ std::string HttpResponseError::BuildMessage(std::string_view request_path,
                                             std::string_view response_body) {
   std::ostringstream err_msg;
   err_msg << "Received an error response from request to " << request_path
-          << " with status " << status_code << " and body '" << response_body
-          << '\'';
+          << " with status " << status_code << " and body '" << response_body << '\'';
   return err_msg.str();
 }
 
@@ -56,8 +55,7 @@ std::string InvalidArgumentError::BuildMessage(std::string_view method_name,
 using databento::JsonResponseError;
 
 JsonResponseError JsonResponseError::ParseError(
-    std::string_view method_name,
-    const nlohmann::json::parse_error& parse_error) {
+    std::string_view method_name, const nlohmann::json::parse_error& parse_error) {
   std::ostringstream err_msg;
   err_msg << "Error parsing JSON response to " << method_name << ' '
           << parse_error.what();
@@ -71,22 +69,23 @@ JsonResponseError JsonResponseError::MissingKey(std::string_view path,
   return JsonResponseError{err_msg.str()};
 }
 
-JsonResponseError JsonResponseError::TypeMismatch(
-    std::string_view method_name, std::string_view expected_type_name,
-    const nlohmann::json& json) {
+JsonResponseError JsonResponseError::TypeMismatch(std::string_view method_name,
+                                                  std::string_view expected_type_name,
+                                                  const nlohmann::json& json) {
   std::ostringstream err_msg;
-  err_msg << "Expected JSON " << expected_type_name << " response for "
-          << method_name << ", got " << json.type_name();
+  err_msg << "Expected JSON " << expected_type_name << " response for " << method_name
+          << ", got " << json.type_name();
   return JsonResponseError{err_msg.str()};
 }
 
-JsonResponseError JsonResponseError::TypeMismatch(
-    std::string_view method_name, std::string_view expected_type_name,
-    const nlohmann::json& key, const nlohmann::json& value) {
+JsonResponseError JsonResponseError::TypeMismatch(std::string_view method_name,
+                                                  std::string_view expected_type_name,
+                                                  const nlohmann::json& key,
+                                                  const nlohmann::json& value) {
   std::ostringstream err_msg;
-  err_msg << "Expected " << expected_type_name
-          << " values in JSON response for " << method_name << ", got "
-          << value.type_name() << " " << value << " for key " << key;
+  err_msg << "Expected " << expected_type_name << " values in JSON response for "
+          << method_name << ", got " << value.type_name() << " " << value << " for key "
+          << key;
   return JsonResponseError{err_msg.str()};
 }
 

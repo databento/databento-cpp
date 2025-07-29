@@ -7,12 +7,11 @@
 
 using databento::detail::DbnBufferDecoder;
 
-databento::KeepGoing DbnBufferDecoder::Process(const char* data,
-                                               std::size_t length) {
+databento::KeepGoing DbnBufferDecoder::Process(const char* data, std::size_t length) {
   zstd_buffer_->WriteAll(data, length);
   while (true) {
-    const auto read_size = zstd_stream_.ReadSome(dbn_buffer_.WriteBegin(),
-                                                 dbn_buffer_.WriteCapacity());
+    const auto read_size =
+        zstd_stream_.ReadSome(dbn_buffer_.WriteBegin(), dbn_buffer_.WriteCapacity());
     dbn_buffer_.Fill(read_size);
     if (read_size == 0) {
       return KeepGoing::Continue;
@@ -23,8 +22,8 @@ databento::KeepGoing DbnBufferDecoder::Process(const char* data,
           break;
         }
         std::tie(input_version_, bytes_needed_) =
-            DbnDecoder::DecodeMetadataVersionAndSize(
-                dbn_buffer_.ReadBegin(), dbn_buffer_.ReadCapacity());
+            DbnDecoder::DecodeMetadataVersionAndSize(dbn_buffer_.ReadBegin(),
+                                                     dbn_buffer_.ReadCapacity());
         dbn_buffer_.Consume(kMetadataPreludeSize);
         dbn_buffer_.Reserve(bytes_needed_);
         state_ = DecoderState::Metadata;
@@ -56,9 +55,8 @@ databento::KeepGoing DbnBufferDecoder::Process(const char* data,
           if (dbn_buffer_.ReadCapacity() < bytes_needed_) {
             break;
           }
-          record =
-              DbnDecoder::DecodeRecordCompat(input_version_, upgrade_policy_,
-                                             ts_out_, &compat_buffer_, record);
+          record = DbnDecoder::DecodeRecordCompat(input_version_, upgrade_policy_,
+                                                  ts_out_, &compat_buffer_, record);
           if (record_callback_(record) == KeepGoing::Stop) {
             return KeepGoing::Stop;
           }

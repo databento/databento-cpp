@@ -40,15 +40,14 @@ TEST(ILogReceiverTests, TestDefault) {
 }
 
 TEST(ILogReceiverTests, TestLogPlatformInfo) {
-  mock::MockLogReceiver receiver{
-      [](auto, LogLevel lvl, const std::string& msg) {
-        EXPECT_EQ(lvl, LogLevel::Info);
-        EXPECT_THAT(msg, testing::HasSubstr(DATABENTO_SYSTEM_ID));
-        EXPECT_THAT(msg, testing::HasSubstr(DATABENTO_SYSTEM_VERSION));
-        EXPECT_THAT(msg, testing::HasSubstr(DATABENTO_CXX_COMPILER_ID));
-        EXPECT_THAT(msg, testing::HasSubstr(DATABENTO_CXX_COMPILER_VERSION));
-        EXPECT_THAT(msg, testing::HasSubstr(DATABENTO_VERSION));
-      }};
+  mock::MockLogReceiver receiver{[](auto, LogLevel lvl, const std::string& msg) {
+    EXPECT_EQ(lvl, LogLevel::Info);
+    EXPECT_THAT(msg, testing::HasSubstr(DATABENTO_SYSTEM_ID));
+    EXPECT_THAT(msg, testing::HasSubstr(DATABENTO_SYSTEM_VERSION));
+    EXPECT_THAT(msg, testing::HasSubstr(DATABENTO_CXX_COMPILER_ID));
+    EXPECT_THAT(msg, testing::HasSubstr(DATABENTO_CXX_COMPILER_VERSION));
+    EXPECT_THAT(msg, testing::HasSubstr(DATABENTO_VERSION));
+  }};
   LogPlatformInfo(&receiver);
   ASSERT_EQ(receiver.CallCount(), 1);
 }

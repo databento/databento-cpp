@@ -65,23 +65,19 @@ date::year_month_day DecodeIso8601Date(std::uint32_t yyyymmdd_int) {
 }  // namespace
 
 DbnDecoder::DbnDecoder(ILogReceiver* log_receiver, InFileStream file_stream)
-    : DbnDecoder(log_receiver,
-                 std::make_unique<InFileStream>(std::move(file_stream))) {}
+    : DbnDecoder(log_receiver, std::make_unique<InFileStream>(std::move(file_stream))) {
+}
 
-DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
-                       std::unique_ptr<IReadable> input)
-    : DbnDecoder(log_receiver, std::move(input),
-                 VersionUpgradePolicy::UpgradeToV3) {}
+DbnDecoder::DbnDecoder(ILogReceiver* log_receiver, std::unique_ptr<IReadable> input)
+    : DbnDecoder(log_receiver, std::move(input), VersionUpgradePolicy::UpgradeToV3) {}
 
-DbnDecoder::DbnDecoder(ILogReceiver* log_receiver,
-                       std::unique_ptr<IReadable> input,
+DbnDecoder::DbnDecoder(ILogReceiver* log_receiver, std::unique_ptr<IReadable> input,
                        VersionUpgradePolicy upgrade_policy)
     : log_receiver_{log_receiver},
       upgrade_policy_{upgrade_policy},
       input_{std::move(input)} {
   if (DetectCompression()) {
-    input_ =
-        std::make_unique<detail::ZstdDecodeStream>(std::move(input_), buffer_);
+    input_ = std::make_unique<detail::ZstdDecodeStream>(std::move(input_), buffer_);
     input_->ReadExact(buffer_.WriteBegin(), kMagicSize);
     buffer_.Fill(kMagicSize);
     const auto* buf_ptr = buffer_.ReadBegin();
@@ -108,16 +104,15 @@ std::pair<std::uint8_t, std::size_t> DbnDecoder::DecodeMetadataVersionAndSize(
   return {version, static_cast<std::size_t>(frame_size)};
 }
 
-databento::Metadata DbnDecoder::DecodeMetadataFields(
-    std::uint8_t version, const std::byte* buffer,
-    const std::byte* buffer_end) {
+databento::Metadata DbnDecoder::DecodeMetadataFields(std::uint8_t version,
+                                                     const std::byte* buffer,
+                                                     const std::byte* buffer_end) {
   Metadata res;
   res.version = version;
   if (res.version > kDbnVersion) {
-    throw DbnResponseError{
-        "Can't decode newer version of DBN. Decoder version is " +
-        std::to_string(kDbnVersion) + ", input version is " +
-        std::to_string(res.version)};
+    throw DbnResponseError{"Can't decode newer version of DBN. Decoder version is " +
+                           std::to_string(kDbnVersion) + ", input version is " +
+                           std::to_string(res.version)};
   }
   res.dataset = Consume(buffer, kDatasetCstrLen, "dataset");
   const auto raw_schema = Consume<std::uint16_t>(buffer);
@@ -126,8 +121,7 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   } else {
     res.schema = {static_cast<Schema>(raw_schema)};
   }
-  res.start =
-      UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(buffer)}};
+  res.start = UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(buffer)}};
   res.end = UnixNanos{std::chrono::nanoseconds{Consume<std::uint64_t>(buffer)}};
   res.limit = Consume<std::uint64_t>(buffer);
   if (version == 1) {
@@ -143,8 +137,7 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
   res.stype_out = static_cast<SType>(Consume<std::uint8_t>(buffer));
   res.ts_out = static_cast<bool>(Consume<std::uint8_t>(buffer));
   if (version > 1) {
-    res.symbol_cstr_len =
-        static_cast<std::size_t>(Consume<std::uint16_t>(buffer));
+    res.symbol_cstr_len = static_cast<std::size_t>(Consume<std::uint16_t>(buffer));
   } else {
     res.symbol_cstr_len = kSymbolCstrLenV1;
   }
@@ -157,8 +150,7 @@ databento::Metadata DbnDecoder::DecodeMetadataFields(
 
   const auto schema_definition_length = Consume<std::uint32_t>(buffer);
   if (schema_definition_length != 0) {
-    throw DbnResponseError{
-        "This version of dbn can't parse schema definitions"};
+    throw DbnResponseError{"This version of dbn can't parse schema definitions"};
   }
   res.symbols =
       DbnDecoder::DecodeRepeatedSymbol(res.symbol_cstr_len, buffer, buffer_end);
@@ -184,8 +176,8 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
   buffer_.Reserve(size);
   input_->ReadExact(buffer_.WriteBegin(), size);
   buffer_.Fill(size);
-  auto metadata = DbnDecoder::DecodeMetadataFields(
-      version_, buffer_.ReadBegin(), buffer_.ReadEnd());
+  auto metadata = DbnDecoder::DecodeMetadataFields(version_, buffer_.ReadBegin(),
+                                                   buffer_.ReadEnd());
   buffer_.Consume(size);
   // Metadata may leave buffer misaligned. Shift records to ensure 8-byte
   // alignment
@@ -211,8 +203,7 @@ databento::Record UpgradeRecord(
     const auto& orig = rec.Get<T>();
     const U upgraded = orig.template Upgrade<U>();
     const auto upgraded_ptr = reinterpret_cast<const std::byte*>(&upgraded);
-    std::copy(upgraded_ptr, upgraded_ptr + upgraded.hd.Size(),
-              compat_buffer->data());
+    std::copy(upgraded_ptr, upgraded_ptr + upgraded.hd.Size(), compat_buffer->data());
   }
   return databento::Record{
       reinterpret_cast<databento::RecordHeader*>(compat_buffer->data())};
@@ -233,54 +224,46 @@ databento::Record DbnDecoder::DecodeRecordCompat(
             ts_out, compat_buffer, rec);
       }
       case RType::Error: {
-        return UpgradeRecord<v1::ErrorMsg, v2::ErrorMsg>(ts_out, compat_buffer,
-                                                         rec);
+        return UpgradeRecord<v1::ErrorMsg, v2::ErrorMsg>(ts_out, compat_buffer, rec);
       }
       case RType::System: {
-        return UpgradeRecord<v1::SystemMsg, v2::SystemMsg>(ts_out,
-                                                           compat_buffer, rec);
+        return UpgradeRecord<v1::SystemMsg, v2::SystemMsg>(ts_out, compat_buffer, rec);
       }
       default: {
         break;
       }
     }
-  } else if (version == 1 &&
-             upgrade_policy == VersionUpgradePolicy::UpgradeToV3) {
+  } else if (version == 1 && upgrade_policy == VersionUpgradePolicy::UpgradeToV3) {
     switch (rec.RType()) {
       case RType::InstrumentDef: {
         return UpgradeRecord<v1::InstrumentDefMsg, v3::InstrumentDefMsg>(
             ts_out, compat_buffer, rec);
       }
       case RType::Statistics: {
-        return UpgradeRecord<v1::StatMsg, v3::StatMsg>(ts_out, compat_buffer,
-                                                       rec);
+        return UpgradeRecord<v1::StatMsg, v3::StatMsg>(ts_out, compat_buffer, rec);
       }
       case RType::SymbolMapping: {
         return UpgradeRecord<v1::SymbolMappingMsg, v3::SymbolMappingMsg>(
             ts_out, compat_buffer, rec);
       }
       case RType::Error: {
-        return UpgradeRecord<v1::ErrorMsg, v3::ErrorMsg>(ts_out, compat_buffer,
-                                                         rec);
+        return UpgradeRecord<v1::ErrorMsg, v3::ErrorMsg>(ts_out, compat_buffer, rec);
       }
       case RType::System: {
-        return UpgradeRecord<v1::SystemMsg, v3::SystemMsg>(ts_out,
-                                                           compat_buffer, rec);
+        return UpgradeRecord<v1::SystemMsg, v3::SystemMsg>(ts_out, compat_buffer, rec);
       }
       default: {
         break;
       }
     }
-  } else if (version == 2 &&
-             upgrade_policy == VersionUpgradePolicy::UpgradeToV3) {
+  } else if (version == 2 && upgrade_policy == VersionUpgradePolicy::UpgradeToV3) {
     switch (rec.RType()) {
       case RType::InstrumentDef: {
         return UpgradeRecord<v2::InstrumentDefMsg, v3::InstrumentDefMsg>(
             ts_out, compat_buffer, rec);
       }
       case RType::Statistics: {
-        return UpgradeRecord<v2::StatMsg, v3::StatMsg>(ts_out, compat_buffer,
-                                                       rec);
+        return UpgradeRecord<v2::StatMsg, v3::StatMsg>(ts_out, compat_buffer, rec);
       }
       default: {
         break;
@@ -302,18 +285,17 @@ const databento::Record* DbnDecoder::DecodeRecord() {
   while (buffer_.ReadCapacity() < BufferRecordHeader()->Size()) {
     if (FillBuffer() == 0) {
       if (buffer_.ReadCapacity() > 0) {
-        log_receiver_->Receive(
-            LogLevel::Warning,
-            "Unexpected partial record remaining in stream: " +
-                std::to_string(buffer_.ReadCapacity()) + " bytes");
+        log_receiver_->Receive(LogLevel::Warning,
+                               "Unexpected partial record remaining in stream: " +
+                                   std::to_string(buffer_.ReadCapacity()) + " bytes");
       }
       return nullptr;
     }
   }
   current_record_ = Record{BufferRecordHeader()};
   buffer_.ConsumeNoShift(current_record_.Size());
-  current_record_ = DbnDecoder::DecodeRecordCompat(
-      version_, upgrade_policy_, ts_out_, &compat_buffer_, current_record_);
+  current_record_ = DbnDecoder::DecodeRecordCompat(version_, upgrade_policy_, ts_out_,
+                                                   &compat_buffer_, current_record_);
   return &current_record_;
 }
 
@@ -365,14 +347,11 @@ std::vector<std::string> DbnDecoder::DecodeRepeatedSymbol(
     std::size_t symbol_cstr_len, const std::byte*& read_buf,
     const std::byte* read_buf_end) {
   if (read_buf + sizeof(std::uint32_t) > read_buf_end) {
-    throw DbnResponseError{
-        "Unexpected end of metadata buffer while parsing symbol"};
+    throw DbnResponseError{"Unexpected end of metadata buffer while parsing symbol"};
   }
   const auto count = std::size_t{Consume<std::uint32_t>(read_buf)};
-  if (read_buf + static_cast<std::ptrdiff_t>(count * symbol_cstr_len) >
-      read_buf_end) {
-    throw DbnResponseError{
-        "Unexpected end of metadata buffer while parsing symbol"};
+  if (read_buf + static_cast<std::ptrdiff_t>(count * symbol_cstr_len) > read_buf_end) {
+    throw DbnResponseError{"Unexpected end of metadata buffer while parsing symbol"};
   }
   std::vector<std::string> res;
   res.reserve(count);
@@ -386,15 +365,14 @@ std::vector<databento::SymbolMapping> DbnDecoder::DecodeSymbolMappings(
     std::size_t symbol_cstr_len, const std::byte*& read_buf,
     const std::byte* read_buf_end) {
   if (read_buf + sizeof(std::uint32_t) > read_buf_end) {
-    throw DbnResponseError{
-        "Unexpected end of metadata buffer while parsing mappings"};
+    throw DbnResponseError{"Unexpected end of metadata buffer while parsing mappings"};
   }
   const auto count = std::size_t{Consume<std::uint32_t>(read_buf)};
   std::vector<SymbolMapping> res;
   res.reserve(count);
   for (std::size_t i = 0; i < count; ++i) {
-    res.emplace_back(DbnDecoder::DecodeSymbolMapping(symbol_cstr_len, read_buf,
-                                                     read_buf_end));
+    res.emplace_back(
+        DbnDecoder::DecodeSymbolMapping(symbol_cstr_len, read_buf, read_buf_end));
   }
   return res;
 }
