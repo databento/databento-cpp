@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.40.0 - TBD
+## 0.40.0 - 2025-07-29
 
 ### Enhancements
 - Added `OhlcvEod` variant to `RType`
