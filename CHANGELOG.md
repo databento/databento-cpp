@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.41.0 - TBD
+
+### Breaking changes
+- Removed unused `Received` variant from `JobState` enum
+
 ## 0.40.0 - 2025-07-29
 
 ### Enhancements

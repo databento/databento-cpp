@@ -70,9 +70,6 @@ const char* ToString(Delivery delivery) {
 
 const char* ToString(JobState state) {
   switch (state) {
-    case JobState::Received: {
-      return "received";
-    }
     case JobState::Queued: {
       return "queued";
     }
@@ -957,9 +954,6 @@ Delivery FromString(const std::string& str) {
 
 template <>
 JobState FromString(const std::string& str) {
-  if (str == "received") {
-    return JobState::Received;
-  }
   if (str == "queued") {
     return JobState::Queued;
   }

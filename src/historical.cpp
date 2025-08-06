@@ -227,7 +227,7 @@ databento::BatchJob Historical::BatchSubmitJob(const httplib::Params& params) {
 
 std::vector<databento::BatchJob> Historical::BatchListJobs() {
   static const std::vector<JobState> kDefaultStates = {
-      JobState::Received, JobState::Queued, JobState::Processing, JobState::Done};
+      JobState::Queued, JobState::Processing, JobState::Done};
   return this->BatchListJobs(kDefaultStates, UnixNanos{});
 }
 std::vector<databento::BatchJob> Historical::BatchListJobs(
