@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <string>
 
-using namespace databento;
+namespace db = databento;
 
 std::vector<std::string> SplitSymbols(const std::string& symbols) {
   std::vector<std::string> result;
@@ -26,26 +26,27 @@ std::vector<std::string> SplitSymbols(const std::string& symbols) {
   return result;
 }
 
-std::pair<bool, UnixNanos> TryConvertToUnixNanos(const char* start) {
+std::pair<bool, db::UnixNanos> TryConvertToUnixNanos(const char* start) {
   std::size_t pos;
   const uint64_t result = std::stoul(start, &pos, 10);
   if (pos != std::strlen(start)) {
-    return std::make_pair(false, UnixNanos{});
+    return std::make_pair(false, db::UnixNanos{});
   }
 
-  return std::make_pair(true, UnixNanos{std::chrono::nanoseconds(result)});
+  return std::make_pair(true, db::UnixNanos{std::chrono::nanoseconds(result)});
 }
 
-void ProcessRecords(LiveBlocking& client, Schema schema, bool start_from_epoch) {
+void ProcessRecords(db::LiveBlocking& client, db::Schema schema,
+                    bool start_from_epoch) {
   client.Start();
 
   std::cout << "Starting client...\n";
 
   // For start != 0 we stop at SymbolMappingMsg so that the tests can be run
   // outside trading hours
-  auto expected_rtype = Record::RTypeFromSchema(schema);
+  auto expected_rtype = db::Record::RTypeFromSchema(schema);
   if (!start_from_epoch) {
-    expected_rtype = databento::RType::SymbolMapping;
+    expected_rtype = db::RType::SymbolMapping;
   }
 
   constexpr auto timeout = std::chrono::seconds{30};
@@ -54,7 +55,7 @@ void ProcessRecords(LiveBlocking& client, Schema schema, bool start_from_epoch) 
     if (record->RType() == expected_rtype) {
       std::cout << "Received expected record type " << expected_rtype << '\n';
       break;
-    } else if (auto* msg = record->GetIf<ErrorMsg>()) {
+    } else if (auto* msg = record->GetIf<db::ErrorMsg>()) {
       std::stringstream ss;
       ss << "Received error " << msg->Err() << '\n';
       std::cerr << ss.str();
@@ -65,26 +66,26 @@ void ProcessRecords(LiveBlocking& client, Schema schema, bool start_from_epoch) 
   std::cout << "Finished client\n";
 }
 
-void ProcessSnapshotRecords(LiveBlocking& client, Schema schema) {
+void ProcessSnapshotRecords(db::LiveBlocking& client, db::Schema schema) {
   client.Start();
 
   std::cout << "Starting client...\n";
 
-  const auto expected_rtype = Record::RTypeFromSchema(schema);
+  const auto expected_rtype = db::Record::RTypeFromSchema(schema);
 
   constexpr auto timeout = std::chrono::seconds{30};
 
   auto received_snapshot_record = false;
 
   while (auto record = client.NextRecord(timeout)) {
-    if (auto* mbo_msg = record->GetIf<MboMsg>()) {
+    if (auto* mbo_msg = record->GetIf<db::MboMsg>()) {
       if (mbo_msg->flags.IsSnapshot()) {
         received_snapshot_record = true;
       } else {
         std::cout << "Received expected record type " << expected_rtype << '\n';
         break;
       }
-    } else if (auto* error_msg = record->GetIf<ErrorMsg>()) {
+    } else if (auto* error_msg = record->GetIf<db::ErrorMsg>()) {
       std::stringstream ss;
       ss << "Received error " << error_msg->Err() << '\n';
       throw std::runtime_error(ss.str());
@@ -137,9 +138,7 @@ class ArgParser {
   std::vector<Arg> args;
 };
 
-ArgParser ParseArgs(int argc, char* argv[]
-
-) {
+ArgParser ParseArgs(int argc, char* argv[]) {
   ArgParser parser;
   parser.Add(ArgParser::Arg{"gateway", "--gateway"});
   parser.Add(ArgParser::Arg{"port", "--port", "13000"});
@@ -163,9 +162,9 @@ int main(int argc, char* argv[]) {
   const auto gateway = parser.Get("gateway");
   const auto port = std::atoi(parser.Get("port"));
   const auto api_key_env_var = parser.Get("api_key_env_var");
-  const auto dataset = FromString<Dataset>(parser.Get("dataset"));
-  const auto schema = FromString<Schema>(parser.Get("schema"));
-  const auto stype = FromString<SType>(parser.Get("stype"));
+  const auto dataset = db::FromString<db::Dataset>(parser.Get("dataset"));
+  const auto schema = db::FromString<db::Schema>(parser.Get("schema"));
+  const auto stype = db::FromString<db::SType>(parser.Get("stype"));
   const auto symbols = SplitSymbols(parser.Get("symbols"));
   const auto start = parser.Get("start");
   const auto use_snapshot = std::atoi(parser.Get("use_snapshot"));
@@ -173,7 +172,7 @@ int main(int argc, char* argv[]) {
   const auto api_key = std::getenv(api_key_env_var);
   assert(api_key);
 
-  auto client = LiveBuilder{}
+  auto client = db::LiveBlocking::Builder()
                     .SetAddress(gateway, static_cast<uint16_t>(port))
                     .SetKey(std::string{api_key})
                     .SetDataset(dataset)

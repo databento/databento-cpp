@@ -16,6 +16,7 @@
 #include "databento/dbn_decoder.hpp"
 #include "databento/detail/tcp_client.hpp"
 #include "databento/exceptions.hpp"  // LiveApiError
+#include "databento/live.hpp"        // LiveBuilder
 #include "databento/log.hpp"         // ILogReceiver
 #include "databento/record.hpp"      // Record
 #include "databento/symbology.hpp"   // JoinSymbolStrings
@@ -26,6 +27,8 @@ using databento::LiveBlocking;
 namespace {
 constexpr std::size_t kBucketIdLength = 5;
 }  // namespace
+
+databento::LiveBuilder LiveBlocking::Builder() { return databento::LiveBuilder{}; }
 
 LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, bool send_ts_out,
@@ -115,7 +118,7 @@ void LiveBlocking::SubscribeWithSnapshot(const std::vector<std::string>& symbols
 void LiveBlocking::Subscribe(std::string_view sub_msg,
                              const std::vector<std::string>& symbols,
                              bool use_snapshot) {
-  static constexpr auto kMethodName = "Live::Subscribe";
+  static constexpr auto kMethodName = "LiveBlocking::Subscribe";
   constexpr std::ptrdiff_t kSymbolMaxChunkSize = 500;
 
   if (symbols.empty()) {
@@ -134,6 +137,12 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
                     << "|snapshot=" << use_snapshot
                     << "|is_last=" << (distance_from_end <= kSymbolMaxChunkSize)
                     << '\n';
+    if (log_receiver_->ShouldLog(LogLevel::Debug)) {
+      std::ostringstream log_ss;
+      log_ss << '[' << kMethodName
+             << "] Sending subscription request: " << chunked_sub_msg.str();
+      log_receiver_->Receive(LogLevel::Debug, log_ss.str());
+    }
     client_.WriteAll(chunked_sub_msg.str());
 
     symbols_it += chunk_size;
@@ -141,6 +150,8 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
 }
 
 databento::Metadata LiveBlocking::Start() {
+  log_receiver_->Receive(LogLevel::Info, "[LiveBlocking::Start] Starting session");
+
   client_.WriteAll("start_session\n");
   client_.ReadExact(buffer_.WriteBegin(), kMetadataPreludeSize);
   buffer_.Fill(kMetadataPreludeSize);
@@ -224,6 +235,7 @@ void LiveBlocking::Resubscribe() {
 }
 
 std::string LiveBlocking::DecodeChallenge() {
+  static constexpr auto kMethodName = "LiveBlocking::DecodeChallenge";
   const auto read_size =
       client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size;
   if (read_size == 0) {
@@ -233,14 +245,15 @@ std::string LiveBlocking::DecodeChallenge() {
   // first line is version
   std::string response{reinterpret_cast<const char*>(buffer_.ReadBegin()),
                        buffer_.ReadCapacity()};
-  if (log_receiver_->ShouldLog(LogLevel::Debug)) {
-    std::ostringstream log_ss;
-    log_ss << "[LiveBlocking::DecodeChallenge] Challenge: " << response;
-    log_receiver_->Receive(LogLevel::Debug, log_ss.str());
-  }
   auto first_nl_pos = response.find('\n');
   if (first_nl_pos == std::string::npos) {
     throw LiveApiError::UnexpectedMsg("Received malformed initial message", response);
+  }
+  if (log_receiver_->ShouldLog(LogLevel::Debug)) {
+    std::ostringstream log_ss;
+    log_ss << '[' << kMethodName
+           << "] Received greeting: " << response.substr(0, first_nl_pos);
+    log_receiver_->Receive(LogLevel::Debug, log_ss.str());
   }
   const auto find_start = first_nl_pos + 1;
   auto next_nl_pos = find_start == response.length() ? std::string::npos
@@ -257,6 +270,11 @@ std::string LiveBlocking::DecodeChallenge() {
     next_nl_pos = response.find('\n', find_start);
   }
   const auto challenge_line = response.substr(find_start, next_nl_pos - find_start);
+  if (log_receiver_->ShouldLog(LogLevel::Debug)) {
+    std::ostringstream log_ss;
+    log_ss << '[' << kMethodName << "] Received CRAM challenge: " << challenge_line;
+    log_receiver_->Receive(LogLevel::Debug, log_ss.str());
+  }
   if (challenge_line.compare(0, 4, "cram") != 0) {
     throw LiveApiError::UnexpectedMsg("Did not receive CRAM challenge when expected",
                                       challenge_line);
@@ -279,17 +297,22 @@ std::string LiveBlocking::DetermineGateway() const {
 }
 
 std::uint64_t LiveBlocking::Authenticate() {
+  static constexpr auto kMethodName = "LiveBlocking::Authenticate";
   const std::string challenge_key = DecodeChallenge() + '|' + key_;
 
   const std::string auth = GenerateCramReply(challenge_key);
   const std::string req = EncodeAuthReq(auth);
+  if (log_receiver_->ShouldLog(LogLevel::Debug)) {
+    std::ostringstream log_ss;
+    log_ss << '[' << kMethodName << "] Sending CRAM reply: " << req;
+    log_receiver_->Receive(LogLevel::Debug, log_ss.str());
+  }
   client_.WriteAll(req);
   const std::uint64_t session_id = DecodeAuthResp();
 
   if (log_receiver_->ShouldLog(LogLevel::Info)) {
     std::ostringstream log_ss;
-    log_ss << "[LiveBlocking::Authenticate] Successfully authenticated with "
-              "session_id "
+    log_ss << '[' << kMethodName << "] Successfully authenticated with session_id "
            << session_id;
     log_receiver_->Receive(LogLevel::Info, log_ss.str());
   }

@@ -2,6 +2,10 @@
 
 ## 0.41.0 - TBD
 
+### Enhancements
+- Add static `Builder()` methods to the clients
+- Improve debug logging in live clients
+
 ### Breaking changes
 - Removed unused `Received` variant from `JobState` enum
 

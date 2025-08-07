@@ -12,60 +12,60 @@
 #include <iostream>
 #include <memory>
 
+namespace db = databento;
+
 static std::sig_atomic_t volatile gSignal;
 
 int main() {
-  databento::PitSymbolMap symbol_mappings;
-  auto log_receiver =
-      std::make_unique<databento::ConsoleLogReceiver>(databento::LogLevel::Debug);
+  db::PitSymbolMap symbol_mappings;
+  auto log_receiver = std::make_unique<db::ConsoleLogReceiver>(db::LogLevel::Debug);
 
-  auto client = databento::LiveBuilder{}
+  auto client = db::LiveThreaded::Builder()
                     .SetLogReceiver(log_receiver.get())
                     .SetSendTsOut(true)
                     .SetKeyFromEnv()
-                    .SetDataset(databento::Dataset::GlbxMdp3)
+                    .SetDataset(db::Dataset::GlbxMdp3)
                     .BuildThreaded();
 
   // Set up signal handler for Ctrl+C
   std::signal(SIGINT, [](int signal) { gSignal = signal; });
 
   std::vector<std::string> symbols{"ESZ5", "ESZ5 C6200", "ESZ5 P5500"};
-  client.Subscribe(symbols, databento::Schema::Definition, databento::SType::RawSymbol);
-  client.Subscribe(symbols, databento::Schema::Mbo, databento::SType::RawSymbol);
+  client.Subscribe(symbols, db::Schema::Definition, db::SType::RawSymbol);
+  client.Subscribe(symbols, db::Schema::Mbo, db::SType::RawSymbol);
 
-  auto metadata_callback = [](databento::Metadata&& metadata) {
+  auto metadata_callback = [](db::Metadata&& metadata) {
     std::cout << metadata << '\n';
   };
-  auto record_callback = [&symbol_mappings](const databento::Record& rec) {
-    using databento::RType;
+  auto record_callback = [&symbol_mappings](const db::Record& rec) {
+    using db::RType;
     switch (rec.RType()) {
       case RType::Mbo: {
-        auto ohlcv = rec.Get<databento::WithTsOut<databento::MboMsg>>();
+        auto ohlcv = rec.Get<db::WithTsOut<db::MboMsg>>();
         std::cout << "Received tick for " << symbol_mappings[ohlcv.rec.hd.instrument_id]
                   << " with ts_out " << ohlcv.ts_out.time_since_epoch().count() << ": "
                   << ohlcv.rec << '\n';
         break;
       }
       case RType::InstrumentDef: {
-        std::cout << "Received definition: " << rec.Get<databento::InstrumentDefMsg>()
-                  << '\n';
+        std::cout << "Received definition: " << rec.Get<db::InstrumentDefMsg>() << '\n';
         break;
       }
       case RType::SymbolMapping: {
-        auto mapping = rec.Get<databento::SymbolMappingMsg>();
+        auto mapping = rec.Get<db::SymbolMappingMsg>();
         symbol_mappings.OnSymbolMapping(mapping);
         break;
       }
       case RType::System: {
-        const auto& system_msg = rec.Get<databento::SystemMsg>();
+        const auto& system_msg = rec.Get<db::SystemMsg>();
         if (!system_msg.IsHeartbeat()) {
           std::cout << "Received system msg: " << system_msg.Msg() << '\n';
         }
         break;
       }
       case RType::Error: {
-        std::cerr << "Received error from gateway: "
-                  << rec.Get<databento::ErrorMsg>().Err() << '\n';
+        std::cerr << "Received error from gateway: " << rec.Get<db::ErrorMsg>().Err()
+                  << '\n';
         break;
       }
       default: {
@@ -73,7 +73,7 @@ int main() {
                   << static_cast<std::uint16_t>(rec.RType()) << '\n';
       }
     }
-    return databento::KeepGoing::Continue;
+    return db::KeepGoing::Continue;
   };
   client.Start(metadata_callback, record_callback);
   while (::gSignal == 0) {

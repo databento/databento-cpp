@@ -121,6 +121,10 @@ void TryCreateDir(const std::filesystem::path& dir_name) {
 }
 }  // namespace
 
+databento::HistoricalBuilder Historical::Builder() {
+  return databento::HistoricalBuilder{};
+}
+
 Historical::Historical(ILogReceiver* log_receiver, std::string key,
                        HistoricalGateway gateway)
     : log_receiver_{log_receiver},

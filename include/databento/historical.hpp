@@ -23,6 +23,8 @@ class ILogReceiver;
 // A client for interfacing with Databento's historical market data API.
 class Historical {
  public:
+  static HistoricalBuilder Builder();
+
   // WARNING: Will be deprecated in the future in favor of the builder
   Historical(ILogReceiver* log_receiver, std::string key, HistoricalGateway gateway);
 

@@ -97,27 +97,26 @@ Here is a simple program that fetches 10 seconds of trades for all ES mini futur
 #include <iostream>
 #include <thread>
 
-using namespace databento;
+namespace db = databento;
 
 int main() {
-  PitSymbolMap symbol_mappings;
+  db::PitSymbolMap symbol_mappings;
 
-  auto client = LiveBuilder{}
+  auto client = db::LiveThreaded::Builder()
                     .SetKeyFromEnv()
-                    .SetDataset(Dataset::GlbxMdp3)
+                    .SetDataset(db::Dataset::GlbxMdp3)
                     .BuildThreaded();
 
-  auto handler = [&symbol_mappings](const Record& rec) {
+  auto handler = [&symbol_mappings](const db::Record& rec) {
     symbol_mappings.OnRecord(rec);
-    if (const auto* trade = rec.GetIf<TradeMsg>()) {
-      std::cout << "Received trade for "
-                << symbol_mappings[trade->hd.instrument_id] << ':' << *trade
-                << '\n';
+    if (const auto* trade = rec.GetIf<db::TradeMsg>()) {
+      std::cout << "Received trade for " << symbol_mappings[trade->hd.instrument_id]
+                << ':' << *trade << '\n';
     }
-    return KeepGoing::Continue;
+    return db::KeepGoing::Continue;
   };
 
-  client.Subscribe({"ES.FUT"}, Schema::Trades, SType::Parent);
+  client.Subscribe({"ES.FUT"}, db::Schema::Trades, db::SType::Parent);
   client.Start(handler);
   std::this_thread::sleep_for(std::chrono::seconds{10});
   return 0;
@@ -135,24 +134,23 @@ Here is a simple program that fetches 10 minutes worth of historical trades for 
 #include <databento/symbol_map.hpp>
 #include <iostream>
 
-using namespace databento;
+namespace db = databento;
 
 int main() {
-  auto client = HistoricalBuilder{}.SetKey("$YOUR_API_KEY").Build();
-  TsSymbolMap symbol_map;
-  auto decode_symbols = [&symbol_map](const Metadata& metadata) {
+  auto client = db::Historical::Builder().SetKey("$YOUR_API_KEY").Build();
+  db::TsSymbolMap symbol_map;
+  auto decode_symbols = [&symbol_map](const db::Metadata& metadata) {
     symbol_map = metadata.CreateSymbolMap();
   };
-  auto print_trades = [&symbol_map](const Record& record) {
-    const auto& trade_msg = record.Get<TradeMsg>();
-    std::cout << "Received trade for " << symbol_map.At(trade_msg) << ": "
-              << trade_msg << '\n';
-    return KeepGoing::Continue;
+  auto print_trades = [&symbol_map](const db::Record& record) {
+    const auto& trade_msg = record.Get<db::TradeMsg>();
+    std::cout << "Received trade for " << symbol_map.At(trade_msg) << ": " << trade_msg
+              << '\n';
+    return db::KeepGoing::Continue;
   };
-  client.TimeseriesGetRange(
-      "GLBX.MDP3", {"2022-06-10T14:30", "2022-06-10T14:40"}, kAllSymbols,
-      Schema::Trades, SType::RawSymbol, SType::InstrumentId, {}, decode_symbols,
-      print_trades);
+  client.TimeseriesGetRange("GLBX.MDP3", {"2022-06-10T14:30", "2022-06-10T14:40"},
+                            {"ESM2", "NQZ2"}, db::Schema::Trades, db::SType::RawSymbol,
+                            db::SType::InstrumentId, {}, decode_symbols, print_trades);
 }
 ```
 
