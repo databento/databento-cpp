@@ -6,7 +6,7 @@
 
 namespace databento {
 std::ostream& operator<<(std::ostream& stream, FlagSet flag_set) {
-  const std::array<std::pair<bool (FlagSet::*)() const, const char*>, 6>
+  const std::array<std::pair<bool (FlagSet::*)() const, const char*>, 7>
       kFlagsAndNames = {{
           {&FlagSet::IsLast, "LAST"},
           {&FlagSet::IsTob, "TOB"},
@@ -14,6 +14,7 @@ std::ostream& operator<<(std::ostream& stream, FlagSet flag_set) {
           {&FlagSet::IsMbp, "MBP"},
           {&FlagSet::IsBadTsRecv, "BAD_TS_RECV"},
           {&FlagSet::IsMaybeBadBook, "MAYBE_BAD_BOOK"},
+          {&FlagSet::IsPublisherSpecific, "PUBLISHER_SPECIFIC"},
       }};
 
   bool has_written_flag = false;
