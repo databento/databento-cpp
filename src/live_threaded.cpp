@@ -10,8 +10,9 @@
 #include <utility>  // forward, move, swap
 
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
+#include "databento/live.hpp"                  // LiveBuilder
 #include "databento/live_blocking.hpp"         // LiveBlocking
-#include "databento/log.hpp"
+#include "databento/log.hpp"                   // ILogReceiver
 
 using databento::LiveThreaded;
 
@@ -35,6 +36,8 @@ struct LiveThreaded::Impl {
   std::condition_variable last_cb_ret_cv;
   LiveBlocking blocking;
 };
+
+databento::LiveBuilder LiveThreaded::Builder() { return databento::LiveBuilder{}; }
 
 LiveThreaded::LiveThreaded(LiveThreaded&& other) noexcept
     : impl_{std::move(other.impl_)}, thread_{std::move(other.thread_)} {}

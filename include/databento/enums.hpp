@@ -34,7 +34,6 @@ enum class Delivery : std::uint8_t {
 
 // The current state of a batch job.
 enum class JobState : std::uint8_t {
-  Received,
   Queued,
   Processing,
   Done,

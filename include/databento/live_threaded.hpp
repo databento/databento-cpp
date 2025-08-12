@@ -35,6 +35,8 @@ class LiveThreaded {
   };
   using ExceptionCallback = std::function<ExceptionAction(const std::exception&)>;
 
+  static LiveBuilder Builder();
+
   LiveThreaded(const LiveThreaded&) = delete;
   LiveThreaded& operator=(const LiveThreaded&) = delete;
   LiveThreaded(LiveThreaded&& other) noexcept;

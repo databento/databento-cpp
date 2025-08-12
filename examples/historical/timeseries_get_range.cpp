@@ -4,19 +4,19 @@
 #include "databento/enums.hpp"
 #include "databento/historical.hpp"
 
+namespace db = databento;
+
 int main() {
-  auto client = databento::HistoricalBuilder{}.SetKeyFromEnv().Build();
+  auto client = db::Historical::Builder().SetKeyFromEnv().Build();
   const auto limit = 1000;
   client.TimeseriesGetRange(
-      databento::dataset::kGlbxMdp3,
-      databento::DateTimeRange<std::string>{"2022-10-03"}, {"ESZ2"},
-      databento::Schema::Trades, databento::SType::RawSymbol,
-      databento::SType::InstrumentId, limit,
-      [](databento::Metadata&& metadata) { std::cout << metadata << '\n'; },
-      [](const databento::Record& record) {
-        const auto& trade_msg = record.Get<databento::TradeMsg>();
+      db::dataset::kGlbxMdp3, db::DateTimeRange<std::string>{"2022-10-03"}, {"ESZ2"},
+      db::Schema::Trades, db::SType::RawSymbol, db::SType::InstrumentId, limit,
+      [](db::Metadata&& metadata) { std::cout << metadata << '\n'; },
+      [](const db::Record& record) {
+        const auto& trade_msg = record.Get<db::TradeMsg>();
         std::cout << trade_msg << '\n';
-        return databento::KeepGoing::Continue;
+        return db::KeepGoing::Continue;
       });
 
   return 0;

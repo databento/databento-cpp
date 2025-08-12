@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.41.0 - 2025-08-12
+
+### Enhancements
+- Added static `Builder()` methods to the clients
+- Improved debug logging in live clients
+- Added `PUBLISHER_SPECIFIC` flag
+
+### Breaking changes
+- Removed unused `Received` variant from `JobState` enum
+
 ## 0.40.0 - 2025-07-29
 
 ### Enhancements

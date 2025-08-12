@@ -1,14 +1,16 @@
 #include <cstddef>
 #include <iostream>
 
-#include "databento/constants.hpp"
 #include "databento/enums.hpp"
 #include "databento/historical.hpp"
+#include "databento/publishers.hpp"
+
+namespace db = databento;
 
 int main() {
-  using databento::dataset::kGlbxMdp3;
+  const char* glbx_dataset = db::ToString(db::Dataset::GlbxMdp3);
 
-  auto client = databento::HistoricalBuilder{}.SetKeyFromEnv().Build();
+  auto client = db::Historical::Builder().SetKeyFromEnv().Build();
 
   const auto publishers = client.MetadataListPublishers();
   std::cout << "Publishers:\n";
@@ -24,15 +26,14 @@ int main() {
   }
   std::cout << '\n';
 
-  const auto schemas = client.MetadataListSchemas(kGlbxMdp3);
+  const auto schemas = client.MetadataListSchemas(glbx_dataset);
   std::cout << "Schemas(GLBX):\n";
   for (const auto& schema : schemas) {
     std::cout << "- " << schema << '\n';
   }
   std::cout << '\n';
 
-  const auto fields =
-      client.MetadataListFields(databento::Encoding::Dbn, databento::Schema::Trades);
+  const auto fields = client.MetadataListFields(db::Encoding::Dbn, db::Schema::Trades);
   std::cout << "Fields:\n";
   for (const auto& field_detail : fields) {
     std::cout << "- " << field_detail << '\n';
@@ -47,7 +48,7 @@ int main() {
   }
   std::cout << '\n';
 
-  const auto all_unit_prices = client.MetadataListUnitPrices(kGlbxMdp3);
+  const auto all_unit_prices = client.MetadataListUnitPrices(glbx_dataset);
   std::cout << "Unit prices:\n";
   for (const auto& [mode, unit_prices] : all_unit_prices) {
     const auto* mode_str = ToString(mode);
@@ -58,16 +59,16 @@ int main() {
   std::cout << '\n';
 
   const auto record_count = client.MetadataGetRecordCount(
-      kGlbxMdp3, {"2020-12-28", "2020-12-29"}, {"ESH1"}, databento::Schema::Mbo);
+      glbx_dataset, {"2020-12-28", "2020-12-29"}, {"ESH1"}, db::Schema::Mbo);
   std::cout << "Record count: " << record_count << "\n\n";
 
   const std::size_t billable_size = client.MetadataGetBillableSize(
-      kGlbxMdp3, {"2020-12-28", "2020-12-29"}, {"ESH1"}, databento::Schema::Mbo,
-      databento::SType::RawSymbol, {});
+      glbx_dataset, {"2020-12-28", "2020-12-29"}, {"ESH1"}, db::Schema::Mbo,
+      db::SType::RawSymbol, {});
   std::cout << "Billable size (uncompressed binary bytes): " << billable_size << "\n\n";
 
-  const auto cost = client.MetadataGetCost(kGlbxMdp3, {"2020-12-28", "2020-12-29"},
-                                           {"ESH1"}, databento::Schema::Mbo);
+  const auto cost = client.MetadataGetCost(glbx_dataset, {"2020-12-28", "2020-12-29"},
+                                           {"ESH1"}, db::Schema::Mbo);
   std::cout << "Cost (in cents): " << cost << '\n';
 
   return 0;

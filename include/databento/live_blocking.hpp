@@ -29,6 +29,8 @@ class LiveThreaded;
 // particular dataset.
 class LiveBlocking {
  public:
+  static LiveBuilder Builder();
+
   /*
    * Getters
    */

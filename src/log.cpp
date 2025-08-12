@@ -27,7 +27,11 @@ ConsoleLogReceiver::ConsoleLogReceiver(LogLevel min_level, std::ostream& stream)
 
 void ConsoleLogReceiver::Receive(LogLevel level, const std::string& msg) {
   if (ShouldLog(level)) {
-    stream_ << level << ": " << msg << '\n';
+    stream_ << level << ": " << msg;
+    // Don't add a newline if `msg` ends in one
+    if (msg.empty() || msg.back() != '\n') {
+      stream_ << '\n';
+    }
   }
 }
 

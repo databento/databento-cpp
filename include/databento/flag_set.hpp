@@ -24,6 +24,8 @@ class FlagSet {
   static constexpr Repr kBadTsRecv = 1 << 3;
   // Indicates an unrecoverable gap was detected in the channel.
   static constexpr Repr kMaybeBadBook = 1 << 2;
+  // Indicates a publisher-specific event.
+  static constexpr Repr kPublisherSpecific = 1 << 1;
 
   friend std::ostream& operator<<(std::ostream&, FlagSet);
 
@@ -77,11 +79,16 @@ class FlagSet {
     bits_.maybe_bad_book = true;
     return *this;
   }
+  constexpr bool IsPublisherSpecific() const { return bits_.publisher_specific; }
+  FlagSet SetPublisherSpecific() {
+    bits_.publisher_specific = true;
+    return *this;
+  }
 
  private:
   struct BitFlags {
     bool reserved0 : 1;
-    bool reserved1 : 1;
+    bool publisher_specific : 1;
     bool maybe_bad_book : 1;
     bool bad_ts_recv : 1;
     bool mbp : 1;

@@ -46,7 +46,8 @@ TEST(FlagSetTests, ToStringThreeSet) {
 TEST(FlagSetTests, ToStringReservedSet) {
   constexpr FlagSet kTarget{255};
   ASSERT_EQ(ToString(kTarget),
-            "LAST | TOB | SNAPSHOT | MBP | BAD_TS_RECV | MAYBE_BAD_BOOK (255)");
+            "LAST | TOB | SNAPSHOT | MBP | BAD_TS_RECV | MAYBE_BAD_BOOK | "
+            "PUBLISHER_SPECIFIC (255)");
 }
 
 TEST(FlagSetTests, ConstantBitFieldEquivalence) {
