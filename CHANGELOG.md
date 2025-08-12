@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.41.0 - TBD
+## 0.41.0 - 2025-08-12
 
 ### Enhancements
 - Added static `Builder()` methods to the clients
