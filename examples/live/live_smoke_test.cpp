@@ -53,7 +53,7 @@ void ProcessRecords(db::LiveBlocking& client, db::Schema schema,
 
   while (auto record = client.NextRecord(timeout)) {
     if (record->RType() == expected_rtype) {
-      std::cout << "Received expected record type " << expected_rtype << '\n';
+      std::cout << "Received expected record type \n";
       break;
     } else if (auto* msg = record->GetIf<db::ErrorMsg>()) {
       std::stringstream ss;
@@ -66,12 +66,10 @@ void ProcessRecords(db::LiveBlocking& client, db::Schema schema,
   std::cout << "Finished client\n";
 }
 
-void ProcessSnapshotRecords(db::LiveBlocking& client, db::Schema schema) {
+void ProcessSnapshotRecords(db::LiveBlocking& client) {
   client.Start();
 
   std::cout << "Starting client...\n";
-
-  const auto expected_rtype = db::Record::RTypeFromSchema(schema);
 
   constexpr auto timeout = std::chrono::seconds{30};
 
@@ -82,7 +80,7 @@ void ProcessSnapshotRecords(db::LiveBlocking& client, db::Schema schema) {
       if (mbo_msg->flags.IsSnapshot()) {
         received_snapshot_record = true;
       } else {
-        std::cout << "Received expected record type " << expected_rtype << '\n';
+        std::cout << "Received expected record type\n";
         break;
       }
     } else if (auto* error_msg = record->GetIf<db::ErrorMsg>()) {
@@ -195,7 +193,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (use_snapshot) {
-    ProcessSnapshotRecords(client, schema);
+    ProcessSnapshotRecords(client);
   } else {
     ProcessRecords(client, schema, start_from_epoch);
   }
