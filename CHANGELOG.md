@@ -2,6 +2,9 @@
 
 ## 0.42.0 - TBD
 
+### Enhancements
+- Added `EndOfInterval` variant to `SystemCode`
+
 ### Breaking changes
 - Removed `bill_id` field from `BatchJob` struct
 

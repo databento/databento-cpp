@@ -627,6 +627,9 @@ enum SystemCode : std::uint8_t {
   SlowReaderWarning = 2,
   // Indicates a replay subscription has caught up with real-time data.
   ReplayCompleted = 3,
+  // Signals that all records for interval-based schemas have been published for the
+  // given timestamp.
+  EndOfInterval = 4,
   Unset = 255,
 };
 }  // namespace system_code
