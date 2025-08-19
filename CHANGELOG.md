@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.42.0 - TBD
+## 0.42.0 - 2025-08-19
 
 ### Enhancements
 - Added `EndOfInterval` variant to `SystemCode`
