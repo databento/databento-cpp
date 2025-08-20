@@ -72,7 +72,6 @@ databento::BatchJob Parse(const std::string& endpoint, const nlohmann::json& jso
   databento::BatchJob res;
   res.id = CheckedAt(endpoint, json, "id");
   res.user_id = ParseAt<std::string>(endpoint, json, "user_id");
-  res.bill_id = ParseAt<std::string>(endpoint, json, "bill_id");
   res.cost_usd = ParseAt<double>(endpoint, json, "cost_usd");
   res.dataset = ParseAt<std::string>(endpoint, json, "dataset");
   res.symbols = ParseAt<std::vector<std::string>>(endpoint, json, "symbols");

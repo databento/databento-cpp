@@ -795,6 +795,9 @@ const char* ToString(SystemCode system_code) {
     case SystemCode::ReplayCompleted: {
       return "replay_completed";
     }
+    case SystemCode::EndOfInterval: {
+      return "end_of_interval";
+    }
     default: {
       return "Unknown";
     }
@@ -1232,6 +1235,9 @@ SystemCode FromString(const std::string& str) {
   }
   if (str == "replay_completed") {
     return SystemCode::ReplayCompleted;
+  }
+  if (str == "end_of_interval") {
+    return SystemCode::EndOfInterval;
   }
   throw InvalidArgumentError{"FromString<SystemCode>", "str",
                              "unknown value '" + str + '\''};
