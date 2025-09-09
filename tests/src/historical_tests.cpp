@@ -227,7 +227,7 @@ static const nlohmann::json kListFilesResp{
      {"hash", {}},
      {"urls",
       {{"https", "https://api.databento.com/v0/job_id/test.dbn"},
-       {"ftp", "ftp://fpt.databento.com/job_id/test.dbn"}}}},
+       {"ftp", "ftp://ftp.databento.com/job_id/test.dbn"}}}},
     {{"filename", "test_metadata.json"},
      {"size", {}},
      {"hash", {}},

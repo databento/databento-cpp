@@ -76,7 +76,7 @@ struct Metadata {
   // This method is useful when working with a historical request over a single
   // day or in other situations where you're sure the mappings don't change
   // during the time range of the request. Otherwise, `SymbolMap()` is
-  // recommmended.
+  // recommended.
   PitSymbolMap CreateSymbolMapForDate(date::year_month_day date) const;
   // Creates a symbology mapping from instrument ID and date to text symbol.
   TsSymbolMap CreateSymbolMap() const;

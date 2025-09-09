@@ -10,7 +10,7 @@ function(verbose_message content)
 endfunction()
 
 #
-# Add a target for formating the project using `clang-format` (i.e: cmake --build build --target clang-format)
+# Add a target for formatting the project using `clang-format` (i.e: cmake --build build --target clang-format)
 #
 
 function(add_clang_format_target)

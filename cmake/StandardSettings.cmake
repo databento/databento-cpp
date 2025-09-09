@@ -43,7 +43,7 @@ option(${PROJECT_NAME_UPPERCASE}_ENABLE_TSAN "Enable thread sanitizer." OFF)
 option(${PROJECT_NAME_UPPERCASE}_ENABLE_UBSAN "Enable undefined behavior sanitizer." OFF)
 
 #
-# Miscelanious options
+# Miscellaneous options
 #
 
 # Generate compile_commands.json for clang based tools
