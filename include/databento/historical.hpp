@@ -139,11 +139,11 @@ class Historical {
   double MetadataGetCost(const std::string& dataset,
                          const DateTimeRange<UnixNanos>& datetime_range,
                          const std::vector<std::string>& symbols, Schema schema,
-                         FeedMode mode, SType stype_in, std::uint64_t limit);
+                         SType stype_in, std::uint64_t limit);
   double MetadataGetCost(const std::string& dataset,
                          const DateTimeRange<std::string>& datetime_range,
                          const std::vector<std::string>& symbols, Schema schema,
-                         FeedMode mode, SType stype_in, std::uint64_t limit);
+                         SType stype_in, std::uint64_t limit);
 
   /*
    * Symbology API

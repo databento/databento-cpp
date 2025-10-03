@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.43.0 - TBD
+
+### Breaking changes
+- Removed `mode` parameter in `Historical::MetadataGetCost()`
+
 ## 0.42.0 - 2025-08-19
 
 ### Enhancements

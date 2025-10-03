@@ -665,25 +665,23 @@ double Historical::MetadataGetCost(const std::string& dataset,
                                    const std::vector<std::string>& symbols,
                                    Schema schema) {
   return this->MetadataGetCost(dataset, datetime_range, symbols, schema,
-                               FeedMode::HistoricalStreaming, kDefaultSTypeIn, {});
+                               kDefaultSTypeIn, {});
 }
 double Historical::MetadataGetCost(const std::string& dataset,
                                    const DateTimeRange<std::string>& datetime_range,
                                    const std::vector<std::string>& symbols,
                                    Schema schema) {
   return this->MetadataGetCost(dataset, datetime_range, symbols, schema,
-                               FeedMode::HistoricalStreaming, kDefaultSTypeIn, {});
+                               kDefaultSTypeIn, {});
 }
 double Historical::MetadataGetCost(const std::string& dataset,
                                    const DateTimeRange<UnixNanos>& datetime_range,
                                    const std::vector<std::string>& symbols,
-                                   Schema schema, FeedMode mode, SType stype_in,
-                                   std::uint64_t limit) {
+                                   Schema schema, SType stype_in, std::uint64_t limit) {
   httplib::Params params{
       {"dataset", dataset},
       {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kMetadataGetCostEndpoint, symbols)},
-      {"mode", ToString(mode)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
   detail::SetIfPositive(&params, "end", datetime_range.end);
@@ -693,13 +691,11 @@ double Historical::MetadataGetCost(const std::string& dataset,
 double Historical::MetadataGetCost(const std::string& dataset,
                                    const DateTimeRange<std::string>& datetime_range,
                                    const std::vector<std::string>& symbols,
-                                   Schema schema, FeedMode mode, SType stype_in,
-                                   std::uint64_t limit) {
+                                   Schema schema, SType stype_in, std::uint64_t limit) {
   httplib::Params params{
       {"dataset", dataset},
       {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kMetadataGetCostEndpoint, symbols)},
-      {"mode", ToString(mode)},
       {"schema", ToString(schema)},
       {"stype_in", ToString(stype_in)}};
   detail::SetIfNotEmpty(&params, "end", datetime_range.end);
