@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.43.0 - TBD
+## 0.43.0 - 2025-10-21
 
 ### Enhancements
 - Made `Unset` a fully-supported variant of `SystemCode` and `ErrorCode`
