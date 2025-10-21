@@ -43,7 +43,7 @@ class Buffer : public IReadable, public IWritable {
   std::byte* ReadEnd() { return write_pos_; }
   const std::byte* ReadBegin() const { return read_pos_; }
   const std::byte* ReadEnd() const { return write_pos_; }
-  // Indicate how mnay bytes were read
+  // Indicate how many bytes were read
   void Consume(std::size_t length) {
     read_pos_ += length;
     if (static_cast<std::size_t>(read_pos_ - buf_.get()) > (Capacity() / 2)) {

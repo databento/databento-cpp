@@ -84,7 +84,7 @@ class Historical {
    * Metadata API
    */
 
-  // Retrievs a mapping of publisher name to publisher ID.
+  // Retrieves a mapping of publisher name to publisher ID.
   std::vector<PublisherDetail> MetadataListPublishers();
   std::vector<std::string> MetadataListDatasets();
   std::vector<std::string> MetadataListDatasets(const DateRange& date_range);
@@ -139,11 +139,11 @@ class Historical {
   double MetadataGetCost(const std::string& dataset,
                          const DateTimeRange<UnixNanos>& datetime_range,
                          const std::vector<std::string>& symbols, Schema schema,
-                         FeedMode mode, SType stype_in, std::uint64_t limit);
+                         SType stype_in, std::uint64_t limit);
   double MetadataGetCost(const std::string& dataset,
                          const DateTimeRange<std::string>& datetime_range,
                          const std::vector<std::string>& symbols, Schema schema,
-                         FeedMode mode, SType stype_in, std::uint64_t limit);
+                         SType stype_in, std::uint64_t limit);
 
   /*
    * Symbology API

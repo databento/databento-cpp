@@ -227,7 +227,7 @@ static const nlohmann::json kListFilesResp{
      {"hash", {}},
      {"urls",
       {{"https", "https://api.databento.com/v0/job_id/test.dbn"},
-       {"ftp", "ftp://fpt.databento.com/job_id/test.dbn"}}}},
+       {"ftp", "ftp://ftp.databento.com/job_id/test.dbn"}}}},
     {{"filename", "test_metadata.json"},
      {"size", {}},
      {"hash", {}},
@@ -552,7 +552,6 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
                             {{"dataset", dataset::kGlbxMdp3},
                              {"start", "2020-06-06T00:00"},
                              {"end", "2021-03-02T00:00"},
-                             {"mode", "historical-streaming"},
                              {"symbols", "MES.OPT,EW.OPT"},
                              {"schema", "tbbo"},
                              {"stype_in", "parent"}},
@@ -562,8 +561,7 @@ TEST_F(HistoricalTests, TestMetadataGetCost_Full) {
   databento::Historical target = Client(port);
   const auto res = target.MetadataGetCost(
       dataset::kGlbxMdp3, {"2020-06-06T00:00", "2021-03-02T00:00"},
-      {"MES.OPT", "EW.OPT"}, Schema::Tbbo, FeedMode::HistoricalStreaming, SType::Parent,
-      {});
+      {"MES.OPT", "EW.OPT"}, Schema::Tbbo, SType::Parent, {});
   ASSERT_DOUBLE_EQ(res, kResp);
 }
 

@@ -776,6 +776,9 @@ const char* ToString(ErrorCode error_code) {
     case ErrorCode::InternalError: {
       return "internal_error";
     }
+    case ErrorCode::Unset: {
+      return "unset";
+    }
     default: {
       return "Unknown";
     }
@@ -797,6 +800,9 @@ const char* ToString(SystemCode system_code) {
     }
     case SystemCode::EndOfInterval: {
       return "end_of_interval";
+    }
+    case SystemCode::Unset: {
+      return "unset";
     }
     default: {
       return "Unknown";
@@ -1219,6 +1225,9 @@ ErrorCode FromString(const std::string& str) {
   if (str == "internal_error") {
     return ErrorCode::InternalError;
   }
+  if (str == "unset") {
+    return ErrorCode::Unset;
+  }
   throw InvalidArgumentError{"FromString<ErrorCode>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -1238,6 +1247,9 @@ SystemCode FromString(const std::string& str) {
   }
   if (str == "end_of_interval") {
     return SystemCode::EndOfInterval;
+  }
+  if (str == "unset") {
+    return SystemCode::Unset;
   }
   throw InvalidArgumentError{"FromString<SystemCode>", "str",
                              "unknown value '" + str + '\''};

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.43.0 - 2025-10-21
+
+### Enhancements
+- Made `Unset` a fully-supported variant of `SystemCode` and `ErrorCode`
+
+### Breaking changes
+- Removed `mode` parameter in `Historical::MetadataGetCost()`
+
 ## 0.42.0 - 2025-08-19
 
 ### Enhancements

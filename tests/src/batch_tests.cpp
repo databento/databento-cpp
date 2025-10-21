@@ -6,7 +6,7 @@
 
 namespace databento::tests {
 TEST(BatchTests, TestBatchJobToString) {
-  const BatchJob target{"aNiD",
+  const BatchJob target{"AN_ID",
                         "USER",
                         12.39,
                         dataset::kXnasItch,
@@ -38,7 +38,7 @@ TEST(BatchTests, TestBatchJobToString) {
                         {}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(BatchJob {
-    id = "aNiD",
+    id = "AN_ID",
     user_id = "USER",
     cost_usd = 12.39,
     dataset = "XNAS.ITCH",
