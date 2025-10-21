@@ -2,6 +2,9 @@
 
 ## 0.43.0 - TBD
 
+### Enhancements
+- Made `Unset` a fully-supported variant of `SystemCode` and `ErrorCode`
+
 ### Breaking changes
 - Removed `mode` parameter in `Historical::MetadataGetCost()`
 

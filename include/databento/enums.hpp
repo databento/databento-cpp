@@ -609,6 +609,8 @@ enum ErrorCode : std::uint8_t {
   InvalidSubscription = 5,
   // An error occurred in the gateway.
   InternalError = 6,
+  // No error code was specified or this record was upgraded from a version 1 struct
+  // where the code field didn't exist.
   Unset = 255,
 };
 }  // namespace error_code
@@ -630,6 +632,8 @@ enum SystemCode : std::uint8_t {
   // Signals that all records for interval-based schemas have been published for the
   // given timestamp.
   EndOfInterval = 4,
+  // No system code was specified or this record was upgraded from a version 1 struct
+  // where the code field didn't exist.
   Unset = 255,
 };
 }  // namespace system_code
