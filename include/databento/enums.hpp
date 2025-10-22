@@ -555,7 +555,7 @@ namespace trading_event {
 enum TradingEvent : std::uint16_t {
   // No additional information given.
   None = 0,
-  // Order entry and modification are not allowed.
+  // Order entry is allowed. Modification and cancellation are not allowed.
   NoCancel = 1,
   // A change of trading session occurred. Daily statistics are reset.
   ChangeTradingSession = 2,
