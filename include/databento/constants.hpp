@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 #include <limits>
 
 #include "databento/system.hpp"   // DATABENTO_CXX_COMPILER_*, DATABENTO_SYSTEM_*
