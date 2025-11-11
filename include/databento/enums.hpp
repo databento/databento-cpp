@@ -633,7 +633,8 @@ enum SystemCode : std::uint8_t {
   // given timestamp.
   EndOfInterval = 4,
   // No system code was specified or this record was upgraded from a version 1 struct
-  // where the code field didn't exist.
+  // where
+  // the code field didn't exist.
   Unset = 255,
 };
 }  // namespace system_code
