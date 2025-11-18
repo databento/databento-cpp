@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.44.0 - TBD
+## 0.44.0 - 2025-11-18
 
 ### Enhancements
 - Added logic to set `code` when upgrading version 1 `SystemMsg` to newer versions

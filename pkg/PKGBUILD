@@ -1,7 +1,7 @@
 # Maintainer: Databento <support@databento.com>
 _pkgname=databento-cpp
 pkgname=databento-cpp-git
-pkgver=0.43.0
+pkgver=0.44.0
 pkgrel=1
 pkgdesc="Official C++ client for Databento"
 arch=('any')
