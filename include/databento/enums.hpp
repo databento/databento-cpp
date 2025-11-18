@@ -555,7 +555,7 @@ namespace trading_event {
 enum TradingEvent : std::uint16_t {
   // No additional information given.
   None = 0,
-  // Order entry and modification are not allowed.
+  // Order entry is allowed. Modification and cancellation are not allowed.
   NoCancel = 1,
   // A change of trading session occurred. Daily statistics are reset.
   ChangeTradingSession = 2,
@@ -633,7 +633,8 @@ enum SystemCode : std::uint8_t {
   // given timestamp.
   EndOfInterval = 4,
   // No system code was specified or this record was upgraded from a version 1 struct
-  // where the code field didn't exist.
+  // where
+  // the code field didn't exist.
   Unset = 255,
 };
 }  // namespace system_code

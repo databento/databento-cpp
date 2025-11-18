@@ -52,6 +52,7 @@ set(
   src/symbol_map_tests.cpp
   src/symbology_tests.cpp
   src/tcp_client_tests.cpp
+  src/v1_tests.cpp
   src/zstd_stream_tests.cpp
 )
 add_executable(${PROJECT_NAME} ${test_headers} ${test_sources})

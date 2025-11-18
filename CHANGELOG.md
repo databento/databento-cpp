@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.44.0 - 2025-11-18
+
+### Enhancements
+- Added logic to set `code` when upgrading version 1 `SystemMsg` to newer versions
+
+### Bug fixes
+- Added missing `<cstddef>` include to `constants.hpp` (credit: @ognian-)
+
 ## 0.43.0 - 2025-10-21
 
 ### Enhancements

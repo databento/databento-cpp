@@ -1,8 +1,10 @@
 #include "databento/v1.hpp"
 
 #include <algorithm>  // copy
+#include <cstddef>    // size_t
 #include <cstdint>
-#include <limits>  // numeric_limits
+#include <cstring>  // strlen, strncmp
+#include <limits>   // numeric_limits
 
 #include "databento/enums.hpp"
 #include "databento/pretty.hpp"  // Px
@@ -239,8 +241,35 @@ v2::SystemMsg SystemMsg::ToV2() const {
       RecordHeader{sizeof(v2::SystemMsg) / RecordHeader::kLengthMultiplier,
                    RType::System, hd.publisher_id, hd.instrument_id, hd.ts_event},
       {},
-      IsHeartbeat() ? SystemCode::Heartbeat : SystemCode::Unset};
+      SystemCode::Unset};
   std::copy(msg.begin(), msg.end(), ret.msg.begin());
+  // No standardized strnlen
+  const auto null_it = std::find(msg.begin(), msg.end(), '\0');
+  if (null_it != msg.end()) {
+    constexpr auto kEndOfInterval = "End of interval for ";
+    constexpr auto kSubAckStart = "Subscription request ";
+    constexpr auto kSubAckEnd = " succeeded";
+    constexpr auto kSlowReader = "Warning: slow reading";
+    constexpr auto kFinishedStart = "Finished ";
+    constexpr auto kFinishedEnd = " replay";
+
+    const auto msg_len = static_cast<std::size_t>(null_it - msg.begin());
+    if (IsHeartbeat()) {
+      ret.code = SystemCode::Heartbeat;
+    } else if (std::strncmp(Msg(), kEndOfInterval, std::strlen(kEndOfInterval)) == 0) {
+      ret.code = SystemCode::EndOfInterval;
+    } else if (std::strncmp(Msg(), kSubAckStart, std::strlen(kSubAckStart)) == 0 &&
+               std::strncmp(&Msg()[msg_len - std::strlen(kSubAckEnd)], kSubAckEnd,
+                            std::strlen(kSubAckEnd)) == 0) {
+      ret.code = SystemCode::SubscriptionAck;
+    } else if (std::strncmp(Msg(), kSlowReader, std::strlen(kSlowReader)) == 0) {
+      ret.code = SystemCode::SlowReaderWarning;
+    } else if (std::strncmp(Msg(), kFinishedStart, std::strlen(kFinishedStart)) == 0 &&
+               std::strncmp(&Msg()[msg_len - std::strlen(kFinishedEnd)], kFinishedEnd,
+                            std::strlen(kFinishedEnd)) == 0) {
+      ret.code = SystemCode::ReplayCompleted;
+    }
+  }
   return ret;
 }
 
