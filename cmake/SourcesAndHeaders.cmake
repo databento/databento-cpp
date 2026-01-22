@@ -54,9 +54,11 @@ set(sources
   src/detail/dbn_buffer_decoder.cpp
   src/detail/http_client.cpp
   src/detail/json_helpers.cpp
+  src/detail/live_connection.cpp
   src/detail/scoped_fd.cpp
   src/detail/sha256_hasher.cpp
   src/detail/tcp_client.cpp
+  src/detail/tcp_readable.cpp
   src/detail/zstd_stream.cpp
   src/enums.cpp
   src/exceptions.cpp

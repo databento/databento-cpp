@@ -271,6 +271,35 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
   }
 }
 
+TEST_F(LiveBlockingTests, TestNextRecordWithZstdCompression) {
+  constexpr auto kTsOut = false;
+  const auto kRecCount = 12;
+  constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
+  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut, Compression::Zstd,
+                                        [kRec, kRecCount](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          self.StartCompressed();
+                                          for (size_t i = 0; i < kRecCount; ++i) {
+                                            self.SendCompressedRecord(kRec);
+                                          }
+                                          self.FlushCompression();
+                                        }};
+
+  LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetCompression(Compression::Zstd)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  const auto metadata = target.Start();
+  EXPECT_EQ(metadata.dataset, dataset::kXnasItch);
+  for (size_t i = 0; i < kRecCount; ++i) {
+    const auto rec = target.NextRecord();
+    ASSERT_TRUE(rec.Holds<OhlcvMsg>()) << "Failed on call " << i;
+    EXPECT_EQ(rec.Get<OhlcvMsg>(), kRec);
+  }
+}
+
 TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   constexpr std::chrono::milliseconds kTimeout{50};
   constexpr auto kTsOut = false;
@@ -336,6 +365,68 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   ASSERT_NE(rec, nullptr);
   EXPECT_TRUE(rec->Holds<Mbp1Msg>());
   EXPECT_EQ(rec->Get<Mbp1Msg>(), kRec);
+}
+
+TEST_F(LiveBlockingTests, TestNextRecordTimeoutWithZstdCompression) {
+  constexpr std::chrono::milliseconds kTimeout{50};
+  constexpr auto kTsOut = false;
+  constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
+
+  bool sent_first_msg = false;
+  std::mutex send_mutex;
+  std::condition_variable send_cv;
+  bool received_first_msg = false;
+  std::mutex receive_mutex;
+  std::condition_variable receive_cv;
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, kTsOut, Compression::Zstd, [&](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.StartCompressed();
+        self.SendCompressedRecord(kRec);
+        {
+          // notify client the first record's been sent
+          const std::lock_guard<std::mutex> lock{send_mutex};
+          sent_first_msg = true;
+          send_cv.notify_one();
+        }
+        {
+          // wait for client to read first record
+          std::unique_lock<std::mutex> lock{receive_mutex};
+          receive_cv.wait(lock, [&received_first_msg] { return received_first_msg; });
+        }
+        self.SendCompressedRecord(kRec);
+        self.FlushCompression();
+      }};
+
+  LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetCompression(Compression::Zstd)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  const auto metadata = target.Start();
+  EXPECT_EQ(metadata.dataset, dataset::kXnasItch);
+  {
+    // wait for server to send first record to avoid flaky timeouts
+    std::unique_lock<std::mutex> lock{send_mutex};
+    send_cv.wait(lock, [&sent_first_msg] { return sent_first_msg; });
+  }
+  auto* rec = target.NextRecord(kTimeout);
+  ASSERT_NE(rec, nullptr);
+  EXPECT_TRUE(rec->Holds<OhlcvMsg>());
+  EXPECT_EQ(rec->Get<OhlcvMsg>(), kRec);
+  rec = target.NextRecord(kTimeout);
+  EXPECT_EQ(rec, nullptr) << "Did not timeout with compression when expected";
+  {
+    // notify server the timeout occurred
+    const std::lock_guard<std::mutex> lock{receive_mutex};
+    received_first_msg = true;
+    receive_cv.notify_one();
+  }
+  rec = target.NextRecord(kTimeout);
+  ASSERT_NE(rec, nullptr);
+  EXPECT_TRUE(rec->Holds<OhlcvMsg>());
+  EXPECT_EQ(rec->Get<OhlcvMsg>(), kRec);
 }
 
 TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {

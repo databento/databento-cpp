@@ -17,6 +17,9 @@ class InFileStream : public IReadable {
   // Read at most `length` bytes. Returns the number of bytes read. Will only
   // return 0 if the end of the stream is reached.
   std::size_t ReadSome(std::byte* buffer, std::size_t max_length) override;
+  // timeout is ignored
+  Result ReadSome(std::byte* buffer, std::size_t max_length,
+                  std::chrono::milliseconds timeout) override;
 
  private:
   std::ifstream stream_;

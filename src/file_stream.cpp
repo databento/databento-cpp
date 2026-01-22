@@ -6,6 +6,7 @@
 #include "databento/exceptions.hpp"
 
 using databento::InFileStream;
+using Status = databento::IReadable::Status;
 
 InFileStream::InFileStream(const std::filesystem::path& file_path)
     : stream_{file_path, std::ios::binary} {
@@ -28,6 +29,13 @@ std::size_t InFileStream::ReadSome(std::byte* buffer, std::size_t max_length) {
   stream_.read(reinterpret_cast<char*>(buffer),
                static_cast<std::streamsize>(max_length));
   return static_cast<std::size_t>(stream_.gcount());
+}
+
+databento::IReadable::Result InFileStream::ReadSome(std::byte* buffer,
+                                                    std::size_t max_length,
+                                                    std::chrono::milliseconds) {
+  const auto bytes_read = ReadSome(buffer, max_length);
+  return {bytes_read, bytes_read > 0 ? Status::Ok : Status::Closed};
 }
 
 using databento::OutFileStream;

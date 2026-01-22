@@ -56,7 +56,7 @@ TEST_F(TcpClientTests, TestFullReadSome) {
   const auto res = target_.ReadSome(buffer.data(), buffer.size() - 1);
 
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), kSendData.c_str());
-  EXPECT_EQ(res.status, detail::TcpClient::Status::Ok);
+  EXPECT_EQ(res.status, IReadable::Status::Ok);
   EXPECT_EQ(res.read_size, kSendData.length());
   EXPECT_EQ(res.read_size, buffer.size() - 1);
 }
@@ -71,7 +71,7 @@ TEST_F(TcpClientTests, TestPartialReadSome) {
   const auto res = target_.ReadSome(buffer.data(), buffer.size());
 
   EXPECT_STREQ(reinterpret_cast<const char*>(buffer.data()), kSendData.c_str());
-  EXPECT_EQ(res.status, detail::TcpClient::Status::Ok);
+  EXPECT_EQ(res.status, IReadable::Status::Ok);
   EXPECT_EQ(res.read_size, kSendData.length());
 }
 
@@ -81,7 +81,7 @@ TEST_F(TcpClientTests, TestReadSomeClose) {
 
   std::array<std::byte, 10> buffer{};
   const auto res = target_.ReadSome(buffer.data(), buffer.size());
-  EXPECT_EQ(res.status, detail::TcpClient::Status::Closed);
+  EXPECT_EQ(res.status, IReadable::Status::Closed);
   EXPECT_EQ(res.read_size, 0);
 }
 
@@ -114,7 +114,7 @@ TEST_F(TcpClientTests, TestReadSomeTimeout) {
     has_timed_out = true;
     has_timed_out_cv.notify_one();
   }
-  EXPECT_EQ(res.status, detail::TcpClient::Status::Timeout);
+  EXPECT_EQ(res.status, IReadable::Status::Timeout);
   EXPECT_EQ(res.read_size, 0);
 }
 
@@ -133,7 +133,7 @@ TEST_F(TcpClientTests, TestReadCloseNoTimeout) {
   // immediately, not wait for the timeout
   const auto res = target_.ReadSome(buffer.data(), buffer.size(), kTimeout);
   const auto end = std::chrono::steady_clock::now();
-  EXPECT_EQ(res.status, detail::TcpClient::Status::Closed);
+  EXPECT_EQ(res.status, IReadable::Status::Closed);
   EXPECT_EQ(res.read_size, 0);
   EXPECT_LT(end - start, kTimeout);
 }
@@ -146,7 +146,7 @@ TEST_F(TcpClientTests, ReadAfterClose) {
 
   std::array<std::byte, 10> buffer{};
   const auto res = target_.ReadSome(buffer.data(), buffer.size());
-  EXPECT_EQ(res.status, detail::TcpClient::Status::Ok);
+  EXPECT_EQ(res.status, IReadable::Status::Ok);
   EXPECT_GT(res.read_size, 0);
   target_.Close();
   ASSERT_THROW(target_.ReadSome(buffer.data(), buffer.size()), databento::TcpError);

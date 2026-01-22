@@ -6,7 +6,6 @@
 #include "databento/log.hpp"
 #include "databento/system.hpp"
 #include "databento/version.hpp"
-#include "gmock/gmock.h"
 #include "mock/mock_log_receiver.hpp"
 
 namespace databento::tests {

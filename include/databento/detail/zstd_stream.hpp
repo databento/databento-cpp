@@ -2,6 +2,7 @@
 
 #include <zstd.h>
 
+#include <chrono>
 #include <cstddef>  // size_t
 #include <memory>   // unique_ptr
 #include <vector>
@@ -19,9 +20,12 @@ class ZstdDecodeStream : public IReadable {
 
   // Read exactly `length` bytes into `buffer`.
   void ReadExact(std::byte* buffer, std::size_t length) override;
-  // Read at most `length` bytes. Returns the number of bytes read. Will only
+  // Read at most `max_length` bytes. Returns the number of bytes read. Will only
   // return 0 if the end of the stream is reached.
   std::size_t ReadSome(std::byte* buffer, std::size_t max_length) override;
+  // Read at most `max_length` bytes with timeout support.
+  IReadable::Result ReadSome(std::byte* buffer, std::size_t max_length,
+                             std::chrono::milliseconds timeout) override;
 
   IReadable* Input() const { return input_.get(); }
 
@@ -44,6 +48,8 @@ class ZstdCompressStream : public IWritable {
   ~ZstdCompressStream() override;
 
   void WriteAll(const std::byte* buffer, std::size_t length) override;
+  // Flush any buffered data without ending the stream
+  void Flush();
 
  private:
   ILogReceiver* log_receiver_;

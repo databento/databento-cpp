@@ -25,12 +25,13 @@ int main() {
                     .SetSendTsOut(true)
                     .SetKeyFromEnv()
                     .SetDataset(db::Dataset::GlbxMdp3)
+                    .SetCompression(db::Compression::Zstd)
                     .BuildThreaded();
 
   // Set up signal handler for Ctrl+C
   std::signal(SIGINT, [](int signal) { gSignal = signal; });
 
-  std::vector<std::string> symbols{"ESZ5", "ESZ5 C6200", "ESZ5 P5500"};
+  std::vector<std::string> symbols{"ESZ6", "ESZ6 C8200", "ESZ6 P7500"};
   client.Subscribe(symbols, db::Schema::Definition, db::SType::RawSymbol);
   client.Subscribe(symbols, db::Schema::Mbo, db::SType::RawSymbol);
 

@@ -38,6 +38,9 @@ class Buffer : public IReadable, public IWritable {
   // Will throw if `length > ReadCapacity()`.
   void ReadExact(std::byte* buffer, std::size_t length) override;
   std::size_t ReadSome(std::byte* buffer, std::size_t max_length) override;
+  // timeout is ignored
+  IReadable::Result ReadSome(std::byte* buffer, std::size_t max_length,
+                             std::chrono::milliseconds timeout) override;
 
   std::byte* ReadBegin() { return read_pos_; }
   std::byte* ReadEnd() { return write_pos_; }

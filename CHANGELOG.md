@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.47.0 - TBD
+
+### Enhancements
+- Added Zstd compression support to live clients which can be enabled with
+`LiveBuilder::SetCompression()`. It's disabled by default
+- Added `Compression()` getter to `LiveBlocking` and `LiveThreaded`
+
+### Breaking changes
+- Added an overload to the `ReadSome` method on `IReadable` for timeout support
+
 ## 0.46.1 - 2026-01-27
 
 ### Enhancements

@@ -1,5 +1,7 @@
 #include "mock/mock_lsg_server.hpp"
 
+#include "databento/dbn.hpp"
+
 #ifdef _WIN32
 #include <winsock2.h>
 #else
@@ -44,6 +46,15 @@ MockLsgServer::MockLsgServer(std::string dataset, bool ts_out,
     : dataset_{std::move(dataset)},
       ts_out_{ts_out},
       heartbeat_interval_{heartbeat_interval},
+      socket_{InitSocketAndSetPort()},
+      thread_{std::move(serve_fn), std::ref(*this)} {}
+
+MockLsgServer::MockLsgServer(std::string dataset, bool ts_out, Compression compression,
+                             std::function<void(MockLsgServer&)> serve_fn)
+    : dataset_{std::move(dataset)},
+      ts_out_{ts_out},
+      heartbeat_interval_{},
+      compression_{compression},
       socket_{InitSocketAndSetPort()},
       thread_{std::move(serve_fn), std::ref(*this)} {}
 
@@ -107,6 +118,9 @@ void MockLsgServer::Authenticate() {
   EXPECT_NE(received.find("dataset=" + dataset_), std::string::npos);
   EXPECT_NE(received.find("encoding=dbn"), std::string::npos);
   EXPECT_NE(received.find("ts_out=" + std::to_string(ts_out_)), std::string::npos);
+  if (compression_ == Compression::Zstd) {
+    EXPECT_NE(received.find("compression=zstd"), std::string::npos);
+  }
   if (heartbeat_interval_.count() > 0) {
     EXPECT_NE(received.find("heartbeat_interval_s=" +
                             std::to_string(heartbeat_interval_.count())),
@@ -165,27 +179,55 @@ void MockLsgServer::Start() {
   EXPECT_EQ(received, "start_session\n");
 
   SocketStream writable{conn_fd_.Get()};
-  Metadata metadata{1,
-                    dataset_,
-                    {},
-                    {},
-                    UnixNanos{std::chrono::nanoseconds{kUndefTimestamp}},
-                    0,
-                    {},
-                    SType::InstrumentId,
-                    false,
-                    kSymbolCstrLenV1,
-                    {},
-                    {},
-                    {},
-                    {}};
-  DbnEncoder::EncodeMetadata(metadata, &writable);
+  DbnEncoder::EncodeMetadata(DummyMetadata(), &writable);
 }
 
-void MockLsgServer::Close() { conn_fd_.Close(); }
+void MockLsgServer::Close() {
+  if (compressor_) {
+    compressor_.reset();
+  }
+  conn_fd_.Close();
+}
+
+void MockLsgServer::StartCompressed() {
+  const auto received = Receive();
+  EXPECT_EQ(received, "start_session\n");
+
+  socket_stream_ = std::make_unique<SocketStream>(conn_fd_.Get());
+
+  if (compression_ == Compression::Zstd) {
+    compressor_ = std::make_unique<detail::ZstdCompressStream>(socket_stream_.get());
+  }
+
+  DbnEncoder::EncodeMetadata(DummyMetadata(), compressor_.get());
+  compressor_->Flush();
+}
+
+void MockLsgServer::FlushCompression() {
+  if (compressor_) {
+    compressor_->Flush();
+  }
+}
 
 databento::detail::Socket MockLsgServer::InitSocketAndSetPort() {
-  const auto pair = MockTcpServer::InitSocket();
-  port_ = pair.first;
-  return pair.second;
+  const auto [port, socket_fd] = MockTcpServer::InitSocket();
+  port_ = port;
+  return socket_fd;
+}
+
+databento::Metadata MockLsgServer::DummyMetadata() const {
+  return Metadata{1,
+                  dataset_,
+                  {},
+                  {},
+                  UnixNanos{std::chrono::nanoseconds{kUndefTimestamp}},
+                  0,
+                  {},
+                  SType::InstrumentId,
+                  false,
+                  kSymbolCstrLenV1,
+                  {},
+                  {},
+                  {},
+                  {}};
 }

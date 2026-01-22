@@ -19,9 +19,11 @@ using ssize_t = SSIZE_T;
 #include <string>
 #include <vector>
 
+#include "databento/dbn.hpp"                   // Metadata
 #include "databento/detail/scoped_fd.hpp"      // ScopedFd
 #include "databento/detail/scoped_thread.hpp"  // ScopedThread
-#include "databento/enums.hpp"                 // Schema, SType
+#include "databento/detail/zstd_stream.hpp"    // ZstdCompressStream
+#include "databento/enums.hpp"                 // Schema, SType, Compression
 #include "databento/iwritable.hpp"
 #include "databento/record.hpp"  // RecordHeader
 
@@ -44,6 +46,8 @@ class MockLsgServer {
                 std::function<void(MockLsgServer&)> serve_fn);
   MockLsgServer(std::string dataset, bool ts_out,
                 std::chrono::seconds heartbeat_interval,
+                std::function<void(MockLsgServer&)> serve_fn);
+  MockLsgServer(std::string dataset, bool ts_out, Compression compression,
                 std::function<void(MockLsgServer&)> serve_fn);
 
   std::uint16_t Port() const { return port_; }
@@ -84,10 +88,24 @@ class MockLsgServer {
 
   void Close();
 
+  // Compression-aware Start and SendRecord methods
+  void StartCompressed();
+  template <typename Rec>
+  void SendCompressedRecord(const Rec& rec) {
+    if (!compressor_) {
+      throw std::runtime_error(
+          "Compression not initialized. Call StartCompressed first.");
+    }
+    compressor_->WriteAll(reinterpret_cast<const std::byte*>(&rec), sizeof(rec));
+    compressor_->Flush();  // Ensure record is sent immediately for testing
+  }
+  void FlushCompression();
+
  private:
   detail::Socket InitSocketAndSetPort();
   detail::Socket InitSocketAndSetPort(int port);
   std::string Receive();
+  databento::Metadata DummyMetadata() const;
 
   template <typename T>
   std::size_t SendBytes(T bytes) {
@@ -100,9 +118,12 @@ class MockLsgServer {
   std::string dataset_;
   bool ts_out_;
   std::chrono::seconds heartbeat_interval_;
+  Compression compression_{Compression::None};
   std::uint16_t port_{};
   detail::ScopedFd socket_{};
   detail::ScopedFd conn_fd_{};
   detail::ScopedThread thread_;
+  std::unique_ptr<SocketStream> socket_stream_;
+  std::unique_ptr<detail::ZstdCompressStream> compressor_;
 };
 }  // namespace databento::tests::mock

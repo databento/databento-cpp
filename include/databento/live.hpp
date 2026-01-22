@@ -51,6 +51,8 @@ class LiveBuilder {
   LiveBuilder& SetBufferSize(std::size_t size);
   // Appends to the default user agent.
   LiveBuilder& ExtendUserAgent(std::string extension);
+  // Sets the compression mode for the read stream.
+  LiveBuilder& SetCompression(Compression compression);
 
   /*
    * Build a live client instance
@@ -77,5 +79,6 @@ class LiveBuilder {
   std::optional<std::chrono::seconds> heartbeat_interval_{};
   std::size_t buffer_size_;
   std::string user_agent_ext_;
+  Compression compression_{Compression::None};
 };
 }  // namespace databento

@@ -78,6 +78,43 @@ TEST_F(LiveThreadedTests, TestBasic) {
   target.BlockForStop();
 }
 
+TEST_F(LiveThreadedTests, TestWithZstdCompression) {
+  const MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
+                    1,
+                    2,
+                    3,
+                    {},
+                    4,
+                    Action::Add,
+                    Side::Bid,
+                    UnixNanos{},
+                    TimeDeltaNanos{},
+                    100};
+  const mock::MockLsgServer mock_server{dataset::kGlbxMdp3, kTsOut, Compression::Zstd,
+                                        [&kRec](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          self.StartCompressed();
+                                          self.SendCompressedRecord(kRec);
+                                          self.SendCompressedRecord(kRec);
+                                          self.FlushCompression();
+                                        }};
+
+  LiveThreaded target = builder_.SetDataset(dataset::kGlbxMdp3)
+                            .SetSendTsOut(kTsOut)
+                            .SetCompression(Compression::Zstd)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildThreaded();
+  std::uint32_t call_count{};
+  target.Start([&call_count, &kRec](const Record& rec) {
+    ++call_count;
+    EXPECT_TRUE(rec.Holds<MboMsg>());
+    EXPECT_EQ(rec.Get<MboMsg>(), kRec);
+    return call_count < 2 ? KeepGoing::Continue : KeepGoing::Stop;
+  });
+  target.BlockForStop();
+}
+
 TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
   const MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
                     1,
@@ -107,6 +144,52 @@ TEST_F(LiveThreadedTests, TestTimeoutRecovery) {
 
   LiveThreaded target = builder_.SetDataset(dataset::kXnasItch)
                             .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildThreaded();
+  target.Start([](Metadata&& metadata) { EXPECT_FALSE(metadata.schema.has_value()); },
+               [&call_count, &kRec](const Record& rec) {
+                 ++call_count;
+                 EXPECT_TRUE(rec.Holds<MboMsg>());
+                 EXPECT_EQ(rec.Get<MboMsg>(), kRec);
+                 return databento::KeepGoing::Continue;
+               });
+  while (call_count < 2) {
+    std::this_thread::yield();
+  }
+}
+
+TEST_F(LiveThreadedTests, TestTimeoutRecoveryWithZstdCompression) {
+  const MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
+                    1,
+                    2,
+                    3,
+                    {},
+                    4,
+                    Action::Add,
+                    Side::Bid,
+                    UnixNanos{},
+                    TimeDeltaNanos{},
+                    100};
+  std::atomic<std::uint32_t> call_count{};
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, kTsOut, Compression::Zstd,
+      [&kRec, &call_count](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.StartCompressed();
+        self.SendCompressedRecord(kRec);
+        while (call_count < 1) {
+          std::this_thread::yield();
+        }
+        // 150% of live threaded timeout
+        std::this_thread::sleep_for(std::chrono::milliseconds{75});
+        self.SendCompressedRecord(kRec);
+        self.FlushCompression();
+      }};
+
+  LiveThreaded target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetCompression(Compression::Zstd)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildThreaded();
   target.Start([](Metadata&& metadata) { EXPECT_FALSE(metadata.schema.has_value()); },

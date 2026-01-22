@@ -20,6 +20,7 @@
 #include "databento/exceptions.hpp"  // TcpError
 
 using databento::detail::TcpClient;
+using Status = databento::IReadable::Status;
 
 namespace {
 int GetErrNo() {
@@ -62,7 +63,8 @@ void TcpClient::ReadExact(std::byte* buffer, std::size_t size) {
   }
 }
 
-TcpClient::Result TcpClient::ReadSome(std::byte* buffer, std::size_t max_size) {
+databento::IReadable::Result TcpClient::ReadSome(std::byte* buffer,
+                                                 std::size_t max_size) {
   const ::ssize_t res =
       ::recv(socket_.Get(), reinterpret_cast<char*>(buffer), max_size, {});
   if (res < 0) {
@@ -71,8 +73,9 @@ TcpClient::Result TcpClient::ReadSome(std::byte* buffer, std::size_t max_size) {
   return {static_cast<std::size_t>(res), res == 0 ? Status::Closed : Status::Ok};
 }
 
-TcpClient::Result TcpClient::ReadSome(std::byte* buffer, std::size_t max_size,
-                                      std::chrono::milliseconds timeout) {
+databento::IReadable::Result TcpClient::ReadSome(std::byte* buffer,
+                                                 std::size_t max_size,
+                                                 std::chrono::milliseconds timeout) {
   pollfd fds{socket_.Get(), POLLIN, {}};
   // passing a timeout of -1 blocks indefinitely, which is the equivalent of
   // having no timeout

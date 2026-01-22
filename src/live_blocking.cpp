@@ -12,7 +12,6 @@
 #include "databento/constants.hpp"  //  kApiKeyLength
 #include "databento/dbn_decoder.hpp"
 #include "databento/detail/sha256_hasher.hpp"
-#include "databento/detail/tcp_client.hpp"
 #include "databento/exceptions.hpp"  // LiveApiError
 #include "databento/live.hpp"        // LiveBuilder
 #include "databento/log.hpp"         // ILogReceiver
@@ -21,6 +20,7 @@
 #include "dbn_constants.hpp"         // kMetadataPreludeSize
 
 using databento::LiveBlocking;
+using Status = databento::IReadable::Status;
 
 namespace {
 constexpr std::size_t kBucketIdLength = 5;
@@ -32,7 +32,8 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, bool send_ts_out,
                            VersionUpgradePolicy upgrade_policy,
                            std::optional<std::chrono::seconds> heartbeat_interval,
-                           std::size_t buffer_size, std::string user_agent_ext)
+                           std::size_t buffer_size, std::string user_agent_ext,
+                           databento::Compression compression)
 
     : log_receiver_{log_receiver},
       key_{std::move(key)},
@@ -43,7 +44,8 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       send_ts_out_{send_ts_out},
       upgrade_policy_{upgrade_policy},
       heartbeat_interval_{heartbeat_interval},
-      client_{gateway_, port_},
+      compression_{compression},
+      connection_{gateway_, port_},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
@@ -51,7 +53,8 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
                            std::string dataset, std::string gateway, std::uint16_t port,
                            bool send_ts_out, VersionUpgradePolicy upgrade_policy,
                            std::optional<std::chrono::seconds> heartbeat_interval,
-                           std::size_t buffer_size, std::string user_agent_ext)
+                           std::size_t buffer_size, std::string user_agent_ext,
+                           databento::Compression compression)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
@@ -61,7 +64,8 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       send_ts_out_{send_ts_out},
       upgrade_policy_{upgrade_policy},
       heartbeat_interval_{heartbeat_interval},
-      client_{gateway_, port_},
+      compression_{compression},
+      connection_{gateway_, port_},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
@@ -141,7 +145,7 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
              << "] Sending subscription request: " << chunked_sub_msg.str();
       log_receiver_->Receive(LogLevel::Debug, log_ss.str());
     }
-    client_.WriteAll(chunked_sub_msg.str());
+    connection_.WriteAll(chunked_sub_msg.str());
 
     symbols_it += chunk_size;
   }
@@ -150,14 +154,15 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
 databento::Metadata LiveBlocking::Start() {
   log_receiver_->Receive(LogLevel::Info, "[LiveBlocking::Start] Starting session");
 
-  client_.WriteAll("start_session\n");
-  client_.ReadExact(buffer_.WriteBegin(), kMetadataPreludeSize);
+  connection_.WriteAll("start_session\n");
+  connection_.SetCompression(compression_);
+  connection_.ReadExact(buffer_.WriteBegin(), kMetadataPreludeSize);
   buffer_.Fill(kMetadataPreludeSize);
   const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
       buffer_.ReadBegin(), kMetadataPreludeSize);
   buffer_.Consume(kMetadataPreludeSize);
   buffer_.Reserve(size);
-  client_.ReadExact(buffer_.WriteBegin(), size);
+  connection_.ReadExact(buffer_.WriteBegin(), size);
   buffer_.Fill(size);
   auto metadata =
       DbnDecoder::DecodeMetadataFields(version, buffer_.ReadBegin(), buffer_.ReadEnd());
@@ -177,20 +182,20 @@ const databento::Record* LiveBlocking::NextRecord(std::chrono::milliseconds time
   const auto unread_bytes = buffer_.ReadCapacity();
   if (unread_bytes == 0) {
     const auto read_res = FillBuffer(timeout);
-    if (read_res.status == detail::TcpClient::Status::Timeout) {
+    if (read_res.status == Status::Timeout) {
       return nullptr;
     }
-    if (read_res.status == detail::TcpClient::Status::Closed) {
+    if (read_res.status == Status::Closed) {
       throw DbnResponseError{"Gateway closed the session"};
     }
   }
   // check length
   while (buffer_.ReadCapacity() < BufferRecordHeader()->Size()) {
     const auto read_res = FillBuffer(timeout);
-    if (read_res.status == detail::TcpClient::Status::Timeout) {
+    if (read_res.status == Status::Timeout) {
       return nullptr;
     }
-    if (read_res.status == detail::TcpClient::Status::Closed) {
+    if (read_res.status == Status::Closed) {
       throw DbnResponseError{"Gateway closed the session"};
     }
   }
@@ -202,7 +207,7 @@ const databento::Record* LiveBlocking::NextRecord(std::chrono::milliseconds time
   return &current_record_;
 }
 
-void LiveBlocking::Stop() { client_.Close(); }
+void LiveBlocking::Stop() { connection_.Close(); }
 
 void LiveBlocking::Reconnect() {
   if (log_receiver_->ShouldLog(LogLevel::Info)) {
@@ -210,7 +215,7 @@ void LiveBlocking::Reconnect() {
     log_msg << "Reconnecting to " << gateway_ << ':' << port_;
     log_receiver_->Receive(LogLevel::Info, log_msg.str());
   }
-  client_ = detail::TcpClient{gateway_, port_};
+  connection_ = detail::LiveConnection{gateway_, port_};
   buffer_.Clear();
   sub_counter_ = 0;
   session_id_ = this->Authenticate();
@@ -235,7 +240,7 @@ void LiveBlocking::Resubscribe() {
 std::string LiveBlocking::DecodeChallenge() {
   static constexpr auto kMethodName = "LiveBlocking::DecodeChallenge";
   const auto read_size =
-      client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size;
+      connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size;
   if (read_size == 0) {
     throw LiveApiError{"Gateway closed socket during authentication"};
   }
@@ -259,7 +264,7 @@ std::string LiveBlocking::DecodeChallenge() {
   while (next_nl_pos == std::string::npos) {
     // read more
     buffer_.Fill(
-        client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size);
+        connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size);
     if (buffer_.ReadCapacity() == 0) {
       throw LiveApiError{"Gateway closed socket during authentication"};
     }
@@ -305,7 +310,7 @@ std::uint64_t LiveBlocking::Authenticate() {
     log_ss << '[' << kMethodName << "] Sending CRAM reply: " << req;
     log_receiver_->Receive(LogLevel::Debug, log_ss.str());
   }
-  client_.WriteAll(req);
+  connection_.WriteAll(req);
   const std::uint64_t session_id = DecodeAuthResp();
 
   if (log_receiver_->ShouldLog(LogLevel::Info)) {
@@ -327,7 +332,8 @@ std::string LiveBlocking::GenerateCramReply(std::string_view challenge_key) {
 std::string LiveBlocking::EncodeAuthReq(std::string_view auth) {
   std::ostringstream req_stream;
   req_stream << "auth=" << auth << "|dataset=" << dataset_ << "|encoding=dbn|"
-             << "ts_out=" << send_ts_out_ << "|client=" << kUserAgent;
+             << "ts_out=" << send_ts_out_ << "|compression=" << compression_
+             << "|client=" << kUserAgent;
   if (!user_agent_ext_.empty()) {
     req_stream << ' ' << user_agent_ext_;
   }
@@ -344,7 +350,7 @@ std::uint64_t LiveBlocking::DecodeAuthResp() {
   buffer_.Clear();
   do {
     const auto read_size =
-        client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size;
+        connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size;
     if (read_size == 0) {
       throw LiveApiError{
           "Unexpected end of message received from server after replying to "
@@ -417,11 +423,11 @@ void LiveBlocking::IncrementSubCounter() {
   }
 }
 
-databento::detail::TcpClient::Result LiveBlocking::FillBuffer(
+databento::IReadable::Result LiveBlocking::FillBuffer(
     std::chrono::milliseconds timeout) {
   buffer_.Shift();
   const auto read_res =
-      client_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity(), timeout);
+      connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity(), timeout);
   buffer_.Fill(read_res.read_size);
   return read_res;
 }
