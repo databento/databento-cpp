@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.46.1 - 2026-01-27
+
+### Enhancements
+- Added new publisher for Blue Ocean ATS (`OCEA_MEMOIR_OCEA`)
+
 ## 0.46.0 - 2026-01-20
 
 ### Enhancements

@@ -167,6 +167,9 @@ const char* ToString(Venue venue) {
     case Venue::Xcbf: {
       return "XCBF";
     }
+    case Venue::Ocea: {
+      return "OCEA";
+    }
     default: {
       return "Unknown";
     }
@@ -336,6 +339,9 @@ Venue FromString(const std::string& str) {
   if (str == "XCBF") {
     return Venue::Xcbf;
   }
+  if (str == "OCEA") {
+    return Venue::Ocea;
+  }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -461,6 +467,9 @@ const char* ToString(Dataset dataset) {
     }
     case Dataset::XcbfPitch: {
       return "XCBF.PITCH";
+    }
+    case Dataset::OceaMemoir: {
+      return "OCEA.MEMOIR";
     }
     default: {
       return "Unknown";
@@ -594,6 +603,9 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "XCBF.PITCH") {
     return Dataset::XcbfPitch;
+  }
+  if (str == "OCEA.MEMOIR") {
+    return Dataset::OceaMemoir;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -918,6 +930,9 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::XcbfPitchXoff: {
       return Venue::Xoff;
+    }
+    case Publisher::OceaMemoirOcea: {
+      return Venue::Ocea;
     }
     default: {
       throw InvalidArgumentError{
@@ -1247,6 +1262,9 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::XcbfPitchXoff: {
       return Dataset::XcbfPitch;
     }
+    case Publisher::OceaMemoirOcea: {
+      return Dataset::OceaMemoir;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -1575,6 +1593,9 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::XcbfPitchXoff: {
       return "XCBF.PITCH.XOFF";
+    }
+    case Publisher::OceaMemoirOcea: {
+      return "OCEA.MEMOIR.OCEA";
     }
     default: {
       return "Unknown";
@@ -1906,6 +1927,9 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "XCBF.PITCH.XOFF") {
     return Publisher::XcbfPitchXoff;
+  }
+  if (str == "OCEA.MEMOIR.OCEA") {
+    return Publisher::OceaMemoirOcea;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
