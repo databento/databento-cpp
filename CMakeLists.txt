@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.24..4.2)
 
 project(
   databento
-  VERSION 0.46.1
+  VERSION 0.47.0
   LANGUAGES CXX
   DESCRIPTION "Official Databento client library"
 )

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.47.0 - TBD
+## 0.47.0 - 2026-02-03
 
 ### Enhancements
 - Added Zstd compression support to live clients which can be enabled with
