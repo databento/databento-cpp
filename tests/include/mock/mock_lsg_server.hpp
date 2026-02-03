@@ -122,8 +122,9 @@ class MockLsgServer {
   std::uint16_t port_{};
   detail::ScopedFd socket_{};
   detail::ScopedFd conn_fd_{};
-  detail::ScopedThread thread_;
   std::unique_ptr<SocketStream> socket_stream_;
   std::unique_ptr<detail::ZstdCompressStream> compressor_;
+  // declared last to ensure it's destroyed first before the members it uses
+  detail::ScopedThread thread_;
 };
 }  // namespace databento::tests::mock
