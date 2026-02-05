@@ -45,4 +45,54 @@ TEST(ZstdStreamTests, TestIdentity) {
   };
   decode.ReadExact(res.data(), size);
 }
+
+TEST(ZstdStreamTests, TestFlush) {
+  // Test that Flush() makes data available for reading without ending the stream
+  const std::string kTestData = "DBN\x01\x00\x00\x00TestData123";
+  detail::Buffer mock_io;
+  {
+    ZstdCompressStream compressor{&mock_io};
+    // Write small data that would normally be buffered
+    compressor.WriteAll(reinterpret_cast<const std::byte*>(kTestData.data()),
+                        kTestData.size());
+    compressor.Flush();
+    // At this point, data should be in mock_io even though compressor isn't destroyed
+
+    // Write more data after flush
+    compressor.WriteAll(reinterpret_cast<const std::byte*>(kTestData.data()),
+                        kTestData.size());
+    compressor.Flush();
+  }
+
+  // Verify we can decode both chunks
+  std::vector<std::byte> res(kTestData.size() * 2);
+  ZstdDecodeStream decode{std::make_unique<detail::Buffer>(std::move(mock_io))};
+  decode.ReadExact(res.data(), kTestData.size() * 2);
+
+  std::string result(reinterpret_cast<const char*>(res.data()), res.size());
+  EXPECT_EQ(result, kTestData + kTestData);
+}
+
+// Mock IReadable that always returns a timeout
+class TimeoutReader : public IReadable {
+ public:
+  void ReadExact(std::byte*, std::size_t) override {
+    throw std::runtime_error{"TimeoutReader does not support ReadExact"};
+  }
+  std::size_t ReadSome(std::byte*, std::size_t) override { return 0; }
+  Result ReadSome(std::byte*, std::size_t, std::chrono::milliseconds) override {
+    return {0, Status::Timeout};
+  }
+};
+
+TEST(ZstdStreamTests, TestDecodeTimeout) {
+  ZstdDecodeStream target{std::make_unique<TimeoutReader>()};
+
+  std::vector<std::byte> buffer(100);
+  auto result =
+      target.ReadSome(buffer.data(), buffer.size(), std::chrono::milliseconds{100});
+
+  EXPECT_EQ(result.read_size, 0);
+  EXPECT_EQ(result.status, IReadable::Status::Timeout);
+}
 }  // namespace databento::detail::tests

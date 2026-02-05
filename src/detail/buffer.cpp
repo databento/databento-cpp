@@ -7,6 +7,7 @@
 #include "stream_op_helper.hpp"
 
 using databento::detail::Buffer;
+using Status = databento::IReadable::Status;
 
 size_t Buffer::Write(const char* data, std::size_t length) {
   return Write(reinterpret_cast<const std::byte*>(data), length);
@@ -49,6 +50,12 @@ std::size_t Buffer::ReadSome(std::byte* buffer, std::size_t max_length) {
   std::copy(ReadBegin(), ReadBegin() + read_size, buffer);
   Consume(read_size);
   return read_size;
+}
+
+databento::IReadable::Result Buffer::ReadSome(std::byte* buffer, std::size_t max_length,
+                                              std::chrono::milliseconds) {
+  const auto bytes_read = ReadSome(buffer, max_length);
+  return {bytes_read, Status::Ok};
 }
 
 void Buffer::Reserve(std::size_t capacity) {

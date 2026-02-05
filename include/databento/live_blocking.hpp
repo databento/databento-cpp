@@ -12,8 +12,8 @@
 #include "databento/datetime.hpp"  // UnixNanos
 #include "databento/dbn.hpp"       // Metadata
 #include "databento/detail/buffer.hpp"
-#include "databento/detail/tcp_client.hpp"  // TcpClient
-#include "databento/enums.hpp"              // Schema, SType, VersionUpgradePolicy
+#include "databento/detail/live_connection.hpp"  // LiveConnection
+#include "databento/enums.hpp"  // Schema, SType, VersionUpgradePolicy, Compression
 #include "databento/live_subscription.hpp"
 #include "databento/record.hpp"  // Record, RecordHeader
 
@@ -44,6 +44,7 @@ class LiveBlocking {
   std::optional<std::chrono::seconds> HeartbeatInterval() const {
     return heartbeat_interval_;
   }
+  databento::Compression Compression() const { return compression_; }
   const std::vector<LiveSubscription>& Subscriptions() const { return subscriptions_; }
   std::vector<LiveSubscription>& Subscriptions() { return subscriptions_; }
 
@@ -93,12 +94,14 @@ class LiveBlocking {
   LiveBlocking(ILogReceiver* log_receiver, std::string key, std::string dataset,
                bool send_ts_out, VersionUpgradePolicy upgrade_policy,
                std::optional<std::chrono::seconds> heartbeat_interval,
-               std::size_t buffer_size, std::string user_agent_ext);
+               std::size_t buffer_size, std::string user_agent_ext,
+               databento::Compression compression);
   LiveBlocking(ILogReceiver* log_receiver, std::string key, std::string dataset,
                std::string gateway, std::uint16_t port, bool send_ts_out,
                VersionUpgradePolicy upgrade_policy,
                std::optional<std::chrono::seconds> heartbeat_interval,
-               std::size_t buffer_size, std::string user_agent_ext);
+               std::size_t buffer_size, std::string user_agent_ext,
+               databento::Compression compression);
 
   std::string DetermineGateway() const;
   std::uint64_t Authenticate();
@@ -109,7 +112,7 @@ class LiveBlocking {
   void IncrementSubCounter();
   void Subscribe(std::string_view sub_msg, const std::vector<std::string>& symbols,
                  bool use_snapshot);
-  detail::TcpClient::Result FillBuffer(std::chrono::milliseconds timeout);
+  IReadable::Result FillBuffer(std::chrono::milliseconds timeout);
   RecordHeader* BufferRecordHeader();
 
   static constexpr std::size_t kMaxStrLen = 24L * 1024;
@@ -124,7 +127,8 @@ class LiveBlocking {
   std::uint8_t version_{};
   const VersionUpgradePolicy upgrade_policy_;
   const std::optional<std::chrono::seconds> heartbeat_interval_;
-  detail::TcpClient client_;
+  const databento::Compression compression_;
+  detail::LiveConnection connection_;
   std::uint32_t sub_counter_{};
   std::vector<LiveSubscription> subscriptions_;
   detail::Buffer buffer_;
