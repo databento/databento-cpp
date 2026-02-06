@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.47.1 - TBD
+
+### Bug fixes
+- Added conversion for missing schemas for function `RTypeFromSchema`
+
 ## 0.47.0 - 2026-02-04
 
 ### Enhancements
