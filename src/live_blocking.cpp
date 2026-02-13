@@ -28,12 +28,12 @@ constexpr std::size_t kBucketIdLength = 5;
 
 databento::LiveBuilder LiveBlocking::Builder() { return databento::LiveBuilder{}; }
 
-LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
-                           std::string dataset, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy,
-                           std::optional<std::chrono::seconds> heartbeat_interval,
-                           std::size_t buffer_size, std::string user_agent_ext,
-                           databento::Compression compression)
+LiveBlocking::LiveBlocking(
+    ILogReceiver* log_receiver, std::string key, std::string dataset, bool send_ts_out,
+    VersionUpgradePolicy upgrade_policy,
+    std::optional<std::chrono::seconds> heartbeat_interval, std::size_t buffer_size,
+    std::string user_agent_ext, databento::Compression compression,
+    std::optional<databento::SlowReadBehavior> slow_read_behavior)
 
     : log_receiver_{log_receiver},
       key_{std::move(key)},
@@ -45,16 +45,18 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       upgrade_policy_{upgrade_policy},
       heartbeat_interval_{heartbeat_interval},
       compression_{compression},
+      slow_read_behavior_{slow_read_behavior},
       connection_{gateway_, port_},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
-LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
-                           std::string dataset, std::string gateway, std::uint16_t port,
-                           bool send_ts_out, VersionUpgradePolicy upgrade_policy,
-                           std::optional<std::chrono::seconds> heartbeat_interval,
-                           std::size_t buffer_size, std::string user_agent_ext,
-                           databento::Compression compression)
+LiveBlocking::LiveBlocking(
+    ILogReceiver* log_receiver, std::string key, std::string dataset,
+    std::string gateway, std::uint16_t port, bool send_ts_out,
+    VersionUpgradePolicy upgrade_policy,
+    std::optional<std::chrono::seconds> heartbeat_interval, std::size_t buffer_size,
+    std::string user_agent_ext, databento::Compression compression,
+    std::optional<databento::SlowReadBehavior> slow_read_behavior)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
@@ -65,6 +67,7 @@ LiveBlocking::LiveBlocking(ILogReceiver* log_receiver, std::string key,
       upgrade_policy_{upgrade_policy},
       heartbeat_interval_{heartbeat_interval},
       compression_{compression},
+      slow_read_behavior_{slow_read_behavior},
       connection_{gateway_, port_},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
@@ -339,6 +342,9 @@ std::string LiveBlocking::EncodeAuthReq(std::string_view auth) {
   }
   if (heartbeat_interval_.has_value()) {
     req_stream << "|heartbeat_interval_s=" << heartbeat_interval_->count();
+  }
+  if (slow_read_behavior_.has_value()) {
+    req_stream << "|slow_read_behavior=" << *slow_read_behavior_;
   }
   req_stream << '\n';
   return req_stream.str();

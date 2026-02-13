@@ -38,7 +38,8 @@ using databento::tests::mock::MockLsgServer;
 
 MockLsgServer::MockLsgServer(std::string dataset, bool ts_out,
                              std::function<void(MockLsgServer&)> serve_fn)
-    : MockLsgServer{std::move(dataset), ts_out, {}, std::move(serve_fn)} {}
+    : MockLsgServer{std::move(dataset), ts_out, std::chrono::seconds{},
+                    std::move(serve_fn)} {}
 
 MockLsgServer::MockLsgServer(std::string dataset, bool ts_out,
                              std::chrono::seconds heartbeat_interval,
@@ -55,6 +56,16 @@ MockLsgServer::MockLsgServer(std::string dataset, bool ts_out, Compression compr
       ts_out_{ts_out},
       heartbeat_interval_{},
       compression_{compression},
+      socket_{InitSocketAndSetPort()},
+      thread_{std::move(serve_fn), std::ref(*this)} {}
+
+MockLsgServer::MockLsgServer(std::string dataset, bool ts_out,
+                             SlowReadBehavior slow_read_behavior,
+                             std::function<void(MockLsgServer&)> serve_fn)
+    : dataset_{std::move(dataset)},
+      ts_out_{ts_out},
+      heartbeat_interval_{},
+      slow_read_behavior_{slow_read_behavior},
       socket_{InitSocketAndSetPort()},
       thread_{std::move(serve_fn), std::ref(*this)} {}
 
@@ -127,6 +138,13 @@ void MockLsgServer::Authenticate() {
               std::string::npos);
   } else {
     EXPECT_EQ(received.find("heartbeat_interval_s="), std::string::npos);
+  }
+  if (slow_read_behavior_.has_value()) {
+    EXPECT_NE(received.find("slow_read_behavior=" +
+                            std::string{ToString(*slow_read_behavior_)}),
+              std::string::npos);
+  } else {
+    EXPECT_EQ(received.find("slow_read_behavior="), std::string::npos);
   }
   Send("success=1|session_id=5|\n");
 }

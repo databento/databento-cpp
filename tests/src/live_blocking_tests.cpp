@@ -56,6 +56,21 @@ TEST_F(LiveBlockingTests, TestAuthentication) {
                                   .BuildBlocking();
 }
 
+TEST_F(LiveBlockingTests, TestAuthenticationWithSlowReadBehavior) {
+  constexpr auto kTsOut = false;
+  constexpr auto kSlowReadBehavior = SlowReadBehavior::Warn;
+  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut, kSlowReadBehavior,
+                                        [](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                        }};
+
+  const LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                                  .SetSlowReadBehavior(kSlowReadBehavior)
+                                  .SetAddress(kLocalhost, mock_server.Port())
+                                  .BuildBlocking();
+}
+
 TEST_F(LiveBlockingTests, TestStartAndUpgrade) {
   constexpr auto kTsOut = true;
   for (const auto [upgrade_policy, exp_version] :

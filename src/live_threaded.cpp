@@ -57,26 +57,28 @@ LiveThreaded::~LiveThreaded() {
   }
 }
 
-LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
-                           std::string dataset, bool send_ts_out,
-                           VersionUpgradePolicy upgrade_policy,
-                           std::optional<std::chrono::seconds> heartbeat_interval,
-                           std::size_t buffer_size, std::string user_agent_ext,
-                           databento::Compression compression)
-    : impl_{std::make_unique<Impl>(
-          log_receiver, std::move(key), std::move(dataset), send_ts_out, upgrade_policy,
-          heartbeat_interval, buffer_size, std::move(user_agent_ext), compression)} {}
-
-LiveThreaded::LiveThreaded(ILogReceiver* log_receiver, std::string key,
-                           std::string dataset, std::string gateway, std::uint16_t port,
-                           bool send_ts_out, VersionUpgradePolicy upgrade_policy,
-                           std::optional<std::chrono::seconds> heartbeat_interval,
-                           std::size_t buffer_size, std::string user_agent_ext,
-                           databento::Compression compression)
+LiveThreaded::LiveThreaded(
+    ILogReceiver* log_receiver, std::string key, std::string dataset, bool send_ts_out,
+    VersionUpgradePolicy upgrade_policy,
+    std::optional<std::chrono::seconds> heartbeat_interval, std::size_t buffer_size,
+    std::string user_agent_ext, databento::Compression compression,
+    std::optional<databento::SlowReadBehavior> slow_read_behavior)
     : impl_{std::make_unique<Impl>(log_receiver, std::move(key), std::move(dataset),
-                                   std::move(gateway), port, send_ts_out,
-                                   upgrade_policy, heartbeat_interval, buffer_size,
-                                   std::move(user_agent_ext), compression)} {}
+                                   send_ts_out, upgrade_policy, heartbeat_interval,
+                                   buffer_size, std::move(user_agent_ext), compression,
+                                   slow_read_behavior)} {}
+
+LiveThreaded::LiveThreaded(
+    ILogReceiver* log_receiver, std::string key, std::string dataset,
+    std::string gateway, std::uint16_t port, bool send_ts_out,
+    VersionUpgradePolicy upgrade_policy,
+    std::optional<std::chrono::seconds> heartbeat_interval, std::size_t buffer_size,
+    std::string user_agent_ext, databento::Compression compression,
+    std::optional<databento::SlowReadBehavior> slow_read_behavior)
+    : impl_{std::make_unique<Impl>(
+          log_receiver, std::move(key), std::move(dataset), std::move(gateway), port,
+          send_ts_out, upgrade_policy, heartbeat_interval, buffer_size,
+          std::move(user_agent_ext), compression, slow_read_behavior)} {}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 
@@ -98,6 +100,10 @@ std::optional<std::chrono::seconds> LiveThreaded::HeartbeatInterval() const {
 
 databento::Compression LiveThreaded::Compression() const {
   return impl_->blocking.Compression();
+}
+
+std::optional<databento::SlowReadBehavior> LiveThreaded::SlowReadBehavior() const {
+  return impl_->blocking.SlowReadBehavior();
 }
 
 const std::vector<databento::LiveSubscription>& LiveThreaded::Subscriptions() const {

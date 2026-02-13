@@ -108,6 +108,20 @@ const char* ToString(DatasetCondition condition) {
   }
 }
 
+const char* ToString(SlowReadBehavior slow_read_behavior) {
+  switch (slow_read_behavior) {
+    case SlowReadBehavior::Warn: {
+      return "warn";
+    }
+    case SlowReadBehavior::Skip: {
+      return "skip";
+    }
+    default: {
+      return "Unknown";
+    }
+  }
+}
+
 const char* ToString(RType r_type) {
   switch (r_type) {
     case RType::Mbp0: {
@@ -844,6 +858,11 @@ std::ostream& operator<<(std::ostream& out, JobState state) {
 
 std::ostream& operator<<(std::ostream& out, DatasetCondition condition) {
   out << ToString(condition);
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, SlowReadBehavior slow_read_behavior) {
+  out << ToString(slow_read_behavior);
   return out;
 }
 

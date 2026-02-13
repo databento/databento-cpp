@@ -2,6 +2,11 @@
 
 ## 0.47.1 - TBD
 
+### Enhancements
+- Added `SlowReadBehavior` enum and `LiveBuilder::SetSlowReadBehavior()` to configure
+  gateway behavior when client falls behind
+- Added `SlowReadBehavior()` getter to `LiveBlocking` and `LiveThreaded`
+
 ### Bug fixes
 - Added conversion for missing schemas for function `RTypeFromSchema`
 

@@ -49,6 +49,8 @@ class MockLsgServer {
                 std::function<void(MockLsgServer&)> serve_fn);
   MockLsgServer(std::string dataset, bool ts_out, Compression compression,
                 std::function<void(MockLsgServer&)> serve_fn);
+  MockLsgServer(std::string dataset, bool ts_out, SlowReadBehavior slow_read_behavior,
+                std::function<void(MockLsgServer&)> serve_fn);
 
   std::uint16_t Port() const { return port_; }
 
@@ -119,6 +121,7 @@ class MockLsgServer {
   bool ts_out_;
   std::chrono::seconds heartbeat_interval_;
   Compression compression_{Compression::None};
+  std::optional<SlowReadBehavior> slow_read_behavior_{};
   std::uint16_t port_{};
   detail::ScopedFd socket_{};
   detail::ScopedFd conn_fd_{};
