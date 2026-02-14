@@ -66,7 +66,7 @@ std::optional<std::string> ParseAt(std::string_view endpoint,
     throw JsonResponseError::TypeMismatch(endpoint, std::string{key} + " string",
                                           val_json);
   }
-  return val_json;
+  return std::optional<std::string>(val_json);
 }
 
 template <>
