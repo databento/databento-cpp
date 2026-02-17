@@ -56,7 +56,7 @@ class LiveBuilder {
   // Sets the compression mode for the read stream.
   LiveBuilder& SetCompression(Compression compression);
   // Sets the behavior of the gateway when the client falls behind real time.
-  LiveBuilder& SetSlowReadBehavior(SlowReadBehavior slow_read_behavior);
+  LiveBuilder& SetSlowReaderBehavior(SlowReaderBehavior slow_reader_behavior);
 
   /*
    * Build a live client instance
@@ -84,6 +84,6 @@ class LiveBuilder {
   std::size_t buffer_size_;
   std::string user_agent_ext_;
   Compression compression_{Compression::None};
-  std::optional<SlowReadBehavior> slow_read_behavior_{};
+  std::optional<SlowReaderBehavior> slow_reader_behavior_{};
 };
 }  // namespace databento

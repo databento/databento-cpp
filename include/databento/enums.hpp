@@ -50,7 +50,7 @@ enum class DatasetCondition : std::uint8_t {
 
 // Live session parameter which controls gateway behavior when the client
 // falls behind real time.
-enum class SlowReadBehavior : std::uint8_t {
+enum class SlowReaderBehavior : std::uint8_t {
   // Send a warning but continue reading.
   Warn = 0,
   // Skip records to catch up.
@@ -671,7 +671,7 @@ const char* ToString(SplitDuration duration_interval);
 const char* ToString(Delivery delivery);
 const char* ToString(JobState state);
 const char* ToString(DatasetCondition condition);
-const char* ToString(SlowReadBehavior slow_read_behavior);
+const char* ToString(SlowReaderBehavior slow_reader_behavior);
 const char* ToString(RType r_type);
 const char* ToString(Side side);
 const char* ToString(Action action);
@@ -698,7 +698,7 @@ std::ostream& operator<<(std::ostream& out, SplitDuration duration_interval);
 std::ostream& operator<<(std::ostream& out, Delivery delivery);
 std::ostream& operator<<(std::ostream& out, JobState state);
 std::ostream& operator<<(std::ostream& out, DatasetCondition condition);
-std::ostream& operator<<(std::ostream& out, SlowReadBehavior slow_read_behavior);
+std::ostream& operator<<(std::ostream& out, SlowReaderBehavior slow_reader_behavior);
 std::ostream& operator<<(std::ostream& out, RType r_type);
 std::ostream& operator<<(std::ostream& out, Side side);
 std::ostream& operator<<(std::ostream& out, Action action);

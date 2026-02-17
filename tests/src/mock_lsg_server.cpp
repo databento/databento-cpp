@@ -60,12 +60,12 @@ MockLsgServer::MockLsgServer(std::string dataset, bool ts_out, Compression compr
       thread_{std::move(serve_fn), std::ref(*this)} {}
 
 MockLsgServer::MockLsgServer(std::string dataset, bool ts_out,
-                             SlowReadBehavior slow_read_behavior,
+                             SlowReaderBehavior slow_reader_behavior,
                              std::function<void(MockLsgServer&)> serve_fn)
     : dataset_{std::move(dataset)},
       ts_out_{ts_out},
       heartbeat_interval_{},
-      slow_read_behavior_{slow_read_behavior},
+      slow_reader_behavior_{slow_reader_behavior},
       socket_{InitSocketAndSetPort()},
       thread_{std::move(serve_fn), std::ref(*this)} {}
 
@@ -139,12 +139,12 @@ void MockLsgServer::Authenticate() {
   } else {
     EXPECT_EQ(received.find("heartbeat_interval_s="), std::string::npos);
   }
-  if (slow_read_behavior_.has_value()) {
-    EXPECT_NE(received.find("slow_read_behavior=" +
-                            std::string{ToString(*slow_read_behavior_)}),
+  if (slow_reader_behavior_.has_value()) {
+    EXPECT_NE(received.find("slow_reader_behavior=" +
+                            std::string{ToString(*slow_reader_behavior_)}),
               std::string::npos);
   } else {
-    EXPECT_EQ(received.find("slow_read_behavior="), std::string::npos);
+    EXPECT_EQ(received.find("slow_reader_behavior="), std::string::npos);
   }
   Send("success=1|session_id=5|\n");
 }

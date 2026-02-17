@@ -55,7 +55,7 @@ class LiveThreaded {
   VersionUpgradePolicy UpgradePolicy() const;
   std::optional<std::chrono::seconds> HeartbeatInterval() const;
   databento::Compression Compression() const;
-  std::optional<databento::SlowReadBehavior> SlowReadBehavior() const;
+  std::optional<databento::SlowReaderBehavior> SlowReaderBehavior() const;
   const std::vector<LiveSubscription>& Subscriptions() const;
   std::vector<LiveSubscription>& Subscriptions();
 
@@ -111,14 +111,14 @@ class LiveThreaded {
                std::optional<std::chrono::seconds> heartbeat_interval,
                std::size_t buffer_size, std::string user_agent_ext,
                databento::Compression compression,
-               std::optional<databento::SlowReadBehavior> slow_read_behavior);
+               std::optional<databento::SlowReaderBehavior> slow_reader_behavior);
   LiveThreaded(ILogReceiver* log_receiver, std::string key, std::string dataset,
                std::string gateway, std::uint16_t port, bool send_ts_out,
                VersionUpgradePolicy upgrade_policy,
                std::optional<std::chrono::seconds> heartbeat_interval,
                std::size_t buffer_size, std::string user_agent_ext,
                databento::Compression compression,
-               std::optional<databento::SlowReadBehavior> slow_read_behavior);
+               std::optional<databento::SlowReaderBehavior> slow_reader_behavior);
 
   // unique_ptr to be movable
   std::unique_ptr<Impl> impl_;

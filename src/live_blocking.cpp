@@ -33,7 +33,7 @@ LiveBlocking::LiveBlocking(
     VersionUpgradePolicy upgrade_policy,
     std::optional<std::chrono::seconds> heartbeat_interval, std::size_t buffer_size,
     std::string user_agent_ext, databento::Compression compression,
-    std::optional<databento::SlowReadBehavior> slow_read_behavior)
+    std::optional<databento::SlowReaderBehavior> slow_reader_behavior)
 
     : log_receiver_{log_receiver},
       key_{std::move(key)},
@@ -45,7 +45,7 @@ LiveBlocking::LiveBlocking(
       upgrade_policy_{upgrade_policy},
       heartbeat_interval_{heartbeat_interval},
       compression_{compression},
-      slow_read_behavior_{slow_read_behavior},
+      slow_reader_behavior_{slow_reader_behavior},
       connection_{gateway_, port_},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
@@ -56,7 +56,7 @@ LiveBlocking::LiveBlocking(
     VersionUpgradePolicy upgrade_policy,
     std::optional<std::chrono::seconds> heartbeat_interval, std::size_t buffer_size,
     std::string user_agent_ext, databento::Compression compression,
-    std::optional<databento::SlowReadBehavior> slow_read_behavior)
+    std::optional<databento::SlowReaderBehavior> slow_reader_behavior)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
@@ -67,7 +67,7 @@ LiveBlocking::LiveBlocking(
       upgrade_policy_{upgrade_policy},
       heartbeat_interval_{heartbeat_interval},
       compression_{compression},
-      slow_read_behavior_{slow_read_behavior},
+      slow_reader_behavior_{slow_reader_behavior},
       connection_{gateway_, port_},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
@@ -343,8 +343,8 @@ std::string LiveBlocking::EncodeAuthReq(std::string_view auth) {
   if (heartbeat_interval_.has_value()) {
     req_stream << "|heartbeat_interval_s=" << heartbeat_interval_->count();
   }
-  if (slow_read_behavior_.has_value()) {
-    req_stream << "|slow_read_behavior=" << *slow_read_behavior_;
+  if (slow_reader_behavior_.has_value()) {
+    req_stream << "|slow_reader_behavior=" << *slow_reader_behavior_;
   }
   req_stream << '\n';
   return req_stream.str();

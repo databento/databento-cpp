@@ -84,8 +84,9 @@ LiveBuilder& LiveBuilder::SetCompression(Compression compression) {
   return *this;
 }
 
-LiveBuilder& LiveBuilder::SetSlowReadBehavior(SlowReadBehavior slow_read_behavior) {
-  slow_read_behavior_ = slow_read_behavior;
+LiveBuilder& LiveBuilder::SetSlowReaderBehavior(
+    SlowReaderBehavior slow_reader_behavior) {
+  slow_reader_behavior_ = slow_reader_behavior;
   return *this;
 }
 
@@ -96,14 +97,14 @@ databento::LiveBlocking LiveBuilder::BuildBlocking() {
                                    dataset_,        send_ts_out_,
                                    upgrade_policy_, heartbeat_interval_,
                                    buffer_size_,    user_agent_ext_,
-                                   compression_,    slow_read_behavior_};
+                                   compression_,    slow_reader_behavior_};
   }
   return databento::LiveBlocking{log_receiver_,   key_,
                                  dataset_,        gateway_,
                                  port_,           send_ts_out_,
                                  upgrade_policy_, heartbeat_interval_,
                                  buffer_size_,    user_agent_ext_,
-                                 compression_,    slow_read_behavior_};
+                                 compression_,    slow_reader_behavior_};
 }
 
 databento::LiveThreaded LiveBuilder::BuildThreaded() {
@@ -113,14 +114,14 @@ databento::LiveThreaded LiveBuilder::BuildThreaded() {
                                    dataset_,        send_ts_out_,
                                    upgrade_policy_, heartbeat_interval_,
                                    buffer_size_,    user_agent_ext_,
-                                   compression_,    slow_read_behavior_};
+                                   compression_,    slow_reader_behavior_};
   }
   return databento::LiveThreaded{log_receiver_,   key_,
                                  dataset_,        gateway_,
                                  port_,           send_ts_out_,
                                  upgrade_policy_, heartbeat_interval_,
                                  buffer_size_,    user_agent_ext_,
-                                 compression_,    slow_read_behavior_};
+                                 compression_,    slow_reader_behavior_};
 }
 
 void LiveBuilder::Validate() {
