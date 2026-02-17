@@ -9,6 +9,7 @@
 
 ### Bug fixes
 - Added conversion for missing schemas for function `RTypeFromSchema`
+- Added explicit optional construction in `json_helpers.hpp` (credit: Enrico Detoma)
 
 ## 0.47.0 - 2026-02-04
 
