@@ -56,6 +56,21 @@ TEST_F(LiveBlockingTests, TestAuthentication) {
                                   .BuildBlocking();
 }
 
+TEST_F(LiveBlockingTests, TestAuthenticationWithSlowReaderBehavior) {
+  constexpr auto kTsOut = false;
+  constexpr auto kSlowReaderBehavior = SlowReaderBehavior::Warn;
+  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut, kSlowReaderBehavior,
+                                        [](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                        }};
+
+  const LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                                  .SetSlowReaderBehavior(kSlowReaderBehavior)
+                                  .SetAddress(kLocalhost, mock_server.Port())
+                                  .BuildBlocking();
+}
+
 TEST_F(LiveBlockingTests, TestStartAndUpgrade) {
   constexpr auto kTsOut = true;
   for (const auto [upgrade_policy, exp_version] :
@@ -561,6 +576,56 @@ TEST_F(LiveBlockingTests, TestStop) {
 TEST_F(LiveBlockingTests, TestConnectWhenGatewayNotUp) {
   builder_.SetDataset(dataset::kXnasItch).SetAddress(kLocalhost, 80);
   ASSERT_THROW(builder_.BuildBlocking(), databento::TcpError);
+}
+
+TEST_F(LiveBlockingTests, TestNextRecordThrowsOnGatewayClose) {
+  constexpr auto kTsOut = false;
+  constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
+
+  bool should_close{};
+  std::mutex should_close_mutex;
+  std::condition_variable should_close_cv;
+  bool has_closed{};
+  std::mutex has_closed_mutex;
+  std::condition_variable has_closed_cv;
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, kTsOut,
+      [kRec, &should_close, &should_close_cv, &should_close_mutex, &has_closed,
+       &has_closed_cv, &has_closed_mutex](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.SendRecord(kRec);
+        {
+          std::unique_lock<std::mutex> lock{should_close_mutex};
+          should_close_cv.wait(lock, [&should_close] { return should_close; });
+        }
+        self.Close();
+        {
+          const std::lock_guard<std::mutex> lock{has_closed_mutex};
+          has_closed = true;
+          has_closed_cv.notify_one();
+        }
+      }};
+
+  LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  const auto rec = target.NextRecord();
+  ASSERT_TRUE(rec.Holds<OhlcvMsg>());
+  EXPECT_EQ(rec.Get<OhlcvMsg>(), kRec);
+  // Signal server to close connection
+  {
+    const std::lock_guard<std::mutex> lock{should_close_mutex};
+    should_close = true;
+    should_close_cv.notify_one();
+  }
+  // Wait for server to close
+  {
+    std::unique_lock<std::mutex> lock{has_closed_mutex};
+    has_closed_cv.wait(lock, [&has_closed] { return has_closed; });
+  }
+  ASSERT_THROW(target.NextRecord(), databento::DbnResponseError);
 }
 
 TEST_F(LiveBlockingTests, TestReconnectAndResubscribe) {

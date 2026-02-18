@@ -88,14 +88,35 @@ databento::RType Record::RTypeFromSchema(const Schema schema) {
     case Schema::Ohlcv1D: {
       return databento::RType::Ohlcv1D;
     }
+    case Schema::OhlcvEod: {
+      return databento::RType::OhlcvEod;
+    }
     case Schema::Definition: {
       return databento::RType::InstrumentDef;
     }
     case Schema::Statistics: {
       return databento::RType::Statistics;
     }
+    case Schema::Status: {
+      return databento::RType::Status;
+    }
     case Schema::Imbalance: {
       return databento::RType::Imbalance;
+    }
+    case Schema::Cmbp1: {
+      return databento::RType::Cmbp1;
+    }
+    case Schema::Cbbo1S: {
+      return databento::RType::Cbbo1S;
+    }
+    case Schema::Cbbo1M: {
+      return databento::RType::Cbbo1M;
+    }
+    case Schema::Bbo1S: {
+      return databento::RType::Bbo1S;
+    }
+    case Schema::Bbo1M: {
+      return databento::RType::Bbo1M;
     }
     default: {
       throw InvalidArgumentError{

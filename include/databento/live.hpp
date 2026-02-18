@@ -2,6 +2,8 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <string>
 
 #include "databento/enums.hpp"  // VersionUpgradePolicy
@@ -53,6 +55,8 @@ class LiveBuilder {
   LiveBuilder& ExtendUserAgent(std::string extension);
   // Sets the compression mode for the read stream.
   LiveBuilder& SetCompression(Compression compression);
+  // Sets the behavior of the gateway when the client falls behind real time.
+  LiveBuilder& SetSlowReaderBehavior(SlowReaderBehavior slow_reader_behavior);
 
   /*
    * Build a live client instance
@@ -80,5 +84,6 @@ class LiveBuilder {
   std::size_t buffer_size_;
   std::string user_agent_ext_;
   Compression compression_{Compression::None};
+  std::optional<SlowReaderBehavior> slow_reader_behavior_{};
 };
 }  // namespace databento

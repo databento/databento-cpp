@@ -1,10 +1,21 @@
 # Changelog
 
+## 0.48.0 - 2026-02-18
+
+### Enhancements
+- Added `SlowReaderBehavior` enum and `LiveBuilder::SetSlowReaderBehavior()` to configure
+  gateway behavior when client falls behind
+- Added `SlowReaderBehavior()` getter to `LiveBlocking` and `LiveThreaded`
+
+### Bug fixes
+- Added conversion for missing schemas for function `RTypeFromSchema`
+- Added explicit optional construction in `json_helpers.hpp` (credit: Enrico Detoma)
+
 ## 0.47.0 - 2026-02-04
 
 ### Enhancements
 - Added Zstd compression support to live clients which can be enabled with
-`LiveBuilder::SetCompression()`. It's disabled by default
+  `LiveBuilder::SetCompression()`. It's disabled by default
 - Added `Compression()` getter to `LiveBlocking` and `LiveThreaded`
 - Upgraded default `httplib` version to 0.30.1
 
