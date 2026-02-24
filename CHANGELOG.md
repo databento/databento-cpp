@@ -1,8 +1,10 @@
 # Changelog
 
-## 0.49.0 - TBD
-- Added `SkippedRecordsAfterSlowReading` to the `ErrorCode` enum for gateway errors originating
-  from slow client catch-up.
+## 0.49.0 - 2026-02-24
+
+### Enhancements
+- Added `SkippedRecordsAfterSlowReading` to the `ErrorCode` enum for gateway errors
+  originating from slow client catch-up
 
 ## 0.48.0 - 2026-02-18
 
