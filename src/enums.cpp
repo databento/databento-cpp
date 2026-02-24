@@ -802,6 +802,9 @@ const char* ToString(ErrorCode error_code) {
     case ErrorCode::InternalError: {
       return "internal_error";
     }
+    case ErrorCode::SkippedRecordsAfterSlowReading: {
+      return "skipped_records_after_slow_reading";
+    }
     case ErrorCode::Unset: {
       return "unset";
     }
@@ -1255,6 +1258,9 @@ ErrorCode FromString(const std::string& str) {
   }
   if (str == "internal_error") {
     return ErrorCode::InternalError;
+  }
+  if (str == "skipped_records_after_slow_reading") {
+    return ErrorCode::SkippedRecordsAfterSlowReading;
   }
   if (str == "unset") {
     return ErrorCode::Unset;

@@ -632,6 +632,9 @@ enum ErrorCode : std::uint8_t {
   InvalidSubscription = 5,
   // An error occurred in the gateway.
   InternalError = 6,
+  // A slow client was detected and records were skipped by the gateway to allow
+  // catching up.
+  SkippedRecordsAfterSlowReading = 7,
   // No error code was specified or this record was upgraded from a version 1 struct
   // where the code field didn't exist.
   Unset = 255,
