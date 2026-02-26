@@ -39,4 +39,32 @@ TEST(V1Tests, TestSystemMsgCodeUpgrade) {
   const auto res5 = target.ToV2();
   EXPECT_EQ(res5.code, SystemCode::ReplayCompleted);
 }
+
+TEST(V1Tests, TestErrorMsgCodeUpgrade) {
+  v1::ErrorMsg target{RecordHeader{
+      sizeof(v1::ErrorMsg) / RecordHeader::kLengthMultiplier, RType::Error, 0, 0, {}}};
+  std::strcpy(target.err.data(), "User or API key deactivated");
+  const auto res1 = target.ToV2();
+  EXPECT_EQ(res1.code, ErrorCode::ApiKeyDeactivated);
+
+  target.err = {};
+  std::strcpy(target.err.data(), "User has reached their open connection limit");
+  const auto res2 = target.ToV2();
+  EXPECT_EQ(res2.code, ErrorCode::ConnectionLimitExceeded);
+
+  target.err = {};
+  std::strcpy(target.err.data(), "Failed to resolve symbol: AAPL");
+  const auto res3 = target.ToV2();
+  EXPECT_EQ(res3.code, ErrorCode::SymbolResolutionFailed);
+
+  target.err = {};
+  std::strcpy(target.err.data(), "Internal error");
+  const auto res4 = target.ToV2();
+  EXPECT_EQ(res4.code, ErrorCode::InternalError);
+
+  target.err = {};
+  std::strcpy(target.err.data(), "Slow client detected for mbo. Skipped records");
+  const auto res5 = target.ToV2();
+  EXPECT_EQ(res5.code, ErrorCode::SkippedRecordsAfterSlowReading);
+}
 }  // namespace databento::v1::tests
