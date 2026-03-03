@@ -211,6 +211,27 @@ v2::ErrorMsg ErrorMsg::ToV2() const {
       ErrorCode::Unset,
       std::numeric_limits<std::uint8_t>::max()};
   std::copy(err.begin(), err.end(), ret.err.begin());
+  const auto null_it = std::find(err.begin(), err.end(), '\0');
+  if (null_it != err.end()) {
+    constexpr auto kApiKeyDeactivated = "User or API key deactivated";
+    constexpr auto kConnectionLimit = "User has reached their open connection limit";
+    constexpr auto kSymbolResolution = "Failed to resolve symbol";
+    constexpr auto kInternalError = "Internal error";
+    constexpr auto kSlowClient = "Slow client detected for ";
+
+    if (std::strcmp(Err(), kApiKeyDeactivated) == 0) {
+      ret.code = ErrorCode::ApiKeyDeactivated;
+    } else if (std::strcmp(Err(), kConnectionLimit) == 0) {
+      ret.code = ErrorCode::ConnectionLimitExceeded;
+    } else if (std::strncmp(Err(), kSymbolResolution, std::strlen(kSymbolResolution)) ==
+               0) {
+      ret.code = ErrorCode::SymbolResolutionFailed;
+    } else if (std::strcmp(Err(), kInternalError) == 0) {
+      ret.code = ErrorCode::InternalError;
+    } else if (std::strncmp(Err(), kSlowClient, std::strlen(kSlowClient)) == 0) {
+      ret.code = ErrorCode::SkippedRecordsAfterSlowReading;
+    }
+  }
   return ret;
 }
 
