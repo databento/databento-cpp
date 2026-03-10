@@ -114,7 +114,7 @@ const char* ToString(SlowReaderBehavior slow_reader_behavior) {
       return "warn";
     }
     case SlowReaderBehavior::Skip: {
-      return "drop";
+      return "skip";
     }
     default: {
       return "Unknown";
