@@ -7,8 +7,8 @@
 #include <string>
 #include <string_view>
 
-#include "databento/exceptions.hpp"  // InvalidArgumentError
-#include "stream_op_helper.hpp"      // StreamOpBuilder
+#include "databento/exceptions.hpp"     // InvalidArgumentError
+#include "detail/stream_op_helper.hpp"  // StreamOpBuilder
 
 namespace databento {
 TsSymbolMap SymbologyResolution::CreateSymbolMap() const {
@@ -53,24 +53,26 @@ std::string JoinSymbolStrings(const std::string& method_name,
   return JoinSymbolStrings(method_name, symbols.begin(), symbols.end());
 }
 
-std::string ToString(const SymbologyResolution& sym_res) { return MakeString(sym_res); }
+std::string ToString(const SymbologyResolution& sym_res) {
+  return detail::MakeString(sym_res);
+}
 
 std::ostream& operator<<(std::ostream& stream, const SymbologyResolution& sym_res) {
-  auto stream_helper = StreamOpBuilder{stream}
+  auto stream_helper = detail::StreamOpBuilder{stream}
                            .SetSpacer("\n    ")
                            .SetTypeName("SymbologyResolution")
                            .Build();
   std::ostringstream intermediate;
   std::ostringstream key_value;
   auto intermediate_builder =
-      StreamOpBuilder{intermediate}.SetIndent("    ").SetSpacer("\n    ");
+      detail::StreamOpBuilder{intermediate}.SetIndent("    ").SetSpacer("\n    ");
   auto mappings_helper = intermediate_builder.Build();
-  auto key_value_builder = StreamOpBuilder{key_value}.SetSpacer(" ");
+  auto key_value_builder = detail::StreamOpBuilder{key_value}.SetSpacer(" ");
   for (const auto& [symbol, intervals] : sym_res.mappings) {
     // empty stream
     key_value.str("");
     std::ostringstream interval_ss;
-    auto interval_helper = StreamOpBuilder{interval_ss}.SetSpacer(" ").Build();
+    auto interval_helper = detail::StreamOpBuilder{interval_ss}.SetSpacer(" ").Build();
     for (const auto& interval : intervals) {
       interval_helper.AddItem(interval);
     }

@@ -16,7 +16,10 @@ namespace databento::tests::mock {
 class MockHttpServer {
  public:
   explicit MockHttpServer(std::string api_key)
-      : port_{server_.bind_to_any_port("localhost")}, api_key_{std::move(api_key)} {}
+      : port_{server_.bind_to_any_port("localhost")}, api_key_{std::move(api_key)} {
+    // Default 5s timeout not needed for local testing
+    server_.set_keep_alive_timeout(1);
+  }
   MockHttpServer(MockHttpServer&&) = delete;
   MockHttpServer& operator=(MockHttpServer&&) = delete;
   MockHttpServer(const MockHttpServer&) = delete;

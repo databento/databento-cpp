@@ -2,7 +2,7 @@
 
 #include <array>
 
-#include "stream_op_helper.hpp"
+#include "detail/stream_op_helper.hpp"
 
 namespace databento {
 std::ostream& operator<<(std::ostream& stream, FlagSet flag_set) {
@@ -38,5 +38,5 @@ std::ostream& operator<<(std::ostream& stream, FlagSet flag_set) {
   return stream;
 }
 
-std::string ToString(FlagSet flags) { return MakeString(flags); }
+std::string ToString(FlagSet flags) { return detail::MakeString(flags); }
 }  // namespace databento

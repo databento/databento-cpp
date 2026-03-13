@@ -3,15 +3,15 @@
 #include <ostream>
 #include <sstream>
 
-#include "stream_op_helper.hpp"
+#include "detail/stream_op_helper.hpp"
 
 namespace databento {
 std::string ToString(const PublisherDetail& publisher_detail) {
-  return MakeString(publisher_detail);
+  return detail::MakeString(publisher_detail);
 }
 std::ostream& operator<<(std::ostream& stream,
                          const PublisherDetail& publisher_detail) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("PublisherDetail")
       .Build()
@@ -23,10 +23,10 @@ std::ostream& operator<<(std::ostream& stream,
 }
 
 std::string ToString(const FieldDetail& field_detail) {
-  return MakeString(field_detail);
+  return detail::MakeString(field_detail);
 }
 std::ostream& operator<<(std::ostream& stream, const FieldDetail& field_detail) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("FieldDetail")
       .Build()
@@ -36,11 +36,11 @@ std::ostream& operator<<(std::ostream& stream, const FieldDetail& field_detail) 
 }
 
 std::string ToString(const DatasetConditionDetail& condition_detail) {
-  return MakeString(condition_detail);
+  return detail::MakeString(condition_detail);
 }
 std::ostream& operator<<(std::ostream& stream,
                          const DatasetConditionDetail& condition_detail) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("DatasetConditionDetail")
       .Build()
@@ -51,17 +51,19 @@ std::ostream& operator<<(std::ostream& stream,
 }
 
 std::string ToString(const DatasetRange& dataset_range) {
-  return MakeString(dataset_range);
+  return detail::MakeString(dataset_range);
 }
 std::ostream& operator<<(std::ostream& stream, const DatasetRange& dataset_range) {
   std::ostringstream range_by_schema_ss;
-  auto range_by_schema_helper =
-      StreamOpBuilder{range_by_schema_ss}.SetSpacer("\n    ").SetIndent("    ").Build();
+  auto range_by_schema_helper = detail::StreamOpBuilder{range_by_schema_ss}
+                                    .SetSpacer("\n    ")
+                                    .SetIndent("    ")
+                                    .Build();
   for (const auto& [schema, range] : dataset_range.range_by_schema) {
     range_by_schema_helper.AddKeyVal(schema, range);
   }
   range_by_schema_helper.Finish();
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("DatasetRange")
       .Build()

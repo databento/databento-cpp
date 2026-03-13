@@ -178,7 +178,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
     find_package(httplib REQUIRED)
   endif()
 else()
-  set(httplib_version 0.30.1)
+  set(httplib_version 0.37.2)
   FetchContent_Declare(
     httplib
     URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz

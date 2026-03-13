@@ -9,6 +9,12 @@
 
 ### Enhancements
 - Added support for `progress` field in `BatchJob` response
+- Added blocking (pull-based) `TimeseriesGetRange` overloads that return a `DbnStore`
+  with `GetMetadata()` and `NextRecord()` methods, unifying the consumption pattern
+  across historical, live, and file sources
+- Generalized `DbnFileStore` into `DbnStore` which accepts any `IReadable` source.
+  `DbnFileStore` is retained as a type alias for backwards compatibility
+- Upgraded default `httplib` version to 0.37.2
 
 ## 0.50.0 - 2026-03-03
 

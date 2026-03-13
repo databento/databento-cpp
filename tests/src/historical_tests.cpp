@@ -821,6 +821,60 @@ TEST_F(HistoricalTests, TestTimeseriesGetRange_UnreadBytes) {
   ASSERT_EQ(logger_.CallCount(), 1);
 }
 
+TEST_F(HistoricalTests, TestTimeseriesGetRange_Blocking) {
+  mock_server_.MockPostDbn("/v0/timeseries.get_range",
+                           {{"dataset", dataset::kGlbxMdp3},
+                            {"symbols", "ESH1"},
+                            {"schema", "mbo"},
+                            {"start", "1609160400000711344"},
+                            {"end", "1609160800000711344"},
+                            {"encoding", "dbn"},
+                            {"stype_in", "raw_symbol"},
+                            {"stype_out", "instrument_id"},
+                            {"limit", "2"}},
+                           TEST_DATA_DIR "/test_data.mbo.v3.dbn.zst");
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target = Client(port);
+  DbnStore store = target.TimeseriesGetRange(
+      dataset::kGlbxMdp3,
+      {UnixNanos{std::chrono::nanoseconds{1609160400000711344}},
+       UnixNanos{std::chrono::nanoseconds{1609160800000711344}}},
+      {"ESH1"}, Schema::Mbo, SType::RawSymbol, SType::InstrumentId, 2);
+  const auto& metadata = store.GetMetadata();
+  EXPECT_EQ(metadata.limit, 2);
+  EXPECT_EQ(metadata.schema, Schema::Mbo);
+  std::vector<MboMsg> mbo_records;
+  while (const auto* record = store.NextRecord()) {
+    mbo_records.emplace_back(record->Get<MboMsg>());
+  }
+  EXPECT_EQ(mbo_records.size(), 2);
+}
+
+TEST_F(HistoricalTests, TestTimeseriesGetRange_BlockingSimple) {
+  mock_server_.MockPostDbn("/v0/timeseries.get_range",
+                           {{"dataset", dataset::kGlbxMdp3},
+                            {"start", "2022-10-21T13:30"},
+                            {"end", "2022-10-21T20:00"},
+                            {"symbols", "CYZ2"},
+                            {"schema", "tbbo"},
+                            {"encoding", "dbn"},
+                            {"stype_in", "raw_symbol"},
+                            {"stype_out", "instrument_id"}},
+                           TEST_DATA_DIR "/test_data.tbbo.v3.dbn.zst");
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target = Client(port);
+  DbnStore store = target.TimeseriesGetRange(dataset::kGlbxMdp3,
+                                             {"2022-10-21T13:30", "2022-10-21T20:00"},
+                                             {"CYZ2"}, Schema::Tbbo);
+  std::vector<TbboMsg> tbbo_records;
+  while (const auto* record = store.NextRecord()) {
+    tbbo_records.emplace_back(record->Get<TbboMsg>());
+  }
+  EXPECT_EQ(tbbo_records.size(), 2);
+}
+
 TEST_F(HistoricalTests, TestTimeseriesGetRangeToFile) {
   mock_server_.MockPostDbn("/v0/timeseries.get_range",
                            {{"dataset", dataset::kGlbxMdp3},

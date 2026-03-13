@@ -10,7 +10,7 @@
 #include <sstream>  // ostringstream
 
 #include "databento/constants.hpp"  // kUndefTimestamp
-#include "stream_op_helper.hpp"
+#include "detail/stream_op_helper.hpp"
 
 namespace databento {
 std::string ToIso8601(UnixNanos unix_nanos) {
@@ -63,11 +63,11 @@ std::string DateFromIso8601Int(std::uint32_t date_int) {
 }
 
 std::string ToString(const DateTimeRange<std::string>& dt_range) {
-  return MakeString(dt_range);
+  return detail::MakeString(dt_range);
 }
 std::ostream& operator<<(std::ostream& stream,
                          const DateTimeRange<std::string>& dt_range) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("DateTimeRange")
       .Build()
@@ -77,11 +77,11 @@ std::ostream& operator<<(std::ostream& stream,
 }
 
 std::string ToString(const DateTimeRange<UnixNanos>& dt_range) {
-  return MakeString(dt_range);
+  return detail::MakeString(dt_range);
 }
 std::ostream& operator<<(std::ostream& stream,
                          const DateTimeRange<UnixNanos>& dt_range) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("DateTimeRange")
       .Build()

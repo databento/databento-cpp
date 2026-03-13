@@ -6,7 +6,7 @@
 
 #include "databento/system.hpp"
 #include "databento/version.hpp"
-#include "stream_op_helper.hpp"
+#include "detail/stream_op_helper.hpp"
 
 databento::ILogReceiver* databento::ILogReceiver::Default() {
   static const std::unique_ptr<ILogReceiver> gDefaultLogger{
@@ -64,7 +64,7 @@ void LogPlatformInfo() { LogPlatformInfo(ILogReceiver::Default()); }
 
 void LogPlatformInfo(ILogReceiver* log_receiver) {
   std::ostringstream ss;
-  StreamOpBuilder{ss}
+  detail::StreamOpBuilder{ss}
       .SetSpacer(" ")
       .Build()
       .AddField("client_version", DATABENTO_VERSION)

@@ -5,7 +5,7 @@
 
 #include "databento/constants.hpp"
 #include "databento/symbol_map.hpp"
-#include "stream_op_helper.hpp"
+#include "detail/stream_op_helper.hpp"
 
 namespace databento {
 
@@ -25,9 +25,9 @@ void Metadata::Upgrade(VersionUpgradePolicy upgrade_policy) {
   }
 }
 
-std::string ToString(const Metadata& metadata) { return MakeString(metadata); }
+std::string ToString(const Metadata& metadata) { return detail::MakeString(metadata); }
 std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
-  auto helper = StreamOpBuilder{stream}
+  auto helper = detail::StreamOpBuilder{stream}
                     .SetTypeName("Metadata")
                     .SetSpacer("\n    ")
                     .Build()
@@ -50,7 +50,7 @@ std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
                                                             "not_found"};
   for (std::size_t i = 0; i < kVecCount; ++i) {
     std::ostringstream vec_stream;
-    auto vec_helper = StreamOpBuilder{vec_stream}.SetSpacer(" ").Build();
+    auto vec_helper = detail::StreamOpBuilder{vec_stream}.SetSpacer(" ").Build();
     for (const auto& str : metadata.*(kStrVecs[i])) {
       vec_helper.AddItem(str);
     }
@@ -61,7 +61,7 @@ std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
   // format mappings
   std::ostringstream mappings;
   auto mappings_helper =
-      StreamOpBuilder{mappings}.SetIndent("    ").SetSpacer("\n    ").Build();
+      detail::StreamOpBuilder{mappings}.SetIndent("    ").SetSpacer("\n    ").Build();
   for (const auto& mapping : metadata.mappings) {
     mappings_helper.AddItem(mapping);
   }
@@ -70,14 +70,16 @@ std::ostream& operator<<(std::ostream& stream, const Metadata& metadata) {
       .Finish();
 }
 
-std::string ToString(const SymbolMapping& mapping) { return MakeString(mapping); }
+std::string ToString(const SymbolMapping& mapping) {
+  return detail::MakeString(mapping);
+}
 std::ostream& operator<<(std::ostream& stream, const SymbolMapping& mapping) {
   std::ostringstream intervals;
-  auto intervals_helper = StreamOpBuilder{intervals}.SetSpacer(" ").Build();
+  auto intervals_helper = detail::StreamOpBuilder{intervals}.SetSpacer(" ").Build();
   for (const auto& interval : mapping.intervals) {
     intervals_helper.AddItem(interval);
   }
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("SymbolMapping")
       .Build()
@@ -87,9 +89,11 @@ std::ostream& operator<<(std::ostream& stream, const SymbolMapping& mapping) {
       .Finish();
 }
 
-std::string ToString(const MappingInterval& interval) { return MakeString(interval); }
+std::string ToString(const MappingInterval& interval) {
+  return detail::MakeString(interval);
+}
 std::ostream& operator<<(std::ostream& stream, const MappingInterval& interval) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("MappingInterval")
       .Build()

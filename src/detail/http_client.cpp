@@ -1,11 +1,16 @@
 #include "databento/detail/http_client.hpp"
 
+#include <sys/types.h>
+
 #include <chrono>   // seconds
+#include <memory>   // make_unique
 #include <sstream>  // ostringstream
 
 #include "databento/constants.hpp"  // kUserAgent
 #include "databento/exceptions.hpp"  // HttpResponseError, HttpRequestError, JsonResponseError
-#include "databento/log.hpp"         // ILogReceiver, LogLevel
+#include "databento/ireadable.hpp"
+#include "databento/log.hpp"              // ILogReceiver, LogLevel
+#include "detail/http_stream_reader.hpp"  // HttpStreamReader
 
 using databento::detail::HttpClient;
 
@@ -18,7 +23,9 @@ const httplib::Headers HttpClient::kHeaders{
 HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string& key,
                        const std::string& gateway)
     : log_receiver_{log_receiver}, client_{gateway} {
-  client_.set_default_headers(HttpClient::kHeaders);
+  auto headers = HttpClient::kHeaders;
+  headers.insert(httplib::make_basic_authentication_header(key, ""));
+  client_.set_default_headers(headers);
   client_.set_basic_auth(key, "");
   client_.set_read_timeout(kTimeout);
   client_.set_write_timeout(kTimeout);
@@ -27,7 +34,9 @@ HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string&
 HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string& key,
                        const std::string& gateway, std::uint16_t port)
     : log_receiver_{log_receiver}, client_{gateway, port} {
-  client_.set_default_headers(HttpClient::kHeaders);
+  auto headers = HttpClient::kHeaders;
+  headers.insert(httplib::make_basic_authentication_header(key, ""));
+  client_.set_default_headers(headers);
   client_.set_basic_auth(key, "");
   client_.set_read_timeout(kTimeout);
   client_.set_write_timeout(kTimeout);
@@ -89,6 +98,32 @@ void HttpClient::PostRawStream(const std::string& path,
   // NOLINTNEXTLINE(clang-analyzer-unix.BlockInCriticalSection): dependency code
   const httplib::Result res = client_.send(req);
   CheckStatusAndStreamRes(path, err_status, std::move(err_body), res);
+}
+
+std::unique_ptr<databento::IReadable> HttpClient::OpenPostStream(
+    const std::string& path, const httplib::Params& form_params) {
+  const auto body = httplib::detail::params_to_query_str(form_params);
+  // NOLINTNEXTLINE(clang-analyzer-unix.BlockInCriticalSection): dependency code
+  auto handle = client_.open_stream("POST", path, {}, {}, body,
+                                    "application/x-www-form-urlencoded");
+  if (handle.error != httplib::Error::Success) {
+    throw HttpRequestError{path, handle.error};
+  }
+  if (!handle.is_valid()) {
+    throw HttpRequestError{path, httplib::Error::Connection};
+  }
+  CheckWarnings(*handle.response);
+  if (IsErrorStatus(handle.response->status)) {
+    // Read the full error body
+    std::string err_body;
+    std::array<char, 4096> buf{};
+    ssize_t n;
+    while ((n = handle.read(buf.data(), buf.size())) > 0) {
+      err_body.append(buf.data(), static_cast<std::size_t>(n));
+    }
+    throw HttpResponseError{path, handle.response->status, std::move(err_body)};
+  }
+  return std::make_unique<HttpStreamReader>(std::move(handle));
 }
 
 httplib::ResponseHandler HttpClient::MakeStreamResponseHandler(int& out_status) {

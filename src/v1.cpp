@@ -11,7 +11,7 @@
 #include "databento/record.hpp"
 #include "databento/v2.hpp"
 #include "databento/v3.hpp"
-#include "stream_op_helper.hpp"  // MakeString, StreamOpBuilder
+#include "detail/stream_op_helper.hpp"  // MakeString, StreamOpBuilder
 
 namespace databento::v1 {
 v2::InstrumentDefMsg InstrumentDefMsg::ToV2() const {
@@ -299,9 +299,11 @@ v2::ErrorMsg ErrorMsg::Upgrade() const {
   return ToV2();
 }
 
-std::string ToString(const ErrorMsg& error_msg) { return MakeString(error_msg); }
+std::string ToString(const ErrorMsg& error_msg) {
+  return detail::MakeString(error_msg);
+}
 std::ostream& operator<<(std::ostream& stream, const ErrorMsg& error_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("ErrorMsg")
       .Build()
@@ -377,11 +379,11 @@ v3::InstrumentDefMsg InstrumentDefMsg::Upgrade() const {
 }
 
 std::string ToString(const InstrumentDefMsg& instrument_def_msg) {
-  return MakeString(instrument_def_msg);
+  return detail::MakeString(instrument_def_msg);
 }
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instrument_def_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("InstrumentDefMsg")
       .Build()
@@ -460,9 +462,9 @@ v3::StatMsg StatMsg::Upgrade() const {
   return ToV3();
 }
 
-std::string ToString(const StatMsg& stat_msg) { return MakeString(stat_msg); }
+std::string ToString(const StatMsg& stat_msg) { return detail::MakeString(stat_msg); }
 std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("StatMsg")
       .Build()
@@ -486,11 +488,11 @@ v2::SymbolMappingMsg SymbolMappingMsg::Upgrade() const {
 }
 
 std::string ToString(const SymbolMappingMsg& symbol_mapping_msg) {
-  return MakeString(symbol_mapping_msg);
+  return detail::MakeString(symbol_mapping_msg);
 }
 std::ostream& operator<<(std::ostream& stream,
                          const SymbolMappingMsg& symbol_mapping_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("SymbolMappingMsg")
       .Build()
@@ -507,9 +509,11 @@ v2::SystemMsg SystemMsg::Upgrade() const {
   return ToV2();
 }
 
-std::string ToString(const SystemMsg& system_msg) { return MakeString(system_msg); }
+std::string ToString(const SystemMsg& system_msg) {
+  return detail::MakeString(system_msg);
+}
 std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("SystemMsg")
       .Build()

@@ -7,6 +7,7 @@ set(headers
   include/databento/dbn_decoder.hpp
   include/databento/dbn_encoder.hpp
   include/databento/dbn_file_store.hpp
+  include/databento/dbn_store.hpp
   include/databento/detail/buffer.hpp
   include/databento/detail/dbn_buffer_decoder.hpp
   include/databento/detail/http_client.hpp
@@ -39,7 +40,8 @@ set(headers
   include/databento/v2.hpp
   include/databento/v3.hpp
   include/databento/with_ts_out.hpp
-  src/stream_op_helper.hpp
+  src/detail/http_stream_reader.hpp
+  src/detail/stream_op_helper.hpp
 )
 
 set(sources
@@ -49,10 +51,11 @@ set(sources
   src/dbn_constants.hpp
   src/dbn_decoder.cpp
   src/dbn_encoder.cpp
-  src/dbn_file_store.cpp
+  src/dbn_store.cpp
   src/detail/buffer.cpp
   src/detail/dbn_buffer_decoder.cpp
   src/detail/http_client.cpp
+  src/detail/http_stream_reader.cpp
   src/detail/json_helpers.cpp
   src/detail/live_connection.cpp
   src/detail/scoped_fd.cpp

@@ -3,7 +3,7 @@
 #include "databento/dbn_decoder.hpp"
 #include "databento/timeseries.hpp"
 #include "dbn_constants.hpp"
-#include "stream_op_helper.hpp"
+#include "detail/stream_op_helper.hpp"
 
 using databento::detail::DbnBufferDecoder;
 
