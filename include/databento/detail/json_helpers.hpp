@@ -93,5 +93,8 @@ std::vector<std::string> ParseAt(std::string_view endpoint, const nlohmann::json
 template <>
 date::year_month_day ParseAt(std::string_view endpoint, const nlohmann::json& json,
                              std::string_view key);
+template <>
+std::optional<std::uint8_t> ParseAt(std::string_view endpoint,
+                                    const nlohmann::json& json, std::string_view key);
 
 }  // namespace databento::detail

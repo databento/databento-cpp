@@ -104,6 +104,7 @@ databento::BatchJob Parse(const std::string& endpoint, const nlohmann::json& jso
   res.ts_process_start = ParseAt<std::string>(endpoint, json, "ts_process_start");
   res.ts_process_done = ParseAt<std::string>(endpoint, json, "ts_process_done");
   res.ts_expiration = ParseAt<std::string>(endpoint, json, "ts_expiration");
+  res.progress = ParseAt<std::optional<std::uint8_t>>(endpoint, json, "progress");
   return res;
 }
 

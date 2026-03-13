@@ -35,7 +35,8 @@ TEST(BatchTests, TestBatchJobToString) {
                         {},
                         {},
                         {},
-                        {}};
+                        {},
+                        std::optional<std::uint8_t>{50}};
   const auto res = ToString(target);
   ASSERT_EQ(res, R"(BatchJob {
     id = "AN_ID",
@@ -67,7 +68,8 @@ TEST(BatchTests, TestBatchJobToString) {
     ts_queued = "",
     ts_process_start = "",
     ts_process_done = "",
-    ts_expiration = ""
+    ts_expiration = "",
+    progress = 50
 })");
 }
 }  // namespace databento::tests

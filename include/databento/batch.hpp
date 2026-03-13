@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -49,6 +50,8 @@ struct BatchJob {
   // Empty if it hasn't finished processing. The expiration is set based on when
   // the job finishes processing, not when it was requested.
   std::string ts_expiration;
+  // Progress percentage (0-100). `nullopt` for jobs that were just submitted.
+  std::optional<std::uint8_t> progress;
 };
 
 // Description of a batch file.
