@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.51.0 - TBD
+## 0.51.0 - 2026-03-17
 
 ### Enhancements
 - Added support for `progress` field in `BatchJob` response
