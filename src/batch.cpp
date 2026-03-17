@@ -47,6 +47,7 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .AddField("ts_process_start", batch_job.ts_process_start)
       .AddField("ts_process_done", batch_job.ts_process_done)
       .AddField("ts_expiration", batch_job.ts_expiration)
+      .AddField("progress", batch_job.progress)
       .Finish();
 }
 

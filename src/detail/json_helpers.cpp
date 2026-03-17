@@ -138,4 +138,20 @@ date::year_month_day ParseAt(std::string_view endpoint, const nlohmann::json& js
   }
   return start;
 }
+template <>
+std::optional<std::uint8_t> ParseAt(std::string_view endpoint,
+                                    const nlohmann::json& json, std::string_view key) {
+  if (!json.contains(key)) {
+    return {};
+  }
+  const auto& val_json = json.at(key);
+  if (val_json.is_null()) {
+    return {};
+  }
+  if (!val_json.is_number_unsigned()) {
+    throw JsonResponseError::TypeMismatch(
+        endpoint, std::string{key} + " unsigned number", val_json);
+  }
+  return val_json.get<std::uint8_t>();
+}
 }  // namespace databento::detail
