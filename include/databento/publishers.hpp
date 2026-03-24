@@ -71,7 +71,7 @@ enum class Venue : std::uint16_t {
   Mprl = 31,
   // Nasdaq Options
   Xndq = 32,
-  // Nasdaq BX Options
+  // Nasdaq Texas Options
   Xbxo = 33,
   // Cboe C2 Options
   C2Ox = 34,
@@ -121,7 +121,7 @@ enum class Dataset : std::uint16_t {
   GlbxMdp3 = 1,
   // Nasdaq TotalView-ITCH
   XnasItch = 2,
-  // Nasdaq BX TotalView-ITCH
+  // Nasdaq Texas TotalView-ITCH
   XbosItch = 3,
   // Nasdaq PSX TotalView-ITCH
   XpsxItch = 4,
@@ -207,7 +207,7 @@ enum class Publisher : std::uint16_t {
   GlbxMdp3Glbx = 1,
   // Nasdaq TotalView-ITCH
   XnasItchXnas = 2,
-  // Nasdaq BX TotalView-ITCH
+  // Nasdaq Texas TotalView-ITCH
   XbosItchXbos = 3,
   // Nasdaq PSX TotalView-ITCH
   XpsxItchXpsx = 4,
@@ -267,7 +267,7 @@ enum class Publisher : std::uint16_t {
   OpraPillarMprl = 31,
   // OPRA - Nasdaq Options
   OpraPillarXndq = 32,
-  // OPRA - Nasdaq BX Options
+  // OPRA - Nasdaq Texas Options
   OpraPillarXbxo = 33,
   // OPRA - Cboe C2 Options
   OpraPillarC2Ox = 34,
@@ -351,7 +351,7 @@ enum class Publisher : std::uint16_t {
   EqusAllEdga = 73,
   // Databento US Equities (All Feeds) - Cboe EDGX
   EqusAllEdgx = 74,
-  // Databento US Equities (All Feeds) - Nasdaq BX
+  // Databento US Equities (All Feeds) - Nasdaq Texas
   EqusAllXbos = 75,
   // Databento US Equities (All Feeds) - Nasdaq PSX
   EqusAllXpsx = 76,
@@ -373,11 +373,11 @@ enum class Publisher : std::uint16_t {
   IfeuImpactXoff = 84,
   // ICE Endex - Off-Market Trades
   NdexImpactXoff = 85,
-  // Nasdaq NLS - Nasdaq BX
+  // Nasdaq NLS - Nasdaq Texas
   XnasNlsXbos = 86,
   // Nasdaq NLS - Nasdaq PSX
   XnasNlsXpsx = 87,
-  // Nasdaq Basic - Nasdaq BX
+  // Nasdaq Basic - Nasdaq Texas
   XnasBasicXbos = 88,
   // Nasdaq Basic - Nasdaq PSX
   XnasBasicXpsx = 89,
