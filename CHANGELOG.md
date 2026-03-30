@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.52.0 - TBD
+## 0.52.0 - 2026-03-31
 
 ### Enhancements
 - Added client-side heartbeat timeout detection: `NextRecord` throws `HeartbeatTimeoutError`
