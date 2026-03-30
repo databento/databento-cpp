@@ -6,8 +6,9 @@
 
 using databento::detail::LiveConnection;
 
-LiveConnection::LiveConnection(const std::string& gateway, std::uint16_t port)
-    : client_{gateway, port} {}
+LiveConnection::LiveConnection(ILogReceiver* log_receiver, const std::string& gateway,
+                               std::uint16_t port)
+    : client_{log_receiver, gateway, port} {}
 
 void LiveConnection::WriteAll(std::string_view str) { client_.WriteAll(str); }
 

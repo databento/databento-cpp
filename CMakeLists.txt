@@ -202,13 +202,16 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_DATE)
     find_package(date REQUIRED)
   endif()
 else()
-  set(date_version 3.0.3)
+  set(date_version 3.0.4)
+  set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
   FetchContent_Declare(
     date_src
     URL https://github.com/HowardHinnant/date/archive/refs/tags/v${date_version}.tar.gz
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
   )
+  # Suppress deprecation warning from date's old cmake_minimum_required
   FetchContent_MakeAvailable(date_src)
+  set(CMAKE_WARN_DEPRECATED ON CACHE BOOL "" FORCE)
   # Ignore compiler warnings in headers
   add_system_include_property(date)
 endif()

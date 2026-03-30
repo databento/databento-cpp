@@ -24,6 +24,9 @@ using Status = databento::IReadable::Status;
 
 namespace {
 constexpr std::size_t kBucketIdLength = 5;
+constexpr std::chrono::seconds kHeartbeatTimeoutMargin{5};
+constexpr auto kDefaultHeartbeatTimeout =
+    std::chrono::seconds{30} + kHeartbeatTimeoutMargin;
 }  // namespace
 
 databento::LiveBuilder LiveBlocking::Builder() { return databento::LiveBuilder{}; }
@@ -46,7 +49,7 @@ LiveBlocking::LiveBlocking(
       heartbeat_interval_{heartbeat_interval},
       compression_{compression},
       slow_reader_behavior_{slow_reader_behavior},
-      connection_{gateway_, port_},
+      connection_{log_receiver_, gateway_, port_},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
@@ -68,7 +71,7 @@ LiveBlocking::LiveBlocking(
       heartbeat_interval_{heartbeat_interval},
       compression_{compression},
       slow_reader_behavior_{slow_reader_behavior},
-      connection_{gateway_, port_},
+      connection_{log_receiver_, gateway_, port_},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
@@ -175,10 +178,22 @@ databento::Metadata LiveBlocking::Start() {
   buffer_.Shift();
   version_ = metadata.version;
   metadata.Upgrade(upgrade_policy_);
+  last_read_time_ = std::chrono::steady_clock::now();
   return metadata;
 }
 
-const databento::Record& LiveBlocking::NextRecord() { return *NextRecord({}); }
+const databento::Record& LiveBlocking::NextRecord() {
+  while (true) {
+    // Use heartbeat timeout as the effective poll timeout
+    const auto hb_timeout = HeartbeatTimeout();
+    const auto* rec = NextRecord(hb_timeout);
+    if (rec) {
+      return *rec;
+    }
+    // throw if the heartbeat deadline has been exceeded
+    CheckHeartbeatTimeout();
+  }
+}
 
 const databento::Record* LiveBlocking::NextRecord(std::chrono::milliseconds timeout) {
   // need some unread_bytes
@@ -186,20 +201,22 @@ const databento::Record* LiveBlocking::NextRecord(std::chrono::milliseconds time
   if (unread_bytes == 0) {
     const auto read_res = FillBuffer(timeout);
     if (read_res.status == Status::Timeout) {
+      CheckHeartbeatTimeout();
       return nullptr;
     }
     if (read_res.status == Status::Closed) {
-      throw DbnResponseError{"Gateway closed the session"};
+      throw LiveApiError{"Gateway closed the session"};
     }
   }
   // check length
   while (buffer_.ReadCapacity() < BufferRecordHeader()->Size()) {
     const auto read_res = FillBuffer(timeout);
     if (read_res.status == Status::Timeout) {
+      CheckHeartbeatTimeout();
       return nullptr;
     }
     if (read_res.status == Status::Closed) {
-      throw DbnResponseError{"Gateway closed the session"};
+      throw LiveApiError{"Gateway closed the session"};
     }
   }
   current_record_ = Record{BufferRecordHeader()};
@@ -218,10 +235,11 @@ void LiveBlocking::Reconnect() {
     log_msg << "Reconnecting to " << gateway_ << ':' << port_;
     log_receiver_->Receive(LogLevel::Info, log_msg.str());
   }
-  connection_ = detail::LiveConnection{gateway_, port_};
+  connection_ = detail::LiveConnection{log_receiver_, gateway_, port_};
   buffer_.Clear();
   sub_counter_ = 0;
   session_id_ = this->Authenticate();
+  last_read_time_ = std::chrono::steady_clock::now();
 }
 
 void LiveBlocking::Resubscribe() {
@@ -435,9 +453,30 @@ databento::IReadable::Result LiveBlocking::FillBuffer(
   const auto read_res =
       connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity(), timeout);
   buffer_.Fill(read_res.read_size);
+  if (read_res.read_size > 0) {
+    last_read_time_ = std::chrono::steady_clock::now();
+  }
   return read_res;
 }
 
 databento::RecordHeader* LiveBlocking::BufferRecordHeader() {
   return reinterpret_cast<RecordHeader*>(buffer_.ReadBegin());
+}
+
+std::chrono::milliseconds LiveBlocking::HeartbeatTimeout() const {
+  if (heartbeat_interval_) {
+    return std::chrono::milliseconds{*heartbeat_interval_ + kHeartbeatTimeoutMargin};
+  }
+  return std::chrono::milliseconds{kDefaultHeartbeatTimeout};
+}
+
+void LiveBlocking::CheckHeartbeatTimeout() const {
+  const auto timeout = heartbeat_interval_.has_value()
+                           ? *heartbeat_interval_ + kHeartbeatTimeoutMargin
+                           : kDefaultHeartbeatTimeout;
+  const auto elapsed = std::chrono::steady_clock::now() - last_read_time_;
+  if (elapsed > timeout) {
+    throw HeartbeatTimeoutError{
+        std::chrono::duration_cast<std::chrono::seconds>(elapsed)};
+  }
 }

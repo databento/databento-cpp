@@ -9,6 +9,11 @@
 #include "databento/detail/scoped_fd.hpp"  // ScopedFd
 #include "databento/ireadable.hpp"
 
+// Forward declare
+namespace databento {
+class ILogReceiver;
+}
+
 namespace databento::detail {
 class TcpClient {
  public:
@@ -17,8 +22,9 @@ class TcpClient {
     std::chrono::seconds max_wait{std::chrono::minutes{1}};
   };
 
-  TcpClient(const std::string& gateway, std::uint16_t port);
-  TcpClient(const std::string& gateway, std::uint16_t port, RetryConf retry_conf);
+  TcpClient(ILogReceiver* log_receiver, const std::string& gateway, std::uint16_t port);
+  TcpClient(ILogReceiver* log_receiver, const std::string& gateway, std::uint16_t port,
+            RetryConf retry_conf);
 
   void WriteAll(std::string_view str);
   void WriteAll(const std::byte* buffer, std::size_t size);
@@ -32,8 +38,8 @@ class TcpClient {
   void Close();
 
  private:
-  static ScopedFd InitSocket(const std::string& gateway, std::uint16_t port,
-                             RetryConf retry_conf);
+  static ScopedFd InitSocket(ILogReceiver* log_receiver, const std::string& gateway,
+                             std::uint16_t port, RetryConf retry_conf);
 
   ScopedFd socket_;
 };

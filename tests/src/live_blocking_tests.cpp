@@ -625,7 +625,7 @@ TEST_F(LiveBlockingTests, TestNextRecordThrowsOnGatewayClose) {
     std::unique_lock<std::mutex> lock{has_closed_mutex};
     has_closed_cv.wait(lock, [&has_closed] { return has_closed; });
   }
-  ASSERT_THROW(target.NextRecord(), databento::DbnResponseError);
+  ASSERT_THROW(target.NextRecord(), databento::LiveApiError);
 }
 
 TEST_F(LiveBlockingTests, TestReconnectAndResubscribe) {
@@ -698,7 +698,7 @@ TEST_F(LiveBlockingTests, TestReconnectAndResubscribe) {
     std::unique_lock<std::mutex> lock{has_closed_mutex};
     has_closed_cv.wait(lock, [&has_closed] { return has_closed; });
   }
-  ASSERT_THROW(target.NextRecord(), databento::DbnResponseError);
+  ASSERT_THROW(target.NextRecord(), databento::LiveApiError);
   target.Reconnect();
   target.Resubscribe();
   ASSERT_EQ(target.Subscriptions().size(), 1);
@@ -710,4 +710,59 @@ TEST_F(LiveBlockingTests, TestReconnectAndResubscribe) {
   ASSERT_TRUE(rec2.Holds<TradeMsg>());
   ASSERT_EQ(rec2.Get<TradeMsg>(), kRec);
 }
+
+TEST_F(LiveBlockingTests, TestHeartbeatTimeoutOnNextRecord) {
+  constexpr auto kTsOut = false;
+  constexpr auto kHeartbeatInterval = std::chrono::seconds{1};
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, kTsOut, kHeartbeatInterval, [](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        // Let the heartbeat timeout trigger
+        std::this_thread::sleep_for(std::chrono::seconds{8});
+      }};
+
+  LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetHeartbeatInterval(kHeartbeatInterval)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  ASSERT_THROW(target.NextRecord(), databento::HeartbeatTimeoutError);
+}
+
+TEST_F(LiveBlockingTests, TestHeartbeatTimeoutOnNextRecordWithTimeout) {
+  constexpr auto kTsOut = false;
+  constexpr auto kHeartbeatInterval = std::chrono::seconds{1};
+  constexpr std::chrono::milliseconds kTimeout{50};
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, kTsOut, kHeartbeatInterval, [](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        // Let the heartbeat timeout trigger
+        std::this_thread::sleep_for(std::chrono::seconds{8});
+      }};
+
+  LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetHeartbeatInterval(kHeartbeatInterval)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  // With 50ms timeout and 1s+10s heartbeat interval, we should get nullptr
+  // returns initially, then eventually a heartbeat timeout exception
+  bool got_timeout_exception = false;
+  for (int i = 0; i < 500; ++i) {
+    try {
+      const auto* rec = target.NextRecord(kTimeout);
+      if (rec != nullptr) {
+        FAIL() << "Expected nullptr or exception, got a record";
+      }
+    } catch (const databento::HeartbeatTimeoutError& e) {
+      EXPECT_NE(std::string{e.what()}.find("Heartbeat timeout"), std::string::npos);
+      got_timeout_exception = true;
+      break;
+    }
+  }
+  EXPECT_TRUE(got_timeout_exception) << "Expected heartbeat timeout exception";
+}
+
 }  // namespace databento::tests

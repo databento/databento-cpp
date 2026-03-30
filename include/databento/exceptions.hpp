@@ -6,6 +6,7 @@
 #include <httplib.h>          // Error
 #include <nlohmann/json.hpp>  // json, parse_error
 
+#include <chrono>
 #include <cstdint>
 #include <exception>
 #include <string>
@@ -130,6 +131,20 @@ class JsonResponseError : public Exception {
 class DbnResponseError : public Exception {
  public:
   explicit DbnResponseError(std::string message) : Exception{std::move(message)} {}
+};
+
+// Exception indicating no data was received within the heartbeat timeout window.
+class HeartbeatTimeoutError : public Exception {
+ public:
+  explicit HeartbeatTimeoutError(std::chrono::seconds elapsed)
+      : Exception{BuildMessage(elapsed)}, elapsed_{elapsed} {}
+
+  std::chrono::seconds Elapsed() const { return elapsed_; }
+
+ private:
+  static std::string BuildMessage(std::chrono::seconds elapsed);
+
+  const std::chrono::seconds elapsed_;
 };
 
 // Exception indicating something internal to the live API, but unrelated to TCP

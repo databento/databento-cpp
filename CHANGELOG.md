@@ -3,7 +3,13 @@
 ## 0.52.0 - TBD
 
 ### Enhancements
+- Added client-side heartbeat timeout detection: `NextRecord` throws `HeartbeatTimeoutError`
+  if no data is received for `heartbeat_interval` + 5 seconds (defaults to 35 seconds)
 - Changed `SlowReaderBehavior::Skip` to send "skip" instead of "drop" to the gateway
+
+### Breaking changes
+- `NextRecord` now throws `LiveApiError` instead of `DbnResponseError` when the gateway
+  closes the session. Code catching `DbnResponseError` for this case should be updated
 
 ## 0.51.0 - 2026-03-17
 
