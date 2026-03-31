@@ -5,7 +5,7 @@
 #else
 #include <netdb.h>       // addrinfo, gai_strerror, getaddrinfo, freeaddrinfo
 #include <netinet/in.h>  // htons, IPPROTO_TCP
-#include <sys/poll.h>    // pollfd, POLLHUP
+#include <sys/poll.h>    // pollfd
 #include <sys/socket.h>  // AF_INET, connect, recv, send, sockaddr, sockaddr_in, socket, SOCK_STREAM
 #include <unistd.h>  // close, ssize_t
 
@@ -18,6 +18,7 @@
 #include <thread>
 
 #include "databento/exceptions.hpp"  // TcpError
+#include "databento/log.hpp"         // ILogReceiver
 
 using databento::detail::TcpClient;
 using Status = databento::IReadable::Status;
@@ -32,12 +33,13 @@ int GetErrNo() {
 }
 }  // namespace
 
-TcpClient::TcpClient(const std::string& gateway, std::uint16_t port)
-    : TcpClient{gateway, port, {}} {}
+TcpClient::TcpClient(ILogReceiver* log_receiver, const std::string& gateway,
+                     std::uint16_t port)
+    : TcpClient{log_receiver, gateway, port, {}} {}
 
-TcpClient::TcpClient(const std::string& gateway, std::uint16_t port,
-                     RetryConf retry_conf)
-    : socket_{InitSocket(gateway, port, retry_conf)} {}
+TcpClient::TcpClient(ILogReceiver* log_receiver, const std::string& gateway,
+                     std::uint16_t port, RetryConf retry_conf)
+    : socket_{InitSocket(log_receiver, gateway, port, retry_conf)} {}
 
 void TcpClient::WriteAll(std::string_view str) {
   WriteAll(reinterpret_cast<const std::byte*>(str.data()), str.length());
@@ -103,9 +105,12 @@ databento::IReadable::Result TcpClient::ReadSome(std::byte* buffer,
 
 void TcpClient::Close() { socket_.Close(); }
 
-databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
+databento::detail::ScopedFd TcpClient::InitSocket(ILogReceiver* log_receiver,
+                                                  const std::string& gateway,
                                                   std::uint16_t port,
                                                   RetryConf retry_conf) {
+  static constexpr auto kMethod = "TcpClient::TcpClient";
+
   const detail::Socket fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (fd == -1) {
     throw TcpError{::GetErrNo(), "Failed to create socket"};
@@ -121,7 +126,7 @@ databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
   const auto ret =
       ::getaddrinfo(gateway.c_str(), std::to_string(port).c_str(), &hints, &out);
   if (ret != 0) {
-    throw InvalidArgumentError{"TcpClient::TcpClient", "addr", ::gai_strerror(ret)};
+    throw InvalidArgumentError{kMethod, "addr", ::gai_strerror(ret)};
   }
   std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> res{out, &::freeaddrinfo};
   const auto max_attempts = std::max<std::uint32_t>(retry_conf.max_attempts, 1);
@@ -134,7 +139,12 @@ databento::detail::ScopedFd TcpClient::InitSocket(const std::string& gateway,
       err_msg << "Socket failed to connect after " << max_attempts << " attempts";
       throw TcpError{::GetErrNo(), err_msg.str()};
     }
-    // TODO(cg): Log
+    std::ostringstream log_msg;
+    log_msg << '[' << kMethod << "] Connection attempt " << (attempt + 1) << " to "
+            << gateway << ':' << port << " failed, retrying in " << backoff.count()
+            << " seconds";
+    log_receiver->Receive(LogLevel::Warning, log_msg.str());
+
     std::this_thread::sleep_for(backoff);
     backoff = (std::min)(backoff * 2, retry_conf.max_wait);
   }

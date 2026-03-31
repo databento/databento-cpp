@@ -7,9 +7,9 @@
 #include <string_view>
 #include <vector>
 
-#include "databento/batch.hpp"     // BatchJob
-#include "databento/datetime.hpp"  // DateRange, DateTimeRange, UnixNanos
-#include "databento/dbn_file_store.hpp"
+#include "databento/batch.hpp"               // BatchJob
+#include "databento/datetime.hpp"            // DateRange, DateTimeRange, UnixNanos
+#include "databento/dbn_store.hpp"           // DbnStore
 #include "databento/detail/http_client.hpp"  // HttpClient
 #include "databento/enums.hpp"  // BatchState, Delivery, DurationInterval, Schema, SType, VersionUpgradePolicy
 #include "databento/metadata.hpp"  // DatasetConditionDetail, DatasetRange, FieldDetail, PublisherDetail, UnitPricesForMode
@@ -188,31 +188,53 @@ class Historical {
                           SType stype_in, SType stype_out, std::uint64_t limit,
                           const MetadataCallback& metadata_callback,
                           const RecordCallback& record_callback);
-  // Stream historical market data to a file at `path`. Returns a `DbnFileStore`
+  // Stream historical market data and return a `DbnStore` that can be consumed
+  // using `Metadata()` / `NextRecord()`.
+  //
+  // WARNING: Calling this method will incur a cost.
+  DbnStore TimeseriesGetRange(const std::string& dataset,
+                              const DateTimeRange<UnixNanos>& datetime_range,
+                              const std::vector<std::string>& symbols, Schema schema);
+  DbnStore TimeseriesGetRange(const std::string& dataset,
+                              const DateTimeRange<std::string>& datetime_range,
+                              const std::vector<std::string>& symbols, Schema schema);
+  DbnStore TimeseriesGetRange(const std::string& dataset,
+                              const DateTimeRange<UnixNanos>& datetime_range,
+                              const std::vector<std::string>& symbols, Schema schema,
+                              SType stype_in, SType stype_out, std::uint64_t limit);
+  DbnStore TimeseriesGetRange(const std::string& dataset,
+                              const DateTimeRange<std::string>& datetime_range,
+                              const std::vector<std::string>& symbols, Schema schema,
+                              SType stype_in, SType stype_out, std::uint64_t limit);
+
+  // Stream historical market data to a file at `path`. Returns a `DbnStore`
   // object for replaying the data in `file_path`.
   //
   // If a file at `file_path` already exists, it will be overwritten.
   //
   // WARNING: Calling this method will incur a cost.
-  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
-                                        const DateTimeRange<UnixNanos>& datetime_range,
-                                        const std::vector<std::string>& symbols,
-                                        Schema schema,
-                                        const std::filesystem::path& file_path);
-  DbnFileStore TimeseriesGetRangeToFile(
-      const std::string& dataset, const DateTimeRange<std::string>& datetime_range,
-      const std::vector<std::string>& symbols, Schema schema,
-      const std::filesystem::path& file_path);
-  DbnFileStore TimeseriesGetRangeToFile(const std::string& dataset,
-                                        const DateTimeRange<UnixNanos>& datetime_range,
-                                        const std::vector<std::string>& symbols,
-                                        Schema schema, SType stype_in, SType stype_out,
-                                        std::uint64_t limit,
-                                        const std::filesystem::path& file_path);
-  DbnFileStore TimeseriesGetRangeToFile(
-      const std::string& dataset, const DateTimeRange<std::string>& datetime_range,
-      const std::vector<std::string>& symbols, Schema schema, SType stype_in,
-      SType stype_out, std::uint64_t limit, const std::filesystem::path& file_path);
+  DbnStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                    const DateTimeRange<UnixNanos>& datetime_range,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema,
+                                    const std::filesystem::path& file_path);
+  DbnStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                    const DateTimeRange<std::string>& datetime_range,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema,
+                                    const std::filesystem::path& file_path);
+  DbnStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                    const DateTimeRange<UnixNanos>& datetime_range,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema, SType stype_in, SType stype_out,
+                                    std::uint64_t limit,
+                                    const std::filesystem::path& file_path);
+  DbnStore TimeseriesGetRangeToFile(const std::string& dataset,
+                                    const DateTimeRange<std::string>& datetime_range,
+                                    const std::vector<std::string>& symbols,
+                                    Schema schema, SType stype_in, SType stype_out,
+                                    std::uint64_t limit,
+                                    const std::filesystem::path& file_path);
 
  private:
   friend HistoricalBuilder;
@@ -237,8 +259,9 @@ class Historical {
   void TimeseriesGetRange(const HttplibParams& params,
                           const MetadataCallback& metadata_callback,
                           const RecordCallback& record_callback);
-  DbnFileStore TimeseriesGetRangeToFile(const HttplibParams& params,
-                                        const std::filesystem::path& file_path);
+  DbnStore TimeseriesGetRange(const HttplibParams& params);
+  DbnStore TimeseriesGetRangeToFile(const HttplibParams& params,
+                                    const std::filesystem::path& file_path);
 
   ILogReceiver* log_receiver_;
   const std::string key_;

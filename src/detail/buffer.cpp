@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "databento/exceptions.hpp"
-#include "stream_op_helper.hpp"
+#include "detail/stream_op_helper.hpp"
 
 using databento::detail::Buffer;
 using Status = databento::IReadable::Status;

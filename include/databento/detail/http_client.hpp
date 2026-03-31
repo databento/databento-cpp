@@ -9,10 +9,12 @@
 #include <nlohmann/json.hpp>
 
 #include <cstdint>
+#include <memory>  // unique_ptr
 #include <string>
 
 namespace databento {
 class ILogReceiver;
+class IReadable;
 namespace detail {
 class HttpClient {
  public:
@@ -27,6 +29,8 @@ class HttpClient {
                     const httplib::ContentReceiver& callback);
   void PostRawStream(const std::string& path, const httplib::Params& form_params,
                      const httplib::ContentReceiver& callback);
+  std::unique_ptr<IReadable> OpenPostStream(const std::string& path,
+                                            const httplib::Params& form_params);
 
  private:
   static bool IsErrorStatus(int status_code);

@@ -14,7 +14,7 @@
 
 #include "databento/datetime.hpp"  // TimeDeltaNanos, UnixNanos
 
-namespace databento {
+namespace databento::detail {
 template <typename T>
 // Helper for types that implement a stream operator
 std::string MakeString(const T& val) {
@@ -172,4 +172,4 @@ class StreamOpBuilder {
   std::string type_name_;
   std::string spacer_;
 };
-}  // namespace databento
+}  // namespace databento::detail

@@ -13,12 +13,18 @@
 #include "databento/ireadable.hpp"
 #include "databento/iwritable.hpp"
 
+// Forward declare
+namespace databento {
+class ILogReceiver;
+}
+
 namespace databento::detail {
 // Manages the TCP connection to the live gateway with optionally compressed reads for
 // the DBN data.
 class LiveConnection : IWritable {
  public:
-  LiveConnection(const std::string& gateway, std::uint16_t port);
+  LiveConnection(ILogReceiver* log_receiver, const std::string& gateway,
+                 std::uint16_t port);
 
   void WriteAll(std::string_view str);
   void WriteAll(const std::byte* buffer, std::size_t size);

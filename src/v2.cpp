@@ -2,7 +2,7 @@
 
 #include "databento/pretty.hpp"  // Px
 #include "databento/v3.hpp"
-#include "stream_op_helper.hpp"
+#include "detail/stream_op_helper.hpp"  // MakeString, StreamOpBuilder
 
 namespace databento::v2 {
 databento::v3::InstrumentDefMsg InstrumentDefMsg::ToV3() const {
@@ -155,11 +155,11 @@ databento::InstrumentDefMsg InstrumentDefMsg::Upgrade() const {
 }
 
 std::string ToString(const InstrumentDefMsg& instrument_def_msg) {
-  return MakeString(instrument_def_msg);
+  return detail::MakeString(instrument_def_msg);
 }
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instrument_def_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("InstrumentDefMsg")
       .Build()

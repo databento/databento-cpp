@@ -1,9 +1,26 @@
 # Changelog
 
+## 0.52.0 - 2026-03-31
+
+### Enhancements
+- Added client-side heartbeat timeout detection: `NextRecord` throws `HeartbeatTimeoutError`
+  if no data is received for `heartbeat_interval` + 5 seconds (defaults to 35 seconds)
+- Changed `SlowReaderBehavior::Skip` to send "skip" instead of "drop" to the gateway
+
+### Breaking changes
+- `NextRecord` now throws `LiveApiError` instead of `DbnResponseError` when the gateway
+  closes the session. Code catching `DbnResponseError` for this case should be updated
+
 ## 0.51.0 - 2026-03-17
 
 ### Enhancements
 - Added support for `progress` field in `BatchJob` response
+- Added blocking (pull-based) `TimeseriesGetRange` overloads that return a `DbnStore`
+  with `GetMetadata()` and `NextRecord()` methods, unifying the consumption pattern
+  across historical, live, and file sources
+- Generalized `DbnFileStore` into `DbnStore` which accepts any `IReadable` source.
+  `DbnFileStore` is retained as a type alias for backwards compatibility
+- Upgraded default `httplib` version to 0.37.2
 
 ## 0.50.0 - 2026-03-03
 

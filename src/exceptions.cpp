@@ -89,6 +89,15 @@ JsonResponseError JsonResponseError::TypeMismatch(std::string_view method_name,
   return JsonResponseError{err_msg.str()};
 }
 
+using databento::HeartbeatTimeoutError;
+
+std::string HeartbeatTimeoutError::BuildMessage(std::chrono::seconds elapsed) {
+  std::ostringstream err_msg;
+  err_msg << "Heartbeat timeout: no data received for " << elapsed.count()
+          << " seconds";
+  return err_msg.str();
+}
+
 using databento::LiveApiError;
 
 LiveApiError LiveApiError::UnexpectedMsg(std::string_view message,

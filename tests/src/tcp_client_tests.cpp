@@ -9,14 +9,18 @@
 
 #include "databento/detail/tcp_client.hpp"
 #include "databento/exceptions.hpp"
+#include "databento/log.hpp"
 #include "mock/mock_tcp_server.hpp"
 
 namespace databento::tests {
 class TcpClientTests : public testing::Test {
  protected:
   TcpClientTests()
-      : testing::Test(), mock_server_{}, target_{"127.0.0.1", mock_server_.Port()} {}
+      : testing::Test(),
+        mock_server_{},
+        target_{&logger_, "127.0.0.1", mock_server_.Port()} {}
 
+  NullLogReceiver logger_;
   mock::MockTcpServer mock_server_;
   detail::TcpClient target_;
 };
@@ -104,7 +108,7 @@ TEST_F(TcpClientTests, TestReadSomeTimeout) {
         server.Send();
         server.Close();
       }};
-  target_ = {"127.0.0.1", mock_server.Port()};
+  target_ = detail::TcpClient{&logger_, "127.0.0.1", mock_server.Port()};
 
   std::array<std::byte, 10> buffer{};
   const auto res =
@@ -123,7 +127,7 @@ TEST_F(TcpClientTests, TestReadCloseNoTimeout) {
     server.Accept();
     server.Close();
   }};
-  target_ = {"127.0.0.1", mock_server.Port()};
+  target_ = detail::TcpClient{&logger_, "127.0.0.1", mock_server.Port()};
 
   constexpr std::chrono::milliseconds kTimeout{5};
 

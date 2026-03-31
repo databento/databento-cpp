@@ -20,6 +20,7 @@
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/dbn_file_store.hpp"
+#include "databento/dbn_store.hpp"
 #include "databento/detail/dbn_buffer_decoder.hpp"
 #include "databento/detail/json_helpers.hpp"
 #include "databento/detail/sha256_hasher.hpp"
@@ -1002,10 +1003,61 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
   }
 }
 
+databento::DbnStore Historical::TimeseriesGetRange(
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema) {
+  return this->TimeseriesGetRange(dataset, datetime_range, symbols, schema,
+                                  kDefaultSTypeIn, kDefaultSTypeOut, {});
+}
+databento::DbnStore Historical::TimeseriesGetRange(
+    const std::string& dataset, const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema) {
+  return this->TimeseriesGetRange(dataset, datetime_range, symbols, schema,
+                                  kDefaultSTypeIn, kDefaultSTypeOut, {});
+}
+databento::DbnStore Historical::TimeseriesGetRange(
+    const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+    SType stype_out, std::uint64_t limit) {
+  httplib::Params params{
+      {"dataset", dataset},
+      {"encoding", "dbn"},
+      {"compression", "zstd"},
+      {"start", ToString(datetime_range.start)},
+      {"symbols", JoinSymbolStrings(kTimeseriesGetRangeEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)},
+      {"stype_out", ToString(stype_out)}};
+  detail::SetIfPositive(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
+  return this->TimeseriesGetRange(params);
+}
+databento::DbnStore Historical::TimeseriesGetRange(
+    const std::string& dataset, const DateTimeRange<std::string>& datetime_range,
+    const std::vector<std::string>& symbols, Schema schema, SType stype_in,
+    SType stype_out, std::uint64_t limit) {
+  httplib::Params params{
+      {"dataset", dataset},
+      {"encoding", "dbn"},
+      {"compression", "zstd"},
+      {"start", datetime_range.start},
+      {"symbols", JoinSymbolStrings(kTimeseriesGetRangeEndpoint, symbols)},
+      {"schema", ToString(schema)},
+      {"stype_in", ToString(stype_in)},
+      {"stype_out", ToString(stype_out)}};
+  detail::SetIfNotEmpty(&params, "end", datetime_range.end);
+  detail::SetIfPositive(&params, "limit", limit);
+  return this->TimeseriesGetRange(params);
+}
+databento::DbnStore Historical::TimeseriesGetRange(const HttplibParams& params) {
+  auto stream = client_.OpenPostStream(kTimeseriesGetRangePath, params);
+  return DbnStore{log_receiver_, std::move(stream), upgrade_policy_};
+}
+
 static const std::string kTimeseriesGetRangeToFileEndpoint =
     "Historical::TimeseriesGetRangeToFile";
 
-databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
+databento::DbnStore Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema,
     const std::filesystem::path& file_path) {
@@ -1013,7 +1065,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
                                         kDefaultSTypeIn, kDefaultSTypeOut, {},
                                         file_path);
 }
-databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
+databento::DbnStore Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const DateTimeRange<std::string>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema,
     const std::filesystem::path& file_path) {
@@ -1021,7 +1073,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
                                         kDefaultSTypeIn, kDefaultSTypeOut, {},
                                         file_path);
 }
-databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
+databento::DbnStore Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     SType stype_out, std::uint64_t limit, const std::filesystem::path& file_path) {
@@ -1038,7 +1090,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
   detail::SetIfPositive(&params, "limit", limit);
   return this->TimeseriesGetRangeToFile(params, file_path);
 }
-databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
+databento::DbnStore Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const DateTimeRange<std::string>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     SType stype_out, std::uint64_t limit, const std::filesystem::path& file_path) {
@@ -1055,7 +1107,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
   detail::SetIfPositive(&params, "limit", limit);
   return this->TimeseriesGetRangeToFile(params, file_path);
 }
-databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
+databento::DbnStore Historical::TimeseriesGetRangeToFile(
     const HttplibParams& params, const std::filesystem::path& file_path) {
   {
     OutFileStream out_file{file_path};
@@ -1066,7 +1118,7 @@ databento::DbnFileStore Historical::TimeseriesGetRangeToFile(
                                   return true;
                                 });
   }  // Flush out_file
-  return DbnFileStore{log_receiver_, file_path, upgrade_policy_};
+  return DbnStore{log_receiver_, file_path, upgrade_policy_};
 }
 
 using databento::HistoricalBuilder;

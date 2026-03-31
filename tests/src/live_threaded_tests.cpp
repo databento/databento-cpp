@@ -322,7 +322,7 @@ TEST_F(LiveThreadedTests, TestExceptionCallbackReconnectAndResubscribe) {
                              kSType](const std::exception& exc) {
     ++exception_calls;
     if (exception_calls == 1) {
-      EXPECT_NE(dynamic_cast<const databento::DbnResponseError*>(&exc), nullptr)
+      EXPECT_NE(dynamic_cast<const databento::LiveApiError*>(&exc), nullptr)
           << "Unexpected exception type";
       target.Reconnect();
       target.Resubscribe();
@@ -399,7 +399,7 @@ TEST_F(LiveThreadedTests, TestDeadlockPrevention) {
   };
   const auto exception_cb = [&target, &metadata_cb, &record_cb, &kSymbols, kSchema,
                              kSType](const std::exception& exc) {
-    EXPECT_NE(dynamic_cast<const databento::DbnResponseError*>(&exc), nullptr)
+    EXPECT_NE(dynamic_cast<const databento::LiveApiError*>(&exc), nullptr)
         << "Unexpected exception type";
     target.Reconnect();
     target.Subscribe(kSymbols, kSchema, kSType);

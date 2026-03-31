@@ -2,18 +2,20 @@
 
 #include <sstream>
 
-#include "stream_op_helper.hpp"
+#include "detail/stream_op_helper.hpp"
 
 namespace databento {
-std::string ToString(const BatchJob& batch_job) { return MakeString(batch_job); }
+std::string ToString(const BatchJob& batch_job) {
+  return detail::MakeString(batch_job);
+}
 
 std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
   std::ostringstream symbol_stream;
-  auto symbol_helper = StreamOpBuilder{symbol_stream}.SetSpacer(" ").Build();
+  auto symbol_helper = detail::StreamOpBuilder{symbol_stream}.SetSpacer(" ").Build();
   for (const auto& symbol : batch_job.symbols) {
     symbol_helper.AddItem(symbol);
   }
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("BatchJob")
       .Build()
@@ -51,10 +53,12 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .Finish();
 }
 
-std::string ToString(const BatchFileDesc& file_desc) { return MakeString(file_desc); }
+std::string ToString(const BatchFileDesc& file_desc) {
+  return detail::MakeString(file_desc);
+}
 
 std::ostream& operator<<(std::ostream& stream, const BatchFileDesc& file_desc) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("BatchFileDesc")
       .Build()

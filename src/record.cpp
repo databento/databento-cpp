@@ -5,13 +5,13 @@
 #include "databento/enums.hpp"
 #include "databento/exceptions.hpp"  // InvalidArgumentError
 #include "databento/pretty.hpp"      // Px
-#include "stream_op_helper.hpp"
+#include "detail/stream_op_helper.hpp"
 
 using databento::Record;
 using databento::RecordHeader;
 
 std::size_t RecordHeader::Size() const {
-  return static_cast<size_t>(length) * kLengthMultiplier;
+  return static_cast<std::size_t>(length) * kLengthMultiplier;
 }
 
 std::size_t Record::Size() const { return record_->Size(); }
@@ -212,18 +212,18 @@ bool databento::operator==(const ImbalanceMsg& lhs, const ImbalanceMsg& rhs) {
 }
 
 namespace databento {
-std::string ToString(const Record& record) { return MakeString(record); }
+std::string ToString(const Record& record) { return detail::MakeString(record); }
 std::ostream& operator<<(std::ostream& stream, const Record& record) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("Record")
       .Build()
       .AddField("ptr", record.Header())
       .Finish();
 }
-std::string ToString(const RecordHeader& header) { return MakeString(header); }
+std::string ToString(const RecordHeader& header) { return detail::MakeString(header); }
 std::ostream& operator<<(std::ostream& stream, const RecordHeader& header) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("RecordHeader")
       .Build()
@@ -235,9 +235,9 @@ std::ostream& operator<<(std::ostream& stream, const RecordHeader& header) {
       .Finish();
 }
 
-std::string ToString(const MboMsg& mbo_msg) { return MakeString(mbo_msg); }
+std::string ToString(const MboMsg& mbo_msg) { return detail::MakeString(mbo_msg); }
 std::ostream& operator<<(std::ostream& stream, const MboMsg& mbo_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("MboMsg")
       .Build()
@@ -256,10 +256,10 @@ std::ostream& operator<<(std::ostream& stream, const MboMsg& mbo_msg) {
 }
 
 std::string ToString(const BidAskPair& bid_ask_pair) {
-  return MakeString(bid_ask_pair);
+  return detail::MakeString(bid_ask_pair);
 }
 std::ostream& operator<<(std::ostream& stream, const BidAskPair& bid_ask_pair) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("BidAskPair")
       .Build()
@@ -273,11 +273,11 @@ std::ostream& operator<<(std::ostream& stream, const BidAskPair& bid_ask_pair) {
 }
 
 std::string ToString(const ConsolidatedBidAskPair& consolidated_bid_ask_pair) {
-  return MakeString(consolidated_bid_ask_pair);
+  return detail::MakeString(consolidated_bid_ask_pair);
 }
 std::ostream& operator<<(std::ostream& stream,
                          const ConsolidatedBidAskPair& consolidated_bid_ask_pair) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer(" ")
       .SetTypeName("ConsolidatedBidAskPair")
       .Build()
@@ -290,9 +290,11 @@ std::ostream& operator<<(std::ostream& stream,
       .Finish();
 }
 
-std::string ToString(const TradeMsg& trade_msg) { return MakeString(trade_msg); }
+std::string ToString(const TradeMsg& trade_msg) {
+  return detail::MakeString(trade_msg);
+}
 std::ostream& operator<<(std::ostream& stream, const TradeMsg& trade_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("TradeMsg")
       .Build()
@@ -309,9 +311,9 @@ std::ostream& operator<<(std::ostream& stream, const TradeMsg& trade_msg) {
       .Finish();
 }
 
-std::string ToString(const Mbp1Msg& mbp1_msg) { return MakeString(mbp1_msg); }
+std::string ToString(const Mbp1Msg& mbp1_msg) { return detail::MakeString(mbp1_msg); }
 std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp1_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("Mbp1Msg")
       .Build()
@@ -330,15 +332,18 @@ std::ostream& operator<<(std::ostream& stream, const Mbp1Msg& mbp1_msg) {
       .Finish();
 }
 
-std::string ToString(const Mbp10Msg& mbp10_msg) { return MakeString(mbp10_msg); }
+std::string ToString(const Mbp10Msg& mbp10_msg) {
+  return detail::MakeString(mbp10_msg);
+}
 std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp10_msg) {
   std::ostringstream sub_ss;
-  auto helper = StreamOpBuilder{sub_ss}.SetSpacer("\n    ").SetIndent("    ").Build();
+  auto helper =
+      detail::StreamOpBuilder{sub_ss}.SetSpacer("\n    ").SetIndent("    ").Build();
   for (const auto& level : mbp10_msg.levels) {
     helper.AddItem(level);
   }
 
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("Mbp10Msg")
       .Build()
@@ -356,9 +361,9 @@ std::ostream& operator<<(std::ostream& stream, const Mbp10Msg& mbp10_msg) {
       .Finish();
 }
 
-std::string ToString(const BboMsg& bbo_msg) { return MakeString(bbo_msg); }
+std::string ToString(const BboMsg& bbo_msg) { return detail::MakeString(bbo_msg); }
 std::ostream& operator<<(std::ostream& stream, const BboMsg& bbo_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("BboMsg")
       .Build()
@@ -374,9 +379,11 @@ std::ostream& operator<<(std::ostream& stream, const BboMsg& bbo_msg) {
       .Finish();
 }
 
-std::string ToString(const Cmbp1Msg& cmbp1_msg) { return MakeString(cmbp1_msg); }
+std::string ToString(const Cmbp1Msg& cmbp1_msg) {
+  return detail::MakeString(cmbp1_msg);
+}
 std::ostream& operator<<(std::ostream& stream, const Cmbp1Msg& cmbp1_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("Cmbp1Msg")
       .Build()
@@ -393,9 +400,9 @@ std::ostream& operator<<(std::ostream& stream, const Cmbp1Msg& cmbp1_msg) {
       .Finish();
 }
 
-std::string ToString(const CbboMsg& cbbo_msg) { return MakeString(cbbo_msg); }
+std::string ToString(const CbboMsg& cbbo_msg) { return detail::MakeString(cbbo_msg); }
 std::ostream& operator<<(std::ostream& stream, const CbboMsg& cbbo_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("CbboMsg")
       .Build()
@@ -410,9 +417,11 @@ std::ostream& operator<<(std::ostream& stream, const CbboMsg& cbbo_msg) {
       .Finish();
 }
 
-std::string ToString(const OhlcvMsg& ohlcv_msg) { return MakeString(ohlcv_msg); }
+std::string ToString(const OhlcvMsg& ohlcv_msg) {
+  return detail::MakeString(ohlcv_msg);
+}
 std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("OhlcvMsg")
       .Build()
@@ -425,9 +434,11 @@ std::ostream& operator<<(std::ostream& stream, const OhlcvMsg& ohlcv_msg) {
       .Finish();
 }
 
-std::string ToString(const StatusMsg& status_msg) { return MakeString(status_msg); }
+std::string ToString(const StatusMsg& status_msg) {
+  return detail::MakeString(status_msg);
+}
 std::ostream& operator<<(std::ostream& stream, const StatusMsg& status_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("StatusMsg")
       .Build()
@@ -443,11 +454,11 @@ std::ostream& operator<<(std::ostream& stream, const StatusMsg& status_msg) {
 }
 
 std::string ToString(const InstrumentDefMsg& instrument_def_msg) {
-  return MakeString(instrument_def_msg);
+  return detail::MakeString(instrument_def_msg);
 }
 std::ostream& operator<<(std::ostream& stream,
                          const InstrumentDefMsg& instrument_def_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("InstrumentDefMsg")
       .Build()
@@ -532,10 +543,10 @@ std::ostream& operator<<(std::ostream& stream,
 }
 
 std::string ToString(const ImbalanceMsg& imbalance_msg) {
-  return MakeString(imbalance_msg);
+  return detail::MakeString(imbalance_msg);
 }
 std::ostream& operator<<(std::ostream& stream, const ImbalanceMsg& imbalance_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("ImbalanceMsg")
       .Build()
@@ -564,9 +575,9 @@ std::ostream& operator<<(std::ostream& stream, const ImbalanceMsg& imbalance_msg
       .Finish();
 }
 
-std::string ToString(const StatMsg& stat_msg) { return MakeString(stat_msg); }
+std::string ToString(const StatMsg& stat_msg) { return detail::MakeString(stat_msg); }
 std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("StatMsg")
       .Build()
@@ -584,9 +595,11 @@ std::ostream& operator<<(std::ostream& stream, const StatMsg& stat_msg) {
       .Finish();
 }
 
-std::string ToString(const ErrorMsg& error_msg) { return MakeString(error_msg); }
+std::string ToString(const ErrorMsg& error_msg) {
+  return detail::MakeString(error_msg);
+}
 std::ostream& operator<<(std::ostream& stream, const ErrorMsg& error_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("ErrorMsg")
       .Build()
@@ -598,11 +611,11 @@ std::ostream& operator<<(std::ostream& stream, const ErrorMsg& error_msg) {
 }
 
 std::string ToString(const SymbolMappingMsg& symbol_mapping_msg) {
-  return MakeString(symbol_mapping_msg);
+  return detail::MakeString(symbol_mapping_msg);
 }
 std::ostream& operator<<(std::ostream& stream,
                          const SymbolMappingMsg& symbol_mapping_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("SymbolMappingMsg")
       .Build()
@@ -616,9 +629,11 @@ std::ostream& operator<<(std::ostream& stream,
       .Finish();
 }
 
-std::string ToString(const SystemMsg& system_msg) { return MakeString(system_msg); }
+std::string ToString(const SystemMsg& system_msg) {
+  return detail::MakeString(system_msg);
+}
 std::ostream& operator<<(std::ostream& stream, const SystemMsg& system_msg) {
-  return StreamOpBuilder{stream}
+  return detail::StreamOpBuilder{stream}
       .SetSpacer("\n    ")
       .SetTypeName("SystemMsg")
       .Build()

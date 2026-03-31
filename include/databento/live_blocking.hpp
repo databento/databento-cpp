@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <chrono>  // milliseconds
+#include <chrono>  // milliseconds, steady_clock
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -119,6 +119,8 @@ class LiveBlocking {
                  bool use_snapshot);
   IReadable::Result FillBuffer(std::chrono::milliseconds timeout);
   RecordHeader* BufferRecordHeader();
+  std::chrono::milliseconds HeartbeatTimeout() const;
+  void CheckHeartbeatTimeout() const;
 
   static constexpr std::size_t kMaxStrLen = 24L * 1024;
 
@@ -142,5 +144,7 @@ class LiveBlocking {
   alignas(RecordHeader) std::array<std::byte, kMaxRecordLen> compat_buffer_{};
   std::uint64_t session_id_;
   Record current_record_{nullptr};
+  std::chrono::steady_clock::time_point last_read_time_{
+      std::chrono::steady_clock::now()};
 };
 }  // namespace databento

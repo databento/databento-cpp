@@ -1,3 +1,17 @@
+# Try config mode first. If the system provides a zstd CMake config (e.g. Homebrew),
+# use it directly so all targets are defined consistently.
+find_package(zstd CONFIG QUIET)
+if(zstd_FOUND)
+  if(NOT TARGET zstd::libzstd)
+    if(TARGET zstd::libzstd_shared)
+      add_library(zstd::libzstd ALIAS zstd::libzstd_shared)
+    elseif(TARGET zstd::libzstd_static)
+      add_library(zstd::libzstd ALIAS zstd::libzstd_static)
+    endif()
+  endif()
+  return()
+endif()
+
 include(FindPackageHandleStandardArgs)
 
 if(WIN32)
