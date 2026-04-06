@@ -21,6 +21,13 @@ namespace databento {
 // Forward declaration
 class ILogReceiver;
 class LiveBuilder;
+
+// Timeouts for the Live client's connection and authentication phases.
+struct TimeoutConf {
+  std::chrono::seconds connect{10};
+  std::chrono::seconds auth{30};
+};
+
 class LiveThreaded;
 
 // A client for interfacing with Databento's real-time and intraday replay
@@ -48,6 +55,8 @@ class LiveBlocking {
   std::optional<databento::SlowReaderBehavior> SlowReaderBehavior() const {
     return slow_reader_behavior_;
   }
+  const databento::TimeoutConf& TimeoutConf() const { return timeout_conf_; }
+  std::uint64_t SessionId() const { return session_id_; }
   const std::vector<LiveSubscription>& Subscriptions() const { return subscriptions_; }
   std::vector<LiveSubscription>& Subscriptions() { return subscriptions_; }
 
@@ -119,21 +128,23 @@ class LiveBlocking {
                std::optional<std::chrono::seconds> heartbeat_interval,
                std::size_t buffer_size, std::string user_agent_ext,
                databento::Compression compression,
-               std::optional<databento::SlowReaderBehavior> slow_reader_behavior);
+               std::optional<databento::SlowReaderBehavior> slow_reader_behavior,
+               databento::TimeoutConf timeout_conf);
   LiveBlocking(ILogReceiver* log_receiver, std::string key, std::string dataset,
                std::string gateway, std::uint16_t port, bool send_ts_out,
                VersionUpgradePolicy upgrade_policy,
                std::optional<std::chrono::seconds> heartbeat_interval,
                std::size_t buffer_size, std::string user_agent_ext,
                databento::Compression compression,
-               std::optional<databento::SlowReaderBehavior> slow_reader_behavior);
+               std::optional<databento::SlowReaderBehavior> slow_reader_behavior,
+               databento::TimeoutConf timeout_conf);
 
   std::string DetermineGateway() const;
   std::uint64_t Authenticate();
-  std::string DecodeChallenge();
+  std::string DecodeChallenge(std::chrono::milliseconds timeout);
   std::string GenerateCramReply(std::string_view challenge_key);
   std::string EncodeAuthReq(std::string_view auth);
-  std::uint64_t DecodeAuthResp();
+  std::uint64_t DecodeAuthResp(std::chrono::milliseconds timeout);
   void IncrementSubCounter();
   void Subscribe(std::string_view sub_msg, const std::vector<std::string>& symbols,
                  bool use_snapshot);
@@ -156,6 +167,7 @@ class LiveBlocking {
   const std::optional<std::chrono::seconds> heartbeat_interval_;
   const databento::Compression compression_;
   const std::optional<databento::SlowReaderBehavior> slow_reader_behavior_;
+  const databento::TimeoutConf timeout_conf_;
   detail::LiveConnection connection_;
   std::uint32_t sub_counter_{};
   std::vector<LiveSubscription> subscriptions_;

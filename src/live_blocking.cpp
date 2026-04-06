@@ -36,8 +36,8 @@ LiveBlocking::LiveBlocking(
     VersionUpgradePolicy upgrade_policy,
     std::optional<std::chrono::seconds> heartbeat_interval, std::size_t buffer_size,
     std::string user_agent_ext, databento::Compression compression,
-    std::optional<databento::SlowReaderBehavior> slow_reader_behavior)
-
+    std::optional<databento::SlowReaderBehavior> slow_reader_behavior,
+    databento::TimeoutConf timeout_conf)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
@@ -49,7 +49,8 @@ LiveBlocking::LiveBlocking(
       heartbeat_interval_{heartbeat_interval},
       compression_{compression},
       slow_reader_behavior_{slow_reader_behavior},
-      connection_{log_receiver_, gateway_, port_},
+      timeout_conf_{timeout_conf},
+      connection_{log_receiver_, gateway_, port_, {{}, {}, timeout_conf_.connect}},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
@@ -59,7 +60,8 @@ LiveBlocking::LiveBlocking(
     VersionUpgradePolicy upgrade_policy,
     std::optional<std::chrono::seconds> heartbeat_interval, std::size_t buffer_size,
     std::string user_agent_ext, databento::Compression compression,
-    std::optional<databento::SlowReaderBehavior> slow_reader_behavior)
+    std::optional<databento::SlowReaderBehavior> slow_reader_behavior,
+    databento::TimeoutConf timeout_conf)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       dataset_{std::move(dataset)},
@@ -71,7 +73,8 @@ LiveBlocking::LiveBlocking(
       heartbeat_interval_{heartbeat_interval},
       compression_{compression},
       slow_reader_behavior_{slow_reader_behavior},
-      connection_{log_receiver_, gateway_, port_},
+      timeout_conf_{timeout_conf},
+      connection_{log_receiver_, gateway_, port_, {{}, {}, timeout_conf_.connect}},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
@@ -239,7 +242,8 @@ void LiveBlocking::Reconnect() {
     log_msg << "Reconnecting to " << gateway_ << ':' << port_;
     log_receiver_->Receive(LogLevel::Info, log_msg.str());
   }
-  connection_ = detail::LiveConnection{log_receiver_, gateway_, port_};
+  connection_ = detail::LiveConnection{
+      log_receiver_, gateway_, port_, {{}, {}, timeout_conf_.connect}};
   buffer_.Clear();
   sub_counter_ = 0;
   session_id_ = this->Authenticate();
@@ -262,10 +266,14 @@ void LiveBlocking::Resubscribe() {
   }
 }
 
-std::string LiveBlocking::DecodeChallenge() {
+std::string LiveBlocking::DecodeChallenge(std::chrono::milliseconds timeout) {
   static constexpr auto kMethodName = "LiveBlocking::DecodeChallenge";
-  const auto read_size =
-      connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size;
+  const auto result =
+      connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity(), timeout);
+  if (result.status == Status::Timeout) {
+    throw TcpError{0, "Authentication timed out waiting for challenge"};
+  }
+  const auto read_size = result.read_size;
   if (read_size == 0) {
     throw LiveApiError{"Gateway closed socket during authentication"};
   }
@@ -288,8 +296,12 @@ std::string LiveBlocking::DecodeChallenge() {
                                                      : response.find('\n', find_start);
   while (next_nl_pos == std::string::npos) {
     // read more
-    buffer_.Fill(
-        connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size);
+    const auto loop_result =
+        connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity(), timeout);
+    if (loop_result.status == Status::Timeout) {
+      throw TcpError{0, "Authentication timed out waiting for challenge"};
+    }
+    buffer_.Fill(loop_result.read_size);
     if (buffer_.ReadCapacity() == 0) {
       throw LiveApiError{"Gateway closed socket during authentication"};
     }
@@ -326,7 +338,17 @@ std::string LiveBlocking::DetermineGateway() const {
 
 std::uint64_t LiveBlocking::Authenticate() {
   static constexpr auto kMethodName = "LiveBlocking::Authenticate";
-  const std::string challenge_key = DecodeChallenge() + '|' + key_;
+  const auto deadline = std::chrono::steady_clock::now() +
+                        std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                            timeout_conf_.auth);
+  auto remaining = [&deadline]() {
+    const auto now = std::chrono::steady_clock::now();
+    if (now >= deadline) {
+      throw TcpError{0, "Authentication timed out"};
+    }
+    return std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
+  };
+  const std::string challenge_key = DecodeChallenge(remaining()) + '|' + key_;
 
   const std::string auth = GenerateCramReply(challenge_key);
   const std::string req = EncodeAuthReq(auth);
@@ -336,7 +358,7 @@ std::uint64_t LiveBlocking::Authenticate() {
     log_receiver_->Receive(LogLevel::Debug, log_ss.str());
   }
   connection_.WriteAll(req);
-  const std::uint64_t session_id = DecodeAuthResp();
+  const std::uint64_t session_id = DecodeAuthResp(remaining());
 
   if (log_receiver_->ShouldLog(LogLevel::Info)) {
     std::ostringstream log_ss;
@@ -372,19 +394,22 @@ std::string LiveBlocking::EncodeAuthReq(std::string_view auth) {
   return req_stream.str();
 }
 
-std::uint64_t LiveBlocking::DecodeAuthResp() {
+std::uint64_t LiveBlocking::DecodeAuthResp(std::chrono::milliseconds timeout) {
   // handle split packet read
   const std::byte* newline_ptr;
   buffer_.Clear();
   do {
-    const auto read_size =
-        connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity()).read_size;
-    if (read_size == 0) {
+    const auto result =
+        connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity(), timeout);
+    if (result.status == Status::Timeout) {
+      throw TcpError{0, "Authentication timed out waiting for auth response"};
+    }
+    if (result.read_size == 0) {
       throw LiveApiError{
           "Unexpected end of message received from server after replying to "
           "CRAM"};
     }
-    buffer_.Fill(read_size);
+    buffer_.Fill(result.read_size);
     newline_ptr =
         std::find(buffer_.ReadBegin(), buffer_.ReadEnd(), static_cast<std::byte>('\n'));
   } while (newline_ptr == buffer_.ReadEnd());

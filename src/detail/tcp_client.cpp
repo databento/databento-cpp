@@ -3,11 +3,12 @@
 #ifdef _WIN32
 #include <winsock2.h>  // closesocket, recv, send, socket
 #else
+#include <fcntl.h>       // fcntl, F_GETFL, F_SETFL, O_NONBLOCK
 #include <netdb.h>       // addrinfo, gai_strerror, getaddrinfo, freeaddrinfo
 #include <netinet/in.h>  // htons, IPPROTO_TCP
 #include <sys/poll.h>    // pollfd
-#include <sys/socket.h>  // AF_INET, connect, recv, send, sockaddr, sockaddr_in, socket, SOCK_STREAM
-#include <unistd.h>  // close, ssize_t
+#include <sys/socket.h>  // AF_INET, connect, recv, send, sockaddr, sockaddr_in, socket, SOCK_STREAM, getsockopt, SO_ERROR, SOL_SOCKET
+#include <unistd.h>      // close, ssize_t
 
 #include <cerrno>  // errno
 #endif
@@ -31,6 +32,55 @@ int GetErrNo() {
   return errno;
 #endif
 }
+
+int Poll(::pollfd* fds, std::uint32_t nfds, int timeout_ms) {
+#ifdef _WIN32
+  return ::WSAPoll(fds, nfds, timeout_ms);
+#else
+  return ::poll(fds, static_cast<::nfds_t>(nfds), timeout_ms);
+#endif
+}
+
+#ifdef _WIN32
+constexpr int kConnectInProgress = WSAEWOULDBLOCK;
+#else
+constexpr int kConnectInProgress = EINPROGRESS;
+#endif
+
+// Saves the current blocking state, sets non-blocking, and returns a RAII guard
+// that restores the original state on destruction.
+struct BlockingGuard {
+  databento::detail::Socket fd;
+#ifdef _WIN32
+  // No state to save on Windows
+#else
+  int original_flags;
+#endif
+
+  explicit BlockingGuard(databento::detail::Socket fd) : fd{fd} {
+#ifdef _WIN32
+    unsigned long mode = 1;
+    ::ioctlsocket(fd, FIONBIO, &mode);
+#else
+    original_flags = ::fcntl(fd, F_GETFL, 0);
+    ::fcntl(fd, F_SETFL, original_flags | O_NONBLOCK);
+#endif
+  }
+
+  ~BlockingGuard() {
+#ifdef _WIN32
+    unsigned long mode = 0;
+    ::ioctlsocket(fd, FIONBIO, &mode);
+#else
+    ::fcntl(fd, F_SETFL, original_flags);
+#endif
+  }
+
+  BlockingGuard(const BlockingGuard&) = delete;
+  BlockingGuard& operator=(const BlockingGuard&) = delete;
+  BlockingGuard(BlockingGuard&&) = delete;
+  BlockingGuard& operator=(BlockingGuard&&) = delete;
+};
 }  // namespace
 
 TcpClient::TcpClient(ILogReceiver* log_receiver, const std::string& gateway,
@@ -83,12 +133,7 @@ databento::IReadable::Result TcpClient::ReadSome(std::byte* buffer,
   // having no timeout
   const auto timeout_ms = timeout.count() ? static_cast<int>(timeout.count()) : -1;
   while (true) {
-    const int poll_status =
-#ifdef _WIN32
-        ::WSAPoll(&fds, 1, timeout_ms);
-#else
-        ::poll(&fds, 1, timeout_ms);
-#endif
+    const int poll_status = Poll(&fds, 1, timeout_ms);
     if (poll_status > 0) {
       return ReadSome(buffer, max_size);
     }
@@ -130,13 +175,34 @@ databento::detail::ScopedFd TcpClient::InitSocket(ILogReceiver* log_receiver,
   }
   std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> res{out, &::freeaddrinfo};
   const auto max_attempts = std::max<std::uint32_t>(retry_conf.max_attempts, 1);
+  const auto timeout_ms = static_cast<int>(
+      std::chrono::duration_cast<std::chrono::milliseconds>(retry_conf.connect_timeout)
+          .count());
   std::chrono::seconds backoff{1};
   for (std::uint32_t attempt = 0; attempt < max_attempts; ++attempt) {
-    if (::connect(scoped_fd.Get(), res->ai_addr, res->ai_addrlen) == 0) {
+    BlockingGuard guard{scoped_fd.Get()};
+
+    const int connect_ret = ::connect(scoped_fd.Get(), res->ai_addr, res->ai_addrlen);
+    bool connected = (connect_ret == 0);
+    if (!connected && ::GetErrNo() == kConnectInProgress) {
+      pollfd pfd{scoped_fd.Get(), POLLOUT, {}};
+      const int poll_ret = Poll(&pfd, 1, timeout_ms);
+      if (poll_ret > 0) {
+        int so_error = 0;
+        socklen_t len = sizeof(so_error);
+        ::getsockopt(scoped_fd.Get(), SOL_SOCKET, SO_ERROR, &so_error, &len);
+        connected = (so_error == 0);
+        if (!connected) {
+          errno = so_error;
+        }
+      }
+    }
+
+    if (connected) {
       break;
     } else if (attempt + 1 == max_attempts) {
       std::ostringstream err_msg;
-      err_msg << "Socket failed to connect after " << max_attempts << " attempts";
+      err_msg << "Socket failed to connect after " << max_attempts << " attempt(s)";
       throw TcpError{::GetErrNo(), err_msg.str()};
     }
     std::ostringstream log_msg;

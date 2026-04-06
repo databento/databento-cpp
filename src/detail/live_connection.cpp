@@ -10,6 +10,10 @@ LiveConnection::LiveConnection(ILogReceiver* log_receiver, const std::string& ga
                                std::uint16_t port)
     : client_{log_receiver, gateway, port} {}
 
+LiveConnection::LiveConnection(ILogReceiver* log_receiver, const std::string& gateway,
+                               std::uint16_t port, TcpClient::RetryConf retry_conf)
+    : client_{log_receiver, gateway, port, retry_conf} {}
+
 void LiveConnection::WriteAll(std::string_view str) { client_.WriteAll(str); }
 
 void LiveConnection::WriteAll(const std::byte* buffer, std::size_t size) {

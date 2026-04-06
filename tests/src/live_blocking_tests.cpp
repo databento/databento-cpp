@@ -1,3 +1,4 @@
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <openssl/sha.h>  //  SHA256_DIGEST_LENGTH
 
@@ -25,6 +26,7 @@
 #include "databento/with_ts_out.hpp"
 #include "mock/mock_log_receiver.hpp"
 #include "mock/mock_lsg_server.hpp"  // MockLsgServer
+#include "mock/mock_tcp_server.hpp"  // MockTcpServer
 
 namespace databento::tests {
 class LiveBlockingTests : public testing::Test {
@@ -787,17 +789,30 @@ TEST_F(LiveBlockingTests, TestTryNextRecordEmptyBuffer) {
 TEST_F(LiveBlockingTests, TestTryNextRecordAfterFillBuffer) {
   constexpr auto kTsOut = false;
   constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
-  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut,
-                                        [kRec](mock::MockLsgServer& self) {
-                                          self.Accept();
-                                          self.Authenticate();
-                                          self.SendRecord(kRec);
-                                        }};
+  bool sent = false;
+  std::mutex sent_mutex;
+  std::condition_variable sent_cv;
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, kTsOut,
+      [kRec, &sent, &sent_mutex, &sent_cv](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.SendRecord(kRec);
+        {
+          const std::lock_guard<std::mutex> lock{sent_mutex};
+          sent = true;
+          sent_cv.notify_one();
+        }
+      }};
 
   LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  {
+    std::unique_lock<std::mutex> lock{sent_mutex};
+    sent_cv.wait(lock, [&sent] { return sent; });
+  }
   const auto fill_res = target.FillBuffer(std::chrono::milliseconds{1000});
   ASSERT_EQ(fill_res.status, IReadable::Status::Ok);
   ASSERT_GT(fill_res.read_size, 0);
@@ -832,7 +847,7 @@ TEST_F(LiveBlockingTests, TestTryNextRecordPollLoop) {
   constexpr auto kRecCount = 5;
   constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
   const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut,
-                                        [kRec](mock::MockLsgServer& self) {
+                                        [kRec, kRecCount](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
                                           for (size_t i = 0; i < kRecCount; ++i) {
@@ -909,6 +924,34 @@ TEST_F(LiveBlockingTests, TestTryNextRecordPartialRecord) {
   ASSERT_NE(rec, nullptr);
   ASSERT_TRUE(rec->Holds<MboMsg>());
   EXPECT_EQ(rec->Get<MboMsg>(), kRec);
+}
+
+TEST_F(LiveBlockingTests, TestConnectTimeout) {
+  const auto connect = [this] {
+    builder_.SetDataset(dataset::kGlbxMdp3)
+        .SetAddress("192.0.2.1", 13000)
+        .SetTimeoutConf({std::chrono::seconds{1}, std::chrono::seconds{30}})
+        .BuildBlocking();
+  };
+  const auto matcher =
+      testing::ThrowsMessage<TcpError>(testing::HasSubstr("failed to connect"));
+  EXPECT_THAT(connect, matcher);
+}
+
+TEST_F(LiveBlockingTests, TestAuthTimeout) {
+  const mock::MockTcpServer mock_server{[](mock::MockTcpServer& self) {
+    self.Accept();
+    std::this_thread::sleep_for(std::chrono::seconds{3});
+  }};
+  const auto connect = [this, &mock_server] {
+    builder_.SetDataset(dataset::kGlbxMdp3)
+        .SetAddress(kLocalhost, mock_server.Port())
+        .SetTimeoutConf({std::chrono::seconds{10}, std::chrono::seconds{1}})
+        .BuildBlocking();
+  };
+  const auto matcher =
+      testing::ThrowsMessage<TcpError>(testing::HasSubstr("Authentication timed out"));
+  EXPECT_THAT(connect, matcher);
 }
 
 }  // namespace databento::tests

@@ -25,6 +25,8 @@ class LiveConnection : IWritable {
  public:
   LiveConnection(ILogReceiver* log_receiver, const std::string& gateway,
                  std::uint16_t port);
+  LiveConnection(ILogReceiver* log_receiver, const std::string& gateway,
+                 std::uint16_t port, TcpClient::RetryConf retry_conf);
 
   void WriteAll(std::string_view str);
   void WriteAll(const std::byte* buffer, std::size_t size);

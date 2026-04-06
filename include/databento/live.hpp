@@ -57,6 +57,9 @@ class LiveBuilder {
   LiveBuilder& SetCompression(Compression compression);
   // Sets the behavior of the gateway when the client falls behind real time.
   LiveBuilder& SetSlowReaderBehavior(SlowReaderBehavior slow_reader_behavior);
+  // Sets the timeouts for connecting and authenticating with the gateway.
+  // Defaults to 10 seconds for connect and 30 seconds for auth.
+  LiveBuilder& SetTimeoutConf(TimeoutConf timeout_conf);
 
   /*
    * Build a live client instance
@@ -85,5 +88,6 @@ class LiveBuilder {
   std::string user_agent_ext_;
   Compression compression_{Compression::None};
   std::optional<SlowReaderBehavior> slow_reader_behavior_{};
+  TimeoutConf timeout_conf_{};
 };
 }  // namespace databento
