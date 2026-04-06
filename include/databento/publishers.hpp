@@ -145,7 +145,7 @@ enum class Dataset : std::uint16_t {
   XcisBbo = 13,
   // NYSE National Trades
   XcisTrades = 14,
-  // MEMX Memoir Depth
+  // MEMX MEMOIR Depth
   MemxMemoir = 15,
   // MIAX Pearl Depth
   EprlDom = 16,
@@ -231,7 +231,7 @@ enum class Publisher : std::uint16_t {
   XcisBboXcis = 13,
   // NYSE National Trades
   XcisTradesXcis = 14,
-  // MEMX Memoir Depth
+  // MEMX MEMOIR Depth
   MemxMemoirMemx = 15,
   // MIAX Pearl Depth
   EprlDomEprl = 16,
