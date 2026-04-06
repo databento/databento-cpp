@@ -81,6 +81,26 @@ class LiveBlocking {
   //
   // This method should only be called after `Start`.
   const Record* NextRecord(std::chrono::milliseconds timeout);
+  // Returns the next record from the internal buffer without performing any
+  // I/O. Returns `nullptr` if no complete record is buffered. The returned
+  // pointer is valid until the next call to `TryNextRecord`, `NextRecord`,
+  // or `FillBuffer`.
+  //
+  // This method should only be called after `Start`.
+  const Record* TryNextRecord();
+  // Reads available data from the connection into the internal buffer using
+  // the heartbeat timeout. Returns the number of bytes read and the status.
+  // A `read_size` of 0 with `Status::Closed` indicates the connection was
+  // closed by the gateway.
+  //
+  // This method should only be called after `Start`.
+  IReadable::Result FillBuffer();
+  // Reads available data from the connection into the internal buffer.
+  // Returns the number of bytes read and the status. A `read_size` of 0 with
+  // `Status::Closed` indicates the connection was closed by the gateway.
+  //
+  // This method should only be called after `Start`.
+  IReadable::Result FillBuffer(std::chrono::milliseconds timeout);
   // Stops the session with the gateway. Once stopped, the session cannot be
   // restarted.
   void Stop();
@@ -117,7 +137,7 @@ class LiveBlocking {
   void IncrementSubCounter();
   void Subscribe(std::string_view sub_msg, const std::vector<std::string>& symbols,
                  bool use_snapshot);
-  IReadable::Result FillBuffer(std::chrono::milliseconds timeout);
+  const Record* ConsumeBufferedRecord();
   RecordHeader* BufferRecordHeader();
   std::chrono::milliseconds HeartbeatTimeout() const;
   void CheckHeartbeatTimeout() const;

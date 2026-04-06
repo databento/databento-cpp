@@ -15,6 +15,7 @@
 #include "databento/datetime.hpp"
 #include "databento/enums.hpp"  // Schema, SType
 #include "databento/exceptions.hpp"
+#include "databento/ireadable.hpp"
 #include "databento/live.hpp"
 #include "databento/live_blocking.hpp"
 #include "databento/live_subscription.hpp"
@@ -763,6 +764,151 @@ TEST_F(LiveBlockingTests, TestHeartbeatTimeoutOnNextRecordWithTimeout) {
     }
   }
   EXPECT_TRUE(got_timeout_exception) << "Expected heartbeat timeout exception";
+}
+
+TEST_F(LiveBlockingTests, TestTryNextRecordEmptyBuffer) {
+  constexpr auto kTsOut = false;
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, kTsOut, [](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        std::this_thread::sleep_for(std::chrono::milliseconds{200});
+      }};
+
+  LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  // Buffer is empty, no I/O should be performed
+  const auto* rec = target.TryNextRecord();
+  EXPECT_EQ(rec, nullptr);
+}
+
+TEST_F(LiveBlockingTests, TestTryNextRecordAfterFillBuffer) {
+  constexpr auto kTsOut = false;
+  constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
+  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut,
+                                        [kRec](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          self.SendRecord(kRec);
+                                        }};
+
+  LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  const auto fill_res = target.FillBuffer(std::chrono::milliseconds{1000});
+  ASSERT_EQ(fill_res.status, IReadable::Status::Ok);
+  ASSERT_GT(fill_res.read_size, 0);
+  const auto* rec = target.TryNextRecord();
+  ASSERT_NE(rec, nullptr);
+  ASSERT_TRUE(rec->Holds<OhlcvMsg>());
+  EXPECT_EQ(rec->Get<OhlcvMsg>(), kRec);
+  // Buffer drained
+  EXPECT_EQ(target.TryNextRecord(), nullptr);
+}
+
+TEST_F(LiveBlockingTests, TestFillBufferReturnsClosed) {
+  constexpr auto kTsOut = false;
+  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut,
+                                        [](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          self.Close();
+                                        }};
+
+  LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  const auto fill_res = target.FillBuffer(std::chrono::milliseconds{1000});
+  EXPECT_EQ(fill_res.status, IReadable::Status::Closed);
+  EXPECT_EQ(fill_res.read_size, 0);
+}
+
+TEST_F(LiveBlockingTests, TestTryNextRecordPollLoop) {
+  constexpr auto kTsOut = false;
+  constexpr auto kRecCount = 5;
+  constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
+  const mock::MockLsgServer mock_server{dataset::kXnasItch, kTsOut,
+                                        [kRec](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          for (size_t i = 0; i < kRecCount; ++i) {
+                                            self.SendRecord(kRec);
+                                          }
+                                          self.Close();
+                                        }};
+
+  LiveBlocking target = builder_.SetDataset(dataset::kXnasItch)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  int record_count = 0;
+  while (true) {
+    while (const auto* rec = target.TryNextRecord()) {
+      ASSERT_TRUE(rec->Holds<OhlcvMsg>());
+      EXPECT_EQ(rec->Get<OhlcvMsg>(), kRec);
+      ++record_count;
+    }
+    const auto fill_res = target.FillBuffer(std::chrono::milliseconds{1000});
+    if (fill_res.status == IReadable::Status::Closed) {
+      break;
+    }
+  }
+  EXPECT_EQ(record_count, kRecCount);
+}
+
+TEST_F(LiveBlockingTests, TestTryNextRecordPartialRecord) {
+  constexpr auto kTsOut = false;
+  constexpr MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
+                        1,
+                        2,
+                        3,
+                        {},
+                        4,
+                        Action::Add,
+                        Side::Bid,
+                        UnixNanos{},
+                        TimeDeltaNanos{},
+                        100};
+
+  bool send_remaining{};
+  std::mutex send_remaining_mutex;
+  std::condition_variable send_remaining_cv;
+  const mock::MockLsgServer mock_server{
+      dataset::kGlbxMdp3, kTsOut,
+      [kRec, &send_remaining, &send_remaining_mutex,
+       &send_remaining_cv](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.SplitSendRecord(kRec, send_remaining, send_remaining_mutex,
+                             send_remaining_cv);
+      }};
+
+  LiveBlocking target = builder_.SetDataset(dataset::kGlbxMdp3)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  // Read partial record (just header)
+  auto fill_res = target.FillBuffer(std::chrono::milliseconds{1000});
+  ASSERT_EQ(fill_res.status, IReadable::Status::Ok);
+  // Record is incomplete
+  EXPECT_EQ(target.TryNextRecord(), nullptr);
+  // Signal server to send remaining bytes
+  {
+    const std::lock_guard<std::mutex> lock{send_remaining_mutex};
+    send_remaining = true;
+    send_remaining_cv.notify_one();
+  }
+  // Read the rest
+  fill_res = target.FillBuffer(std::chrono::milliseconds{1000});
+  ASSERT_EQ(fill_res.status, IReadable::Status::Ok);
+  const auto* rec = target.TryNextRecord();
+  ASSERT_NE(rec, nullptr);
+  ASSERT_TRUE(rec->Holds<MboMsg>());
+  EXPECT_EQ(rec->Get<MboMsg>(), kRec);
 }
 
 }  // namespace databento::tests

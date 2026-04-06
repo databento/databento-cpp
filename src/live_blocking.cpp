@@ -196,9 +196,8 @@ const databento::Record& LiveBlocking::NextRecord() {
 }
 
 const databento::Record* LiveBlocking::NextRecord(std::chrono::milliseconds timeout) {
-  // need some unread_bytes
-  const auto unread_bytes = buffer_.ReadCapacity();
-  if (unread_bytes == 0) {
+  // need at least a header to read the record size
+  if (buffer_.ReadCapacity() < sizeof(RecordHeader)) {
     const auto read_res = FillBuffer(timeout);
     if (read_res.status == Status::Timeout) {
       CheckHeartbeatTimeout();
@@ -208,7 +207,7 @@ const databento::Record* LiveBlocking::NextRecord(std::chrono::milliseconds time
       throw LiveApiError{"Gateway closed the session"};
     }
   }
-  // check length
+  // wait for the full record
   while (buffer_.ReadCapacity() < BufferRecordHeader()->Size()) {
     const auto read_res = FillBuffer(timeout);
     if (read_res.status == Status::Timeout) {
@@ -219,12 +218,17 @@ const databento::Record* LiveBlocking::NextRecord(std::chrono::milliseconds time
       throw LiveApiError{"Gateway closed the session"};
     }
   }
-  current_record_ = Record{BufferRecordHeader()};
-  const auto bytes_to_consume = current_record_.Size();
-  buffer_.ConsumeNoShift(bytes_to_consume);
-  current_record_ = DbnDecoder::DecodeRecordCompat(
-      version_, upgrade_policy_, send_ts_out_, &compat_buffer_, current_record_);
-  return &current_record_;
+  return ConsumeBufferedRecord();
+}
+
+const databento::Record* LiveBlocking::TryNextRecord() {
+  if (buffer_.ReadCapacity() < sizeof(RecordHeader)) {
+    return nullptr;
+  }
+  if (buffer_.ReadCapacity() < BufferRecordHeader()->Size()) {
+    return nullptr;
+  }
+  return ConsumeBufferedRecord();
 }
 
 void LiveBlocking::Stop() { connection_.Close(); }
@@ -447,6 +451,10 @@ void LiveBlocking::IncrementSubCounter() {
   }
 }
 
+databento::IReadable::Result LiveBlocking::FillBuffer() {
+  return FillBuffer(HeartbeatTimeout());
+}
+
 databento::IReadable::Result LiveBlocking::FillBuffer(
     std::chrono::milliseconds timeout) {
   buffer_.Shift();
@@ -457,6 +465,14 @@ databento::IReadable::Result LiveBlocking::FillBuffer(
     last_read_time_ = std::chrono::steady_clock::now();
   }
   return read_res;
+}
+
+const databento::Record* LiveBlocking::ConsumeBufferedRecord() {
+  current_record_ = Record{BufferRecordHeader()};
+  buffer_.ConsumeNoShift(current_record_.Size());
+  current_record_ = DbnDecoder::DecodeRecordCompat(
+      version_, upgrade_policy_, send_ts_out_, &compat_buffer_, current_record_);
+  return &current_record_;
 }
 
 databento::RecordHeader* LiveBlocking::BufferRecordHeader() {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.53.0 - TBD
+
+### Enhancements
+- Added `TryNextRecord` and `FillBuffer` to `LiveBlocking` for more fine-grained
+  control around I/O
+
 ## 0.52.0 - 2026-03-31
 
 ### Enhancements
