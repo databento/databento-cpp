@@ -340,7 +340,9 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
   std::mutex receive_mutex;
   std::condition_variable receive_cv;
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, kTsOut, [&](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut,
+      [kRec, &sent_first_msg, &send_mutex, &send_cv, &received_first_msg,
+       &receive_mutex, &receive_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.SendRecord(kRec);
@@ -397,7 +399,9 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeoutWithZstdCompression) {
   std::mutex receive_mutex;
   std::condition_variable receive_cv;
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, kTsOut, Compression::Zstd, [&](mock::MockLsgServer& self) {
+      dataset::kXnasItch, kTsOut, Compression::Zstd,
+      [kRec, &sent_first_msg, &send_mutex, &send_cv, &received_first_msg,
+       &receive_mutex, &receive_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.StartCompressed();
@@ -789,14 +793,23 @@ TEST_F(LiveBlockingTests, TestTryNextRecordEmptyBuffer) {
 TEST_F(LiveBlockingTests, TestTryNextRecordAfterFillBuffer) {
   constexpr auto kTsOut = false;
   constexpr OhlcvMsg kRec{DummyHeader<OhlcvMsg>(RType::Ohlcv1M), 1, 2, 3, 4, 5};
-  bool sent = false;
+  bool client_ready{};
+  std::mutex client_ready_mutex;
+  std::condition_variable client_ready_cv;
+  bool sent{};
   std::mutex sent_mutex;
   std::condition_variable sent_cv;
   const mock::MockLsgServer mock_server{
       dataset::kXnasItch, kTsOut,
-      [kRec, &sent, &sent_mutex, &sent_cv](mock::MockLsgServer& self) {
+      [kRec, &client_ready, &client_ready_mutex, &client_ready_cv, &sent, &sent_mutex,
+       &sent_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
+        {
+          // wait for client to finish auth to prevent TCP coalescing
+          std::unique_lock<std::mutex> lock{client_ready_mutex};
+          client_ready_cv.wait(lock, [&client_ready] { return client_ready; });
+        }
         self.SendRecord(kRec);
         {
           const std::lock_guard<std::mutex> lock{sent_mutex};
@@ -809,6 +822,11 @@ TEST_F(LiveBlockingTests, TestTryNextRecordAfterFillBuffer) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  {
+    const std::lock_guard<std::mutex> lock{client_ready_mutex};
+    client_ready = true;
+    client_ready_cv.notify_one();
+  }
   {
     std::unique_lock<std::mutex> lock{sent_mutex};
     sent_cv.wait(lock, [&sent] { return sent; });
@@ -889,15 +907,23 @@ TEST_F(LiveBlockingTests, TestTryNextRecordPartialRecord) {
                         TimeDeltaNanos{},
                         100};
 
+  bool client_ready{};
+  std::mutex client_ready_mutex;
+  std::condition_variable client_ready_cv;
   bool send_remaining{};
   std::mutex send_remaining_mutex;
   std::condition_variable send_remaining_cv;
   const mock::MockLsgServer mock_server{
       dataset::kGlbxMdp3, kTsOut,
-      [kRec, &send_remaining, &send_remaining_mutex,
-       &send_remaining_cv](mock::MockLsgServer& self) {
+      [kRec, &client_ready, &client_ready_mutex, &client_ready_cv, &send_remaining,
+       &send_remaining_mutex, &send_remaining_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
+        {
+          // wait for client to finish auth to prevent TCP coalescing
+          std::unique_lock<std::mutex> lock{client_ready_mutex};
+          client_ready_cv.wait(lock, [&client_ready] { return client_ready; });
+        }
         self.SplitSendRecord(kRec, send_remaining, send_remaining_mutex,
                              send_remaining_cv);
       }};
@@ -906,6 +932,11 @@ TEST_F(LiveBlockingTests, TestTryNextRecordPartialRecord) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  {
+    const std::lock_guard<std::mutex> lock{client_ready_mutex};
+    client_ready = true;
+    client_ready_cv.notify_one();
+  }
   // Read partial record (just header)
   auto fill_res = target.FillBuffer(std::chrono::milliseconds{1000});
   ASSERT_EQ(fill_res.status, IReadable::Status::Ok);
