@@ -145,7 +145,7 @@ enum class Dataset : std::uint16_t {
   XcisBbo = 13,
   // NYSE National Trades
   XcisTrades = 14,
-  // MEMX Memoir Depth
+  // MEMX MEMOIR Depth
   MemxMemoir = 15,
   // MIAX Pearl Depth
   EprlDom = 16,
@@ -195,7 +195,7 @@ enum class Dataset : std::uint16_t {
   XeurEobi = 38,
   // European Energy Exchange EOBI
   XeeeEobi = 39,
-  // Cboe Futures Exchange PITCH
+  // CFE Depth
   XcbfPitch = 40,
   // Blue Ocean ATS MEMOIR Depth
   OceaMemoir = 41,
@@ -231,7 +231,7 @@ enum class Publisher : std::uint16_t {
   XcisBboXcis = 13,
   // NYSE National Trades
   XcisTradesXcis = 14,
-  // MEMX Memoir Depth
+  // MEMX MEMOIR Depth
   MemxMemoirMemx = 15,
   // MIAX Pearl Depth
   EprlDomEprl = 16,
@@ -411,9 +411,9 @@ enum class Publisher : std::uint16_t {
   XeurEobiXoff = 103,
   // European Energy Exchange EOBI - Off-Market Trades
   XeeeEobiXoff = 104,
-  // Cboe Futures Exchange
+  // Cboe Futures Exchange (CFE)
   XcbfPitchXcbf = 105,
-  // Cboe Futures Exchange - Off-Market Trades
+  // Cboe Futures Exchange (CFE) - Off-Market Trades
   XcbfPitchXoff = 106,
   // Blue Ocean ATS MEMOIR
   OceaMemoirOcea = 107,

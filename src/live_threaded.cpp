@@ -62,11 +62,12 @@ LiveThreaded::LiveThreaded(
     VersionUpgradePolicy upgrade_policy,
     std::optional<std::chrono::seconds> heartbeat_interval, std::size_t buffer_size,
     std::string user_agent_ext, databento::Compression compression,
-    std::optional<databento::SlowReaderBehavior> slow_reader_behavior)
+    std::optional<databento::SlowReaderBehavior> slow_reader_behavior,
+    databento::TimeoutConf timeout_conf)
     : impl_{std::make_unique<Impl>(log_receiver, std::move(key), std::move(dataset),
                                    send_ts_out, upgrade_policy, heartbeat_interval,
                                    buffer_size, std::move(user_agent_ext), compression,
-                                   slow_reader_behavior)} {}
+                                   slow_reader_behavior, timeout_conf)} {}
 
 LiveThreaded::LiveThreaded(
     ILogReceiver* log_receiver, std::string key, std::string dataset,
@@ -74,11 +75,13 @@ LiveThreaded::LiveThreaded(
     VersionUpgradePolicy upgrade_policy,
     std::optional<std::chrono::seconds> heartbeat_interval, std::size_t buffer_size,
     std::string user_agent_ext, databento::Compression compression,
-    std::optional<databento::SlowReaderBehavior> slow_reader_behavior)
+    std::optional<databento::SlowReaderBehavior> slow_reader_behavior,
+    databento::TimeoutConf timeout_conf)
     : impl_{std::make_unique<Impl>(
           log_receiver, std::move(key), std::move(dataset), std::move(gateway), port,
           send_ts_out, upgrade_policy, heartbeat_interval, buffer_size,
-          std::move(user_agent_ext), compression, slow_reader_behavior)} {}
+          std::move(user_agent_ext), compression, slow_reader_behavior, timeout_conf)} {
+}
 
 const std::string& LiveThreaded::Key() const { return impl_->blocking.Key(); }
 
@@ -105,6 +108,12 @@ databento::Compression LiveThreaded::Compression() const {
 std::optional<databento::SlowReaderBehavior> LiveThreaded::SlowReaderBehavior() const {
   return impl_->blocking.SlowReaderBehavior();
 }
+
+const databento::TimeoutConf& LiveThreaded::TimeoutConf() const {
+  return impl_->blocking.TimeoutConf();
+}
+
+std::uint64_t LiveThreaded::SessionId() const { return impl_->blocking.SessionId(); }
 
 const std::vector<databento::LiveSubscription>& LiveThreaded::Subscriptions() const {
   return impl_->blocking.Subscriptions();

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.53.0 - 2026-04-08
+
+### Enhancements
+- Added `TryNextRecord` and `FillBuffer` to `LiveBlocking` for more fine-grained
+  control around I/O
+- Added `TimeoutConf` struct and `SetTimeoutConf()` builder method for configuring connect
+  and auth timeouts on the Live client (defaults to 10s and 30s)
+- Added `SessionId()` and `Timeouts()` getters to `LiveBlocking` and `LiveThreaded`
+
 ## 0.52.0 - 2026-03-31
 
 ### Enhancements

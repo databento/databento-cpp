@@ -20,6 +20,7 @@ class TcpClient {
   struct RetryConf {
     std::uint32_t max_attempts{1};
     std::chrono::seconds max_wait{std::chrono::minutes{1}};
+    std::chrono::seconds connect_timeout{std::chrono::seconds{10}};
   };
 
   TcpClient(ILogReceiver* log_receiver, const std::string& gateway, std::uint16_t port);
