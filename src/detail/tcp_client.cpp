@@ -41,6 +41,16 @@ int Poll(::pollfd* fds, std::uint32_t nfds, int timeout_ms) {
 #endif
 }
 
+int GetSockOpt(databento::detail::Socket fd, int level, int optname, int* optval) {
+#ifdef _WIN32
+  int len = sizeof(*optval);
+  return ::getsockopt(fd, level, optname, reinterpret_cast<char*>(optval), &len);
+#else
+  socklen_t len = sizeof(*optval);
+  return ::getsockopt(fd, level, optname, optval, &len);
+#endif
+}
+
 #ifdef _WIN32
 constexpr int kConnectInProgress = WSAEWOULDBLOCK;
 #else
@@ -189,8 +199,7 @@ databento::detail::ScopedFd TcpClient::InitSocket(ILogReceiver* log_receiver,
       const int poll_ret = Poll(&pfd, 1, timeout_ms);
       if (poll_ret > 0) {
         int so_error = 0;
-        socklen_t len = sizeof(so_error);
-        ::getsockopt(scoped_fd.Get(), SOL_SOCKET, SO_ERROR, &so_error, &len);
+        GetSockOpt(scoped_fd.Get(), SOL_SOCKET, SO_ERROR, &so_error);
         connected = (so_error == 0);
         if (!connected) {
           errno = so_error;
