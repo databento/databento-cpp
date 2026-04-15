@@ -113,6 +113,10 @@ enum class Venue : std::uint16_t {
   Xcbf = 52,
   // Blue Ocean ATS
   Ocea = 53,
+  // MX2 Options
+  Mxto = 54,
+  // IEX Options LLC
+  Iexo = 55,
 };
 
 // A source of data.
@@ -417,6 +421,10 @@ enum class Publisher : std::uint16_t {
   XcbfPitchXoff = 106,
   // Blue Ocean ATS MEMOIR
   OceaMemoirOcea = 107,
+  // OPRA - MEMX MX2 Options
+  OpraPillarMxto = 108,
+  // OPRA - IEX Options LLC
+  OpraPillarIexo = 109,
 };
 
 // Get a Publisher's Venue.
