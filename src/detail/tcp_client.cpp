@@ -59,21 +59,15 @@ constexpr int kConnectInProgress = EINPROGRESS;
 
 // Saves the current blocking state, sets non-blocking, and returns a RAII guard
 // that restores the original state on destruction.
-struct BlockingGuard {
-  databento::detail::Socket fd;
-#ifdef _WIN32
-  // No state to save on Windows
-#else
-  int original_flags;
-#endif
-
-  explicit BlockingGuard(databento::detail::Socket fd) : fd{fd} {
+class BlockingGuard {
+ public:
+  explicit BlockingGuard(databento::detail::Socket socket) : _fd{socket} {
 #ifdef _WIN32
     unsigned long mode = 1;
     ::ioctlsocket(fd, FIONBIO, &mode);
 #else
-    original_flags = ::fcntl(fd, F_GETFL, 0);
-    ::fcntl(fd, F_SETFL, original_flags | O_NONBLOCK);
+    _original_flags = ::fcntl(_fd, F_GETFL, 0);
+    ::fcntl(_fd, F_SETFL, _original_flags | O_NONBLOCK);
 #endif
   }
 
@@ -82,7 +76,7 @@ struct BlockingGuard {
     unsigned long mode = 0;
     ::ioctlsocket(fd, FIONBIO, &mode);
 #else
-    ::fcntl(fd, F_SETFL, original_flags);
+    ::fcntl(_fd, F_SETFL, _original_flags);
 #endif
   }
 
@@ -90,6 +84,14 @@ struct BlockingGuard {
   BlockingGuard& operator=(const BlockingGuard&) = delete;
   BlockingGuard(BlockingGuard&&) = delete;
   BlockingGuard& operator=(BlockingGuard&&) = delete;
+
+ private:
+  databento::detail::Socket _fd;
+#ifdef _WIN32
+  // No state to save on Windows
+#else
+  int _original_flags;
+#endif
 };
 }  // namespace
 
