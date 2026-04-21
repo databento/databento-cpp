@@ -69,7 +69,7 @@ int main() {
 
   const auto cost = client.MetadataGetCost(glbx_dataset, {"2020-12-28", "2020-12-29"},
                                            {"ESH1"}, db::Schema::Mbo);
-  std::cout << "Cost (in cents): " << cost << '\n';
+  std::cout << "Cost (in USD): " << cost << '\n';
 
   return 0;
 }

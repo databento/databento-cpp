@@ -170,6 +170,12 @@ const char* ToString(Venue venue) {
     case Venue::Ocea: {
       return "OCEA";
     }
+    case Venue::Mxto: {
+      return "MXTO";
+    }
+    case Venue::Iexo: {
+      return "IEXO";
+    }
     default: {
       return "Unknown";
     }
@@ -341,6 +347,12 @@ Venue FromString(const std::string& str) {
   }
   if (str == "OCEA") {
     return Venue::Ocea;
+  }
+  if (str == "MXTO") {
+    return Venue::Mxto;
+  }
+  if (str == "IEXO") {
+    return Venue::Iexo;
   }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
@@ -934,6 +946,12 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::OceaMemoirOcea: {
       return Venue::Ocea;
     }
+    case Publisher::OpraPillarMxto: {
+      return Venue::Mxto;
+    }
+    case Publisher::OpraPillarIexo: {
+      return Venue::Iexo;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherVenue", "publisher",
@@ -1264,6 +1282,12 @@ Dataset PublisherDataset(Publisher publisher) {
     }
     case Publisher::OceaMemoirOcea: {
       return Dataset::OceaMemoir;
+    }
+    case Publisher::OpraPillarMxto: {
+      return Dataset::OpraPillar;
+    }
+    case Publisher::OpraPillarIexo: {
+      return Dataset::OpraPillar;
     }
     default: {
       throw InvalidArgumentError{
@@ -1596,6 +1620,12 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::OceaMemoirOcea: {
       return "OCEA.MEMOIR.OCEA";
+    }
+    case Publisher::OpraPillarMxto: {
+      return "OPRA.PILLAR.MXTO";
+    }
+    case Publisher::OpraPillarIexo: {
+      return "OPRA.PILLAR.IEXO";
     }
     default: {
       return "Unknown";
@@ -1930,6 +1960,12 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "OCEA.MEMOIR.OCEA") {
     return Publisher::OceaMemoirOcea;
+  }
+  if (str == "OPRA.PILLAR.MXTO") {
+    return Publisher::OpraPillarMxto;
+  }
+  if (str == "OPRA.PILLAR.IEXO") {
+    return Publisher::OpraPillarIexo;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
