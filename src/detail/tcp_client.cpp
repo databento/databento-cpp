@@ -64,7 +64,7 @@ class BlockingGuard {
   explicit BlockingGuard(databento::detail::Socket socket) : _fd{socket} {
 #ifdef _WIN32
     unsigned long mode = 1;
-    ::ioctlsocket(fd, FIONBIO, &mode);
+    ::ioctlsocket(_fd, FIONBIO, &mode);
 #else
     _original_flags = ::fcntl(_fd, F_GETFL, 0);
     ::fcntl(_fd, F_SETFL, _original_flags | O_NONBLOCK);
@@ -74,7 +74,7 @@ class BlockingGuard {
   ~BlockingGuard() {
 #ifdef _WIN32
     unsigned long mode = 0;
-    ::ioctlsocket(fd, FIONBIO, &mode);
+    ::ioctlsocket(_fd, FIONBIO, &mode);
 #else
     ::fcntl(_fd, F_SETFL, _original_flags);
 #endif
