@@ -3,8 +3,11 @@
 ## 0.55.0 - TBD
 
 ### Enhancements
-- Added new publisher values for Cboe Titanium Cboe Global Indices Feed
+- Improved `DbnDecoder` throughput on current-version data and `AsIs` workloads by
+  caching whether the upgrade policy-version combination requires upgrading, skipping
+  the per-record `DecodeRecordCompat` dispatch on the fast path
 - Made `detail::Buffer` shifts explicit to avoid redundant moves during record decoding
+- Added new publisher values for Cboe Titanium Cboe Global Indices Feed
 - Added `Year` to `SplitDuration` enum for yearly historical batch job submissions
 
 ## 0.54.0 - 2026-04-21

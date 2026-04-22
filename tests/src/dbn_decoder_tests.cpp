@@ -217,6 +217,29 @@ TEST_F(DbnDecoderTests, TestUpgradeMbp1WithTsOut) {
   ASSERT_EQ(&orig, &upgraded);
 }
 
+TEST_F(DbnDecoderTests, TestNeedsUpgrade) {
+  struct Case {
+    VersionUpgradePolicy policy;
+    std::uint8_t version;
+    bool expected;
+  };
+  constexpr Case kCases[] = {
+      {VersionUpgradePolicy::AsIs, 1, false},
+      {VersionUpgradePolicy::AsIs, 2, false},
+      {VersionUpgradePolicy::AsIs, 3, false},
+      {VersionUpgradePolicy::UpgradeToV2, 1, true},
+      {VersionUpgradePolicy::UpgradeToV2, 2, false},
+      {VersionUpgradePolicy::UpgradeToV3, 1, true},
+      {VersionUpgradePolicy::UpgradeToV3, 2, true},
+      {VersionUpgradePolicy::UpgradeToV3, 3, false},
+  };
+  for (const auto& c : kCases) {
+    EXPECT_EQ(DbnDecoder::NeedsUpgrade(c.policy, c.version), c.expected)
+        << "policy=" << static_cast<int>(c.policy)
+        << " version=" << static_cast<int>(c.version);
+  }
+}
+
 class DbnDecoderSchemaTests
     : public DbnDecoderTests,
       public testing::WithParamInterface<std::pair<const char*, std::uint8_t>> {};

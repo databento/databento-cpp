@@ -173,6 +173,7 @@ databento::Metadata DbnDecoder::DecodeMetadata() {
       buffer_.ReadBegin(), kMetadataPreludeSize);
   buffer_.Consume(kMetadataPreludeSize);
   version_ = version;
+  needs_upgrade_ = NeedsUpgrade(upgrade_policy_, version_);
   buffer_.Reserve(size);
   input_->ReadExact(buffer_.WriteBegin(), size);
   buffer_.Fill(size);
@@ -273,6 +274,19 @@ databento::Record DbnDecoder::DecodeRecordCompat(
   return rec;
 }
 
+bool DbnDecoder::NeedsUpgrade(VersionUpgradePolicy upgrade_policy,
+                              std::uint8_t version) {
+  switch (upgrade_policy) {
+    case VersionUpgradePolicy::UpgradeToV2:
+      return version < 2;
+    case VersionUpgradePolicy::UpgradeToV3:
+      return version < 3;
+    case VersionUpgradePolicy::AsIs:
+    default:
+      return false;
+  }
+}
+
 // assumes DecodeMetadata has been called
 const databento::Record* DbnDecoder::DecodeRecord() {
   // need some unread unread_bytes
@@ -294,8 +308,10 @@ const databento::Record* DbnDecoder::DecodeRecord() {
   }
   current_record_ = Record{BufferRecordHeader()};
   buffer_.Consume(current_record_.Size());
-  current_record_ = DbnDecoder::DecodeRecordCompat(version_, upgrade_policy_, ts_out_,
-                                                   &compat_buffer_, current_record_);
+  if (needs_upgrade_) {
+    current_record_ = DbnDecoder::DecodeRecordCompat(version_, upgrade_policy_, ts_out_,
+                                                     &compat_buffer_, current_record_);
+  }
   return &current_record_;
 }
 
