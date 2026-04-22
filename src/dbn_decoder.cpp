@@ -293,16 +293,14 @@ const databento::Record* DbnDecoder::DecodeRecord() {
     }
   }
   current_record_ = Record{BufferRecordHeader()};
-  buffer_.ConsumeNoShift(current_record_.Size());
+  buffer_.Consume(current_record_.Size());
   current_record_ = DbnDecoder::DecodeRecordCompat(version_, upgrade_policy_, ts_out_,
                                                    &compat_buffer_, current_record_);
   return &current_record_;
 }
 
 size_t DbnDecoder::FillBuffer() {
-  if (buffer_.WriteCapacity() < kMaxRecordLen) {
-    buffer_.Shift();
-  }
+  buffer_.ShiftForSpace(kMaxRecordLen);
   const auto fill_size =
       input_->ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity());
   buffer_.Fill(fill_size);

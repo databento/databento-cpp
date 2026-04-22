@@ -11,7 +11,7 @@ namespace databento::detail::tests {
 TEST(BufferTests, TestWriteAllPastCapacity) {
   Buffer target{10};
   target.Fill(4);
-  target.ConsumeNoShift(2);
+  target.Consume(2);
   ASSERT_EQ(target.WriteCapacity(), 6);
   ASSERT_EQ(target.ReadCapacity(), 2);
   ASSERT_EQ(target.Capacity(), 10);
@@ -25,7 +25,7 @@ TEST(BufferTests, TestWriteAllPastCapacity) {
 TEST(BufferTests, TestWriteAllShift) {
   Buffer target{20};
   target.WriteAll("TestWriteAllShift", 17);
-  target.ConsumeNoShift(4);
+  target.Consume(4);
   ASSERT_EQ(target.WriteCapacity(), 3);
   ASSERT_EQ(target.ReadCapacity(), 13);
   ASSERT_EQ(target.Capacity(), 20);
@@ -39,7 +39,7 @@ TEST(BufferTests, TestWriteAllShift) {
 TEST(BufferTests, TestWriteRead) {
   Buffer target{10};
   target.Fill(5);
-  target.ConsumeNoShift(5);
+  target.Consume(5);
   const auto write_len = target.Write("BufferTests", 11);
   ASSERT_EQ(write_len, 10);
   std::array<std::byte, 10> read_buf{};
@@ -54,16 +54,42 @@ TEST(BufferTests, TestReserve) {
   ASSERT_EQ(target.ReadCapacity(), 0);
   ASSERT_EQ(target.Capacity(), 120);
   target.WriteAll("TestReserve", 11);
-  target.ConsumeNoShift(4);
+  target.Consume(4);
 }
 
-TEST(BufferTests, TestConsumeShift) {
+TEST(BufferTests, TestConsumeDoesNotShift) {
+  Buffer target{16};
+  target.Fill(12);
+  target.Consume(10);
+  ASSERT_EQ(target.ReadCapacity(), 2);
+  ASSERT_EQ(target.WriteCapacity(), 4);
+}
+
+TEST(BufferTests, TestShiftForSpace) {
   Buffer target{120};
-  target.Fill(120);
-  ASSERT_EQ(target.WriteCapacity(), 0);
-  target.ConsumeNoShift(100);
-  ASSERT_EQ(target.WriteCapacity(), 0);
-  target.Consume(1);
-  ASSERT_EQ(target.WriteCapacity(), 101);
+  target.Fill(40);
+  target.Consume(20);
+  ASSERT_EQ(target.WriteCapacity(), 80);
+  ASSERT_EQ(target.ReadCapacity(), 20);
+  // Writable space is sufficient: no shift
+  target.ShiftForSpace(50);
+  ASSERT_EQ(target.WriteCapacity(), 80);
+  ASSERT_EQ(target.ReadCapacity(), 20);
+  // Writable space is insufficient: reclaim the consumed prefix
+  target.ShiftForSpace(100);
+  ASSERT_EQ(target.WriteCapacity(), 100);
+  ASSERT_EQ(target.ReadCapacity(), 20);
+  // Nothing left to reclaim; shift is a no-op
+  target.ShiftForSpace(1000);
+  ASSERT_EQ(target.WriteCapacity(), 100);
+  ASSERT_EQ(target.ReadCapacity(), 20);
+}
+
+TEST(BufferTests, TestShiftForSpaceNoopWhenUnconsumed) {
+  Buffer target{16};
+  target.Fill(4);
+  target.ShiftForSpace(1000);
+  ASSERT_EQ(target.WriteCapacity(), 12);
+  ASSERT_EQ(target.ReadCapacity(), 4);
 }
 }  // namespace databento::detail::tests

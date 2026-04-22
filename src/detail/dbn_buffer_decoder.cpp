@@ -10,6 +10,7 @@ using databento::detail::DbnBufferDecoder;
 databento::KeepGoing DbnBufferDecoder::Process(const char* data, std::size_t length) {
   zstd_buffer_->WriteAll(data, length);
   while (true) {
+    dbn_buffer_.ShiftForSpace(kMaxRecordLen);
     const auto read_size =
         zstd_stream_.ReadSome(dbn_buffer_.WriteBegin(), dbn_buffer_.WriteCapacity());
     dbn_buffer_.Fill(read_size);

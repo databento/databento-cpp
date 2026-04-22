@@ -482,7 +482,7 @@ databento::IReadable::Result LiveBlocking::FillBuffer() {
 
 databento::IReadable::Result LiveBlocking::FillBuffer(
     std::chrono::milliseconds timeout) {
-  buffer_.Shift();
+  buffer_.ShiftForSpace(kMaxRecordLen);
   const auto read_res =
       connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity(), timeout);
   buffer_.Fill(read_res.read_size);
@@ -494,7 +494,7 @@ databento::IReadable::Result LiveBlocking::FillBuffer(
 
 const databento::Record* LiveBlocking::ConsumeBufferedRecord() {
   current_record_ = Record{BufferRecordHeader()};
-  buffer_.ConsumeNoShift(current_record_.Size());
+  buffer_.Consume(current_record_.Size());
   current_record_ = DbnDecoder::DecodeRecordCompat(
       version_, upgrade_policy_, send_ts_out_, &compat_buffer_, current_record_);
   return &current_record_;
