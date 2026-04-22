@@ -1,9 +1,10 @@
 # Changelog
 
-### 0.55.0 - TBD
+## 0.55.0 - TBD
 
-##### Enhancements
+### Enhancements
 - Added new publisher values for Cboe Titanium Cboe Global Indices Feed
+- Added `Year` to `SplitDuration` enum for yearly historical batch job submissions
 
 ## 0.54.0 - 2026-04-21
 

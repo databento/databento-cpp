@@ -48,6 +48,9 @@ const char* ToString(SplitDuration duration_interval) {
     case SplitDuration::Month: {
       return "month";
     }
+    case SplitDuration::Year: {
+      return "year";
+    }
     case SplitDuration::None: {
       return "none";
     }
@@ -978,6 +981,9 @@ SplitDuration FromString(const std::string& str) {
   }
   if (str == "month") {
     return SplitDuration::Month;
+  }
+  if (str == "year") {
+    return SplitDuration::Year;
   }
   if (str == "none") {
     return SplitDuration::None;
