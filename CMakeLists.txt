@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.24..4.2)
 
 project(
   databento
-  VERSION 0.54.0
+  VERSION 0.55.0
   LANGUAGES CXX
   DESCRIPTION "Official Databento client library"
 )
@@ -152,7 +152,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_JSON)
     find_package(nlohmann_json REQUIRED)
   endif()
 else()
-  set(json_version 3.11.3)
+  set(json_version 3.12.0)
   # Required to correctly install nlohmann_json
   set(JSON_Install ON)
   FetchContent_Declare(
@@ -178,7 +178,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
     find_package(httplib REQUIRED)
   endif()
 else()
-  set(httplib_version 0.37.2)
+  set(httplib_version 0.43.1)
   FetchContent_Declare(
     httplib
     URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz

@@ -43,7 +43,7 @@ class HttpClient {
                                        httplib::Result&& res) const;
   void CheckWarnings(const httplib::Response& response) const;
 
-  static const httplib::Headers kHeaders;
+  static const httplib::Headers& BaseHeaders();
 
   ILogReceiver* log_receiver_;
   httplib::Client client_;

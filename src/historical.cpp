@@ -13,6 +13,7 @@
 #include <iterator>   // back_inserter
 #include <optional>
 #include <sstream>
+#include <string_view>
 #include <system_error>
 #include <utility>  // move
 #include <variant>
@@ -226,7 +227,7 @@ Historical::Historical(ILogReceiver* log_receiver, std::string key, std::string 
       upgrade_policy_{upgrade_policy},
       client_{log_receiver, key_, gateway_, port} {}
 
-static const std::string kBatchSubmitJobEndpoint = "Historical::BatchSubmitJob";
+constexpr std::string_view kBatchSubmitJobEndpoint = "Historical::BatchSubmitJob";
 
 databento::BatchJob Historical::BatchSubmitJob(
     const std::string& dataset, const std::vector<std::string>& symbols, Schema schema,
@@ -471,7 +472,7 @@ void Historical::DownloadFile(const std::string& url,
     } catch (const databento::Exception& exc) {
       retry += 1;
       if (retry == kMaxRetries) {
-        throw exc;
+        throw;
       }
       ss.str("");
       ss << '[' << kMethod << "] Retrying download attempt " << retry + 1 << " after "
@@ -685,7 +686,7 @@ databento::DatasetRange Historical::MetadataGetDatasetRange(
                       std::move(range_by_schema)};
 }
 
-static const std::string kMetadataGetRecordCountEndpoint =
+constexpr std::string_view kMetadataGetRecordCountEndpoint =
     "Historical::MetadataGetRecordCount";
 
 std::uint64_t Historical::MetadataGetRecordCount(
@@ -738,7 +739,7 @@ std::uint64_t Historical::MetadataGetRecordCount(const httplib::Params& params) 
   return json;
 }
 
-static const std::string kMetadataGetBillableSizeEndpoint =
+constexpr std::string_view kMetadataGetBillableSizeEndpoint =
     "Historical::MetadataGetBillableSize";
 
 std::uint64_t Historical::MetadataGetBillableSize(
@@ -792,7 +793,7 @@ std::uint64_t Historical::MetadataGetBillableSize(const httplib::Params& params)
   return json;
 }
 
-static const std::string kMetadataGetCostEndpoint = "Historical::MetadataGetCost";
+constexpr std::string_view kMetadataGetCostEndpoint = "Historical::MetadataGetCost";
 
 double Historical::MetadataGetCost(const std::string& dataset,
                                    const DateTimeRange<UnixNanos>& datetime_range,
@@ -912,8 +913,13 @@ databento::SymbologyResolution Historical::SymbologyResolve(
   return res;
 }
 
-static const std::string kTimeseriesGetRangeEndpoint = "Historical::TimeseriesGetRange";
-static const std::string kTimeseriesGetRangePath = ::BuildTimeseriesPath(".get_range");
+constexpr std::string_view kTimeseriesGetRangeEndpoint =
+    "Historical::TimeseriesGetRange";
+
+static const std::string& TimeseriesGetRangePath() {
+  static const std::string kPath = ::BuildTimeseriesPath(".get_range");
+  return kPath;
+}
 
 void Historical::TimeseriesGetRange(const std::string& dataset,
                                     const DateTimeRange<UnixNanos>& datetime_range,
@@ -986,7 +992,7 @@ void Historical::TimeseriesGetRange(const HttplibParams& params,
 
   bool early_exit = false;
   this->client_.PostRawStream(
-      kTimeseriesGetRangePath, params,
+      TimeseriesGetRangePath(), params,
       [&decoder, &early_exit](const char* data, std::size_t length) mutable {
         if (decoder.Process(data, length) == KeepGoing::Continue) {
           return true;
@@ -1050,11 +1056,11 @@ databento::DbnStore Historical::TimeseriesGetRange(
   return this->TimeseriesGetRange(params);
 }
 databento::DbnStore Historical::TimeseriesGetRange(const HttplibParams& params) {
-  auto stream = client_.OpenPostStream(kTimeseriesGetRangePath, params);
+  auto stream = client_.OpenPostStream(TimeseriesGetRangePath(), params);
   return DbnStore{log_receiver_, std::move(stream), upgrade_policy_};
 }
 
-static const std::string kTimeseriesGetRangeToFileEndpoint =
+constexpr std::string_view kTimeseriesGetRangeToFileEndpoint =
     "Historical::TimeseriesGetRangeToFile";
 
 databento::DbnStore Historical::TimeseriesGetRangeToFile(
@@ -1111,7 +1117,7 @@ databento::DbnStore Historical::TimeseriesGetRangeToFile(
     const HttplibParams& params, const std::filesystem::path& file_path) {
   {
     OutFileStream out_file{file_path};
-    this->client_.PostRawStream(kTimeseriesGetRangePath, params,
+    this->client_.PostRawStream(TimeseriesGetRangePath(), params,
                                 [&out_file](const char* data, std::size_t length) {
                                   out_file.WriteAll(
                                       reinterpret_cast<const std::byte*>(data), length);
