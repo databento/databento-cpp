@@ -13,9 +13,7 @@ size_t Buffer::Write(const char* data, std::size_t length) {
   return Write(reinterpret_cast<const std::byte*>(data), length);
 }
 size_t Buffer::Write(const std::byte* data, std::size_t length) {
-  if (length > WriteCapacity()) {
-    Shift();
-  }
+  ShiftForSpace(length);
   const auto write_size = std::min(WriteCapacity(), length);
   std::copy(data, data + write_size, WriteBegin());
   Fill(write_size);
@@ -28,8 +26,8 @@ void Buffer::WriteAll(const char* data, std::size_t length) {
 void Buffer::WriteAll(const std::byte* data, std::size_t length) {
   if (length > Capacity() - ReadCapacity()) {
     Reserve(ReadCapacity() + length);
-  } else if (length >= WriteCapacity()) {
-    Shift();
+  } else {
+    ShiftForSpace(length);
   }
   std::copy(data, data + length, WriteBegin());
   write_pos_ += length;

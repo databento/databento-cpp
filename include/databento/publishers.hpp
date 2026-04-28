@@ -117,6 +117,8 @@ enum class Venue : std::uint16_t {
   Mxto = 54,
   // IEX Options LLC
   Iexo = 55,
+  // Cboe Global Indices Feed
+  Cgif = 56,
 };
 
 // A source of data.
@@ -203,6 +205,8 @@ enum class Dataset : std::uint16_t {
   XcbfPitch = 40,
   // Blue Ocean ATS MEMOIR Depth
   OceaMemoir = 41,
+  // Cboe Titanium Cboe Global Indices Feed
+  CgifTitanium = 42,
 };
 
 // A specific Venue from a specific data source.
@@ -425,6 +429,8 @@ enum class Publisher : std::uint16_t {
   OpraPillarMxto = 108,
   // OPRA - IEX Options LLC
   OpraPillarIexo = 109,
+  // Cboe Global Indices Feed
+  CgifTitaniumCgif = 110,
 };
 
 // Get a Publisher's Venue.

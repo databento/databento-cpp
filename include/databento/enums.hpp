@@ -24,6 +24,7 @@ enum class SplitDuration : std::uint8_t {
   Day = 0,
   Week,
   Month,
+  Year,
   None,
 };
 

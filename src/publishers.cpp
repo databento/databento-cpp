@@ -176,6 +176,9 @@ const char* ToString(Venue venue) {
     case Venue::Iexo: {
       return "IEXO";
     }
+    case Venue::Cgif: {
+      return "CGIF";
+    }
     default: {
       return "Unknown";
     }
@@ -354,6 +357,9 @@ Venue FromString(const std::string& str) {
   if (str == "IEXO") {
     return Venue::Iexo;
   }
+  if (str == "CGIF") {
+    return Venue::Cgif;
+  }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -482,6 +488,9 @@ const char* ToString(Dataset dataset) {
     }
     case Dataset::OceaMemoir: {
       return "OCEA.MEMOIR";
+    }
+    case Dataset::CgifTitanium: {
+      return "CGIF.TITANIUM";
     }
     default: {
       return "Unknown";
@@ -618,6 +627,9 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "OCEA.MEMOIR") {
     return Dataset::OceaMemoir;
+  }
+  if (str == "CGIF.TITANIUM") {
+    return Dataset::CgifTitanium;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -951,6 +963,9 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::OpraPillarIexo: {
       return Venue::Iexo;
+    }
+    case Publisher::CgifTitaniumCgif: {
+      return Venue::Cgif;
     }
     default: {
       throw InvalidArgumentError{
@@ -1289,6 +1304,9 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::OpraPillarIexo: {
       return Dataset::OpraPillar;
     }
+    case Publisher::CgifTitaniumCgif: {
+      return Dataset::CgifTitanium;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -1626,6 +1644,9 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::OpraPillarIexo: {
       return "OPRA.PILLAR.IEXO";
+    }
+    case Publisher::CgifTitaniumCgif: {
+      return "CGIF.TITANIUM.CGIF";
     }
     default: {
       return "Unknown";
@@ -1966,6 +1987,9 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "OPRA.PILLAR.IEXO") {
     return Publisher::OpraPillarIexo;
+  }
+  if (str == "CGIF.TITANIUM.CGIF") {
+    return Publisher::CgifTitaniumCgif;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

@@ -61,6 +61,7 @@ class DbnBufferDecoder {
   alignas(RecordHeader) std::array<std::byte, kMaxRecordLen> compat_buffer_{};
   std::uint8_t input_version_{};
   bool ts_out_{};
+  bool needs_upgrade_{true};
   DecoderState state_{DecoderState::Init};
 };
 }  // namespace databento::detail

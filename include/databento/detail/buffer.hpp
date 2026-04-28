@@ -46,14 +46,7 @@ class Buffer : public IReadable, public IWritable {
   std::byte* ReadEnd() { return write_pos_; }
   const std::byte* ReadBegin() const { return read_pos_; }
   const std::byte* ReadEnd() const { return write_pos_; }
-  // Indicate how many bytes were read
-  void Consume(std::size_t length) {
-    read_pos_ += length;
-    if (static_cast<std::size_t>(read_pos_ - buf_.get()) > (Capacity() / 2)) {
-      Shift();
-    }
-  }
-  void ConsumeNoShift(std::size_t length) { read_pos_ += length; }
+  void Consume(std::size_t length) { read_pos_ += length; }
   std::size_t ReadCapacity() const {
     return static_cast<std::size_t>(write_pos_ - read_pos_);
   }
@@ -65,6 +58,13 @@ class Buffer : public IReadable, public IWritable {
   }
   void Reserve(std::size_t capacity);
   void Shift();
+  // Shifts unread data to offset 0 if writable space is less than `needed`,
+  // reclaiming the consumed prefix. Does not grow the buffer.
+  void ShiftForSpace(std::size_t needed) {
+    if (WriteCapacity() < needed && read_pos_ != buf_.get()) {
+      Shift();
+    }
+  }
 
   friend std::ostream& operator<<(std::ostream& stream, const Buffer& buffer);
 

@@ -3,6 +3,7 @@ Checks: >
     -*,
     bugprone-*,
     -bugprone-easily-swappable-parameters,
+    -bugprone-invalid-enum-default-initialization,
     clang-analyzer-*,
     -clang-analyzer-optin.cplusplus.VirtualCall,
     clang-diagnostic-*,

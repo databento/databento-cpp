@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.55.0 - 2026-04-28
+
+### Enhancements
+- Improved `DbnDecoder` throughput on current-version data and `AsIs` workloads by
+  caching whether the upgrade policy-version combination requires upgrading, skipping
+  the per-record `DecodeRecordCompat` dispatch on the fast path
+- Made `detail::Buffer` shifts explicit to avoid redundant moves during record decoding
+- Added new publisher values for Cboe Titanium Cboe Global Indices Feed
+- Added `Year` to `SplitDuration` enum for yearly historical batch job submissions
+- Upgraded default cpp-httplib version to 0.43.1
+- Upgraded default nlohmann/json version to 3.12.0
+
 ## 0.54.0 - 2026-04-21
 
 ### Enhancements

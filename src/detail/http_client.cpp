@@ -15,15 +15,19 @@
 using databento::detail::HttpClient;
 
 constexpr std::chrono::seconds kTimeout{100};
-const httplib::Headers HttpClient::kHeaders{
-    {"accept", "application/json"},
-    {"user-agent", kUserAgent},
-};
+
+const httplib::Headers& HttpClient::BaseHeaders() {
+  static const httplib::Headers kHeaders{
+      {"accept", "application/json"},
+      {"user-agent", kUserAgent},
+  };
+  return kHeaders;
+}
 
 HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string& key,
                        const std::string& gateway)
     : log_receiver_{log_receiver}, client_{gateway} {
-  auto headers = HttpClient::kHeaders;
+  auto headers = HttpClient::BaseHeaders();
   headers.insert(httplib::make_basic_authentication_header(key, ""));
   client_.set_default_headers(headers);
   client_.set_basic_auth(key, "");
@@ -34,7 +38,7 @@ HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string&
 HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string& key,
                        const std::string& gateway, std::uint16_t port)
     : log_receiver_{log_receiver}, client_{gateway, port} {
-  auto headers = HttpClient::kHeaders;
+  auto headers = HttpClient::BaseHeaders();
   headers.insert(httplib::make_basic_authentication_header(key, ""));
   client_.set_default_headers(headers);
   client_.set_basic_auth(key, "");

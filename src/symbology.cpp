@@ -33,11 +33,11 @@ TsSymbolMap SymbologyResolution::CreateSymbolMap() const {
   return res;
 }
 
-std::string JoinSymbolStrings(const std::string& method_name,
+std::string JoinSymbolStrings(std::string_view method_name,
                               std::vector<std::string>::const_iterator symbols_begin,
                               std::vector<std::string>::const_iterator symbols_end) {
   if (symbols_begin == symbols_end) {
-    throw InvalidArgumentError{method_name, "symbols", "Cannot be empty"};
+    throw InvalidArgumentError{std::string{method_name}, "symbols", "Cannot be empty"};
   }
   return std::accumulate(symbols_begin, symbols_end, std::string{},
                          [](std::string acc, const std::string& sym) {
@@ -45,10 +45,10 @@ std::string JoinSymbolStrings(const std::string& method_name,
                          });
 }
 
-std::string JoinSymbolStrings(const std::string& method_name,
+std::string JoinSymbolStrings(std::string_view method_name,
                               const std::vector<std::string>& symbols) {
   if (symbols.empty()) {
-    throw InvalidArgumentError{method_name, "symbols", "Cannot be empty"};
+    throw InvalidArgumentError{std::string{method_name}, "symbols", "Cannot be empty"};
   }
   return JoinSymbolStrings(method_name, symbols.begin(), symbols.end());
 }

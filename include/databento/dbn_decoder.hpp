@@ -35,6 +35,9 @@ class DbnDecoder {
                                    VersionUpgradePolicy upgrade_policy, bool ts_out,
                                    std::array<std::byte, kMaxRecordLen>* compat_buffer,
                                    Record rec);
+  // Returns whether a record from `version`-formatted data requires runtime
+  // upgrade dispatch under `upgrade_policy`.
+  static bool NeedsUpgrade(VersionUpgradePolicy upgrade_policy, std::uint8_t version);
 
   // Should be called exactly once.
   Metadata DecodeMetadata();
@@ -61,6 +64,7 @@ class DbnDecoder {
   ILogReceiver* log_receiver_;
   std::uint8_t version_{};
   VersionUpgradePolicy upgrade_policy_;
+  bool needs_upgrade_{true};
   bool ts_out_{};
   std::unique_ptr<IReadable> input_;
   detail::Buffer buffer_{};
