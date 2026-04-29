@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.56.0 - TBD
+
+### Enhancements
+- Added `Index` `InstrumentClass` variant
+- Added `StatType` variants `IndicativeClosePrice` and `VenueSpecificPrice1`
+
 ## 0.55.0 - 2026-04-28
 
 ### Enhancements

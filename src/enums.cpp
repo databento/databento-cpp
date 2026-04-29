@@ -253,6 +253,9 @@ const char* ToString(InstrumentClass instrument_class) {
     case InstrumentClass::Future: {
       return "Future";
     }
+    case InstrumentClass::Index: {
+      return "Index";
+    }
     case InstrumentClass::Stock: {
       return "Stock";
     }
@@ -546,8 +549,14 @@ const char* ToString(StatType stat_type) {
     case StatType::BlockVolume: {
       return "BlockVolume";
     }
+    case StatType::IndicativeClosePrice: {
+      return "IndicativeClosePrice";
+    }
     case StatType::VenueSpecificVolume1: {
       return "VenueSpecificVolume1";
+    }
+    case StatType::VenueSpecificPrice1: {
+      return "VenueSpecificPrice1";
     }
     default: {
       return "Unknown";
