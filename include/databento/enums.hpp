@@ -171,6 +171,8 @@ enum InstrumentClass : char {
   Call = 'C',
   // A future.
   Future = 'F',
+  // An index.
+  Index = 'I',
   // A stock.
   Stock = 'K',
   // A spread composed of multiple instrument classes.
@@ -436,10 +438,17 @@ enum StatType : std::uint16_t {
   // date.
   // `quantity` will be set. `ts_ref` will indicate the trading date of the volume.
   BlockVolume = 19,
+  // The probable price of the last trade of an instrument published during the trading
+  // session. `price` will be set.
+  IndicativeClosePrice = 20,
   // A venue specific volume statistic. Refer to the venue documentation for more
   // information.
   // `quantity` will be set.
   VenueSpecificVolume1 = 10001,
+  // A venue specific price statistic. Refer to the venue documentation for more
+  // information.
+  // `price` will be set.
+  VenueSpecificPrice1 = 10002,
 };
 }  // namespace stat_type
 using stat_type::StatType;
