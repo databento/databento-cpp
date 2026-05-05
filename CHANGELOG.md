@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.56.0 - TBD
+## 0.56.0 - 2026-05-05
 
 ### Enhancements
 - Added `Index` `InstrumentClass` variant
