@@ -125,7 +125,7 @@ std::unique_ptr<databento::IReadable> HttpClient::OpenPostStream(
     while ((n = handle.read(buf.data(), buf.size())) > 0) {
       err_body.append(buf.data(), static_cast<std::size_t>(n));
     }
-    throw HttpResponseError{path, handle.response->status, std::move(err_body)};
+    throw HttpResponseError{path, handle.response->status, err_body};
   }
   return std::make_unique<HttpStreamReader>(std::move(handle));
 }
@@ -144,7 +144,7 @@ void HttpClient::CheckStatusAndStreamRes(const std::string& path, int status_cod
                                          std::string&& err_body,
                                          const httplib::Result& res) {
   if (status_code > 0) {
-    throw HttpResponseError{path, status_code, std::move(err_body)};
+    throw HttpResponseError{path, status_code, err_body};
   }
   if (res.error() != httplib::Error::Success &&
       // canceled happens if `callback` returns false, which is based on the
@@ -162,7 +162,7 @@ nlohmann::json HttpClient::CheckAndParseResponse(const std::string& path,
   auto& response = res.value();
   const auto status_code = response.status;
   if (HttpClient::IsErrorStatus(status_code)) {
-    throw HttpResponseError{path, status_code, std::move(response.body)};
+    throw HttpResponseError{path, status_code, response.body};
   }
   CheckWarnings(response);
   try {

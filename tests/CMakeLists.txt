@@ -33,6 +33,7 @@ set(
   src/dbn_encoder_tests.cpp
   src/dbn_file_store_tests.cpp
   src/dbn_tests.cpp
+  src/exception_tests.cpp
   src/file_stream_tests.cpp
   src/flag_set_tests.cpp
   src/historical_tests.cpp

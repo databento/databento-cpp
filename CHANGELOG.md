@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.57.0 - TBD
+
+### Enhancements
+- Added `Case()`, `DetailMessage()`, and `DocsUrl()` getters on `HttpResponseError`.
+  These parse the JSON error envelope returned by the historical API and expose its
+  fields directly
+- Included the error `case` (when present) in the message returned by
+  `HttpResponseError::what()`
+
+### Breaking changes
+- Removed `HttpResponseError::ResponseBody()`. The raw body is still embedded in the
+  message returned by `what()`; use the new `Case()`, `DetailMessage()`, and `DocsUrl()`
+  getters for structured access
+
 ## 0.56.0 - 2026-05-05
 
 ### Enhancements
