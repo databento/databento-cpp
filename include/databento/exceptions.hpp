@@ -9,6 +9,7 @@
 #include <chrono>
 #include <cstdint>
 #include <exception>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>  // move
@@ -48,26 +49,43 @@ class HttpRequestError : public Exception {
 // server.
 class HttpResponseError : public Exception {
  public:
-  HttpResponseError(std::string request_path, std::int32_t status_code,
-                    std::string response_body)
-      : Exception{BuildMessage(request_path, status_code, response_body)},
-        request_path_{std::move(request_path)},
-        status_code_{status_code},
-        response_body_{std::move(response_body)} {}
+  HttpResponseError(const std::string& request_path, std::int32_t status_code,
+                    const std::string& response_body);
 
   const std::string& RequestPath() const { return request_path_; }
   std::int32_t StatusCode() const { return status_code_; }
-  const std::string& ResponseBody() const { return response_body_; }
+  // Machine-readable error case from the server's JSON envelope, or `nullopt` if
+  // the response body was not a structured error.
+  const std::optional<std::string>& Case() const { return case_; }
+  // Server-provided message extracted from the JSON envelope, or `nullopt` if
+  // the body was not parseable as one.
+  const std::optional<std::string>& DetailMessage() const { return detail_message_; }
+  // Documentation URL from the JSON envelope, or `nullopt` if absent.
+  const std::optional<std::string>& DocsUrl() const { return docs_url_; }
 
  private:
+  struct ParsedDetail {
+    std::optional<std::string> case_str;
+    std::optional<std::string> detail_message;
+    std::optional<std::string> docs_url;
+  };
+
+  static ParsedDetail ParseDetail(std::string_view request_path,
+                                  const std::string& response_body);
   static std::string BuildMessage(std::string_view request_path,
                                   std::int32_t status_code,
-                                  std::string_view response_body);
+                                  std::string_view response_body,
+                                  const std::optional<std::string>& case_str);
+
+  HttpResponseError(std::string request_path, std::int32_t status_code,
+                    const std::string& response_body, ParsedDetail parsed);
 
   const std::string request_path_;
   // int32 is the representation used by httplib
   const std::int32_t status_code_;
-  const std::string response_body_;
+  const std::optional<std::string> case_;
+  const std::optional<std::string> detail_message_;
+  const std::optional<std::string> docs_url_;
 };
 
 // Exception indicating an issue with the TCP connection.
