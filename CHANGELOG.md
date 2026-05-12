@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.57.0 - TBD
+## 0.57.0 - 2026-05-12
 
 ### Enhancements
 - Added `Case()`, `DetailMessage()`, and `DocsUrl()` getters on `HttpResponseError`.
