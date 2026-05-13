@@ -362,6 +362,15 @@ std::vector<databento::BatchFileDesc> Historical::BatchListFiles(
   return files;
 }
 
+databento::BatchJob Historical::BatchGetJobDetails(const std::string& job_id) {
+  static const std::string kEndpoint = "Historical::BatchGetJobDetails";
+  static const std::string kPath = ::BuildBatchPath(".get_job_details");
+
+  const nlohmann::json json =
+      client_.GetJson(kPath, httplib::Params{{"job_id", job_id}});
+  return ::Parse(kEndpoint, json);
+}
+
 std::vector<std::filesystem::path> Historical::BatchDownload(
     const std::filesystem::path& output_dir, const std::string& job_id) {
   TryCreateDir(output_dir);

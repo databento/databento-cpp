@@ -3,6 +3,7 @@
 ## 0.59.0 - TBD
 
 ### Enhancements
+- Added `Historical::BatchGetJobDetails` for querying the details for a single batch job
 - Added new venues, datasets, and publishers for US Equities Securities Information
   Processors
 

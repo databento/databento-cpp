@@ -223,6 +223,54 @@ TEST_F(HistoricalTests, TestBatchListFiles) {
   ASSERT_EQ(file_desc.ftp_url, "ftp://ftp.databento.com/job_id/test.json");
 }
 
+TEST_F(HistoricalTests, TestBatchGetJobDetails) {
+  const auto kJobId = "GLBX-20221031-L3RVE95CV5";
+  const nlohmann::json kResp{{"actual_size", 2022690},
+                             {"billed_size", 5156064},
+                             {"compression", "zstd"},
+                             {"cost_usd", 0.119089},
+                             {"dataset", "GLBX.MDP3"},
+                             {"delivery", "download"},
+                             {"encoding", "dbn"},
+                             {"end", "2022-07-03 00:00:00+00:00"},
+                             {"id", kJobId},
+                             {"limit", nullptr},
+                             {"package_size", 2026761},
+                             {"packaging", nullptr},
+                             {"pretty_px", false},
+                             {"pretty_ts", false},
+                             {"map_symbols", false},
+                             {"progress", 100},
+                             {"record_count", 107418},
+                             {"schema", "trades"},
+                             {"split_duration", "day"},
+                             {"split_size", nullptr},
+                             {"split_symbols", false},
+                             {"start", "2022-05-17 00:00:00+00:00"},
+                             {"state", "done"},
+                             {"stype_in", "raw_symbol"},
+                             {"stype_out", "instrument_id"},
+                             {"symbols", "CLH3"},
+                             {"ts_expiration", "2022-11-30 15:29:43.148303+00:00"},
+                             {"ts_process_done", "2022-10-31 15:29:43.148303+00:00"},
+                             {"ts_process_start", "2022-10-31 15:29:41.189821+00:00"},
+                             {"ts_queued", "2022-10-31 15:29:39.130441+00:00"},
+                             {"ts_received", "2022-10-31 15:28:58.233520+00:00"},
+                             {"user_id", "TEST_USER"}};
+  mock_server_.MockGetJson("/v0/batch.get_job_details", {{"job_id", kJobId}}, kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target = Client(port);
+  const auto res = target.BatchGetJobDetails(kJobId);
+  EXPECT_EQ(res.id, kJobId);
+  EXPECT_EQ(res.dataset, "GLBX.MDP3");
+  EXPECT_EQ(res.state, JobState::Done);
+  EXPECT_EQ(res.encoding, Encoding::Dbn);
+  EXPECT_EQ(res.compression, Compression::Zstd);
+  EXPECT_NEAR(res.cost_usd, 0.11908, 1e-2);
+  EXPECT_EQ(res.progress, 100);
+}
+
 static const nlohmann::json kListFilesResp{
     {{"filename", "test.dbn"},
      // size of test_data.mbo.v3.dbn
