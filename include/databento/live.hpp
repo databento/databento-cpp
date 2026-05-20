@@ -47,16 +47,21 @@ class LiveBuilder {
   LiveBuilder& SetLogReceiver(ILogReceiver* log_receiver);
   // Overrides the heartbeat interval.
   LiveBuilder& SetHeartbeatInterval(std::chrono::seconds heartbeat_interval);
-  // Overrides the gateway and port. This is an advanced method.
+  // Sets the compression mode for the read stream.
+  LiveBuilder& SetCompression(Compression compression);
+  // Sets the behavior of the gateway when the client falls behind real time.
+  LiveBuilder& SetSlowReaderBehavior(SlowReaderBehavior slow_reader_behavior);
+
+  /*
+   * Advanced methods
+   */
+
+  // Overrides the gateway and port.
   LiveBuilder& SetAddress(std::string gateway, std::uint16_t port);
   // Overrides the size of the buffer used for reading data from the TCP socket.
   LiveBuilder& SetBufferSize(std::size_t size);
   // Appends to the default user agent.
   LiveBuilder& ExtendUserAgent(std::string extension);
-  // Sets the compression mode for the read stream.
-  LiveBuilder& SetCompression(Compression compression);
-  // Sets the behavior of the gateway when the client falls behind real time.
-  LiveBuilder& SetSlowReaderBehavior(SlowReaderBehavior slow_reader_behavior);
   // Sets the timeouts for connecting and authenticating with the gateway.
   // Defaults to 10 seconds for connect and 30 seconds for auth.
   LiveBuilder& SetTimeoutConf(TimeoutConf timeout_conf);

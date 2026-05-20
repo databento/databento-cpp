@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.58.0 - TBD
+
+### Enhancements
+- Added logging for gateway `ErrorMsg` and `SystemMsg` records in
+  `LiveBlocking`. Suppress by raising the minimum level or by passing a
+  `NullLogReceiver`
+
 ## 0.57.0 - 2026-05-12
 
 ### Enhancements

@@ -63,6 +63,17 @@ LiveBuilder& LiveBuilder::SetHeartbeatInterval(
   return *this;
 }
 
+LiveBuilder& LiveBuilder::SetCompression(Compression compression) {
+  compression_ = compression;
+  return *this;
+}
+
+LiveBuilder& LiveBuilder::SetSlowReaderBehavior(
+    SlowReaderBehavior slow_reader_behavior) {
+  slow_reader_behavior_ = slow_reader_behavior;
+  return *this;
+}
+
 LiveBuilder& LiveBuilder::SetAddress(std::string gateway, std::uint16_t port) {
   gateway_ = std::move(gateway);
   port_ = port;
@@ -76,17 +87,6 @@ LiveBuilder& LiveBuilder::SetBufferSize(std::size_t size) {
 
 LiveBuilder& LiveBuilder::ExtendUserAgent(std::string extension) {
   user_agent_ext_ = std::move(extension);
-  return *this;
-}
-
-LiveBuilder& LiveBuilder::SetCompression(Compression compression) {
-  compression_ = compression;
-  return *this;
-}
-
-LiveBuilder& LiveBuilder::SetSlowReaderBehavior(
-    SlowReaderBehavior slow_reader_behavior) {
-  slow_reader_behavior_ = slow_reader_behavior;
   return *this;
 }
 
