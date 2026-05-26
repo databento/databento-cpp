@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.58.0 - 2026-05-26
+
+### Enhancements
+- Added logging for gateway `ErrorMsg` and `SystemMsg` records in
+  `LiveBlocking`. Suppress by raising the minimum level or by passing a
+  `NullLogReceiver`
+- Upgraded default cpp-httplib version to 0.46.0
+
 ## 0.57.0 - 2026-05-12
 
 ### Enhancements

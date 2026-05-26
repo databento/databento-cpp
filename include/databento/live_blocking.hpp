@@ -152,6 +152,9 @@ class LiveBlocking {
   RecordHeader* BufferRecordHeader();
   std::chrono::milliseconds HeartbeatTimeout() const;
   void CheckHeartbeatTimeout() const;
+  void LogRecord() const;
+  void LogSystemRecord() const;
+  void LogErrorRecord() const;
 
   static constexpr std::size_t kMaxStrLen = 24L * 1024;
 

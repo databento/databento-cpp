@@ -17,6 +17,7 @@
 #include "databento/log.hpp"         // ILogReceiver
 #include "databento/record.hpp"      // Record
 #include "databento/symbology.hpp"   // JoinSymbolStrings
+#include "databento/v1.hpp"          // v1::SystemMsg, ErrorMsg
 #include "dbn_constants.hpp"         // kMetadataPreludeSize
 
 using databento::LiveBlocking;
@@ -520,4 +521,81 @@ void LiveBlocking::CheckHeartbeatTimeout() const {
     throw HeartbeatTimeoutError{
         std::chrono::duration_cast<std::chrono::seconds>(elapsed)};
   }
+}
+
+void LiveBlocking::LogRecord() const {
+  if (current_record_.RType() == RType::System) {
+    LogSystemRecord();
+  } else if (current_record_.RType() == RType::Error) {
+    LogErrorRecord();
+  }
+}
+
+void LiveBlocking::LogSystemRecord() const {
+  static constexpr auto kMethodName = "[LiveBlocking::LogSystemRecord]";
+
+  std::ostringstream ss;
+
+  const auto log_heartbeat = [this, &ss] {
+    if (log_receiver_->ShouldLog(LogLevel::Debug)) {
+      ss << kMethodName << " Received gateway heartbeat";
+      log_receiver_->Receive(LogLevel::Debug, ss.str());
+    }
+  };
+
+  if (current_record_.Size() >= sizeof(SystemMsg)) {
+    const auto& system = current_record_.Get<SystemMsg>();
+    switch (system.code) {
+      case SystemCode::Heartbeat: {
+        log_heartbeat();
+        break;
+      }
+      case SystemCode::EndOfInterval: {
+        if (log_receiver_->ShouldLog(LogLevel::Debug)) {
+          ss << kMethodName << " Received: " << system.Msg();
+          log_receiver_->Receive(LogLevel::Debug, ss.str());
+        }
+        break;
+      }
+      case SystemCode::SlowReaderWarning: {
+        ss << kMethodName << " Received: " << system.Msg();
+        log_receiver_->Receive(LogLevel::Warning, ss.str());
+        break;
+      }
+      default: {
+        if (log_receiver_->ShouldLog(LogLevel::Info)) {
+          ss << kMethodName << " Received system message with code: " << system.code
+             << " and message: " << system.Msg();
+          log_receiver_->Receive(LogLevel::Info, ss.str());
+        }
+        break;
+      }
+    }
+  } else {
+    // v1 path with explicit UpgradePolicy::AsIs
+    const auto& system = current_record_.Get<v1::SystemMsg>();
+    if (system.IsHeartbeat()) {
+      log_heartbeat();
+    } else if (log_receiver_->ShouldLog(LogLevel::Info)) {
+      // Don't make effort to parse based on Msg as this path is rare
+      ss << kMethodName << " Received system message: " << system.Msg();
+      log_receiver_->Receive(LogLevel::Info, ss.str());
+    }
+  }
+}
+
+void LiveBlocking::LogErrorRecord() const {
+  static constexpr auto kMethodName = "[LiveBlocking::LogErrorRecord]";
+
+  std::ostringstream ss;
+  ss << kMethodName << ' ';
+  if (current_record_.Size() >= sizeof(ErrorMsg)) {
+    const auto& error = current_record_.Get<ErrorMsg>();
+    ss << " Received error with code: " << error.code << ", message:" << error.Err()
+       << ", and is_last: " << static_cast<std::uint16_t>(error.is_last);
+  } else {
+    const auto& error = current_record_.Get<v1::ErrorMsg>();
+    ss << " Received error with message:" << error.Err();
+  }
+  log_receiver_->Receive(LogLevel::Error, ss.str());
 }
