@@ -8,7 +8,15 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 # Add dependencies here so end-user doesn't have to
 include(CMakeFindDependencyMacro)
 find_dependency(date)
+# httplib must be found before zstd: on systems where zstd lacks a CMake config at
+# version 1.5.6+, httplib's installed config falls back to PkgConfig and creates a
+# `zstd::libzstd` ALIAS unconditionally. Letting it run first means our Findzstd
+# module sees the target and skips its own creation.
+find_dependency(httplib)
 find_dependency(zstd)
+find_dependency(nlohmann_json)
+find_dependency(Threads)
+
 if(NOT TARGET zstd::libzstd)
   if(TARGET zstd::libzstd_shared)
     add_library(zstd::libzstd ALIAS zstd::libzstd_shared)
@@ -16,9 +24,6 @@ if(NOT TARGET zstd::libzstd)
     add_library(zstd::libzstd ALIAS zstd::libzstd_static)
   endif()
 endif()
-find_dependency(httplib)
-find_dependency(nlohmann_json)
-find_dependency(Threads)
 
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 
