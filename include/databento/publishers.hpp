@@ -119,6 +119,16 @@ enum class Venue : std::uint16_t {
   Iexo = 55,
   // Cboe Global Indices Feed
   Cgif = 56,
+  // Texas Stock Exchange, LLC
+  Txse = 57,
+  // 24X National Exchange, LLC
+  _24Eq = 58,
+  // Consolidated Tape Association
+  Cta = 59,
+  // Unlisted Trading Privileges
+  Utp = 60,
+  // FINRA Alternative Display Facility
+  Xadf = 61,
 };
 
 // A source of data.
@@ -207,6 +217,8 @@ enum class Dataset : std::uint16_t {
   OceaMemoir = 41,
   // Cboe Titanium Cboe Global Indices Feed
   CgifTitanium = 42,
+  // US Equities Security Information Processor
+  EqusSip = 43,
 };
 
 // A specific Venue from a specific data source.
@@ -431,6 +443,52 @@ enum class Publisher : std::uint16_t {
   OpraPillarIexo = 109,
   // Cboe Global Indices Feed
   CgifTitaniumCgif = 110,
+  // US Equities SIP - NYSE American
+  EqusSipXase = 111,
+  // US Equities SIP - Nasdaq Texas
+  EqusSipXbos = 112,
+  // US Equities SIP - NYSE National
+  EqusSipXcis = 113,
+  // US Equities SIP - Texas Stock Exchange
+  EqusSipTxse = 114,
+  // US Equities SIP - 24X National Exchange
+  EqusSip24Eq = 115,
+  // US Equities SIP - MIAX Pearl
+  EqusSipEprl = 116,
+  // US Equities SIP - Nasdaq ISE
+  EqusSipXisx = 117,
+  // US Equities SIP - Cboe EDGA
+  EqusSipEdga = 118,
+  // US Equities SIP - Cboe EDGX
+  EqusSipEdgx = 119,
+  // US Equities SIP - Long-Term Stock Exchange
+  EqusSipLtse = 120,
+  // US Equities SIP - NYSE Texas
+  EqusSipXchi = 121,
+  // US Equities SIP - NYSE
+  EqusSipXnys = 122,
+  // US Equities SIP - NYSE Arca
+  EqusSipArcx = 123,
+  // US Equities SIP - Nasdaq
+  EqusSipXnas = 124,
+  // US Equities SIP - MEMX
+  EqusSipMemx = 125,
+  // US Equities SIP - IEX
+  EqusSipIexg = 126,
+  // US Equities SIP - Nasdaq PSX
+  EqusSipXpsx = 127,
+  // US Equities SIP - Cboe BYX
+  EqusSipBaty = 128,
+  // US Equities SIP - Cboe BZX
+  EqusSipBats = 129,
+  // US Equities SIP - FINRA/Nasdaq TRF Carteret
+  EqusSipFinn = 130,
+  // US Equities SIP - FINRA/NYSE TRF
+  EqusSipFiny = 131,
+  // US Equities SIP - FINRA/Nasdaq TRF Chicago
+  EqusSipFinc = 132,
+  // US Equities SIP - FINRA Alternative Display Facility
+  EqusSipXadf = 133,
 };
 
 // Get a Publisher's Venue.

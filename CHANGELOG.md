@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.59.0 - TBD
+
+### Enhancements
+- Added new venues, datasets, and publishers for US Equities Securities Information Processors
+
 ## 0.58.0 - 2026-05-26
 
 ### Enhancements
