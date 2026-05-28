@@ -1,7 +1,5 @@
 #include "databento/detail/http_client.hpp"
 
-#include <sys/types.h>
-
 #include <chrono>   // seconds
 #include <memory>   // make_unique
 #include <sstream>  // ostringstream
@@ -37,7 +35,9 @@ HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string&
 
 HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string& key,
                        const std::string& gateway, std::uint16_t port)
-    : log_receiver_{log_receiver}, client_{gateway, port} {
+    : log_receiver_{log_receiver},
+      // constructor with port parameter is HTTP-only
+      client_{gateway + ':' + std::to_string(port)} {
   auto headers = HttpClient::BaseHeaders();
   headers.insert(httplib::make_basic_authentication_header(key, ""));
   client_.set_default_headers(headers);

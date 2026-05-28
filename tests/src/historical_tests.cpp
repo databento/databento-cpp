@@ -52,7 +52,7 @@ class HistoricalTests : public ::testing::Test {
     return databento::HistoricalBuilder{}
         .SetLogReceiver(&logger_)
         .SetKey(kApiKey)
-        .SetAddress("localhost", static_cast<std::uint16_t>(port))
+        .SetAddress("http://localhost", static_cast<std::uint16_t>(port))
         .Build();
   }
 

@@ -3,7 +3,11 @@
 ## 0.59.0 - TBD
 
 ### Enhancements
-- Added new venues, datasets, and publishers for US Equities Securities Information Processors
+- Added new venues, datasets, and publishers for US Equities Securities Information
+  Processors
+
+### Bug fixes
+- Fixed `HistoricalBuilder::SetAddress` not working with HTTPS
 
 ## 0.58.0 - 2026-05-26
 
