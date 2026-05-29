@@ -489,6 +489,10 @@ enum class Publisher : std::uint16_t {
   EqusSipFinc = 132,
   // US Equities SIP - FINRA Alternative Display Facility
   EqusSipXadf = 133,
+  // US Equities SIP - CTA
+  EqusSipCta = 134,
+  // US Equities SIP - UTP
+  EqusSipUtp = 135,
 };
 
 // Get a Publisher's Venue.

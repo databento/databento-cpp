@@ -1072,6 +1072,12 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::EqusSipXadf: {
       return Venue::Xadf;
     }
+    case Publisher::EqusSipCta: {
+      return Venue::Cta;
+    }
+    case Publisher::EqusSipUtp: {
+      return Venue::Utp;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherVenue", "publisher",
@@ -1479,6 +1485,12 @@ Dataset PublisherDataset(Publisher publisher) {
       return Dataset::EqusSip;
     }
     case Publisher::EqusSipXadf: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipCta: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipUtp: {
       return Dataset::EqusSip;
     }
     default: {
@@ -1891,6 +1903,12 @@ const char* ToString(Publisher publisher) {
     case Publisher::EqusSipXadf: {
       return "EQUS.SIP.XADF";
     }
+    case Publisher::EqusSipCta: {
+      return "EQUS.SIP.CTA";
+    }
+    case Publisher::EqusSipUtp: {
+      return "EQUS.SIP.UTP";
+    }
     default: {
       return "Unknown";
     }
@@ -2302,6 +2320,12 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "EQUS.SIP.XADF") {
     return Publisher::EqusSipXadf;
+  }
+  if (str == "EQUS.SIP.CTA") {
+    return Publisher::EqusSipCta;
+  }
+  if (str == "EQUS.SIP.UTP") {
+    return Publisher::EqusSipUtp;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
