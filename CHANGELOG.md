@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.59.0 - TBD
+## 0.59.0 - 2026-06-02
 
 ### Enhancements
 - Added `Historical::BatchGetJobDetails` for querying the details for a single batch job
