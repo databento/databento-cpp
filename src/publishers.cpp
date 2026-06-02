@@ -179,6 +179,21 @@ const char* ToString(Venue venue) {
     case Venue::Cgif: {
       return "CGIF";
     }
+    case Venue::Txse: {
+      return "TXSE";
+    }
+    case Venue::_24Eq: {
+      return "24EQ";
+    }
+    case Venue::Cta: {
+      return "CTA";
+    }
+    case Venue::Utp: {
+      return "UTP";
+    }
+    case Venue::Xadf: {
+      return "XADF";
+    }
     default: {
       return "Unknown";
     }
@@ -360,6 +375,21 @@ Venue FromString(const std::string& str) {
   if (str == "CGIF") {
     return Venue::Cgif;
   }
+  if (str == "TXSE") {
+    return Venue::Txse;
+  }
+  if (str == "24EQ") {
+    return Venue::_24Eq;
+  }
+  if (str == "CTA") {
+    return Venue::Cta;
+  }
+  if (str == "UTP") {
+    return Venue::Utp;
+  }
+  if (str == "XADF") {
+    return Venue::Xadf;
+  }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -491,6 +521,9 @@ const char* ToString(Dataset dataset) {
     }
     case Dataset::CgifTitanium: {
       return "CGIF.TITANIUM";
+    }
+    case Dataset::EqusSip: {
+      return "EQUS.SIP";
     }
     default: {
       return "Unknown";
@@ -630,6 +663,9 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "CGIF.TITANIUM") {
     return Dataset::CgifTitanium;
+  }
+  if (str == "EQUS.SIP") {
+    return Dataset::EqusSip;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -966,6 +1002,81 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::CgifTitaniumCgif: {
       return Venue::Cgif;
+    }
+    case Publisher::EqusSipXase: {
+      return Venue::Xase;
+    }
+    case Publisher::EqusSipXbos: {
+      return Venue::Xbos;
+    }
+    case Publisher::EqusSipXcis: {
+      return Venue::Xcis;
+    }
+    case Publisher::EqusSipTxse: {
+      return Venue::Txse;
+    }
+    case Publisher::EqusSip24Eq: {
+      return Venue::_24Eq;
+    }
+    case Publisher::EqusSipEprl: {
+      return Venue::Eprl;
+    }
+    case Publisher::EqusSipXisx: {
+      return Venue::Xisx;
+    }
+    case Publisher::EqusSipEdga: {
+      return Venue::Edga;
+    }
+    case Publisher::EqusSipEdgx: {
+      return Venue::Edgx;
+    }
+    case Publisher::EqusSipLtse: {
+      return Venue::Ltse;
+    }
+    case Publisher::EqusSipXchi: {
+      return Venue::Xchi;
+    }
+    case Publisher::EqusSipXnys: {
+      return Venue::Xnys;
+    }
+    case Publisher::EqusSipArcx: {
+      return Venue::Arcx;
+    }
+    case Publisher::EqusSipXnas: {
+      return Venue::Xnas;
+    }
+    case Publisher::EqusSipMemx: {
+      return Venue::Memx;
+    }
+    case Publisher::EqusSipIexg: {
+      return Venue::Iexg;
+    }
+    case Publisher::EqusSipXpsx: {
+      return Venue::Xpsx;
+    }
+    case Publisher::EqusSipBaty: {
+      return Venue::Baty;
+    }
+    case Publisher::EqusSipBats: {
+      return Venue::Bats;
+    }
+    case Publisher::EqusSipFinn: {
+      return Venue::Finn;
+    }
+    case Publisher::EqusSipFiny: {
+      return Venue::Finy;
+    }
+    case Publisher::EqusSipFinc: {
+      return Venue::Finc;
+    }
+    case Publisher::EqusSipXadf: {
+      return Venue::Xadf;
+    }
+    case Publisher::EqusSipCta: {
+      return Venue::Cta;
+    }
+    case Publisher::EqusSipUtp: {
+      return Venue::Utp;
     }
     default: {
       throw InvalidArgumentError{
@@ -1307,6 +1418,81 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::CgifTitaniumCgif: {
       return Dataset::CgifTitanium;
     }
+    case Publisher::EqusSipXase: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipXbos: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipXcis: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipTxse: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSip24Eq: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipEprl: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipXisx: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipEdga: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipEdgx: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipLtse: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipXchi: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipXnys: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipArcx: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipXnas: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipMemx: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipIexg: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipXpsx: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipBaty: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipBats: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipFinn: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipFiny: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipFinc: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipXadf: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipCta: {
+      return Dataset::EqusSip;
+    }
+    case Publisher::EqusSipUtp: {
+      return Dataset::EqusSip;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -1647,6 +1833,81 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::CgifTitaniumCgif: {
       return "CGIF.TITANIUM.CGIF";
+    }
+    case Publisher::EqusSipXase: {
+      return "EQUS.SIP.XASE";
+    }
+    case Publisher::EqusSipXbos: {
+      return "EQUS.SIP.XBOS";
+    }
+    case Publisher::EqusSipXcis: {
+      return "EQUS.SIP.XCIS";
+    }
+    case Publisher::EqusSipTxse: {
+      return "EQUS.SIP.TXSE";
+    }
+    case Publisher::EqusSip24Eq: {
+      return "EQUS.SIP.24EQ";
+    }
+    case Publisher::EqusSipEprl: {
+      return "EQUS.SIP.EPRL";
+    }
+    case Publisher::EqusSipXisx: {
+      return "EQUS.SIP.XISX";
+    }
+    case Publisher::EqusSipEdga: {
+      return "EQUS.SIP.EDGA";
+    }
+    case Publisher::EqusSipEdgx: {
+      return "EQUS.SIP.EDGX";
+    }
+    case Publisher::EqusSipLtse: {
+      return "EQUS.SIP.LTSE";
+    }
+    case Publisher::EqusSipXchi: {
+      return "EQUS.SIP.XCHI";
+    }
+    case Publisher::EqusSipXnys: {
+      return "EQUS.SIP.XNYS";
+    }
+    case Publisher::EqusSipArcx: {
+      return "EQUS.SIP.ARCX";
+    }
+    case Publisher::EqusSipXnas: {
+      return "EQUS.SIP.XNAS";
+    }
+    case Publisher::EqusSipMemx: {
+      return "EQUS.SIP.MEMX";
+    }
+    case Publisher::EqusSipIexg: {
+      return "EQUS.SIP.IEXG";
+    }
+    case Publisher::EqusSipXpsx: {
+      return "EQUS.SIP.XPSX";
+    }
+    case Publisher::EqusSipBaty: {
+      return "EQUS.SIP.BATY";
+    }
+    case Publisher::EqusSipBats: {
+      return "EQUS.SIP.BATS";
+    }
+    case Publisher::EqusSipFinn: {
+      return "EQUS.SIP.FINN";
+    }
+    case Publisher::EqusSipFiny: {
+      return "EQUS.SIP.FINY";
+    }
+    case Publisher::EqusSipFinc: {
+      return "EQUS.SIP.FINC";
+    }
+    case Publisher::EqusSipXadf: {
+      return "EQUS.SIP.XADF";
+    }
+    case Publisher::EqusSipCta: {
+      return "EQUS.SIP.CTA";
+    }
+    case Publisher::EqusSipUtp: {
+      return "EQUS.SIP.UTP";
     }
     default: {
       return "Unknown";
@@ -1990,6 +2251,81 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "CGIF.TITANIUM.CGIF") {
     return Publisher::CgifTitaniumCgif;
+  }
+  if (str == "EQUS.SIP.XASE") {
+    return Publisher::EqusSipXase;
+  }
+  if (str == "EQUS.SIP.XBOS") {
+    return Publisher::EqusSipXbos;
+  }
+  if (str == "EQUS.SIP.XCIS") {
+    return Publisher::EqusSipXcis;
+  }
+  if (str == "EQUS.SIP.TXSE") {
+    return Publisher::EqusSipTxse;
+  }
+  if (str == "EQUS.SIP.24EQ") {
+    return Publisher::EqusSip24Eq;
+  }
+  if (str == "EQUS.SIP.EPRL") {
+    return Publisher::EqusSipEprl;
+  }
+  if (str == "EQUS.SIP.XISX") {
+    return Publisher::EqusSipXisx;
+  }
+  if (str == "EQUS.SIP.EDGA") {
+    return Publisher::EqusSipEdga;
+  }
+  if (str == "EQUS.SIP.EDGX") {
+    return Publisher::EqusSipEdgx;
+  }
+  if (str == "EQUS.SIP.LTSE") {
+    return Publisher::EqusSipLtse;
+  }
+  if (str == "EQUS.SIP.XCHI") {
+    return Publisher::EqusSipXchi;
+  }
+  if (str == "EQUS.SIP.XNYS") {
+    return Publisher::EqusSipXnys;
+  }
+  if (str == "EQUS.SIP.ARCX") {
+    return Publisher::EqusSipArcx;
+  }
+  if (str == "EQUS.SIP.XNAS") {
+    return Publisher::EqusSipXnas;
+  }
+  if (str == "EQUS.SIP.MEMX") {
+    return Publisher::EqusSipMemx;
+  }
+  if (str == "EQUS.SIP.IEXG") {
+    return Publisher::EqusSipIexg;
+  }
+  if (str == "EQUS.SIP.XPSX") {
+    return Publisher::EqusSipXpsx;
+  }
+  if (str == "EQUS.SIP.BATY") {
+    return Publisher::EqusSipBaty;
+  }
+  if (str == "EQUS.SIP.BATS") {
+    return Publisher::EqusSipBats;
+  }
+  if (str == "EQUS.SIP.FINN") {
+    return Publisher::EqusSipFinn;
+  }
+  if (str == "EQUS.SIP.FINY") {
+    return Publisher::EqusSipFiny;
+  }
+  if (str == "EQUS.SIP.FINC") {
+    return Publisher::EqusSipFinc;
+  }
+  if (str == "EQUS.SIP.XADF") {
+    return Publisher::EqusSipXadf;
+  }
+  if (str == "EQUS.SIP.CTA") {
+    return Publisher::EqusSipCta;
+  }
+  if (str == "EQUS.SIP.UTP") {
+    return Publisher::EqusSipUtp;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

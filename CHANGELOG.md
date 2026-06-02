@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.59.0 - 2026-06-02
+
+### Enhancements
+- Added `Historical::BatchGetJobDetails` for querying the details for a single batch job
+- Added new venues, datasets, and publishers for US Equities Securities Information
+  Processors
+
+### Bug fixes
+- Fixed `HistoricalBuilder::SetAddress` not working with HTTPS
+
 ## 0.58.0 - 2026-05-26
 
 ### Enhancements

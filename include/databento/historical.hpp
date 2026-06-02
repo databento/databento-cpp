@@ -73,6 +73,8 @@ class Historical {
                                       const std::string& since);
   // Lists all files associated with a batch job.
   std::vector<BatchFileDesc> BatchListFiles(const std::string& job_id);
+  // Gets the details of a batch job.
+  BatchJob BatchGetJobDetails(const std::string& job_id);
   // Returns the paths of the downloaded files.
   std::vector<std::filesystem::path> BatchDownload(
       const std::filesystem::path& output_dir, const std::string& job_id);
