@@ -203,15 +203,15 @@ enum MatchAlgorithm : char {
   // Trade quantity is allocated to resting orders based on a pro-rata percentage:
   // resting order quantity divided by total quantity.
   ProRata = 'C',
-  // Like `FIFO` but with LMM allocations prior to FIFO allocations.
+  // Like FIFO, but with LMM allocations prior to FIFO allocations.
   FifoLmm = 'T',
-  // Like `PRO_RATA` but includes a configurable allocation to the first order that
-  // improves the market.
+  // Like Pro-Rata, but includes a configurable allocation to the first order that
+  // improves the market. Minimum order thresholds may exist.
   ThresholdProRata = 'O',
-  // Like `FIFO_LMM` but includes a configurable allocation to the first order that
+  // Like FIFO with LMM, but includes a configurable allocation to the first order that
   // improves the market.
   FifoTopLmm = 'S',
-  // Like `THRESHOLD_PRO_RATA` but includes a special priority to LMMs.
+  // Like Threshold Pro-Rata, but includes a special priority to LMMs.
   ThresholdProRataLmm = 'Q',
   // Special variant used only for Eurodollar futures on CME.
   EurodollarFutures = 'Y',
@@ -225,6 +225,9 @@ enum MatchAlgorithm : char {
   // association. See [CME
   // documentation](https://cmegroupclientsite.atlassian.net/wiki/spaces/EPICSANDBOX/pages/457217267#InstitutionalPrioritizationMatchAlgorithm).
   InstitutionalPrioritization = 'V',
+  // Like Pro-Rata, but includes a configurable allocation to the first order that
+  // improves the market.
+  Allocation = 'A',
 };
 }  // namespace match_algorithm
 using match_algorithm::MatchAlgorithm;
