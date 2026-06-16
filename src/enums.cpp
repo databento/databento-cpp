@@ -317,6 +317,9 @@ const char* ToString(MatchAlgorithm match_algorithm) {
     case MatchAlgorithm::InstitutionalPrioritization: {
       return "InstitutionalPrioritization";
     }
+    case MatchAlgorithm::Allocation: {
+      return "Allocation";
+    }
     default: {
       return "Unknown";
     }
