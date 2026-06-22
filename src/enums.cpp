@@ -555,6 +555,15 @@ const char* ToString(StatType stat_type) {
     case StatType::IndicativeClosePrice: {
       return "IndicativeClosePrice";
     }
+    case StatType::MwcbLevel1: {
+      return "MwcbLevel1";
+    }
+    case StatType::MwcbLevel2: {
+      return "MwcbLevel2";
+    }
+    case StatType::MwcbLevel3: {
+      return "MwcbLevel3";
+    }
     case StatType::VenueSpecificVolume1: {
       return "VenueSpecificVolume1";
     }

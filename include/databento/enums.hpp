@@ -444,6 +444,15 @@ enum StatType : std::uint16_t {
   // The probable price of the last trade of an instrument published during the trading
   // session. `price` will be set.
   IndicativeClosePrice = 20,
+  // The Market-Wide Circuit Breaker (MWCB) Level 1 threshold (7%), expressed as S&P 500
+  // index points. `price` will be set.
+  MwcbLevel1 = 21,
+  // The Market-Wide Circuit Breaker (MWCB) Level 2 threshold (13%), expressed as S&P
+  // 500 index points. `price` will be set.
+  MwcbLevel2 = 22,
+  // The Market-Wide Circuit Breaker (MWCB) Level 3 threshold (20%), expressed as S&P
+  // 500 index points. `price` will be set.
+  MwcbLevel3 = 23,
   // A venue specific volume statistic. Refer to the venue documentation for more
   // information.
   // `quantity` will be set.
