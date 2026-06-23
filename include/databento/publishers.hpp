@@ -118,7 +118,7 @@ enum class Venue : std::uint16_t {
   // IEX Options LLC
   Iexo = 55,
   // Cboe Global Indices Feed
-  Cgif = 56,
+  Main = 56,
   // Texas Stock Exchange, LLC
   Txse = 57,
   // 24X National Exchange, LLC
@@ -129,6 +129,20 @@ enum class Venue : std::uint16_t {
   Utp = 60,
   // FINRA Alternative Display Facility
   Xadf = 61,
+  // CGIF Morgan Stanley Capital International
+  Msci = 62,
+  // CGIF FTSE Russell
+  Ftse = 63,
+  // CGIF Intraday Net Asset Values
+  Inav = 64,
+  // CGIF Morning Star
+  Mstar = 65,
+  // CGIF Crypto Currency
+  Cccy = 66,
+  // CGIF CBOE Global Indices
+  Cgi = 67,
+  // CGIF Definitions
+  Def = 68,
 };
 
 // A source of data.
@@ -216,9 +230,21 @@ enum class Dataset : std::uint16_t {
   // Blue Ocean ATS MEMOIR Depth
   OceaMemoir = 41,
   // Cboe Titanium Cboe Global Indices Feed
-  CgifTitanium = 42,
+  MainCgif = 42,
   // US Equities Security Information Processor
   EqusSip = 43,
+  // CGIF - Morgan Stanley Capital International
+  MsciCgif = 44,
+  // CGIF - FTSE Russell
+  FtseCgif = 45,
+  // CGIF - Intraday Net Asset Values
+  InavCgif = 46,
+  // CGIF - Morning Star
+  MstarCgif = 47,
+  // CGIF - Crypto Currency
+  CccyCgif = 48,
+  // CGIF - CBOE Global Indices
+  CgiCgif = 49,
 };
 
 // A specific Venue from a specific data source.
@@ -442,7 +468,7 @@ enum class Publisher : std::uint16_t {
   // OPRA - IEX Options LLC
   OpraPillarIexo = 109,
   // Cboe Global Indices Feed
-  CgifTitaniumCgif = 110,
+  MainCgifMain = 110,
   // US Equities SIP - NYSE American
   EqusSipXase = 111,
   // US Equities SIP - Nasdaq Texas
@@ -493,6 +519,20 @@ enum class Publisher : std::uint16_t {
   EqusSipCta = 134,
   // US Equities SIP - UTP
   EqusSipUtp = 135,
+  // CGIF - Morgan Stanley Capital International
+  MsciCgifMsci = 136,
+  // CGIF - FTSE Russell
+  FtseCgifFtse = 137,
+  // CGIF - Intraday Net Asset Values
+  InavCgifInav = 138,
+  // CGIF - Morning Star
+  MstarCgifMstar = 139,
+  // CGIF - Crypto Currency
+  CccyCgifCccy = 140,
+  // CGIF - CBOE Global Indices
+  CgiCgifCgi = 141,
+  // CGIF - Definitions
+  MainCgifDef = 142,
 };
 
 // Get a Publisher's Venue.

@@ -176,8 +176,8 @@ const char* ToString(Venue venue) {
     case Venue::Iexo: {
       return "IEXO";
     }
-    case Venue::Cgif: {
-      return "CGIF";
+    case Venue::Main: {
+      return "MAIN";
     }
     case Venue::Txse: {
       return "TXSE";
@@ -193,6 +193,27 @@ const char* ToString(Venue venue) {
     }
     case Venue::Xadf: {
       return "XADF";
+    }
+    case Venue::Msci: {
+      return "MSCI";
+    }
+    case Venue::Ftse: {
+      return "FTSE";
+    }
+    case Venue::Inav: {
+      return "INAV";
+    }
+    case Venue::Mstar: {
+      return "MSTAR";
+    }
+    case Venue::Cccy: {
+      return "CCCY";
+    }
+    case Venue::Cgi: {
+      return "CGI";
+    }
+    case Venue::Def: {
+      return "DEF";
     }
     default: {
       return "Unknown";
@@ -372,8 +393,8 @@ Venue FromString(const std::string& str) {
   if (str == "IEXO") {
     return Venue::Iexo;
   }
-  if (str == "CGIF") {
-    return Venue::Cgif;
+  if (str == "MAIN") {
+    return Venue::Main;
   }
   if (str == "TXSE") {
     return Venue::Txse;
@@ -389,6 +410,27 @@ Venue FromString(const std::string& str) {
   }
   if (str == "XADF") {
     return Venue::Xadf;
+  }
+  if (str == "MSCI") {
+    return Venue::Msci;
+  }
+  if (str == "FTSE") {
+    return Venue::Ftse;
+  }
+  if (str == "INAV") {
+    return Venue::Inav;
+  }
+  if (str == "MSTAR") {
+    return Venue::Mstar;
+  }
+  if (str == "CCCY") {
+    return Venue::Cccy;
+  }
+  if (str == "CGI") {
+    return Venue::Cgi;
+  }
+  if (str == "DEF") {
+    return Venue::Def;
   }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
@@ -519,11 +561,29 @@ const char* ToString(Dataset dataset) {
     case Dataset::OceaMemoir: {
       return "OCEA.MEMOIR";
     }
-    case Dataset::CgifTitanium: {
-      return "CGIF.TITANIUM";
+    case Dataset::MainCgif: {
+      return "MAIN.CGIF";
     }
     case Dataset::EqusSip: {
       return "EQUS.SIP";
+    }
+    case Dataset::MsciCgif: {
+      return "MSCI.CGIF";
+    }
+    case Dataset::FtseCgif: {
+      return "FTSE.CGIF";
+    }
+    case Dataset::InavCgif: {
+      return "INAV.CGIF";
+    }
+    case Dataset::MstarCgif: {
+      return "MSTAR.CGIF";
+    }
+    case Dataset::CccyCgif: {
+      return "CCCY.CGIF";
+    }
+    case Dataset::CgiCgif: {
+      return "CGI.CGIF";
     }
     default: {
       return "Unknown";
@@ -661,11 +721,29 @@ Dataset FromString(const std::string& str) {
   if (str == "OCEA.MEMOIR") {
     return Dataset::OceaMemoir;
   }
-  if (str == "CGIF.TITANIUM") {
-    return Dataset::CgifTitanium;
+  if (str == "MAIN.CGIF") {
+    return Dataset::MainCgif;
   }
   if (str == "EQUS.SIP") {
     return Dataset::EqusSip;
+  }
+  if (str == "MSCI.CGIF") {
+    return Dataset::MsciCgif;
+  }
+  if (str == "FTSE.CGIF") {
+    return Dataset::FtseCgif;
+  }
+  if (str == "INAV.CGIF") {
+    return Dataset::InavCgif;
+  }
+  if (str == "MSTAR.CGIF") {
+    return Dataset::MstarCgif;
+  }
+  if (str == "CCCY.CGIF") {
+    return Dataset::CccyCgif;
+  }
+  if (str == "CGI.CGIF") {
+    return Dataset::CgiCgif;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -1000,8 +1078,8 @@ Venue PublisherVenue(Publisher publisher) {
     case Publisher::OpraPillarIexo: {
       return Venue::Iexo;
     }
-    case Publisher::CgifTitaniumCgif: {
-      return Venue::Cgif;
+    case Publisher::MainCgifMain: {
+      return Venue::Main;
     }
     case Publisher::EqusSipXase: {
       return Venue::Xase;
@@ -1077,6 +1155,27 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::EqusSipUtp: {
       return Venue::Utp;
+    }
+    case Publisher::MsciCgifMsci: {
+      return Venue::Msci;
+    }
+    case Publisher::FtseCgifFtse: {
+      return Venue::Ftse;
+    }
+    case Publisher::InavCgifInav: {
+      return Venue::Inav;
+    }
+    case Publisher::MstarCgifMstar: {
+      return Venue::Mstar;
+    }
+    case Publisher::CccyCgifCccy: {
+      return Venue::Cccy;
+    }
+    case Publisher::CgiCgifCgi: {
+      return Venue::Cgi;
+    }
+    case Publisher::MainCgifDef: {
+      return Venue::Def;
     }
     default: {
       throw InvalidArgumentError{
@@ -1415,8 +1514,8 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::OpraPillarIexo: {
       return Dataset::OpraPillar;
     }
-    case Publisher::CgifTitaniumCgif: {
-      return Dataset::CgifTitanium;
+    case Publisher::MainCgifMain: {
+      return Dataset::MainCgif;
     }
     case Publisher::EqusSipXase: {
       return Dataset::EqusSip;
@@ -1492,6 +1591,27 @@ Dataset PublisherDataset(Publisher publisher) {
     }
     case Publisher::EqusSipUtp: {
       return Dataset::EqusSip;
+    }
+    case Publisher::MsciCgifMsci: {
+      return Dataset::MsciCgif;
+    }
+    case Publisher::FtseCgifFtse: {
+      return Dataset::FtseCgif;
+    }
+    case Publisher::InavCgifInav: {
+      return Dataset::InavCgif;
+    }
+    case Publisher::MstarCgifMstar: {
+      return Dataset::MstarCgif;
+    }
+    case Publisher::CccyCgifCccy: {
+      return Dataset::CccyCgif;
+    }
+    case Publisher::CgiCgifCgi: {
+      return Dataset::CgiCgif;
+    }
+    case Publisher::MainCgifDef: {
+      return Dataset::MainCgif;
     }
     default: {
       throw InvalidArgumentError{
@@ -1831,8 +1951,8 @@ const char* ToString(Publisher publisher) {
     case Publisher::OpraPillarIexo: {
       return "OPRA.PILLAR.IEXO";
     }
-    case Publisher::CgifTitaniumCgif: {
-      return "CGIF.TITANIUM.CGIF";
+    case Publisher::MainCgifMain: {
+      return "MAIN.CGIF.MAIN";
     }
     case Publisher::EqusSipXase: {
       return "EQUS.SIP.XASE";
@@ -1908,6 +2028,27 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::EqusSipUtp: {
       return "EQUS.SIP.UTP";
+    }
+    case Publisher::MsciCgifMsci: {
+      return "MSCI.CGIF.MSCI";
+    }
+    case Publisher::FtseCgifFtse: {
+      return "FTSE.CGIF.FTSE";
+    }
+    case Publisher::InavCgifInav: {
+      return "INAV.CGIF.INAV";
+    }
+    case Publisher::MstarCgifMstar: {
+      return "MSTAR.CGIF.MSTAR";
+    }
+    case Publisher::CccyCgifCccy: {
+      return "CCCY.CGIF.CCCY";
+    }
+    case Publisher::CgiCgifCgi: {
+      return "CGI.CGIF.CGI";
+    }
+    case Publisher::MainCgifDef: {
+      return "MAIN.CGIF.DEF";
     }
     default: {
       return "Unknown";
@@ -2249,8 +2390,8 @@ Publisher FromString(const std::string& str) {
   if (str == "OPRA.PILLAR.IEXO") {
     return Publisher::OpraPillarIexo;
   }
-  if (str == "CGIF.TITANIUM.CGIF") {
-    return Publisher::CgifTitaniumCgif;
+  if (str == "MAIN.CGIF.MAIN") {
+    return Publisher::MainCgifMain;
   }
   if (str == "EQUS.SIP.XASE") {
     return Publisher::EqusSipXase;
@@ -2326,6 +2467,27 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "EQUS.SIP.UTP") {
     return Publisher::EqusSipUtp;
+  }
+  if (str == "MSCI.CGIF.MSCI") {
+    return Publisher::MsciCgifMsci;
+  }
+  if (str == "FTSE.CGIF.FTSE") {
+    return Publisher::FtseCgifFtse;
+  }
+  if (str == "INAV.CGIF.INAV") {
+    return Publisher::InavCgifInav;
+  }
+  if (str == "MSTAR.CGIF.MSTAR") {
+    return Publisher::MstarCgifMstar;
+  }
+  if (str == "CCCY.CGIF.CCCY") {
+    return Publisher::CccyCgifCccy;
+  }
+  if (str == "CGI.CGIF.CGI") {
+    return Publisher::CgiCgifCgi;
+  }
+  if (str == "MAIN.CGIF.DEF") {
+    return Publisher::MainCgifDef;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
