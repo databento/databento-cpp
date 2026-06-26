@@ -453,6 +453,12 @@ enum StatType : std::uint16_t {
   // The Market-Wide Circuit Breaker (MWCB) Level 3 threshold (20%), expressed as S&P
   // 500 index points. `price` will be set.
   MwcbLevel3 = 23,
+  // The auction collar reference price. `price` will be set.
+  AuctionCollarReferencePrice = 24,
+  // The auction collar upper price. `price` will be set.
+  AuctionCollarUpperPrice = 25,
+  // The auction collar lower price. `price` will be set.
+  AuctionCollarLowerPrice = 26,
   // A venue specific volume statistic. Refer to the venue documentation for more
   // information.
   // `quantity` will be set.
