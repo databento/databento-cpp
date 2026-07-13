@@ -2,6 +2,8 @@
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 
+#include <optional>
+
 #include "databento/detail/http_client.hpp"
 #include "databento/log.hpp"
 #include "mock/mock_http_server.hpp"
@@ -32,8 +34,17 @@ TEST_F(HttpClientTests, TestLogWarnings) {
         }
       }};
   HttpClient target{&mock_logger, kApiKey, "localhost",
-                    static_cast<std::uint16_t>(port)};
+                    static_cast<std::uint16_t>(port), std::nullopt};
   target.GetJson("/warn", {});
   ASSERT_EQ(mock_logger.CallCount(), 2);
+}
+
+TEST_F(HttpClientTests, TestHttpClientCallbackInvoked) {
+  const auto port = mock_server_.ListenOnThread();
+  bool called = false;
+  HttpClient target{ILogReceiver::Default(), kApiKey, "localhost",
+                    static_cast<std::uint16_t>(port),
+                    HttpClientCallback{[&called](httplib::Client&) { called = true; }}};
+  EXPECT_TRUE(called);
 }
 }  // namespace databento::detail::tests
