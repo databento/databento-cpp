@@ -632,17 +632,17 @@ enum TriState : char {
 using tri_state::TriState;
 
 // How to handle decoding DBN data from other versions.
-enum class VersionUpgradePolicy {
+enum class VersionUpgradePolicy : std::uint8_t {
   // Decode data from all supported versions (less than or equal to
   // `DBN_VERSION`) as-is.
-  AsIs,
+  AsIs = 1,
   // Decode and convert data from DBN versions prior to version 2 to that version.
   // Attempting to decode data from newer versions will fail.
-  UpgradeToV2,
+  UpgradeToV2 = 2,
   // Decode and convert data from DBN versions prior to version 3 to that version.
   // Attempting to decode data from newer versions (when they're introduced) will
   // fail.
-  UpgradeToV3,
+  UpgradeToV3 = 3,
 };
 
 // An error code from the live subscription gateway.
