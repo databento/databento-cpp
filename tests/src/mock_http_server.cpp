@@ -19,6 +19,9 @@ using databento::tests::mock::MockHttpServer;
 
 int MockHttpServer::ListenOnThread() {
   listen_thread_ = detail::ScopedThread{[this] { this->server_.listen_after_bind(); }};
+  // Wait until the server is accepting so a later stop() in the destructor can't
+  // race the listen thread's startup, which would otherwise hang
+  server_.wait_until_ready();
   return port_;
 }
 

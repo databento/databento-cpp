@@ -46,7 +46,7 @@ jobs:
       - name: CMake build
         run: cmake --build build
       - name: Unit tests
-        run: cd build && ctest --verbose
+        run: cd build && ctest --verbose --timeout 300
 
   macos:
     name: build - macos-latest - clang++
@@ -69,7 +69,7 @@ jobs:
       - name: CMake build
         run: cmake --build build
       - name: Unit tests
-        run: cd build && ctest --verbose
+        run: cd build && ctest --verbose --timeout 300
 
   windows:
     name: build - windows-latest - msvc
@@ -95,4 +95,4 @@ jobs:
       - name: CMake build
         run: cmake --build build --parallel
       - name: Unit tests
-        run: cd build && ctest --verbose --exclude-regex cmake
+        run: cd build && ctest --verbose --exclude-regex cmake --timeout 300
