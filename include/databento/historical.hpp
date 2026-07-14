@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <map>  // multimap
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -244,10 +245,12 @@ class Historical {
   using HttplibParams = std::multimap<std::string, std::string>;
 
   Historical(ILogReceiver* log_receiver, std::string key, HistoricalGateway gateway,
-             VersionUpgradePolicy upgrade_policy, std::string user_agent_ext);
+             VersionUpgradePolicy upgrade_policy, std::string user_agent_ext,
+             std::optional<HttpClientCallback> http_client_callback);
   Historical(ILogReceiver* log_receiver, std::string key, std::string gateway,
              std::uint16_t port, VersionUpgradePolicy upgrade_policy,
-             std::string user_agent_ext);
+             std::string user_agent_ext,
+             std::optional<HttpClientCallback> http_client_callback);
 
   BatchJob BatchSubmitJob(const HttplibParams& params);
   void DownloadFile(const std::string& url, const std::filesystem::path& output_path,
@@ -303,6 +306,9 @@ class HistoricalBuilder {
   HistoricalBuilder& SetAddress(std::string gateway, std::uint16_t port);
   // Appends to the default user agent.
   HistoricalBuilder& ExtendUserAgent(std::string extension);
+  // Sets a callback for customizing the underlying httplib::Client.
+  // The callback runs after Databento's defaults, so it can override them.
+  HistoricalBuilder& SetHttpClientConfig(HttpClientCallback callback);
 
   // Attempts to construct an instance of Historical or throws an exception if
   // no key has been set.
@@ -316,5 +322,6 @@ class HistoricalBuilder {
   std::string key_;
   VersionUpgradePolicy upgrade_policy_{VersionUpgradePolicy::UpgradeToV3};
   std::string user_agent_ext_;
+  std::optional<HttpClientCallback> http_client_callback_;
 };
 }  // namespace databento

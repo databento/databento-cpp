@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.62.0 - 2026-07-14
+
+### Enhancements
+- Changed `VersionUpgradePolicy` to be backed by `std::uint8_t` with explicit
+  values starting at 1
+- Added `HistoricalBuilder::SetHttpClientConfig` for customizing the underlying
+  HTTP client
+
 ## 0.61.0 - 2026-07-07
 
 ### Enhancements

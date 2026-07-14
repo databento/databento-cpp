@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install dependencies
         # pcre is a dependency of cppcheck
         run: |
@@ -46,14 +46,14 @@ jobs:
       - name: CMake build
         run: cmake --build build
       - name: Unit tests
-        run: cd build && ctest --verbose
+        run: cd build && ctest --verbose --timeout 300
 
   macos:
     name: build - macos-latest - clang++
     runs-on: macos-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install dependencies
         run: brew install cmake cppcheck googletest openssl@3 ninja zstd
       # Don't enable clang-tidy on macOS because it's incredibly slow
@@ -69,14 +69,14 @@ jobs:
       - name: CMake build
         run: cmake --build build
       - name: Unit tests
-        run: cd build && ctest --verbose
+        run: cd build && ctest --verbose --timeout 300
 
   windows:
     name: build - windows-latest - msvc
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Cache dependencies
         uses: actions/cache@v4
         env:
@@ -95,4 +95,4 @@ jobs:
       - name: CMake build
         run: cmake --build build --parallel
       - name: Unit tests
-        run: cd build && ctest --verbose --exclude-regex cmake
+        run: cd build && ctest --verbose --exclude-regex cmake --timeout 300

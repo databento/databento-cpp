@@ -9,19 +9,25 @@
 #include <nlohmann/json.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <memory>  // unique_ptr
+#include <optional>
 #include <string>
 
 namespace databento {
+// A callback for customizing the underlying httplib::Client.
+using HttpClientCallback = std::function<void(httplib::Client&)>;
+
 class ILogReceiver;
 class IReadable;
 namespace detail {
 class HttpClient {
  public:
   HttpClient(ILogReceiver* log_receiver, const std::string& key,
-             const std::string& gateway);
+             const std::string& gateway, std::optional<HttpClientCallback> callback);
   HttpClient(ILogReceiver* log_receiver, const std::string& key,
-             const std::string& gateway, std::uint16_t port);
+             const std::string& gateway, std::uint16_t port,
+             std::optional<HttpClientCallback> callback);
 
   nlohmann::json GetJson(const std::string& path, const httplib::Params& params);
   nlohmann::json PostJson(const std::string& path, const httplib::Params& form_params);

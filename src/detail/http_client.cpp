@@ -23,7 +23,8 @@ const httplib::Headers& HttpClient::BaseHeaders() {
 }
 
 HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string& key,
-                       const std::string& gateway)
+                       const std::string& gateway,
+                       std::optional<HttpClientCallback> callback)
     : log_receiver_{log_receiver}, client_{gateway} {
   auto headers = HttpClient::BaseHeaders();
   headers.insert(httplib::make_basic_authentication_header(key, ""));
@@ -31,10 +32,14 @@ HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string&
   client_.set_basic_auth(key, "");
   client_.set_read_timeout(kTimeout);
   client_.set_write_timeout(kTimeout);
+  if (callback) {
+    (*callback)(client_);
+  }
 }
 
 HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string& key,
-                       const std::string& gateway, std::uint16_t port)
+                       const std::string& gateway, std::uint16_t port,
+                       std::optional<HttpClientCallback> callback)
     : log_receiver_{log_receiver},
       // constructor with port parameter is HTTP-only
       client_{gateway + ':' + std::to_string(port)} {
@@ -44,6 +49,9 @@ HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string&
   client_.set_basic_auth(key, "");
   client_.set_read_timeout(kTimeout);
   client_.set_write_timeout(kTimeout);
+  if (callback) {
+    (*callback)(client_);
+  }
 }
 
 nlohmann::json HttpClient::GetJson(const std::string& path,

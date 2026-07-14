@@ -205,27 +205,29 @@ Historical::Historical(ILogReceiver* log_receiver, std::string key,
       key_{std::move(key)},
       gateway_{UrlFromGateway(gateway)},
       upgrade_policy_{VersionUpgradePolicy::UpgradeToV3},
-      client_{log_receiver, key_, gateway_} {}
+      client_{log_receiver, key_, gateway_, std::nullopt} {}
 
 Historical::Historical(ILogReceiver* log_receiver, std::string key,
                        HistoricalGateway gateway, VersionUpgradePolicy upgrade_policy,
-                       std::string user_agent_ext)
+                       std::string user_agent_ext,
+                       std::optional<HttpClientCallback> http_client_callback)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       gateway_{UrlFromGateway(gateway)},
       user_agent_ext_{std::move(user_agent_ext)},
       upgrade_policy_{upgrade_policy},
-      client_{log_receiver, key_, gateway_} {}
+      client_{log_receiver, key_, gateway_, std::move(http_client_callback)} {}
 
 Historical::Historical(ILogReceiver* log_receiver, std::string key, std::string gateway,
                        std::uint16_t port, VersionUpgradePolicy upgrade_policy,
-                       std::string user_agent_ext)
+                       std::string user_agent_ext,
+                       std::optional<HttpClientCallback> http_client_callback)
     : log_receiver_{log_receiver},
       key_{std::move(key)},
       gateway_{std::move(gateway)},
       user_agent_ext_{std::move(user_agent_ext)},
       upgrade_policy_{upgrade_policy},
-      client_{log_receiver, key_, gateway_, port} {}
+      client_{log_receiver, key_, gateway_, port, std::move(http_client_callback)} {}
 
 constexpr std::string_view kBatchSubmitJobEndpoint = "Historical::BatchSubmitJob";
 
@@ -1179,6 +1181,11 @@ HistoricalBuilder& HistoricalBuilder::ExtendUserAgent(std::string extension) {
   return *this;
 }
 
+HistoricalBuilder& HistoricalBuilder::SetHttpClientConfig(HttpClientCallback callback) {
+  http_client_callback_ = std::move(callback);
+  return *this;
+}
+
 Historical HistoricalBuilder::Build() {
   if (key_.empty()) {
     throw Exception{"'key' is unset"};
@@ -1187,8 +1194,12 @@ Historical HistoricalBuilder::Build() {
     log_receiver_ = databento::ILogReceiver::Default();
   }
   if (gateway_override_.empty()) {
-    return Historical{log_receiver_, key_, gateway_, upgrade_policy_, user_agent_ext_};
+    return Historical{log_receiver_,   key_,
+                      gateway_,        upgrade_policy_,
+                      user_agent_ext_, http_client_callback_};
   }
-  return Historical{log_receiver_,   key_,           gateway_override_, port_,
-                    upgrade_policy_, user_agent_ext_};
+  return Historical{log_receiver_,        key_,
+                    gateway_override_,    port_,
+                    upgrade_policy_,      user_agent_ext_,
+                    http_client_callback_};
 }

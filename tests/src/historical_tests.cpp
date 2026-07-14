@@ -970,6 +970,16 @@ TEST(HistoricalBuilderTests, TestBasic) {
   EXPECT_EQ(client.Gateway(), "https://hist.databento.com");
 }
 
+TEST(HistoricalBuilderTests, TestSetHttpClientConfig) {
+  bool called = false;
+  const auto client =
+      databento::HistoricalBuilder()
+          .SetKey("SECRET")
+          .SetHttpClientConfig([&called](httplib::Client&) { called = true; })
+          .Build();
+  EXPECT_TRUE(called);
+}
+
 TEST(HistoricalBuilderTests, TestMissingKey) {
   ASSERT_THROW(databento::HistoricalBuilder().Build(), Exception);
 }
