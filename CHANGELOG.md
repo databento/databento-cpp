@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.62.1 - Upcoming
+
+### Bug fixes
+- Fixed `DbnEncoder::EncodeRecord` overload for `WithTsOut` failing to compile
+
 ## 0.62.0 - 2026-07-14
 
 ### Enhancements
