@@ -28,7 +28,7 @@ class DbnEncoder {
     static_assert(has_header<R>::value,
                   "must be a DBN record struct with an `hd` RecordHeader field");
     // Safe to cast away const as EncodeRecord will not modify data
-    const Record rec{const_cast<RecordHeader*>(&record.hd)};
+    const Record rec{const_cast<RecordHeader*>(&record.rec.hd)};
     EncodeRecord(rec);
   }
   void EncodeRecord(const Record& record);
