@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.62.1 - Upcoming
+## 0.62.1 - 2026-07-28
+
+### Enhancements
+- Upgraded default cpp-httplib version to 0.51.0
 
 ### Bug fixes
 - Fixed `DbnEncoder::EncodeRecord` overload for `WithTsOut` failing to compile
