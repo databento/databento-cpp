@@ -4,6 +4,7 @@
 
 ### Enhancements
 - Added `ReplayDataAgedOut` variant to `ErrorCode`
+- Added new publisher values for JPX
 
 ## 0.62.1 - 2026-07-28
 

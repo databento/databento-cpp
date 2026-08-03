@@ -143,6 +143,12 @@ enum class Venue : std::uint16_t {
   Cgi = 67,
   // CGIF Definitions
   Def = 68,
+  // Tokyo Stock Exchange
+  Xtks = 69,
+  // Tokyo Commodity Exchange
+  Xtkt = 70,
+  // Osaka Exchange
+  Xose = 71,
 };
 
 // A source of data.
@@ -245,6 +251,12 @@ enum class Dataset : std::uint16_t {
   CccyCgif = 48,
   // CGIF - CBOE Global Indices
   CgiCgif = 49,
+  // Arrowhead FLEX
+  XtksFlex = 50,
+  // JPX JGATE3.0-ITCH
+  XtktItch = 51,
+  // JPX JGATE3.0-ITCH
+  XoseItch = 52,
 };
 
 // A specific Venue from a specific data source.
@@ -533,6 +545,12 @@ enum class Publisher : std::uint16_t {
   CgiCgifCgi = 141,
   // CGIF - Definitions
   MainCgifDef = 142,
+  // JPX - Tokyo Stock Exchange
+  XtksFlexXtks = 143,
+  // JPX - Tokyo Commodity Exchange
+  XtktItchXtkt = 144,
+  // JPX - Osaka Exchange
+  XoseItchXose = 145,
 };
 
 // Get a Publisher's Venue.
