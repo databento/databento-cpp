@@ -838,6 +838,9 @@ const char* ToString(ErrorCode error_code) {
     case ErrorCode::SkippedRecordsAfterSlowReading: {
       return "skipped_records_after_slow_reading";
     }
+    case ErrorCode::ReplayDataAgedOut: {
+      return "replay_data_aged_out";
+    }
     case ErrorCode::Unset: {
       return "unset";
     }
@@ -1297,6 +1300,9 @@ ErrorCode FromString(const std::string& str) {
   }
   if (str == "skipped_records_after_slow_reading") {
     return ErrorCode::SkippedRecordsAfterSlowReading;
+  }
+  if (str == "replay_data_aged_out") {
+    return ErrorCode::ReplayDataAgedOut;
   }
   if (str == "unset") {
     return ErrorCode::Unset;

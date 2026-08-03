@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.62.2 - Upcoming
+
+### Enhancements
+- Added `ReplayDataAgedOut` variant to `ErrorCode`
+
 ## 0.62.1 - 2026-07-28
 
 ### Enhancements
