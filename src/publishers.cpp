@@ -215,6 +215,15 @@ const char* ToString(Venue venue) {
     case Venue::Def: {
       return "DEF";
     }
+    case Venue::Xtks: {
+      return "XTKS";
+    }
+    case Venue::Xtkt: {
+      return "XTKT";
+    }
+    case Venue::Xose: {
+      return "XOSE";
+    }
     default: {
       return "Unknown";
     }
@@ -432,6 +441,15 @@ Venue FromString(const std::string& str) {
   if (str == "DEF") {
     return Venue::Def;
   }
+  if (str == "XTKS") {
+    return Venue::Xtks;
+  }
+  if (str == "XTKT") {
+    return Venue::Xtkt;
+  }
+  if (str == "XOSE") {
+    return Venue::Xose;
+  }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -584,6 +602,15 @@ const char* ToString(Dataset dataset) {
     }
     case Dataset::CgiCgif: {
       return "CGI.CGIF";
+    }
+    case Dataset::XtksFlex: {
+      return "XTKS.FLEX";
+    }
+    case Dataset::XtktItch: {
+      return "XTKT.ITCH";
+    }
+    case Dataset::XoseItch: {
+      return "XOSE.ITCH";
     }
     default: {
       return "Unknown";
@@ -744,6 +771,15 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "CGI.CGIF") {
     return Dataset::CgiCgif;
+  }
+  if (str == "XTKS.FLEX") {
+    return Dataset::XtksFlex;
+  }
+  if (str == "XTKT.ITCH") {
+    return Dataset::XtktItch;
+  }
+  if (str == "XOSE.ITCH") {
+    return Dataset::XoseItch;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -1176,6 +1212,15 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::MainCgifDef: {
       return Venue::Def;
+    }
+    case Publisher::XtksFlexXtks: {
+      return Venue::Xtks;
+    }
+    case Publisher::XtktItchXtkt: {
+      return Venue::Xtkt;
+    }
+    case Publisher::XoseItchXose: {
+      return Venue::Xose;
     }
     default: {
       throw InvalidArgumentError{
@@ -1613,6 +1658,15 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::MainCgifDef: {
       return Dataset::MainCgif;
     }
+    case Publisher::XtksFlexXtks: {
+      return Dataset::XtksFlex;
+    }
+    case Publisher::XtktItchXtkt: {
+      return Dataset::XtktItch;
+    }
+    case Publisher::XoseItchXose: {
+      return Dataset::XoseItch;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -2049,6 +2103,15 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::MainCgifDef: {
       return "MAIN.CGIF.DEF";
+    }
+    case Publisher::XtksFlexXtks: {
+      return "XTKS.FLEX.XTKS";
+    }
+    case Publisher::XtktItchXtkt: {
+      return "XTKT.ITCH.XTKT";
+    }
+    case Publisher::XoseItchXose: {
+      return "XOSE.ITCH.XOSE";
     }
     default: {
       return "Unknown";
@@ -2488,6 +2551,15 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "MAIN.CGIF.DEF") {
     return Publisher::MainCgifDef;
+  }
+  if (str == "XTKS.FLEX.XTKS") {
+    return Publisher::XtksFlexXtks;
+  }
+  if (str == "XTKT.ITCH.XTKT") {
+    return Publisher::XtktItchXtkt;
+  }
+  if (str == "XOSE.ITCH.XOSE") {
+    return Publisher::XoseItchXose;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
