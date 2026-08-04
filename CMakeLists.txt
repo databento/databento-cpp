@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.24..4.2)
 
 project(
   databento
-  VERSION 0.62.1
+  VERSION 0.63.0
   LANGUAGES CXX
   DESCRIPTION "Official Databento client library"
 )
@@ -202,7 +202,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_DATE)
     find_package(date REQUIRED)
   endif()
 else()
-  set(date_version 3.0.4)
+  set(date_version 3.0.5)
   set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
   FetchContent_Declare(
     date_src

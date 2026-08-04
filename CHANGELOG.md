@@ -1,10 +1,11 @@
 # Changelog
 
-## 0.62.2 - Upcoming
+## 0.63.0 - 2026-08-04
 
 ### Enhancements
 - Added `ReplayDataAgedOut` variant to `ErrorCode`
-- Added new publisher values for JPX
+- Added new venues, datasets, and publishers for JPX
+- Upgraded default date version to 3.0.5
 
 ## 0.62.1 - 2026-07-28
 
