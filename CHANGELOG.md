@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.64.0 - Upcoming
+
+### Breaking changes
+- Changed `LiveBlocking` to throw a `LiveApiError` instead of an
+  `InvalidArgumentError` when the gateway rejects authentication, so the reason is no
+  longer mislabeled as an invalid `key` argument
+
 ## 0.63.0 - 2026-08-04
 
 ### Enhancements

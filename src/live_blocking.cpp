@@ -462,8 +462,8 @@ std::uint64_t LiveBlocking::DecodeAuthResp(std::chrono::milliseconds timeout) {
     throw LiveApiError{"Did not receive success indicator from authentication attempt"};
   }
   if (is_error) {
-    throw InvalidArgumentError{"LiveBlocking::LiveBlocking", "key",
-                               "Failed to authenticate: " + err_details};
+    throw LiveApiError{"Failed to authenticate: " +
+                       (err_details.empty() ? response : err_details)};
   }
   return session_id;
 }

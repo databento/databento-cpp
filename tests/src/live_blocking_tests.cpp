@@ -985,4 +985,26 @@ TEST_F(LiveBlockingTests, TestAuthTimeout) {
   EXPECT_THAT(connect, matcher);
 }
 
+TEST_F(LiveBlockingTests, TestAuthRejected) {
+  constexpr auto kGatewayError = "heartbeat_interval_s must be between 5 and 1800";
+  const mock::MockLsgServer mock_server{
+      dataset::kXnasItch, false, [](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Send("lsg-test\n");
+        self.Send("cram=t7kNhwj4xqR0QYjzFKtBEG2ec2pXJ4FK\n");
+        self.Send(std::string{"success=0|error="} + kGatewayError + '\n');
+      }};
+  // Not `ThrowsMessage`: the mock serves a single connection, so the retry gtest makes
+  // when that matcher fails would report a connection timeout instead of the real type
+  try {
+    builder_.SetDataset(dataset::kXnasItch)
+        .SetAddress(kLocalhost, mock_server.Port())
+        .BuildBlocking();
+    FAIL() << "Expected the gateway's rejection to throw";
+  } catch (const LiveApiError& exc) {
+    EXPECT_THAT(exc.what(), testing::HasSubstr(kGatewayError));
+    EXPECT_THAT(exc.what(), testing::Not(testing::HasSubstr("Invalid argument")));
+  }
+}
+
 }  // namespace databento::tests

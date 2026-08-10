@@ -45,7 +45,8 @@ class LiveBuilder {
   LiveBuilder& SetUpgradePolicy(VersionUpgradePolicy upgrade_policy);
   // Sets the receiver of the logs to be used by the client.
   LiveBuilder& SetLogReceiver(ILogReceiver* log_receiver);
-  // Overrides the heartbeat interval.
+  // Overrides the heartbeat interval. Must be between 5 and 1800 seconds. If unset,
+  // the gateway's default interval is used.
   LiveBuilder& SetHeartbeatInterval(std::chrono::seconds heartbeat_interval);
   // Sets the compression mode for the read stream.
   LiveBuilder& SetCompression(Compression compression);
@@ -71,10 +72,10 @@ class LiveBuilder {
    */
 
   // Attempts to construct an instance of a blocking live client or throws
-  // an exception.
+  // an exception. Throws a LiveApiError if the gateway rejects authentication.
   LiveBlocking BuildBlocking();
   // Attempts to construct an instance of a threaded live client or throws an
-  // exception.
+  // exception. Throws a LiveApiError if the gateway rejects authentication.
   LiveThreaded BuildThreaded();
 
  private:
