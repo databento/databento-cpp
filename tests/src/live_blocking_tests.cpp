@@ -964,8 +964,8 @@ TEST_F(LiveBlockingTests, TestConnectTimeout) {
         .SetTimeoutConf({std::chrono::seconds{1}, std::chrono::seconds{30}})
         .BuildBlocking();
   };
-  const auto matcher =
-      testing::ThrowsMessage<TcpError>(testing::HasSubstr("failed to connect"));
+  const auto matcher = testing::ThrowsMessage<TcpError>(testing::HasSubstr(
+      "failed to connect to 192.0.2.1:13000 after 1 second(s): Connection timed out"));
   EXPECT_THAT(connect, matcher);
 }
 

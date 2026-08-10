@@ -7,6 +7,14 @@
   `InvalidArgumentError` when the gateway rejects authentication, so the reason is no
   longer mislabeled as an invalid `key` argument
 
+### Bug fixes
+- Fixed Live connect timeouts being reported as `Operation now in progress`, and
+  added the gateway, port, and timeout to the error message
+- Fixed a Live connect interrupted by a signal failing instead of continuing to
+  wait for the connection
+- Fixed only the first address being tried when a Live gateway hostname resolves to
+  more than one
+
 ## 0.63.0 - 2026-08-04
 
 ### Enhancements
