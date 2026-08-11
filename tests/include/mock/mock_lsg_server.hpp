@@ -66,6 +66,7 @@ class MockLsgServer {
   void Start();
   std::size_t Send(const std::string& msg);
   ::ssize_t UncheckedSend(const std::string& msg);
+  std::string Receive();
   template <typename Rec>
   void SendRecord(const Rec& rec) {
     const std::string rec_str{reinterpret_cast<const char*>(&rec), sizeof(rec)};
@@ -107,7 +108,6 @@ class MockLsgServer {
  private:
   detail::Socket InitSocketAndSetPort();
   detail::Socket InitSocketAndSetPort(int port);
-  std::string Receive();
   databento::Metadata DummyMetadata() const;
 
   template <typename T>

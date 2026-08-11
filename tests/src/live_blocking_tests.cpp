@@ -964,8 +964,10 @@ TEST_F(LiveBlockingTests, TestConnectTimeout) {
         .SetTimeoutConf({std::chrono::seconds{1}, std::chrono::seconds{30}})
         .BuildBlocking();
   };
-  const auto matcher = testing::ThrowsMessage<TcpError>(testing::HasSubstr(
-      "failed to connect to 192.0.2.1:13000 after 1 second(s): Connection timed out"));
+  // The `errno` description varies by platform, so only check the rest of the message
+  const auto matcher = testing::ThrowsMessage<TcpError>(testing::AllOf(
+      testing::HasSubstr("failed to connect to 192.0.2.1:13000 after 1 second(s)"),
+      testing::Not(testing::HasSubstr("Operation now in progress"))));
   EXPECT_THAT(connect, matcher);
 }
 
@@ -988,10 +990,11 @@ TEST_F(LiveBlockingTests, TestAuthTimeout) {
 TEST_F(LiveBlockingTests, TestAuthRejected) {
   constexpr auto kGatewayError = "heartbeat_interval_s must be between 5 and 1800";
   const mock::MockLsgServer mock_server{
-      dataset::kXnasItch, false, [](mock::MockLsgServer& self) {
+      dataset::kXnasItch, false, [kGatewayError](mock::MockLsgServer& self) {
         self.Accept();
         self.Send("lsg-test\n");
         self.Send("cram=t7kNhwj4xqR0QYjzFKtBEG2ec2pXJ4FK\n");
+        self.Receive();
         self.Send(std::string{"success=0|error="} + kGatewayError + '\n');
       }};
   // Not `ThrowsMessage`: the mock serves a single connection, so the retry gtest makes
