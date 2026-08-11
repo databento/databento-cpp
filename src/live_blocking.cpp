@@ -28,6 +28,13 @@ constexpr std::size_t kBucketIdLength = 5;
 constexpr std::chrono::seconds kHeartbeatTimeoutMargin{5};
 constexpr auto kDefaultHeartbeatTimeout =
     std::chrono::seconds{30} + kHeartbeatTimeoutMargin;
+
+databento::detail::TcpClient::RetryConf RetryConfFrom(
+    const databento::TimeoutConf& timeout_conf) {
+  databento::detail::TcpClient::RetryConf retry_conf{};
+  retry_conf.connect_timeout = timeout_conf.connect;
+  return retry_conf;
+}
 }  // namespace
 
 databento::LiveBuilder LiveBlocking::Builder() { return databento::LiveBuilder{}; }
@@ -51,7 +58,7 @@ LiveBlocking::LiveBlocking(
       compression_{compression},
       slow_reader_behavior_{slow_reader_behavior},
       timeout_conf_{timeout_conf},
-      connection_{log_receiver_, gateway_, port_, {{}, {}, timeout_conf_.connect}},
+      connection_{log_receiver_, gateway_, port_, RetryConfFrom(timeout_conf_)},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
@@ -75,7 +82,7 @@ LiveBlocking::LiveBlocking(
       compression_{compression},
       slow_reader_behavior_{slow_reader_behavior},
       timeout_conf_{timeout_conf},
-      connection_{log_receiver_, gateway_, port_, {{}, {}, timeout_conf_.connect}},
+      connection_{log_receiver_, gateway_, port_, RetryConfFrom(timeout_conf_)},
       buffer_{buffer_size},
       session_id_{this->Authenticate()} {}
 
@@ -243,8 +250,8 @@ void LiveBlocking::Reconnect() {
     log_msg << "Reconnecting to " << gateway_ << ':' << port_;
     log_receiver_->Receive(LogLevel::Info, log_msg.str());
   }
-  connection_ = detail::LiveConnection{
-      log_receiver_, gateway_, port_, {{}, {}, timeout_conf_.connect}};
+  connection_ = detail::LiveConnection{log_receiver_, gateway_, port_,
+                                       RetryConfFrom(timeout_conf_)};
   buffer_.Clear();
   sub_counter_ = 0;
   session_id_ = this->Authenticate();
@@ -462,8 +469,8 @@ std::uint64_t LiveBlocking::DecodeAuthResp(std::chrono::milliseconds timeout) {
     throw LiveApiError{"Did not receive success indicator from authentication attempt"};
   }
   if (is_error) {
-    throw InvalidArgumentError{"LiveBlocking::LiveBlocking", "key",
-                               "Failed to authenticate: " + err_details};
+    throw LiveApiError{"Failed to authenticate: " +
+                       (err_details.empty() ? response : err_details)};
   }
   return session_id;
 }

@@ -17,6 +17,8 @@
 #include <memory>     // unique_ptr
 #include <sstream>
 #include <thread>
+#include <utility>  // move
+#include <variant>
 
 #include "databento/exceptions.hpp"  // TcpError
 #include "databento/log.hpp"         // ILogReceiver
@@ -53,8 +55,10 @@ int GetSockOpt(databento::detail::Socket fd, int level, int optname, int* optval
 
 #ifdef _WIN32
 constexpr int kConnectInProgress = WSAEWOULDBLOCK;
+constexpr int kTimedOut = WSAETIMEDOUT;
 #else
 constexpr int kConnectInProgress = EINPROGRESS;
+constexpr int kTimedOut = ETIMEDOUT;
 #endif
 
 // Saves the current blocking state, sets non-blocking, and returns a RAII guard
@@ -93,6 +97,66 @@ class BlockingGuard {
   int _original_flags;
 #endif
 };
+
+int PollForConnect(databento::detail::Socket fd, int timeout_ms) {
+  const bool has_timeout = timeout_ms >= 0;
+  const auto deadline = std::chrono::steady_clock::now() +
+                        std::chrono::milliseconds{has_timeout ? timeout_ms : 0};
+  int remaining_ms = timeout_ms;
+  while (true) {
+    ::pollfd pfd{fd, POLLOUT, {}};
+    const int poll_ret = Poll(&pfd, 1, remaining_ms);
+    if (poll_ret >= 0 || GetErrNo() != EINTR) {
+      return poll_ret;
+    }
+    if (has_timeout) {
+      const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
+          deadline - std::chrono::steady_clock::now());
+      if (remaining.count() <= 0) {
+        return 0;
+      }
+      remaining_ms = static_cast<int>(remaining.count());
+    }
+  }
+}
+
+using ConnectResult = std::variant<databento::detail::ScopedFd, int>;
+
+ConnectResult ConnectTo(const ::addrinfo* addr, int timeout_ms) {
+  using databento::detail::ScopedFd;
+
+  ScopedFd fd{::socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol)};
+  if (fd.Get() == ScopedFd::kUnset) {
+    return GetErrNo();
+  }
+  const int err_num = [&fd, addr, timeout_ms] {
+    BlockingGuard guard{fd.Get()};
+    if (::connect(fd.Get(), addr->ai_addr, addr->ai_addrlen) == 0) {
+      return 0;
+    }
+    if (GetErrNo() != kConnectInProgress) {
+      return GetErrNo();
+    }
+    const int poll_ret = PollForConnect(fd.Get(), timeout_ms);
+    if (poll_ret == 0) {
+      // errno still holds the EINPROGRESS from connect, which would misreport a
+      // timeout as an in-progress connection
+      return kTimedOut;
+    }
+    if (poll_ret < 0) {
+      return GetErrNo();
+    }
+    int so_error = 0;
+    if (GetSockOpt(fd.Get(), SOL_SOCKET, SO_ERROR, &so_error) != 0) {
+      return GetErrNo();
+    }
+    return so_error;
+  }();
+  if (err_num != 0) {
+    return err_num;
+  }
+  return std::move(fd);
+}
 }  // namespace
 
 TcpClient::TcpClient(ILogReceiver* log_receiver, const std::string& gateway,
@@ -168,12 +232,6 @@ databento::detail::ScopedFd TcpClient::InitSocket(ILogReceiver* log_receiver,
                                                   RetryConf retry_conf) {
   static constexpr auto kMethod = "TcpClient::TcpClient";
 
-  const detail::Socket fd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (fd == -1) {
-    throw TcpError{::GetErrNo(), "Failed to create socket"};
-  }
-  ScopedFd scoped_fd{fd};
-
   addrinfo hints{};
   hints.ai_flags = AI_PASSIVE;
   hints.ai_family = AF_INET;
@@ -187,34 +245,35 @@ databento::detail::ScopedFd TcpClient::InitSocket(ILogReceiver* log_receiver,
   }
   std::unique_ptr<addrinfo, decltype(&::freeaddrinfo)> res{out, &::freeaddrinfo};
   const auto max_attempts = std::max<std::uint32_t>(retry_conf.max_attempts, 1);
-  const auto timeout_ms = static_cast<int>(
+  // passing a timeout of -1 blocks indefinitely, which is the equivalent of
+  // having no timeout
+  const auto timeout_count =
       std::chrono::duration_cast<std::chrono::milliseconds>(retry_conf.connect_timeout)
-          .count());
+          .count();
+  const auto timeout_ms = timeout_count ? static_cast<int>(timeout_count) : -1;
+  ScopedFd scoped_fd;
   std::chrono::seconds backoff{1};
   for (std::uint32_t attempt = 0; attempt < max_attempts; ++attempt) {
-    BlockingGuard guard{scoped_fd.Get()};
-
-    const int connect_ret = ::connect(scoped_fd.Get(), res->ai_addr, res->ai_addrlen);
-    bool connected = (connect_ret == 0);
-    if (!connected && ::GetErrNo() == kConnectInProgress) {
-      pollfd pfd{scoped_fd.Get(), POLLOUT, {}};
-      const int poll_ret = Poll(&pfd, 1, timeout_ms);
-      if (poll_ret > 0) {
-        int so_error = 0;
-        GetSockOpt(scoped_fd.Get(), SOL_SOCKET, SO_ERROR, &so_error);
-        connected = (so_error == 0);
-        if (!connected) {
-          errno = so_error;
-        }
+    int err_num = kTimedOut;
+    // Try each addr from getaddrinfo
+    for (const ::addrinfo* addr = res.get(); addr != nullptr; addr = addr->ai_next) {
+      auto connect_res = ConnectTo(addr, timeout_ms);
+      if (auto* connected = std::get_if<ScopedFd>(&connect_res)) {
+        scoped_fd = std::move(*connected);
+        break;
       }
+      err_num = std::get<int>(connect_res);
     }
 
-    if (connected) {
+    if (scoped_fd.Get() != ScopedFd::kUnset) {
       break;
     } else if (attempt + 1 == max_attempts) {
       std::ostringstream err_msg;
-      err_msg << "Socket failed to connect after " << max_attempts << " attempt(s)";
-      throw TcpError{::GetErrNo(), err_msg.str()};
+      err_msg << "Socket failed to connect to " << gateway << ':' << port;
+      if (err_num == kTimedOut) {
+        err_msg << " after " << retry_conf.connect_timeout.count() << " second(s)";
+      }
+      throw TcpError{err_num, err_msg.str()};
     }
     std::ostringstream log_msg;
     log_msg << '[' << kMethod << "] Connection attempt " << (attempt + 1) << " to "
