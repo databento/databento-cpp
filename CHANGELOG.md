@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.64.0 - Upcoming
+## 0.64.0 - 2026-08-11
 
 ### Breaking changes
 - Changed `LiveBlocking` to throw a `LiveApiError` instead of an
