@@ -48,6 +48,30 @@ jobs:
       - name: Unit tests
         run: cd build && ctest --verbose --timeout 300
 
+  ubuntu-dbn-from-source:
+    name: build - ubuntu-latest - libdbn_c from source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libzstd-dev ninja-build
+      - name: Set up Rust
+        run: rustup toolchain add --profile minimal stable
+      - name: CMake configure
+        run: |
+          cmake -S . -B build \
+            -GNinja \
+            -DDATABENTO_USE_EXTERNAL_GTEST=0 \
+            -DDATABENTO_ENABLE_UNIT_TESTING=1 \
+            -DDATABENTO_BUILD_DBN_FROM_SOURCE=1
+      - name: CMake build
+        run: cmake --build build
+      - name: Unit tests
+        run: cd build && ctest --verbose --timeout 300
+
   macos:
     name: build - macos-latest - clang++
     runs-on: macos-latest

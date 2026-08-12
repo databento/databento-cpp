@@ -10,6 +10,7 @@ set(headers
   include/databento/dbn_store.hpp
   include/databento/detail/buffer.hpp
   include/databento/detail/dbn_buffer_decoder.hpp
+  include/databento/detail/dbn_fsm.hpp
   include/databento/detail/http_client.hpp
   include/databento/detail/json_helpers.hpp
   include/databento/detail/scoped_fd.hpp
@@ -54,6 +55,7 @@ set(sources
   src/dbn_store.cpp
   src/detail/buffer.cpp
   src/detail/dbn_buffer_decoder.cpp
+  src/detail/dbn_fsm.cpp
   src/detail/http_client.cpp
   src/detail/http_stream_reader.cpp
   src/detail/json_helpers.cpp

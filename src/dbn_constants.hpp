@@ -6,7 +6,6 @@
 
 namespace databento {
 constexpr std::size_t kMagicSize = 4;
-constexpr std::size_t kMetadataPreludeSize = 8;
 constexpr std::uint32_t kZstdMagicNumber = 0xFD2FB528;
 constexpr auto kDbnPrefix = "DBN";
 constexpr std::size_t kFixedMetadataLen = 100;

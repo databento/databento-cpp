@@ -59,9 +59,10 @@ target_link_libraries(example PRIVATE databento::databento)
 ### Dependencies
 
 You'll need to ensure the following dependencies are installed:
+- [libdbn\_c](https://github.com/databento/dbn), the C interface to the DBN library
+- [Zstandard (zstd)](https://github.com/facebook/zstd)
 - [OpenSSL](https://www.openssl.org/) (minimum version 3.0)
 - [Libcrypto](https://www.openssl.org/docs/man3.0/man7/crypto.html)
-- [Zstandard (zstd)](https://github.com/facebook/zstd)
 - [nlohmann\_json (header-only)](https://github.com/nlohmann/json)
 - [cpp-httplib (header-only)](https://github.com/yhirose/cpp-httplib)
 - [date (header-only)](https://github.com/HowardHinnant/date)
@@ -69,6 +70,11 @@ You'll need to ensure the following dependencies are installed:
 By default, date, cpp-httplib and nlohmann\_json are downloaded by CMake as part of the build process.
 If you would like to use a local version of these libraries, enable the CMake flag
 `DATABENTO_USE_EXTERNAL_DATE`, `DATABENTO_USE_EXTERNAL_HTTPLIB`, or `DATABENTO_USE_EXTERNAL_JSON` respectively.
+
+libdbn\_c is downloaded as a prebuilt library for Linux, macOS, and Windows on x86\_64 and ARM64.
+Other platforms build it from source, which requires a [Rust toolchain](https://rustup.rs).
+To force building from source, enable the `DATABENTO_BUILD_DBN_FROM_SOURCE` CMake flag.
+To build it from a local DBN checkout, set `DATABENTO_DBN_SOURCE_DIR` to that directory.
 
 #### Ubuntu
 

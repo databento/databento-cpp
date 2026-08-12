@@ -124,6 +124,7 @@ else()
     # Visual Studio by default links C runtimes dynamically but gtest by default links them statically
     set(gtest_force_shared_crt ON CACHE BOOL "Link dynamic CRT" FORCE)
   endif()
+  set(INSTALL_GTEST OFF)
   FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz

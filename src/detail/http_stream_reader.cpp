@@ -1,4 +1,4 @@
-#include "databento/detail/http_stream_reader.hpp"
+#include "detail/http_stream_reader.hpp"
 
 #include <cstddef>  // byte, size_t
 #include <sstream>

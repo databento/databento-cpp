@@ -10,7 +10,6 @@
 #include <variant>
 
 #include "databento/constants.hpp"  //  kApiKeyLength
-#include "databento/dbn_decoder.hpp"
 #include "databento/detail/sha256_hasher.hpp"
 #include "databento/exceptions.hpp"  // LiveApiError
 #include "databento/live.hpp"        // LiveBuilder
@@ -18,7 +17,6 @@
 #include "databento/record.hpp"      // Record
 #include "databento/symbology.hpp"   // JoinSymbolStrings
 #include "databento/v1.hpp"          // v1::SystemMsg, ErrorMsg
-#include "dbn_constants.hpp"         // kMetadataPreludeSize
 
 using databento::LiveBlocking;
 using Status = databento::IReadable::Status;
@@ -59,7 +57,8 @@ LiveBlocking::LiveBlocking(
       slow_reader_behavior_{slow_reader_behavior},
       timeout_conf_{timeout_conf},
       connection_{log_receiver_, gateway_, port_, RetryConfFrom(timeout_conf_)},
-      buffer_{buffer_size},
+      buffer_{kTextBufSize},
+      fsm_{upgrade_policy, buffer_size},
       session_id_{this->Authenticate()} {}
 
 LiveBlocking::LiveBlocking(
@@ -83,7 +82,8 @@ LiveBlocking::LiveBlocking(
       slow_reader_behavior_{slow_reader_behavior},
       timeout_conf_{timeout_conf},
       connection_{log_receiver_, gateway_, port_, RetryConfFrom(timeout_conf_)},
-      buffer_{buffer_size},
+      buffer_{kTextBufSize},
+      fsm_{upgrade_policy, buffer_size},
       session_id_{this->Authenticate()} {}
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols, Schema schema,
@@ -173,24 +173,29 @@ databento::Metadata LiveBlocking::Start() {
 
   connection_.WriteAll("start_session\n");
   connection_.SetCompression(compression_);
-  connection_.ReadExact(buffer_.WriteBegin(), kMetadataPreludeSize);
-  buffer_.Fill(kMetadataPreludeSize);
-  const auto [version, size] = DbnDecoder::DecodeMetadataVersionAndSize(
-      buffer_.ReadBegin(), kMetadataPreludeSize);
-  buffer_.Consume(kMetadataPreludeSize);
-  buffer_.Reserve(size);
-  connection_.ReadExact(buffer_.WriteBegin(), size);
-  buffer_.Fill(size);
-  auto metadata =
-      DbnDecoder::DecodeMetadataFields(version, buffer_.ReadBegin(), buffer_.ReadEnd());
-  buffer_.Consume(size);
-  // Metadata may leave buffer misaligned. Shift records to ensure 8-byte
-  // alignment
-  buffer_.Shift();
-  version_ = metadata.version;
-  metadata.Upgrade(upgrade_policy_);
-  last_read_time_ = std::chrono::steady_clock::now();
-  return metadata;
+  // Authentication may have read part of the DBN stream
+  fsm_.WriteAll(buffer_.ReadBegin(), buffer_.ReadCapacity());
+  buffer_.Clear();
+  while (true) {
+    switch (fsm_.Process()) {
+      case detail::DbnFsm::Status::Metadata: {
+        last_read_time_ = std::chrono::steady_clock::now();
+        return fsm_.TakeMetadata();
+      }
+      case detail::DbnFsm::Status::Record: {
+        throw LiveApiError{"Received a record before the metadata"};
+      }
+      case detail::DbnFsm::Status::ReadMore: {
+        std::size_t length{};
+        auto* space = fsm_.Space(&length);
+        const auto read_res = connection_.ReadSome(space, length);
+        if (read_res.read_size == 0) {
+          throw LiveApiError{"Gateway closed the session before sending metadata"};
+        }
+        fsm_.Fill(read_res.read_size);
+      }
+    }
+  }
 }
 
 const databento::Record& LiveBlocking::NextRecord() {
@@ -207,8 +212,10 @@ const databento::Record& LiveBlocking::NextRecord() {
 }
 
 const databento::Record* LiveBlocking::NextRecord(std::chrono::milliseconds timeout) {
-  // need at least a header to read the record size
-  if (buffer_.ReadCapacity() < sizeof(RecordHeader)) {
+  while (true) {
+    if (const auto* record = TryNextRecord()) {
+      return record;
+    }
     const auto read_res = FillBuffer(timeout);
     if (read_res.status == Status::Timeout) {
       CheckHeartbeatTimeout();
@@ -218,28 +225,21 @@ const databento::Record* LiveBlocking::NextRecord(std::chrono::milliseconds time
       throw LiveApiError{"Gateway closed the session"};
     }
   }
-  // wait for the full record
-  while (buffer_.ReadCapacity() < BufferRecordHeader()->Size()) {
-    const auto read_res = FillBuffer(timeout);
-    if (read_res.status == Status::Timeout) {
-      CheckHeartbeatTimeout();
-      return nullptr;
-    }
-    if (read_res.status == Status::Closed) {
-      throw LiveApiError{"Gateway closed the session"};
-    }
-  }
-  return ConsumeBufferedRecord();
 }
 
 const databento::Record* LiveBlocking::TryNextRecord() {
-  if (buffer_.ReadCapacity() < sizeof(RecordHeader)) {
-    return nullptr;
+  switch (fsm_.Process()) {
+    case detail::DbnFsm::Status::Record: {
+      return &fsm_.LastRecord();
+    }
+    case detail::DbnFsm::Status::Metadata: {
+      throw LiveApiError{"Unexpectedly decoded metadata"};
+    }
+    case detail::DbnFsm::Status::ReadMore:
+    default: {
+      return nullptr;
+    }
   }
-  if (buffer_.ReadCapacity() < BufferRecordHeader()->Size()) {
-    return nullptr;
-  }
-  return ConsumeBufferedRecord();
 }
 
 void LiveBlocking::Stop() { connection_.Close(); }
@@ -253,6 +253,7 @@ void LiveBlocking::Reconnect() {
   connection_ = detail::LiveConnection{log_receiver_, gateway_, port_,
                                        RetryConfFrom(timeout_conf_)};
   buffer_.Clear();
+  fsm_.Reset();
   sub_counter_ = 0;
   session_id_ = this->Authenticate();
   last_read_time_ = std::chrono::steady_clock::now();
@@ -490,26 +491,14 @@ databento::IReadable::Result LiveBlocking::FillBuffer() {
 
 databento::IReadable::Result LiveBlocking::FillBuffer(
     std::chrono::milliseconds timeout) {
-  buffer_.ShiftForSpace(kMaxRecordLen);
-  const auto read_res =
-      connection_.ReadSome(buffer_.WriteBegin(), buffer_.WriteCapacity(), timeout);
-  buffer_.Fill(read_res.read_size);
+  std::size_t length{};
+  auto* space = fsm_.Space(&length);
+  const auto read_res = connection_.ReadSome(space, length, timeout);
+  fsm_.Fill(read_res.read_size);
   if (read_res.read_size > 0) {
     last_read_time_ = std::chrono::steady_clock::now();
   }
   return read_res;
-}
-
-const databento::Record* LiveBlocking::ConsumeBufferedRecord() {
-  current_record_ = Record{BufferRecordHeader()};
-  buffer_.Consume(current_record_.Size());
-  current_record_ = DbnDecoder::DecodeRecordCompat(
-      version_, upgrade_policy_, send_ts_out_, &compat_buffer_, current_record_);
-  return &current_record_;
-}
-
-databento::RecordHeader* LiveBlocking::BufferRecordHeader() {
-  return reinterpret_cast<RecordHeader*>(buffer_.ReadBegin());
 }
 
 std::chrono::milliseconds LiveBlocking::HeartbeatTimeout() const {
@@ -531,9 +520,9 @@ void LiveBlocking::CheckHeartbeatTimeout() const {
 }
 
 void LiveBlocking::LogRecord() const {
-  if (current_record_.RType() == RType::System) {
+  if (fsm_.LastRecord().RType() == RType::System) {
     LogSystemRecord();
-  } else if (current_record_.RType() == RType::Error) {
+  } else if (fsm_.LastRecord().RType() == RType::Error) {
     LogErrorRecord();
   }
 }
@@ -550,8 +539,8 @@ void LiveBlocking::LogSystemRecord() const {
     }
   };
 
-  if (current_record_.Size() >= sizeof(SystemMsg)) {
-    const auto& system = current_record_.Get<SystemMsg>();
+  if (fsm_.LastRecord().Size() >= sizeof(SystemMsg)) {
+    const auto& system = fsm_.LastRecord().Get<SystemMsg>();
     switch (system.code) {
       case SystemCode::Heartbeat: {
         log_heartbeat();
@@ -580,7 +569,7 @@ void LiveBlocking::LogSystemRecord() const {
     }
   } else {
     // v1 path with explicit UpgradePolicy::AsIs
-    const auto& system = current_record_.Get<v1::SystemMsg>();
+    const auto& system = fsm_.LastRecord().Get<v1::SystemMsg>();
     if (system.IsHeartbeat()) {
       log_heartbeat();
     } else if (log_receiver_->ShouldLog(LogLevel::Info)) {
@@ -596,12 +585,12 @@ void LiveBlocking::LogErrorRecord() const {
 
   std::ostringstream ss;
   ss << kMethodName << ' ';
-  if (current_record_.Size() >= sizeof(ErrorMsg)) {
-    const auto& error = current_record_.Get<ErrorMsg>();
+  if (fsm_.LastRecord().Size() >= sizeof(ErrorMsg)) {
+    const auto& error = fsm_.LastRecord().Get<ErrorMsg>();
     ss << " Received error with code: " << error.code << ", message:" << error.Err()
        << ", and is_last: " << static_cast<std::uint16_t>(error.is_last);
   } else {
-    const auto& error = current_record_.Get<v1::ErrorMsg>();
+    const auto& error = fsm_.LastRecord().Get<v1::ErrorMsg>();
     ss << " Received error with message:" << error.Err();
   }
   log_receiver_->Receive(LogLevel::Error, ss.str());
