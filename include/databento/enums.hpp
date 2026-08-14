@@ -61,9 +61,11 @@ enum class SlowReaderBehavior : std::uint8_t {
 // A record type sentinel.
 namespace r_type {
 enum RType : std::uint8_t {
-  // none
+  // Denotes a market-by-price record with a book depth of 0 (used for the
+  // `Trades` schema).
   Mbp0 = 0x00,
-  // none
+  // Denotes a market-by-price record with a book depth of 1 (also used for the
+  // `Tbbo` schema).
   Mbp1 = 0x01,
   // Denotes a market-by-price record with a book depth of 10.
   Mbp10 = 0x0A,
