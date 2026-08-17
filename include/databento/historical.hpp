@@ -93,7 +93,10 @@ class Historical {
   std::vector<std::string> MetadataListDatasets();
   std::vector<std::string> MetadataListDatasets(const DateRange& date_range);
   std::vector<Schema> MetadataListSchemas(const std::string& dataset);
+  std::vector<FieldDetail> MetadataListFields(Encoding encoding, Schema schema,
+                                              const std::string& dataset);
   std::vector<FieldDetail> MetadataListFields(Encoding encoding, Schema schema);
+
   std::vector<UnitPricesForMode> MetadataListUnitPrices(const std::string& dataset);
   std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const std::string& dataset);

@@ -578,10 +578,20 @@ std::vector<databento::Schema> Historical::MetadataListSchemas(
 
 std::vector<databento::FieldDetail> Historical::MetadataListFields(Encoding encoding,
                                                                    Schema schema) {
+  return this->MetadataListFields(encoding, schema, "");
+}
+
+std::vector<databento::FieldDetail> Historical::MetadataListFields(
+    Encoding encoding, Schema schema, const std::string& dataset) {
   static const std::string kEndpoint = "Historical::MetadataListFields";
   static const std::string kPath = ::BuildMetadataPath(".list_fields");
-  const nlohmann::json json = client_.GetJson(
-      kPath, {{"encoding", ToString(encoding)}, {"schema", ToString(schema)}});
+  httplib::Params params{{"encoding", ToString(encoding)},
+                         {"schema", ToString(schema)}};
+
+  detail::SetIfNotEmpty(&params, "dataset", dataset);
+
+  const nlohmann::json json = client_.GetJson(kPath, params);
+
   if (!json.is_array()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }

@@ -5,6 +5,9 @@
 ### Enhancements
 - Added `SType` variants `ListingId`, `IssuerId`, and `SecurityId` for the
   reference data API
+- Added an overload of `Historical::MetadataListFields` that accepts a
+  `dataset` parameter. Without it, the returned fields are for the latest
+  DBN encoding version, which may not match a specific dataset's schema
 
 ## 0.64.0 - 2026-08-11
 

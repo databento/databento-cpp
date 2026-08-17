@@ -475,6 +475,24 @@ TEST_F(HistoricalTests, TestMetadataListFields) {
   EXPECT_EQ(res, kExp);
 }
 
+TEST_F(HistoricalTests, TestMetadataListFields_WithDataset) {
+  const nlohmann::json kResp{{{"name", "length"}, {"type", "uint8_t"}},
+                             {{"name", "rtype"}, {"type", "uint8_t"}},
+                             {{"name", "dataset_id"}, {"type", "uint16_t"}}};
+  mock_server_.MockGetJson(
+      "/v0/metadata.list_fields",
+      {{"encoding", "dbn"}, {"schema", "trades"}, {"dataset", dataset::kGlbxMdp3}},
+      kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target = Client(port);
+  const auto res =
+      target.MetadataListFields(Encoding::Dbn, Schema::Trades, dataset::kGlbxMdp3);
+  const std::vector<FieldDetail> kExp{
+      {"length", "uint8_t"}, {"rtype", "uint8_t"}, {"dataset_id", "uint16_t"}};
+  EXPECT_EQ(res, kExp);
+}
+
 TEST_F(HistoricalTests, TestMetadataGetDatasetCondition) {
   const nlohmann::json kResp{{{"date", "2022-11-07"},
                               {"condition", "available"},
