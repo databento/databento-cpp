@@ -392,6 +392,15 @@ const char* ToString(SType s_type) {
     case SType::FigiTicker: {
       return "figi_ticker";
     }
+    case SType::ListingId: {
+      return "listing_id";
+    }
+    case SType::IssuerId: {
+      return "issuer_id";
+    }
+    case SType::SecurityId: {
+      return "security_id";
+    }
     default: {
       return "Unknown";
     }
@@ -1184,6 +1193,15 @@ SType FromString(const std::string& str) {
   }
   if (str == "figi_ticker") {
     return SType::FigiTicker;
+  }
+  if (str == "listing_id") {
+    return SType::ListingId;
+  }
+  if (str == "issuer_id") {
+    return SType::IssuerId;
+  }
+  if (str == "security_id") {
+    return SType::SecurityId;
   }
   throw InvalidArgumentError{"FromString<SType>", "str",
                              "unknown value '" + str + '\''};
