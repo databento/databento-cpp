@@ -61,9 +61,11 @@ enum class SlowReaderBehavior : std::uint8_t {
 // A record type sentinel.
 namespace r_type {
 enum RType : std::uint8_t {
-  // none
+  // Denotes a market-by-price record with a book depth of 0 (used for the
+  // `Trades` schema).
   Mbp0 = 0x00,
-  // none
+  // Denotes a market-by-price record with a book depth of 1 (also used for the
+  // `Tbbo` schema).
   Mbp1 = 0x01,
   // Denotes a market-by-price record with a book depth of 10.
   Mbp10 = 0x0A,
@@ -292,10 +294,19 @@ enum SType : std::uint8_t {
   BbgCompId = 9,
   // Symbology using Bloomberg composite tickers.
   BbgCompTicker = 10,
-  // Symbology using Bloomberg FIGI exchange level IDs.
+  // Symbology using Bloomberg FIGI exchange-level IDs.
   Figi = 11,
-  // Symbology using Bloomberg exchange level tickers.
+  // Symbology using Bloomberg exchange-level tickers.
   FigiTicker = 12,
+  // Symbology using the Databento-specific listing ID, only available for the reference
+  // data API.
+  ListingId = 13,
+  // Symbology using the Databento-specific issuer ID, only available for the reference
+  // data API.
+  IssuerId = 14,
+  // Symbology using the Databento-specific security ID, only available for the
+  // reference data API.
+  SecurityId = 15,
 };
 }  // namespace s_type
 using s_type::SType;

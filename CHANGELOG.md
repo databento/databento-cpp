@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.65.0 - 2026-08-18
+
+### Enhancements
+- Added `SType` variants `ListingId`, `IssuerId`, and `SecurityId` for the
+  reference data API
+
 ## 0.64.0 - 2026-08-11
 
 ### Breaking changes
