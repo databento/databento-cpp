@@ -20,7 +20,7 @@ using databento::detail::DbnFsm;
 
 namespace {
 // The DBN library's decoder, which the header only knows as an opaque type
-DbnDecoder* Handle(databento::detail::DbnFfiDecoder* decoder) {
+DbnDecoder* AsDecoder(databento::detail::CFfiDecoder* decoder) {
   return reinterpret_cast<DbnDecoder*>(decoder);
 }
 
@@ -123,8 +123,8 @@ const char* ErrorMessage(DbnDecoderError error) {
   }
 }
 
-databento::detail::DbnFfiDecoder* Create(databento::VersionUpgradePolicy upgrade_policy,
-                                         std::size_t buffer_size) {
+databento::detail::CFfiDecoder* Create(databento::VersionUpgradePolicy upgrade_policy,
+                                       std::size_t buffer_size) {
   DbnDecoderOptions options{};
   options.upgrade_policy = static_cast<std::uint8_t>(upgrade_policy);
   // `Space` can only return space for the largest record if the buffer is at
@@ -137,42 +137,43 @@ databento::detail::DbnFfiDecoder* Create(databento::VersionUpgradePolicy upgrade
     throw databento::InvalidArgumentError{"DbnFsm::DbnFsm", "upgrade_policy",
                                           ErrorMessage(error)};
   }
-  return reinterpret_cast<databento::detail::DbnFfiDecoder*>(decoder);
+  return reinterpret_cast<databento::detail::CFfiDecoder*>(decoder);
 }
 }  // namespace
 
-void databento::detail::FreeDbnFfiDecoder(DbnFfiDecoder* decoder) {
-  DbnDecoder_free(Handle(decoder));
+void databento::detail::FreeCFfiDecoder(CFfiDecoder* decoder) {
+  DbnDecoder_free(AsDecoder(decoder));
 }
 
 // A `buffer_size` of 0 leaves the buffer size to the DBN library
 DbnFsm::DbnFsm(VersionUpgradePolicy upgrade_policy) : DbnFsm{upgrade_policy, 0} {}
 
 DbnFsm::DbnFsm(VersionUpgradePolicy upgrade_policy, std::size_t buffer_size)
-    : decoder_{Create(upgrade_policy, buffer_size), FreeDbnFfiDecoder} {}
+    : decoder_{Create(upgrade_policy, buffer_size), FreeCFfiDecoder} {}
 
 std::byte* DbnFsm::Space(std::size_t* length) {
-  return reinterpret_cast<std::byte*>(DbnDecoder_space(Handle(decoder_.get()), length));
+  return reinterpret_cast<std::byte*>(
+      DbnDecoder_space(AsDecoder(decoder_.get()), length));
 }
 
 void DbnFsm::Fill(std::size_t length) {
-  DbnDecoder_fill(Handle(decoder_.get()), length);
+  DbnDecoder_fill(AsDecoder(decoder_.get()), length);
 }
 
 void DbnFsm::WriteAll(const char* data, std::size_t length) {
-  DbnDecoder_write_all(Handle(decoder_.get()),
+  DbnDecoder_write_all(AsDecoder(decoder_.get()),
                        reinterpret_cast<const std::uint8_t*>(data), length);
 }
 
 void DbnFsm::WriteAll(const std::byte* data, std::size_t length) {
-  DbnDecoder_write_all(Handle(decoder_.get()),
+  DbnDecoder_write_all(AsDecoder(decoder_.get()),
                        reinterpret_cast<const std::uint8_t*>(data), length);
 }
 
 DbnFsm::Status DbnFsm::Process() {
   std::size_t read_more{};
   DbnMetadata* metadata{};
-  switch (DbnDecoder_process(Handle(decoder_.get()), &read_more, &metadata)) {
+  switch (DbnDecoder_process(AsDecoder(decoder_.get()), &read_more, &metadata)) {
     case DbnProcessStatus_ReadMore: {
       return Status::ReadMore;
     }
@@ -187,12 +188,12 @@ DbnFsm::Status DbnFsm::Process() {
       // next mutated
       last_record_ =
           Record{const_cast<RecordHeader*>(reinterpret_cast<const RecordHeader*>(
-              DbnDecoder_last_record(Handle(decoder_.get()))))};
+              DbnDecoder_last_record(AsDecoder(decoder_.get()))))};
       return Status::Record;
     }
     case DbnProcessStatus_Error:
     default: {
-      const char* error = DbnDecoder_last_error(Handle(decoder_.get()));
+      const char* error = DbnDecoder_last_error(AsDecoder(decoder_.get()));
       throw DbnResponseError{error == nullptr ? "Failed to decode DBN" : error};
     }
   }
@@ -209,12 +210,12 @@ databento::Metadata DbnFsm::TakeMetadata() {
 
 std::size_t DbnFsm::UnreadBytes() const {
   std::size_t length{};
-  DbnDecoder_data(Handle(decoder_.get()), &length);
+  DbnDecoder_data(AsDecoder(decoder_.get()), &length);
   return length;
 }
 
 void DbnFsm::Reset() {
-  DbnDecoder_reset(Handle(decoder_.get()));
+  DbnDecoder_reset(AsDecoder(decoder_.get()));
   metadata_.reset();
   last_record_ = Record{nullptr};
 }

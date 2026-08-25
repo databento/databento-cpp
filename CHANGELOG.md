@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.66.0 - Upcoming
+## 0.66.0 - 2026-08-25
 
 ### Enhancements
 - Added a dependency on libdbn_c, the C interface to the [DBN library](https://github.com/databento/dbn),

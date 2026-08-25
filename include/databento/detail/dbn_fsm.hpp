@@ -10,9 +10,9 @@
 #include "databento/record.hpp"  // Record
 
 namespace databento::detail {
-struct DbnFfiDecoder;
+struct CFfiDecoder;
 
-void FreeDbnFfiDecoder(DbnFfiDecoder* decoder);
+void FreeCFfiDecoder(CFfiDecoder* decoder);
 
 // A push-based DBN decoder backed by the DBN library. Bytes are pushed in with
 // `Space` and `Fill` or with `WriteAll`, and decoded metadata and records are
@@ -55,7 +55,7 @@ class DbnFsm {
   void Reset();
 
  private:
-  std::unique_ptr<DbnFfiDecoder, void (*)(DbnFfiDecoder*)> decoder_;
+  std::unique_ptr<CFfiDecoder, void (*)(CFfiDecoder*)> decoder_;
   // Holds the decoded metadata until `TakeMetadata` moves it out
   std::optional<databento::Metadata> metadata_;
   // Owns the `Record` view of the library's buffer so callers can be handed a

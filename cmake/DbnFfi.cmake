@@ -10,20 +10,21 @@
 #   dbn_c_installed_lib          static library to install alongside the client
 #   dbn_c_lib_name               file name of the static library
 #   dbn_c_native_static_libs     libraries the static library depends on
+#   dbn_c_native_link_options    linker flags the static library depends on
 #
 
-set(dbn_version 0.67.0)
+set(dbn_version 0.68.0)
 
 set(dbn_c_sha256_x86_64-unknown-linux-gnu
-  d914299c51a222c3ba24da064f040873747d7fef2722cf795fa9c7a6390a8398)
+  29b24cf9b0b011f4353eb4f9965ba8e8cdb83f2b9e5535b6050d9004644b1750)
 set(dbn_c_sha256_aarch64-unknown-linux-gnu
-  ad53ec377d35d7faebd3256f0fc4e176bc68f0f94297009f1c04b31b44ccfb1f)
+  ce78c36ed7642733d17b3d01912cdc2f28f84411c16145e0fe5ffbb5d722ccb4)
 set(dbn_c_sha256_x86_64-apple-darwin
-  27950903196fc113576905a22c5ef64baa4982bad4196c1779d4fda8cab65a37)
+  410f05bec12719000fba9e622a44a0534bae25ac8bd2ab18b3dcf054312bbfd0)
 set(dbn_c_sha256_aarch64-apple-darwin
-  c72b0b03a70f51e8551ce676a4711b4ea6588f1856d6bef16f47aebcc4e20efa)
+  bee3deb1d6bcc18661e34a181530c55d42c21e1213d09151e3f4defdb5982cc3)
 set(dbn_c_sha256_x86_64-pc-windows-msvc
-  8c0eeb5a60c40307542e41ef5e83000f71c4f4964bddb045aa81a3ccf6cbbeb7)
+  28fbeaa0341b2d036f7c9f6206327e1049d8af5f0de3d4f438204f4f6a06f22e)
 
 #
 # Determine which prebuilt archive fits the target platform, if any
@@ -107,12 +108,28 @@ if(NOT dbn_c_from_source)
   string(STRIP "${dbn_c_native_static_libs}" dbn_c_native_static_libs)
   separate_arguments(dbn_c_native_static_libs NATIVE_COMMAND "${dbn_c_native_static_libs}")
 
+  # `rustc` mixes MSVC linker flags like `/defaultlib:msvcrt` in with the libraries.
+  # CMake reads a leading `/` as a file path, so the flags go in link options instead
+  set(dbn_c_native_link_options "")
+  if(MSVC)
+    set(dbn_c_libs "")
+    foreach(dbn_c_item IN LISTS dbn_c_native_static_libs)
+      if(dbn_c_item MATCHES "^/")
+        list(APPEND dbn_c_native_link_options "${dbn_c_item}")
+      else()
+        list(APPEND dbn_c_libs "${dbn_c_item}")
+      endif()
+    endforeach()
+    set(dbn_c_native_static_libs "${dbn_c_libs}")
+  endif()
+
   add_library(dbn::dbn_c STATIC IMPORTED GLOBAL)
   set_target_properties(
     dbn::dbn_c
     PROPERTIES
     IMPORTED_LOCATION "${dbn_c_SOURCE_DIR}/${dbn_c_lib_name}"
     INTERFACE_LINK_LIBRARIES "${dbn_c_native_static_libs}"
+    INTERFACE_LINK_OPTIONS "${dbn_c_native_link_options}"
   )
   set(dbn_c_include_dir "${dbn_c_SOURCE_DIR}/include")
   set(dbn_c_target dbn::dbn_c)
@@ -156,6 +173,7 @@ else()
   if(NOT dbn_c_native_static_libs)
     set(dbn_c_native_static_libs "")
   endif()
+  set(dbn_c_native_link_options "")
   message(STATUS "Building libdbn_c from ${dbn_c_manifest}")
 endif()
 
