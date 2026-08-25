@@ -121,6 +121,11 @@ if(NOT dbn_c_from_source)
       endif()
     endforeach()
     set(dbn_c_native_static_libs "${dbn_c_libs}")
+
+    # Drop the CRT `rustc` names and leave it to whatever links the static library in.
+    # Matches what corrosion does
+    list(FILTER dbn_c_native_static_libs EXCLUDE REGEX "^msvcrtd?(\\.lib)?$")
+    list(FILTER dbn_c_native_link_options EXCLUDE REGEX "^/defaultlib:msvcrtd?$")
   endif()
 
   add_library(dbn::dbn_c STATIC IMPORTED GLOBAL)
