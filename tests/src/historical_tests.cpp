@@ -124,7 +124,7 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
   EXPECT_EQ(res.split_size, 0);
 }
 
-TEST_F(HistoricalTests, TestBatchListJobs) {
+TEST_F(HistoricalTests, TestBatchListJobsFull) {
   const nlohmann::json kResp{{{"actual_size", 2022690},
                               {"billed_size", 5156064},
                               {"compression", "zstd"},
@@ -193,11 +193,32 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target = Client(port);
-  const auto res = target.BatchListJobs();
+  const auto res = target.BatchListJobsFull();
   ASSERT_EQ(res.size(), 2);
   const std::vector<std::string> symbols{"GEZ2", "GEH3"};
   EXPECT_EQ(res[1].symbols, symbols);
   EXPECT_EQ(res[0].ts_expiration, "2022-11-30 15:27:10.148788+00:00");
+}
+
+TEST_F(HistoricalTests, TestBatchListJobs) {
+  const nlohmann::json kResp{{{"id", "CKXF"},
+                              {"state", "done"},
+                              {"ts_received", "2022-10-31 15:26:58.112496+00:00"}},
+                             {{"id", "8UPL"},
+                              {"state", "processing"},
+                              {"ts_received", "2022-10-31 15:28:58.233520+00:00"}}};
+  mock_server_.MockGetJson("/v0/batch.list_jobs", {{"short", "true"}}, kResp);
+  const auto port = mock_server_.ListenOnThread();
+
+  databento::Historical target = Client(port);
+  const auto res = target.BatchListJobs();
+  ASSERT_EQ(res.size(), 2);
+  EXPECT_EQ(res[0].id, "CKXF");
+  EXPECT_EQ(res[0].state, databento::JobState::Done);
+  EXPECT_EQ(res[0].ts_received, "2022-10-31 15:26:58.112496+00:00");
+  EXPECT_EQ(res[1].id, "8UPL");
+  EXPECT_EQ(res[1].state, databento::JobState::Processing);
+  EXPECT_EQ(res[1].ts_received, "2022-10-31 15:28:58.233520+00:00");
 }
 
 TEST_F(HistoricalTests, TestBatchListFiles) {

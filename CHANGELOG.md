@@ -17,6 +17,10 @@
   rebuilding it, so the read buffer keeps the capacity it grew
 
 ### Breaking changes
+- Changed `Historical::BatchListJobs` to request the new short response format of the
+  `batch.list_jobs` endpoint and return `std::vector<BatchJobShort>`, which contains
+  only the `id`, `state`, and `ts_received` fields for each job. Use
+  `Historical::BatchGetJobDetails` to fetch the complete details of an individual job
 - Removed `DbnDecoder::DecodeMetadataVersionAndSize`, `DbnDecoder::DecodeMetadataFields`,
   `DbnDecoder::DecodeRecordCompat`, and `DbnDecoder::NeedsUpgrade`, which the DBN library
   now handles
@@ -25,6 +29,11 @@
 - Changed decoding DBN version 3 data with `VersionUpgradePolicy::UpgradeToV2` to throw a
   `DbnResponseError`, which the policy was already documented to do, instead of decoding
   the data as-is
+
+### Deprecations
+- Deprecated `Historical::BatchListJobsFull`, which returns the full job details like
+  `BatchListJobs` did previously. The `batch.list_jobs` endpoint will stop returning
+  full job details at a future date, at which point this method will be removed
 
 ## 0.65.0 - 2026-08-18
 
