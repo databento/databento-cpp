@@ -273,6 +273,7 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
                                         [kRec, kRecCount](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
+                                          self.Start();
                                           for (size_t i = 0; i < kRecCount; ++i) {
                                             self.SendRecord(kRec);
                                           }
@@ -282,6 +283,7 @@ TEST_F(LiveBlockingTests, TestNextRecord) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  target.Start();
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
     ASSERT_TRUE(rec.Holds<OhlcvMsg>()) << "Failed on call " << i;
@@ -345,6 +347,7 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
        &receive_mutex, &receive_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
+        self.Start();
         self.SendRecord(kRec);
         {
           // notify client the first record's been sent
@@ -364,6 +367,7 @@ TEST_F(LiveBlockingTests, TestNextRecordTimeout) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  target.Start();
   {
     // wait for server to send first record to avoid flaky timeouts
     std::unique_lock<std::mutex> lock{send_mutex};
@@ -474,6 +478,7 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
        &send_remaining_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
+        self.Start();
         self.SendRecord(kRec);
         // should cause partial read
         self.SplitSendRecord(kRec, send_remaining, send_remaining_mutex,
@@ -484,6 +489,7 @@ TEST_F(LiveBlockingTests, TestNextRecordPartialRead) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  target.Start();
   auto rec = target.NextRecord();
   ASSERT_TRUE(rec.Holds<MboMsg>());
   EXPECT_EQ(rec.Get<MboMsg>(), kRec);
@@ -520,6 +526,7 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
       dataset::kXnasItch, kTsOut, [send_rec, kRecCount](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
+        self.Start();
         for (size_t i = 0; i < kRecCount; ++i) {
           self.SendRecord(send_rec);
         }
@@ -529,6 +536,7 @@ TEST_F(LiveBlockingTests, TestNextRecordWithTsOut) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  target.Start();
   for (size_t i = 0; i < kRecCount; ++i) {
     const auto rec = target.NextRecord();
     ASSERT_TRUE(rec.Holds<WithTsOut<TradeMsg>>()) << "Failed on call " << i;
@@ -558,6 +566,7 @@ TEST_F(LiveBlockingTests, TestStop) {
       dataset::kXnasItch, kTsOut, [send_rec, &has_stopped](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
+        self.Start();
         self.SendRecord(send_rec);
         while (!has_stopped) {
           std::this_thread::yield();
@@ -572,6 +581,7 @@ TEST_F(LiveBlockingTests, TestStop) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server->Port())
                             .BuildBlocking();
+  target.Start();
   ASSERT_EQ(target.NextRecord().Get<WithTsOut<TradeMsg>>(), send_rec);
   target.Stop();
   has_stopped = true;
@@ -601,6 +611,7 @@ TEST_F(LiveBlockingTests, TestNextRecordThrowsOnGatewayClose) {
        &has_closed_cv, &has_closed_mutex](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
+        self.Start();
         self.SendRecord(kRec);
         {
           std::unique_lock<std::mutex> lock{should_close_mutex};
@@ -618,6 +629,7 @@ TEST_F(LiveBlockingTests, TestNextRecordThrowsOnGatewayClose) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  target.Start();
   const auto rec = target.NextRecord();
   ASSERT_TRUE(rec.Holds<OhlcvMsg>());
   EXPECT_EQ(rec.Get<OhlcvMsg>(), kRec);
@@ -805,6 +817,7 @@ TEST_F(LiveBlockingTests, TestTryNextRecordAfterFillBuffer) {
        &sent_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
+        self.Start();
         {
           // wait for client to finish auth to prevent TCP coalescing
           std::unique_lock<std::mutex> lock{client_ready_mutex};
@@ -822,6 +835,7 @@ TEST_F(LiveBlockingTests, TestTryNextRecordAfterFillBuffer) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  target.Start();
   {
     const std::lock_guard<std::mutex> lock{client_ready_mutex};
     client_ready = true;
@@ -868,6 +882,7 @@ TEST_F(LiveBlockingTests, TestTryNextRecordPollLoop) {
                                         [kRec, kRecCount](mock::MockLsgServer& self) {
                                           self.Accept();
                                           self.Authenticate();
+                                          self.Start();
                                           for (size_t i = 0; i < kRecCount; ++i) {
                                             self.SendRecord(kRec);
                                           }
@@ -878,6 +893,7 @@ TEST_F(LiveBlockingTests, TestTryNextRecordPollLoop) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  target.Start();
   int record_count = 0;
   while (true) {
     while (const auto* rec = target.TryNextRecord()) {
@@ -919,6 +935,7 @@ TEST_F(LiveBlockingTests, TestTryNextRecordPartialRecord) {
        &send_remaining_mutex, &send_remaining_cv](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
+        self.Start();
         {
           // wait for client to finish auth to prevent TCP coalescing
           std::unique_lock<std::mutex> lock{client_ready_mutex};
@@ -932,6 +949,7 @@ TEST_F(LiveBlockingTests, TestTryNextRecordPartialRecord) {
                             .SetSendTsOut(kTsOut)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
+  target.Start();
   {
     const std::lock_guard<std::mutex> lock{client_ready_mutex};
     client_ready = true;

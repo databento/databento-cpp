@@ -53,6 +53,21 @@ std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job) {
       .Finish();
 }
 
+std::string ToString(const BatchJobShort& batch_job) {
+  return detail::MakeString(batch_job);
+}
+
+std::ostream& operator<<(std::ostream& stream, const BatchJobShort& batch_job) {
+  return detail::StreamOpBuilder{stream}
+      .SetSpacer("\n    ")
+      .SetTypeName("BatchJobShort")
+      .Build()
+      .AddField("id", batch_job.id)
+      .AddField("state", batch_job.state)
+      .AddField("ts_received", batch_job.ts_received)
+      .Finish();
+}
+
 std::string ToString(const BatchFileDesc& file_desc) {
   return detail::MakeString(file_desc);
 }

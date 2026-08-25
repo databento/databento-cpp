@@ -6,6 +6,8 @@ option(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_DATE "Use an external date library
 option(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_JSON "Use an external JSON library" OFF)
 option(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB "Use an external httplib library" OFF)
 option(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_GTEST "Use an external google test (gtest) library" ON)
+option(${PROJECT_NAME_UPPERCASE}_BUILD_DBN_FROM_SOURCE "Build the dbn C library with Cargo instead of downloading a prebuilt one" OFF)
+set(${PROJECT_NAME_UPPERCASE}_DBN_SOURCE_DIR "" CACHE PATH "Path to a dbn checkout to build the dbn C library from")
 
 #
 # Compiler options

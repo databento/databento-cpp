@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.66.0 - 2026-08-25
+
+### Enhancements
+- Added a dependency on libdbn_c, the C interface to the [DBN library](https://github.com/databento/dbn),
+  which CMake downloads as a prebuilt library or can be built from source with Cargo
+- Decoding DBN is now done via the C interface of the DBN library rather than a separate
+  C++ implementation
+- Added CMake configurations `DATABENTO_BUILD_DBN_FROM_SOURCE` for always building
+  libdbn_c from source and `DATABENTO_DBN_SOURCE_DIR` for building it from a local DBN
+  checkout
+- Added an overload of `Historical::MetadataListFields` that accepts a
+  `dataset` parameter. Without it, the returned fields are for the latest
+  DBN encoding version, which may not match a specific dataset's schema
+- Changed `LiveBlocking::Reconnect` to reuse its DBN decoder rather than
+  rebuilding it, so the read buffer keeps the capacity it grew
+
+### Breaking changes
+- Changed `Historical::BatchListJobs` to request the new short response format of the
+  `batch.list_jobs` endpoint and return `std::vector<BatchJobShort>`, which contains
+  only the `id`, `state`, and `ts_received` fields for each job. Use
+  `Historical::BatchGetJobDetails` to fetch the complete details of an individual job
+- Removed `DbnDecoder::DecodeMetadataVersionAndSize`, `DbnDecoder::DecodeMetadataFields`,
+  `DbnDecoder::DecodeRecordCompat`, and `DbnDecoder::NeedsUpgrade`, which the DBN library
+  now handles
+
+### Bug fixes
+- Changed decoding DBN version 3 data with `VersionUpgradePolicy::UpgradeToV2` to throw a
+  `DbnResponseError`, which the policy was already documented to do, instead of decoding
+  the data as-is
+
+### Deprecations
+- Deprecated `Historical::BatchListJobsFull`, which returns the full job details like
+  `BatchListJobs` did previously. The `batch.list_jobs` endpoint will stop returning
+  full job details at a future date, at which point this method will be removed
+
 ## 0.65.0 - 2026-08-18
 
 ### Enhancements

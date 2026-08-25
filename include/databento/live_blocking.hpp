@@ -12,6 +12,7 @@
 #include "databento/datetime.hpp"  // UnixNanos
 #include "databento/dbn.hpp"       // Metadata
 #include "databento/detail/buffer.hpp"
+#include "databento/detail/dbn_fsm.hpp"
 #include "databento/detail/live_connection.hpp"  // LiveConnection
 #include "databento/enums.hpp"  // Schema, SType, VersionUpgradePolicy, Compression
 #include "databento/live_subscription.hpp"
@@ -148,15 +149,13 @@ class LiveBlocking {
   void IncrementSubCounter();
   void Subscribe(std::string_view sub_msg, const std::vector<std::string>& symbols,
                  bool use_snapshot);
-  const Record* ConsumeBufferedRecord();
-  RecordHeader* BufferRecordHeader();
   std::chrono::milliseconds HeartbeatTimeout() const;
   void CheckHeartbeatTimeout() const;
   void LogRecord() const;
   void LogSystemRecord() const;
   void LogErrorRecord() const;
 
-  static constexpr std::size_t kMaxStrLen = 24L * 1024;
+  static constexpr std::size_t kTextBufSize = 2L * 1024;
 
   ILogReceiver* log_receiver_;
   const std::string key_;
@@ -165,7 +164,6 @@ class LiveBlocking {
   const std::string user_agent_ext_;
   const std::uint16_t port_;
   const bool send_ts_out_;
-  std::uint8_t version_{};
   const VersionUpgradePolicy upgrade_policy_;
   const std::optional<std::chrono::seconds> heartbeat_interval_;
   const databento::Compression compression_;
@@ -174,11 +172,11 @@ class LiveBlocking {
   detail::LiveConnection connection_;
   std::uint32_t sub_counter_{};
   std::vector<LiveSubscription> subscriptions_;
+  // Only used for the text protocol of the authentication handshake. DBN data is
+  // buffered by `fsm_`
   detail::Buffer buffer_;
-  // Must be 8-byte aligned for records
-  alignas(RecordHeader) std::array<std::byte, kMaxRecordLen> compat_buffer_{};
+  detail::DbnFsm fsm_;
   std::uint64_t session_id_;
-  Record current_record_{nullptr};
   std::chrono::steady_clock::time_point last_read_time_{
       std::chrono::steady_clock::now()};
 };

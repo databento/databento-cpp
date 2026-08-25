@@ -66,12 +66,24 @@ class Historical {
                           SplitDuration split_duration, std::uint64_t split_size,
                           Delivery delivery, SType stype_in, SType stype_out,
                           std::uint64_t limit);
-  // Lists previous batch jobs.
-  std::vector<BatchJob> BatchListJobs();
-  std::vector<BatchJob> BatchListJobs(const std::vector<JobState>& states,
-                                      UnixNanos since);
-  std::vector<BatchJob> BatchListJobs(const std::vector<JobState>& states,
-                                      const std::string& since);
+  // Lists previous batch jobs. Returns the short form of each job, which
+  // contains only the job ID, state, and received timestamp. Use
+  // BatchGetJobDetails to fetch the complete details of an individual job.
+  std::vector<BatchJobShort> BatchListJobs();
+  std::vector<BatchJobShort> BatchListJobs(const std::vector<JobState>& states,
+                                           UnixNanos since);
+  std::vector<BatchJobShort> BatchListJobs(const std::vector<JobState>& states,
+                                           const std::string& since);
+  // Lists previous batch jobs with the full details of each job.
+  //
+  // DEPRECATED: the batch.list_jobs endpoint will stop returning full job
+  // details at a future date; use BatchListJobs and BatchGetJobDetails
+  // instead.
+  std::vector<BatchJob> BatchListJobsFull();
+  std::vector<BatchJob> BatchListJobsFull(const std::vector<JobState>& states,
+                                          UnixNanos since);
+  std::vector<BatchJob> BatchListJobsFull(const std::vector<JobState>& states,
+                                          const std::string& since);
   // Lists all files associated with a batch job.
   std::vector<BatchFileDesc> BatchListFiles(const std::string& job_id);
   // Gets the details of a batch job.
@@ -93,7 +105,10 @@ class Historical {
   std::vector<std::string> MetadataListDatasets();
   std::vector<std::string> MetadataListDatasets(const DateRange& date_range);
   std::vector<Schema> MetadataListSchemas(const std::string& dataset);
+  std::vector<FieldDetail> MetadataListFields(Encoding encoding, Schema schema,
+                                              const std::string& dataset);
   std::vector<FieldDetail> MetadataListFields(Encoding encoding, Schema schema);
+
   std::vector<UnitPricesForMode> MetadataListUnitPrices(const std::string& dataset);
   std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const std::string& dataset);
@@ -255,7 +270,8 @@ class Historical {
   BatchJob BatchSubmitJob(const HttplibParams& params);
   void DownloadFile(const std::string& url, const std::filesystem::path& output_path,
                     std::string_view hash, std::uint64_t exp_size);
-  std::vector<BatchJob> BatchListJobs(const HttplibParams& params);
+  std::vector<BatchJobShort> BatchListJobs(const HttplibParams& params);
+  std::vector<BatchJob> BatchListJobsFull(const HttplibParams& params);
   std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const HttplibParams& params);
   std::uint64_t MetadataGetRecordCount(const HttplibParams& params);

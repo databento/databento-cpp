@@ -6,6 +6,10 @@ add_test(
     --install ${CMAKE_BINARY_DIR}
     --prefix ${CMAKE_CURRENT_BINARY_DIR}/pkg
 )
+# The project is configured in a nested directory because the client's own install
+# script recurses into this one, and a project configured here would overwrite it
+set(nested_binary_dir ${CMAKE_CURRENT_BINARY_DIR}/nested)
+
 # Configure test project
 add_test(
   NAME cmake_import_configure
@@ -17,12 +21,13 @@ add_test(
     -Dnlohmann_json_DIR=${nlohmann_json_BINARY_DIR}
     -Ddate_DIR=${CMAKE_CURRENT_BINARY_DIR}/pkg/${CMAKE_INSTALL_LIBDIR}/cmake/date
     -Dhttplib_DIR=${CMAKE_CURRENT_BINARY_DIR}/pkg/${CMAKE_INSTALL_LIBDIR}/cmake/httplib
-    ${CMAKE_CURRENT_SOURCE_DIR}/project
+    -S ${CMAKE_CURRENT_SOURCE_DIR}/project
+    -B ${nested_binary_dir}
 )
 # Build test project
 add_test(
   NAME cmake_import_build
-  COMMAND ${CMAKE_COMMAND} --build .
+  COMMAND ${CMAKE_COMMAND} --build ${nested_binary_dir}
 )
 set_tests_properties(
   cmake_import_install

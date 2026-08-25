@@ -7,6 +7,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 
 # Add dependencies here so end-user doesn't have to
 include(CMakeFindDependencyMacro)
+find_dependency(OpenSSL)
 find_dependency(date)
 # httplib must be found before zstd: on systems where zstd lacks a CMake config at
 # version 1.5.6+, httplib's installed config falls back to PkgConfig and creates a
@@ -23,6 +24,18 @@ if(NOT TARGET zstd::libzstd)
   elseif(TARGET zstd::libzstd_static)
     add_library(zstd::libzstd ALIAS zstd::libzstd_static)
   endif()
+endif()
+
+# dbn C is installed alongside the client
+if(NOT TARGET @dbn_c_target@)
+  add_library(@dbn_c_target@ STATIC IMPORTED)
+  set_target_properties(
+    @dbn_c_target@
+    PROPERTIES
+    IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_LIBDIR@/@PROJECT_NAME@/@dbn_c_lib_name@"
+    INTERFACE_LINK_LIBRARIES "@dbn_c_native_static_libs@"
+    INTERFACE_LINK_OPTIONS "@dbn_c_native_link_options@"
+  )
 endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")

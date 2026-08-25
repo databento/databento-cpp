@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.24..4.2)
 
 project(
   databento
-  VERSION 0.65.0
+  VERSION 0.66.0
   LANGUAGES CXX
   DESCRIPTION "Official Databento client library"
 )
@@ -215,6 +215,7 @@ else()
   # Ignore compiler warnings in headers
   add_system_include_property(date)
 endif()
+include(cmake/DbnFfi.cmake)
 
 target_link_libraries(
   ${PROJECT_NAME}
@@ -226,6 +227,10 @@ target_link_libraries(
     OpenSSL::SSL
     Threads::Threads
     zstd::libzstd
+  PRIVATE
+    # The dbn header is only used in the implementation, so it stays out of the
+    # interface, but consumers still link the library
+    ${dbn_c_target}
 )
 
 target_compile_definitions(
@@ -292,6 +297,13 @@ install(
     ${CMAKE_INSTALL_INCLUDEDIR}
   PUBLIC_HEADER DESTINATION
     ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(
+  FILES
+    ${dbn_c_installed_lib}
+  DESTINATION
+    ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}
 )
 
 install(

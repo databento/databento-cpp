@@ -110,6 +110,24 @@ databento::BatchJob Parse(const std::string& endpoint, const nlohmann::json& jso
   return res;
 }
 
+databento::BatchJobShort ParseShort(const std::string& endpoint,
+                                    const nlohmann::json& json) {
+  using databento::JobState;
+  using databento::JsonResponseError;
+  using databento::detail::CheckedAt;
+  using databento::detail::FromCheckedAtString;
+  using databento::detail::ParseAt;
+
+  if (!json.is_object()) {
+    throw JsonResponseError::TypeMismatch(endpoint, "object", json);
+  }
+  databento::BatchJobShort res;
+  res.id = CheckedAt(endpoint, json, "id");
+  res.state = FromCheckedAtString<JobState>(endpoint, json, "state");
+  res.ts_received = ParseAt<std::string>(endpoint, json, "ts_received");
+  return res;
+}
+
 void TryCreateDir(const std::filesystem::path& dir_name) {
   using namespace std::string_literals;
   if (dir_name.empty()) {
@@ -305,28 +323,63 @@ databento::BatchJob Historical::BatchSubmitJob(const httplib::Params& params) {
   return ::Parse("BatchSubmitJob", json);
 }
 
-std::vector<databento::BatchJob> Historical::BatchListJobs() {
+std::vector<databento::BatchJobShort> Historical::BatchListJobs() {
   static const std::vector<JobState> kDefaultStates = {
       JobState::Queued, JobState::Processing, JobState::Done};
   return this->BatchListJobs(kDefaultStates, UnixNanos{});
 }
-std::vector<databento::BatchJob> Historical::BatchListJobs(
+std::vector<databento::BatchJobShort> Historical::BatchListJobs(
     const std::vector<databento::JobState>& states, UnixNanos since) {
-  httplib::Params params;
+  httplib::Params params{{"short", "true"}};
   detail::SetIfNotEmpty(&params, "states", states);
   detail::SetIfPositive(&params, "since", since.time_since_epoch().count());
   return this->BatchListJobs(params);
 }
-std::vector<databento::BatchJob> Historical::BatchListJobs(
+std::vector<databento::BatchJobShort> Historical::BatchListJobs(
     const std::vector<databento::JobState>& states, const std::string& since) {
-  httplib::Params params;
+  httplib::Params params{{"short", "true"}};
   detail::SetIfNotEmpty(&params, "states", states);
   detail::SetIfNotEmpty(&params, "since", since);
   return this->BatchListJobs(params);
 }
-std::vector<databento::BatchJob> Historical::BatchListJobs(
+std::vector<databento::BatchJobShort> Historical::BatchListJobs(
     const httplib::Params& params) {
   static const std::string kEndpoint = "Historical::BatchListJobs";
+  static const std::string kPath = ::BuildBatchPath(".list_jobs");
+  const nlohmann::json json = client_.GetJson(kPath, params);
+  if (!json.is_array()) {
+    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
+  }
+  std::vector<BatchJobShort> jobs;
+  std::transform(
+      json.begin(), json.end(), std::back_inserter(jobs),
+      [](const nlohmann::json& item) { return ::ParseShort(kEndpoint, item); });
+  return jobs;
+}
+std::vector<databento::BatchJob> Historical::BatchListJobsFull() {
+  static const std::vector<JobState> kDefaultStates = {
+      JobState::Queued, JobState::Processing, JobState::Done};
+  httplib::Params params;
+  detail::SetIfNotEmpty(&params, "states", kDefaultStates);
+  return this->BatchListJobsFull(kDefaultStates, UnixNanos{});
+}
+std::vector<databento::BatchJob> Historical::BatchListJobsFull(
+    const std::vector<databento::JobState>& states, UnixNanos since) {
+  httplib::Params params;
+  detail::SetIfNotEmpty(&params, "states", states);
+  detail::SetIfPositive(&params, "since", since.time_since_epoch().count());
+  return this->BatchListJobsFull(params);
+}
+std::vector<databento::BatchJob> Historical::BatchListJobsFull(
+    const std::vector<databento::JobState>& states, const std::string& since) {
+  httplib::Params params;
+  detail::SetIfNotEmpty(&params, "states", states);
+  detail::SetIfNotEmpty(&params, "since", since);
+  return this->BatchListJobsFull(params);
+}
+std::vector<databento::BatchJob> Historical::BatchListJobsFull(
+    const httplib::Params& params) {
+  static const std::string kEndpoint = "Historical::BatchListJobsFull";
   static const std::string kPath = ::BuildBatchPath(".list_jobs");
   const nlohmann::json json = client_.GetJson(kPath, params);
   if (!json.is_array()) {
@@ -578,10 +631,20 @@ std::vector<databento::Schema> Historical::MetadataListSchemas(
 
 std::vector<databento::FieldDetail> Historical::MetadataListFields(Encoding encoding,
                                                                    Schema schema) {
+  return this->MetadataListFields(encoding, schema, "");
+}
+
+std::vector<databento::FieldDetail> Historical::MetadataListFields(
+    Encoding encoding, Schema schema, const std::string& dataset) {
   static const std::string kEndpoint = "Historical::MetadataListFields";
   static const std::string kPath = ::BuildMetadataPath(".list_fields");
-  const nlohmann::json json = client_.GetJson(
-      kPath, {{"encoding", ToString(encoding)}, {"schema", ToString(schema)}});
+  httplib::Params params{{"encoding", ToString(encoding)},
+                         {"schema", ToString(schema)}};
+
+  detail::SetIfNotEmpty(&params, "dataset", dataset);
+
+  const nlohmann::json json = client_.GetJson(kPath, params);
+
   if (!json.is_array()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }

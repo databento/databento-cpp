@@ -54,6 +54,15 @@ struct BatchJob {
   std::optional<std::uint8_t> progress;
 };
 
+// Short-form description of a batch job, as returned by
+// Historical::BatchListJobs. Use Historical::BatchGetJobDetails to fetch
+// the complete details of an individual job.
+struct BatchJobShort {
+  std::string id;
+  JobState state;
+  std::string ts_received;
+};
+
 // Description of a batch file.
 struct BatchFileDesc {
   std::string filename;
@@ -65,6 +74,8 @@ struct BatchFileDesc {
 
 std::string ToString(const BatchJob& batch_job);
 std::ostream& operator<<(std::ostream& stream, const BatchJob& batch_job);
+std::string ToString(const BatchJobShort& batch_job);
+std::ostream& operator<<(std::ostream& stream, const BatchJobShort& batch_job);
 std::string ToString(const BatchFileDesc& file_desc);
 std::ostream& operator<<(std::ostream& stream, const BatchFileDesc& file_desc);
 }  // namespace databento
