@@ -700,6 +700,8 @@ enum SystemCode : std::uint8_t {
   // Signals that all records for interval-based schemas have been published for the
   // given timestamp.
   EndOfInterval = 4,
+  // An acknowledgement of an unsubscribe request.
+  UnsubscribeAck = 5,
   // No system code was specified or this record was upgraded from a version 1 struct
   // where
   // the code field didn't exist.
