@@ -82,7 +82,7 @@ void HttpClient::GetRawStream(const std::string& path, const httplib::Headers& h
         }
         return callback(data, length);
       });
-  CheckStatusAndStreamRes(path, err_status, std::move(err_body), res);
+  CheckStatusAndStreamRes(path, err_status, err_body, res);
 }
 
 void HttpClient::PostRawStream(const std::string& path,
@@ -109,7 +109,7 @@ void HttpClient::PostRawStream(const std::string& path,
   };
   // NOLINTNEXTLINE(clang-analyzer-unix.BlockInCriticalSection): dependency code
   const httplib::Result res = client_.send(req);
-  CheckStatusAndStreamRes(path, err_status, std::move(err_body), res);
+  CheckStatusAndStreamRes(path, err_status, err_body, res);
 }
 
 std::unique_ptr<databento::IReadable> HttpClient::OpenPostStream(
@@ -149,7 +149,7 @@ httplib::ResponseHandler HttpClient::MakeStreamResponseHandler(int& out_status) 
 }
 
 void HttpClient::CheckStatusAndStreamRes(const std::string& path, int status_code,
-                                         std::string&& err_body,
+                                         const std::string& err_body,
                                          const httplib::Result& res) {
   if (status_code > 0) {
     throw HttpResponseError{path, status_code, err_body};
@@ -162,6 +162,8 @@ void HttpClient::CheckStatusAndStreamRes(const std::string& path, int status_cod
   }
 }
 
+// `res` is consumed: its body is moved out of the contained response.
+// NOLINTBEGIN(cppcoreguidelines-rvalue-reference-param-not-moved)
 nlohmann::json HttpClient::CheckAndParseResponse(const std::string& path,
                                                  httplib::Result&& res) const {
   if (res.error() != httplib::Error::Success) {
@@ -179,6 +181,7 @@ nlohmann::json HttpClient::CheckAndParseResponse(const std::string& path,
     throw JsonResponseError::ParseError(path, parse_err);
   }
 }
+// NOLINTEND(cppcoreguidelines-rvalue-reference-param-not-moved)
 
 void HttpClient::CheckWarnings(const httplib::Response& response) const {
   // Returns empty string if not found. `get_header_value` is case insensitive

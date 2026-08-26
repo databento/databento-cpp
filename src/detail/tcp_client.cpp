@@ -70,6 +70,8 @@ class BlockingGuard {
     unsigned long mode = 1;
     ::ioctlsocket(_fd, FIONBIO, &mode);
 #else
+    // the member only exists off Windows, so it cannot be in the init list
+    // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
     _original_flags = ::fcntl(_fd, F_GETFL, 0);
     ::fcntl(_fd, F_SETFL, _original_flags | O_NONBLOCK);
 #endif

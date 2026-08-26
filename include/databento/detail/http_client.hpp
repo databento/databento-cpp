@@ -41,7 +41,7 @@ class HttpClient {
  private:
   static bool IsErrorStatus(int status_code);
   static void CheckStatusAndStreamRes(const std::string& path, int status_code,
-                                      std::string&& err_body,
+                                      const std::string& err_body,
                                       const httplib::Result& res);
 
   httplib::ResponseHandler MakeStreamResponseHandler(int& out_status);
