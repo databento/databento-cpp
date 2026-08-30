@@ -127,8 +127,8 @@ endif()
 #
 
 find_package(OpenSSL REQUIRED)
-find_package(zstd REQUIRED)
 if(NOT TARGET zstd::libzstd)
+  find_package(zstd REQUIRED)
   if(TARGET zstd::libzstd_shared)
     add_library(zstd::libzstd ALIAS zstd::libzstd_shared)
   elseif(TARGET zstd::libzstd_static)
