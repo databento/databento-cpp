@@ -5,6 +5,10 @@
 ### Enhancements
 - Added `UnsubscribeAck` to the `SystemCode` enum for acknowledging unsubscribe requests
 
+### Bug fixes
+- Fixed CMake error when the consuming project already defines a `zstd::libzstd`
+  target (credit: @NuLL3rr0r)
+
 ## 0.66.0 - 2026-08-25
 
 ### Enhancements

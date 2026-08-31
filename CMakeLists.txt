@@ -127,7 +127,10 @@ endif()
 #
 
 find_package(OpenSSL REQUIRED)
-find_package(zstd REQUIRED)
+if(NOT TARGET zstd::libzstd)
+  find_package(zstd REQUIRED)
+endif()
+# Check again: find_package defines zstd::libzstd where zstd ships a CMake config
 if(NOT TARGET zstd::libzstd)
   if(TARGET zstd::libzstd_shared)
     add_library(zstd::libzstd ALIAS zstd::libzstd_shared)

@@ -11,10 +11,10 @@ find_dependency(OpenSSL)
 find_dependency(date)
 # httplib must be found before zstd: on systems where zstd lacks a CMake config at
 # version 1.5.6+, httplib's installed config falls back to PkgConfig and creates a
-# `zstd::libzstd` ALIAS unconditionally. Letting it run first means our Findzstd
-# module sees the target and skips its own creation.
 find_dependency(httplib)
-find_dependency(zstd)
+if(NOT TARGET zstd::libzstd)
+  find_dependency(zstd)
+endif()
 find_dependency(nlohmann_json)
 find_dependency(Threads)
 
