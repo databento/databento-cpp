@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/dbn_store.hpp"

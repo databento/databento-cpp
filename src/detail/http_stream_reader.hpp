@@ -1,11 +1,10 @@
 #pragma once
 
-#include <httplib.h>
-
 #include <chrono>   // milliseconds
 #include <cstddef>  // byte, size_t
 
 #include "databento/ireadable.hpp"
+#include "detail/httplib.hpp"  // ClientImpl::StreamHandle
 
 namespace databento::detail {
 // Adapts an httplib StreamHandle to the IReadable interface, allowing

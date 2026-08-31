@@ -6,14 +6,14 @@
 #include <string>
 
 namespace databento::detail {
-void SetIfNotEmpty(httplib::Params* params, const std::string& key,
+void SetIfNotEmpty(HttpParams* params, const std::string& key,
                    const std::string& value) {
   if (!value.empty()) {
     params->emplace(key, value);
   }
 }
 
-void SetIfNotEmpty(httplib::Params* params, const std::string& key,
+void SetIfNotEmpty(HttpParams* params, const std::string& key,
                    const std::vector<databento::JobState>& states) {
   if (!states.empty()) {
     std::string value = std::accumulate(

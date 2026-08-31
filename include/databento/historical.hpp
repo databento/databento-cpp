@@ -257,8 +257,6 @@ class Historical {
  private:
   friend HistoricalBuilder;
 
-  using HttplibParams = std::multimap<std::string, std::string>;
-
   Historical(ILogReceiver* log_receiver, std::string key, HistoricalGateway gateway,
              VersionUpgradePolicy upgrade_policy, std::string user_agent_ext,
              std::optional<HttpClientCallback> http_client_callback);
@@ -267,21 +265,21 @@ class Historical {
              std::string user_agent_ext,
              std::optional<HttpClientCallback> http_client_callback);
 
-  BatchJob BatchSubmitJob(const HttplibParams& params);
+  BatchJob BatchSubmitJob(const detail::HttpParams& params);
   void DownloadFile(const std::string& url, const std::filesystem::path& output_path,
                     std::string_view hash, std::uint64_t exp_size);
-  std::vector<BatchJobShort> BatchListJobs(const HttplibParams& params);
-  std::vector<BatchJob> BatchListJobsFull(const HttplibParams& params);
+  std::vector<BatchJobShort> BatchListJobs(const detail::HttpParams& params);
+  std::vector<BatchJob> BatchListJobsFull(const detail::HttpParams& params);
   std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
-      const HttplibParams& params);
-  std::uint64_t MetadataGetRecordCount(const HttplibParams& params);
-  std::uint64_t MetadataGetBillableSize(const HttplibParams& params);
-  double MetadataGetCost(const HttplibParams& params);
-  void TimeseriesGetRange(const HttplibParams& params,
+      const detail::HttpParams& params);
+  std::uint64_t MetadataGetRecordCount(const detail::HttpParams& params);
+  std::uint64_t MetadataGetBillableSize(const detail::HttpParams& params);
+  double MetadataGetCost(const detail::HttpParams& params);
+  void TimeseriesGetRange(const detail::HttpParams& params,
                           const MetadataCallback& metadata_callback,
                           const RecordCallback& record_callback);
-  DbnStore TimeseriesGetRange(const HttplibParams& params);
-  DbnStore TimeseriesGetRangeToFile(const HttplibParams& params,
+  DbnStore TimeseriesGetRange(const detail::HttpParams& params);
+  DbnStore TimeseriesGetRangeToFile(const detail::HttpParams& params,
                                     const std::filesystem::path& file_path);
 
   ILogReceiver* log_receiver_;

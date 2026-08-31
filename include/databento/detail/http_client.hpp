@@ -5,22 +5,35 @@
 #ifndef CPPHTTPLIB_OPENSSL_SUPPORT
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #endif
-#include <httplib.h>
 #include <nlohmann/json.hpp>
 
+#include <cstddef>  // size_t
 #include <cstdint>
 #include <functional>
+#include <map>     // multimap
 #include <memory>  // unique_ptr
 #include <optional>
 #include <string>
+
+// Forward declare
+namespace httplib {
+class Client;
+}  // namespace httplib
 
 namespace databento {
 // A callback for customizing the underlying httplib::Client.
 using HttpClientCallback = std::function<void(httplib::Client&)>;
 
+// Forward declare
 class ILogReceiver;
 class IReadable;
 namespace detail {
+// The underlying container of the httplib type alias for these changed in httplib
+// 0.52.0
+using HttpParams = std::multimap<std::string, std::string>;
+using HttpHeaders = std::multimap<std::string, std::string>;
+using HttpContentReceiver = std::function<bool(const char* data, std::size_t length)>;
+
 class HttpClient {
  public:
   HttpClient(ILogReceiver* log_receiver, const std::string& key,
@@ -28,31 +41,25 @@ class HttpClient {
   HttpClient(ILogReceiver* log_receiver, const std::string& key,
              const std::string& gateway, std::uint16_t port,
              std::optional<HttpClientCallback> callback);
+  HttpClient(const HttpClient&) = delete;
+  HttpClient& operator=(const HttpClient&) = delete;
+  HttpClient(HttpClient&&) noexcept;
+  HttpClient& operator=(HttpClient&&) noexcept;
+  ~HttpClient();
 
-  nlohmann::json GetJson(const std::string& path, const httplib::Params& params);
-  nlohmann::json PostJson(const std::string& path, const httplib::Params& form_params);
-  void GetRawStream(const std::string& path, const httplib::Headers& headers,
-                    const httplib::ContentReceiver& callback);
-  void PostRawStream(const std::string& path, const httplib::Params& form_params,
-                     const httplib::ContentReceiver& callback);
+  nlohmann::json GetJson(const std::string& path, const HttpParams& params);
+  nlohmann::json PostJson(const std::string& path, const HttpParams& form_params);
+  void GetRawStream(const std::string& path, const HttpHeaders& headers,
+                    const HttpContentReceiver& callback);
+  void PostRawStream(const std::string& path, const HttpParams& form_params,
+                     const HttpContentReceiver& callback);
   std::unique_ptr<IReadable> OpenPostStream(const std::string& path,
-                                            const httplib::Params& form_params);
+                                            const HttpParams& form_params);
 
  private:
-  static bool IsErrorStatus(int status_code);
-  static void CheckStatusAndStreamRes(const std::string& path, int status_code,
-                                      const std::string& err_body,
-                                      const httplib::Result& res);
-
-  httplib::ResponseHandler MakeStreamResponseHandler(int& out_status);
-  nlohmann::json CheckAndParseResponse(const std::string& path,
-                                       httplib::Result&& res) const;
-  void CheckWarnings(const httplib::Response& response) const;
-
-  static const httplib::Headers& BaseHeaders();
-
   ILogReceiver* log_receiver_;
-  httplib::Client client_;
+  // unique_ptr so this header only needs an incomplete httplib::Client
+  std::unique_ptr<httplib::Client> client_;
 };
 }  // namespace detail
 }  // namespace databento

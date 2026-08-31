@@ -13,6 +13,7 @@
 #include <utility>  // move
 
 #include "databento/detail/json_helpers.hpp"
+#include "detail/httplib.hpp"  // Error
 
 using databento::HttpRequestError;
 

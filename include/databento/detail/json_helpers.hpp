@@ -3,35 +3,31 @@
 #include <date/date.h>
 #include <nlohmann/json.hpp>
 
-#include <map>  // multimap
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include "databento/datetime.hpp"    // UnixNanos
-#include "databento/enums.hpp"       // FromString
-#include "databento/exceptions.hpp"  // JsonResponseError
-
-namespace httplib {
-using Params = std::multimap<std::string, std::string>;
-}
+#include "databento/datetime.hpp"            // UnixNanos
+#include "databento/detail/http_client.hpp"  // HttpParams
+#include "databento/enums.hpp"               // FromString
+#include "databento/exceptions.hpp"          // JsonResponseError
 
 namespace databento::detail {
-void SetIfNotEmpty(httplib::Params* params, const std::string& key,
+void SetIfNotEmpty(HttpParams* params, const std::string& key,
                    const std::string& value);
-void SetIfNotEmpty(httplib::Params* params, const std::string& key,
+void SetIfNotEmpty(HttpParams* params, const std::string& key,
                    const std::vector<databento::JobState>& states);
 
 template <typename T>
-void SetIfPositive(httplib::Params* params, std::string_view key, const T value) {
+void SetIfPositive(HttpParams* params, std::string_view key, const T value) {
   if (value > 0) {
     params->emplace(key, std::to_string(value));
   }
 }
 
 template <>
-inline void SetIfPositive<databento::UnixNanos>(httplib::Params* params,
+inline void SetIfPositive<databento::UnixNanos>(HttpParams* params,
                                                 std::string_view key,
                                                 const databento::UnixNanos value) {
   if (value.time_since_epoch().count()) {

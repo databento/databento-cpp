@@ -1,9 +1,5 @@
 #include "databento/historical.hpp"
 
-#ifndef CPPHTTPLIB_OPENSSL_SUPPORT
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-#endif
-#include <httplib.h>
 #include <nlohmann/json.hpp>
 
 #include <algorithm>  // find_if
@@ -31,6 +27,7 @@
 #include "databento/log.hpp"
 #include "databento/metadata.hpp"
 #include "databento/timeseries.hpp"
+#include "detail/httplib.hpp"
 
 using databento::Historical;
 
@@ -271,7 +268,7 @@ databento::BatchJob Historical::BatchSubmitJob(
     Compression compression, bool pretty_px, bool pretty_ts, bool map_symbols,
     bool split_symbols, SplitDuration split_duration, std::uint64_t split_size,
     Delivery delivery, SType stype_in, SType stype_out, std::uint64_t limit) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
@@ -297,7 +294,7 @@ databento::BatchJob Historical::BatchSubmitJob(
     Compression compression, bool pretty_px, bool pretty_ts, bool map_symbols,
     bool split_symbols, SplitDuration split_duration, std::uint64_t split_size,
     Delivery delivery, SType stype_in, SType stype_out, std::uint64_t limit) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kBatchSubmitJobEndpoint, symbols)},
@@ -317,7 +314,7 @@ databento::BatchJob Historical::BatchSubmitJob(
   detail::SetIfPositive(&params, "limit", limit);
   return this->BatchSubmitJob(params);
 }
-databento::BatchJob Historical::BatchSubmitJob(const httplib::Params& params) {
+databento::BatchJob Historical::BatchSubmitJob(const detail::HttpParams& params) {
   static const std::string kPath = ::BuildBatchPath(".submit_job");
   const nlohmann::json json = client_.PostJson(kPath, params);
   return ::Parse("BatchSubmitJob", json);
@@ -330,20 +327,20 @@ std::vector<databento::BatchJobShort> Historical::BatchListJobs() {
 }
 std::vector<databento::BatchJobShort> Historical::BatchListJobs(
     const std::vector<databento::JobState>& states, UnixNanos since) {
-  httplib::Params params{{"short", "true"}};
+  detail::HttpParams params{{"short", "true"}};
   detail::SetIfNotEmpty(&params, "states", states);
   detail::SetIfPositive(&params, "since", since.time_since_epoch().count());
   return this->BatchListJobs(params);
 }
 std::vector<databento::BatchJobShort> Historical::BatchListJobs(
     const std::vector<databento::JobState>& states, const std::string& since) {
-  httplib::Params params{{"short", "true"}};
+  detail::HttpParams params{{"short", "true"}};
   detail::SetIfNotEmpty(&params, "states", states);
   detail::SetIfNotEmpty(&params, "since", since);
   return this->BatchListJobs(params);
 }
 std::vector<databento::BatchJobShort> Historical::BatchListJobs(
-    const httplib::Params& params) {
+    const detail::HttpParams& params) {
   static const std::string kEndpoint = "Historical::BatchListJobs";
   static const std::string kPath = ::BuildBatchPath(".list_jobs");
   const nlohmann::json json = client_.GetJson(kPath, params);
@@ -359,26 +356,26 @@ std::vector<databento::BatchJobShort> Historical::BatchListJobs(
 std::vector<databento::BatchJob> Historical::BatchListJobsFull() {
   static const std::vector<JobState> kDefaultStates = {
       JobState::Queued, JobState::Processing, JobState::Done};
-  httplib::Params params;
+  detail::HttpParams params;
   detail::SetIfNotEmpty(&params, "states", kDefaultStates);
   return this->BatchListJobsFull(kDefaultStates, UnixNanos{});
 }
 std::vector<databento::BatchJob> Historical::BatchListJobsFull(
     const std::vector<databento::JobState>& states, UnixNanos since) {
-  httplib::Params params;
+  detail::HttpParams params;
   detail::SetIfNotEmpty(&params, "states", states);
   detail::SetIfPositive(&params, "since", since.time_since_epoch().count());
   return this->BatchListJobsFull(params);
 }
 std::vector<databento::BatchJob> Historical::BatchListJobsFull(
     const std::vector<databento::JobState>& states, const std::string& since) {
-  httplib::Params params;
+  detail::HttpParams params;
   detail::SetIfNotEmpty(&params, "states", states);
   detail::SetIfNotEmpty(&params, "since", since);
   return this->BatchListJobsFull(params);
 }
 std::vector<databento::BatchJob> Historical::BatchListJobsFull(
-    const httplib::Params& params) {
+    const detail::HttpParams& params) {
   static const std::string kEndpoint = "Historical::BatchListJobsFull";
   static const std::string kPath = ::BuildBatchPath(".list_jobs");
   const nlohmann::json json = client_.GetJson(kPath, params);
@@ -397,7 +394,7 @@ std::vector<databento::BatchFileDesc> Historical::BatchListFiles(
   static const std::string kPath = ::BuildBatchPath(".list_files");
 
   const nlohmann::json json =
-      client_.GetJson(kPath, httplib::Params{{"job_id", job_id}});
+      client_.GetJson(kPath, detail::HttpParams{{"job_id", job_id}});
   if (!json.is_array()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
@@ -422,7 +419,7 @@ databento::BatchJob Historical::BatchGetJobDetails(const std::string& job_id) {
   static const std::string kPath = ::BuildBatchPath(".get_job_details");
 
   const nlohmann::json json =
-      client_.GetJson(kPath, httplib::Params{{"job_id", job_id}});
+      client_.GetJson(kPath, detail::HttpParams{{"job_id", job_id}});
   return ::Parse(kEndpoint, json);
 }
 
@@ -512,7 +509,7 @@ void Historical::DownloadFile(const std::string& url,
     if (std::holds_alternative<AlreadyDownloaded>(exists_res)) {
       return;
     }
-    httplib::Headers http_headers;
+    detail::HttpHeaders http_headers;
     const auto opt_range = std::get<std::optional<httplib::Range>>(exists_res);
     std::ios::openmode mode = std::ios::binary;
     if (opt_range) {
@@ -562,7 +559,7 @@ void Historical::DownloadFile(const std::string& url,
 std::vector<databento::PublisherDetail> Historical::MetadataListPublishers() {
   static const std::string kEndpoint = "Historical::MetadataListPublishers";
   static const std::string kPath = ::BuildMetadataPath(".list_publishers");
-  const nlohmann::json json = client_.GetJson(kPath, httplib::Params{});
+  const nlohmann::json json = client_.GetJson(kPath, detail::HttpParams{});
   if (!json.is_array()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
@@ -589,7 +586,7 @@ std::vector<std::string> Historical::MetadataListDatasets() {
 std::vector<std::string> Historical::MetadataListDatasets(const DateRange& date_range) {
   static const std::string kEndpoint = "Historical::MetadataListDatasets";
   static const std::string kPath = ::BuildMetadataPath(".list_datasets");
-  httplib::Params params{};
+  detail::HttpParams params{};
   detail::SetIfNotEmpty(&params, "start_date", date_range.start);
   detail::SetIfNotEmpty(&params, "end_date", date_range.end);
   const nlohmann::json json = client_.GetJson(kPath, params);
@@ -638,8 +635,8 @@ std::vector<databento::FieldDetail> Historical::MetadataListFields(
     Encoding encoding, Schema schema, const std::string& dataset) {
   static const std::string kEndpoint = "Historical::MetadataListFields";
   static const std::string kPath = ::BuildMetadataPath(".list_fields");
-  httplib::Params params{{"encoding", ToString(encoding)},
-                         {"schema", ToString(schema)}};
+  detail::HttpParams params{{"encoding", ToString(encoding)},
+                            {"schema", ToString(schema)}};
 
   detail::SetIfNotEmpty(&params, "dataset", dataset);
 
@@ -665,7 +662,7 @@ std::vector<databento::UnitPricesForMode> Historical::MetadataListUnitPrices(
   static const std::string kEndpoint = "Historical::MetadataListUnitPrices";
   static const std::string kPath = ::BuildMetadataPath(".list_unit_prices");
   const nlohmann::json json =
-      client_.GetJson(kPath, httplib::Params{{"dataset", dataset}});
+      client_.GetJson(kPath, detail::HttpParams{{"dataset", dataset}});
   if (!json.is_array()) {
     throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
   }
@@ -697,18 +694,18 @@ std::vector<databento::UnitPricesForMode> Historical::MetadataListUnitPrices(
 
 std::vector<databento::DatasetConditionDetail> Historical::MetadataGetDatasetCondition(
     const std::string& dataset) {
-  return MetadataGetDatasetCondition(httplib::Params{{"dataset", dataset}});
+  return MetadataGetDatasetCondition(detail::HttpParams{{"dataset", dataset}});
 }
 
 std::vector<databento::DatasetConditionDetail> Historical::MetadataGetDatasetCondition(
     const std::string& dataset, const DateRange& date_range) {
-  httplib::Params params{{"dataset", dataset}, {"start_date", date_range.start}};
+  detail::HttpParams params{{"dataset", dataset}, {"start_date", date_range.start}};
   detail::SetIfNotEmpty(&params, "end_date", date_range.end);
   return MetadataGetDatasetCondition(params);
 }
 
 std::vector<databento::DatasetConditionDetail> Historical::MetadataGetDatasetCondition(
-    const httplib::Params& params) {
+    const detail::HttpParams& params) {
   static const std::string kEndpoint = "Historical::MetadataGetDatasetCondition";
   static const std::string kPath = ::BuildMetadataPath(".get_dataset_condition");
   const nlohmann::json json = client_.GetJson(kPath, params);
@@ -779,7 +776,7 @@ std::uint64_t Historical::MetadataGetRecordCount(
     const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     std::uint64_t limit) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kMetadataGetRecordCountEndpoint, symbols)},
@@ -793,7 +790,7 @@ std::uint64_t Historical::MetadataGetRecordCount(
     const std::string& dataset, const DateTimeRange<std::string>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     std::uint64_t limit) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kMetadataGetRecordCountEndpoint, symbols)},
@@ -803,7 +800,7 @@ std::uint64_t Historical::MetadataGetRecordCount(
   detail::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetRecordCount(params);
 }
-std::uint64_t Historical::MetadataGetRecordCount(const httplib::Params& params) {
+std::uint64_t Historical::MetadataGetRecordCount(const detail::HttpParams& params) {
   static const std::string kPath = ::BuildMetadataPath(".get_record_count");
   const nlohmann::json json = client_.PostJson(kPath, params);
   if (!json.is_number_unsigned()) {
@@ -833,7 +830,7 @@ std::uint64_t Historical::MetadataGetBillableSize(
     const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     std::uint64_t limit) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kMetadataGetBillableSizeEndpoint, symbols)},
@@ -847,7 +844,7 @@ std::uint64_t Historical::MetadataGetBillableSize(
     const std::string& dataset, const DateTimeRange<std::string>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     std::uint64_t limit) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kMetadataGetBillableSizeEndpoint, symbols)},
@@ -857,7 +854,7 @@ std::uint64_t Historical::MetadataGetBillableSize(
   detail::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetBillableSize(params);
 }
-std::uint64_t Historical::MetadataGetBillableSize(const httplib::Params& params) {
+std::uint64_t Historical::MetadataGetBillableSize(const detail::HttpParams& params) {
   static const std::string kPath = ::BuildMetadataPath(".get_billable_size");
   const nlohmann::json json = client_.PostJson(kPath, params);
   if (!json.is_number_unsigned()) {
@@ -887,7 +884,7 @@ double Historical::MetadataGetCost(const std::string& dataset,
                                    const DateTimeRange<UnixNanos>& datetime_range,
                                    const std::vector<std::string>& symbols,
                                    Schema schema, SType stype_in, std::uint64_t limit) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"start", ToString(datetime_range.start)},
       {"symbols", JoinSymbolStrings(kMetadataGetCostEndpoint, symbols)},
@@ -901,7 +898,7 @@ double Historical::MetadataGetCost(const std::string& dataset,
                                    const DateTimeRange<std::string>& datetime_range,
                                    const std::vector<std::string>& symbols,
                                    Schema schema, SType stype_in, std::uint64_t limit) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"start", datetime_range.start},
       {"symbols", JoinSymbolStrings(kMetadataGetCostEndpoint, symbols)},
@@ -911,7 +908,7 @@ double Historical::MetadataGetCost(const std::string& dataset,
   detail::SetIfPositive(&params, "limit", limit);
   return this->MetadataGetCost(params);
 }
-double Historical::MetadataGetCost(const HttplibParams& params) {
+double Historical::MetadataGetCost(const detail::HttpParams& params) {
   static const std::string kPath = ::BuildMetadataPath(".get_cost");
   const nlohmann::json json = client_.PostJson(kPath, params);
   if (!json.is_number()) {
@@ -926,11 +923,11 @@ databento::SymbologyResolution Historical::SymbologyResolve(
     SType stype_out, const DateRange& date_range) {
   static const std::string kEndpoint = "Historical::SymbologyResolve";
   static const std::string kPath = ::BuildSymbologyPath(".resolve");
-  httplib::Params params{{"dataset", dataset},
-                         {"start_date", date_range.start},
-                         {"symbols", JoinSymbolStrings(kEndpoint, symbols)},
-                         {"stype_in", ToString(stype_in)},
-                         {"stype_out", ToString(stype_out)}};
+  detail::HttpParams params{{"dataset", dataset},
+                            {"start_date", date_range.start},
+                            {"symbols", JoinSymbolStrings(kEndpoint, symbols)},
+                            {"stype_in", ToString(stype_in)},
+                            {"stype_out", ToString(stype_out)}};
   detail::SetIfNotEmpty(&params, "end_date", date_range.end);
   const nlohmann::json json = client_.PostJson(kPath, params);
   if (!json.is_object()) {
@@ -1018,7 +1015,7 @@ void Historical::TimeseriesGetRange(const std::string& dataset,
                                     std::uint64_t limit,
                                     const MetadataCallback& metadata_callback,
                                     const RecordCallback& record_callback) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"encoding", "dbn"},
       {"compression", "zstd"},
@@ -1039,7 +1036,7 @@ void Historical::TimeseriesGetRange(const std::string& dataset,
                                     std::uint64_t limit,
                                     const MetadataCallback& metadata_callback,
                                     const RecordCallback& record_callback) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"encoding", "dbn"},
       {"compression", "zstd"},
@@ -1059,7 +1056,7 @@ enum class DecoderState : std::uint8_t {
   Metadata,
   Records,
 };
-void Historical::TimeseriesGetRange(const HttplibParams& params,
+void Historical::TimeseriesGetRange(const detail::HttpParams& params,
                                     const MetadataCallback& metadata_callback,
                                     const RecordCallback& record_callback) {
   detail::DbnBufferDecoder decoder{upgrade_policy_, metadata_callback, record_callback};
@@ -1099,7 +1096,7 @@ databento::DbnStore Historical::TimeseriesGetRange(
     const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     SType stype_out, std::uint64_t limit) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"encoding", "dbn"},
       {"compression", "zstd"},
@@ -1116,7 +1113,7 @@ databento::DbnStore Historical::TimeseriesGetRange(
     const std::string& dataset, const DateTimeRange<std::string>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     SType stype_out, std::uint64_t limit) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"encoding", "dbn"},
       {"compression", "zstd"},
@@ -1129,7 +1126,7 @@ databento::DbnStore Historical::TimeseriesGetRange(
   detail::SetIfPositive(&params, "limit", limit);
   return this->TimeseriesGetRange(params);
 }
-databento::DbnStore Historical::TimeseriesGetRange(const HttplibParams& params) {
+databento::DbnStore Historical::TimeseriesGetRange(const detail::HttpParams& params) {
   auto stream = client_.OpenPostStream(TimeseriesGetRangePath(), params);
   return DbnStore{log_receiver_, std::move(stream), upgrade_policy_};
 }
@@ -1157,7 +1154,7 @@ databento::DbnStore Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const DateTimeRange<UnixNanos>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     SType stype_out, std::uint64_t limit, const std::filesystem::path& file_path) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"encoding", "dbn"},
       {"compression", "zstd"},
@@ -1174,7 +1171,7 @@ databento::DbnStore Historical::TimeseriesGetRangeToFile(
     const std::string& dataset, const DateTimeRange<std::string>& datetime_range,
     const std::vector<std::string>& symbols, Schema schema, SType stype_in,
     SType stype_out, std::uint64_t limit, const std::filesystem::path& file_path) {
-  httplib::Params params{
+  detail::HttpParams params{
       {"dataset", dataset},
       {"encoding", "dbn"},
       {"compression", "zstd"},
@@ -1188,7 +1185,7 @@ databento::DbnStore Historical::TimeseriesGetRangeToFile(
   return this->TimeseriesGetRangeToFile(params, file_path);
 }
 databento::DbnStore Historical::TimeseriesGetRangeToFile(
-    const HttplibParams& params, const std::filesystem::path& file_path) {
+    const detail::HttpParams& params, const std::filesystem::path& file_path) {
   {
     OutFileStream out_file{file_path};
     this->client_.PostRawStream(TimeseriesGetRangePath(), params,

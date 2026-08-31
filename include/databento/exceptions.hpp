@@ -1,9 +1,5 @@
 #pragma once
 
-#ifndef CPPHTTPLIB_OPENSSL_SUPPORT
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-#endif
-#include <httplib.h>          // Error
 #include <nlohmann/json.hpp>  // json, parse_error
 
 #include <chrono>
@@ -13,6 +9,13 @@
 #include <string>
 #include <string_view>
 #include <utility>  // move
+
+namespace httplib {
+// An opaque enum declaration is a complete type, which is all `HttpRequestError`
+// needs. Including <httplib.h> here would expand the whole header in every
+// translation unit that reaches this one.
+enum class Error;
+}  // namespace httplib
 
 namespace databento {
 // Base class for all databento client library exceptions.

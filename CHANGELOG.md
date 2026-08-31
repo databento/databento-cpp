@@ -4,6 +4,10 @@
 
 ### Enhancements
 - Added `UnsubscribeAck` to the `SystemCode` enum for acknowledging unsubscribe requests
+- Added support for building against cpp-httplib 0.52.0 and newer, which changed the
+  underlying container of `httplib::Params` and `httplib::Headers`
+- Removed the `httplib.h` include from the public headers, cutting about a third of the
+  preprocessed size of `record.hpp`, `historical.hpp`, and `live.hpp`
 
 ### Bug fixes
 - Fixed CMake error when the consuming project already defines a `zstd::libzstd`
