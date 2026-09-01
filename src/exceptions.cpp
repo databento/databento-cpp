@@ -1,7 +1,8 @@
 #include "databento/exceptions.hpp"
 
 #ifdef _WIN32
-#include <winbase.h>  // FormatMessage, FORMAT_MESSAGE_FROM_SYSTEM
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>  // FormatMessage, FORMAT_MESSAGE_FROM_SYSTEM
 #else
 #include <cstring>  // strerror
 #endif

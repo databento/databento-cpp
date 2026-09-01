@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.67.0 - Upcoming
+## 0.67.0 - 2026-09-01
 
 ### Enhancements
 - Added `UnsubscribeAck` to the `SystemCode` enum for acknowledging unsubscribe requests
@@ -8,8 +8,12 @@
   underlying container of `httplib::Params` and `httplib::Headers`
 - Removed the `httplib.h` include from the public headers, cutting about a third of the
   preprocessed size of `record.hpp`, `historical.hpp`, and `live.hpp`
+- Upgraded libdbn_c version to 0.69.0
+- Upgraded default cpp-httplib version to 0.53.1
 
 ### Bug fixes
+- Fixed incorrect count in DBN metadata causing decoding to read into the start of
+  records
 - Fixed CMake error when the consuming project already defines a `zstd::libzstd`
   target (credit: @NuLL3rr0r)
 

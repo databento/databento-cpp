@@ -1,7 +1,10 @@
 #include "databento/detail/tcp_client.hpp"
 
 #ifdef _WIN32
+#include <basetsd.h>   // SSIZE_T
 #include <winsock2.h>  // closesocket, recv, send, socket
+
+using ssize_t = SSIZE_T;
 #else
 #include <fcntl.h>       // fcntl, F_GETFL, F_SETFL, O_NONBLOCK
 #include <netdb.h>       // addrinfo, gai_strerror, getaddrinfo, freeaddrinfo
