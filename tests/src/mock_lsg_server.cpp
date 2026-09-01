@@ -4,6 +4,7 @@
 
 #ifdef _WIN32
 #include <winsock2.h>
+#include <ws2tcpip.h>  // socklen_t
 #else
 #include <netinet/in.h>  // sockaddr_in
 #include <sys/socket.h>  // recv

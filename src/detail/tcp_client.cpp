@@ -3,6 +3,7 @@
 #ifdef _WIN32
 #include <basetsd.h>   // SSIZE_T
 #include <winsock2.h>  // closesocket, recv, send, socket
+#include <ws2tcpip.h>  // freeaddrinfo, gai_strerror, getaddrinfo
 
 using ssize_t = SSIZE_T;
 #else
