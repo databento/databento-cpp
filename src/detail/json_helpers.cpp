@@ -6,14 +6,14 @@
 #include <string>
 
 namespace databento::detail {
-void SetIfNotEmpty(httplib::Params* params, const std::string& key,
+void SetIfNotEmpty(HttpParams* params, const std::string& key,
                    const std::string& value) {
   if (!value.empty()) {
     params->emplace(key, value);
   }
 }
 
-void SetIfNotEmpty(httplib::Params* params, const std::string& key,
+void SetIfNotEmpty(HttpParams* params, const std::string& key,
                    const std::vector<databento::JobState>& states) {
   if (!states.empty()) {
     std::string value = std::accumulate(
@@ -130,7 +130,7 @@ date::year_month_day ParseAt(std::string_view endpoint, const nlohmann::json& js
                              std::string_view key) {
   std::string raw_start = detail::CheckedAt(endpoint, json, key);
   std::istringstream start_stream{raw_start};
-  date::year_month_day start;
+  date::year_month_day start{};
   start_stream >> date::parse("%F", start);
   if (start_stream.fail()) {
     throw JsonResponseError::TypeMismatch(endpoint, "YYYY-MM-DD date string",

@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.24..4.2)
 
 project(
   databento
-  VERSION 0.66.0
+  VERSION 0.67.0
   LANGUAGES CXX
   DESCRIPTION "Official Databento client library"
 )
@@ -127,13 +127,20 @@ endif()
 #
 
 find_package(OpenSSL REQUIRED)
-find_package(zstd REQUIRED)
+if(NOT TARGET zstd::libzstd)
+  find_package(zstd REQUIRED)
+endif()
+# Check again: find_package defines zstd::libzstd where zstd ships a CMake config
 if(NOT TARGET zstd::libzstd)
   if(TARGET zstd::libzstd_shared)
     add_library(zstd::libzstd ALIAS zstd::libzstd_shared)
   elseif(TARGET zstd::libzstd_static)
     add_library(zstd::libzstd ALIAS zstd::libzstd_static)
   endif()
+endif()
+get_target_property(zstd_link_target zstd::libzstd ALIASED_TARGET)
+if(NOT zstd_link_target)
+  set(zstd_link_target zstd::libzstd)
 endif()
 find_package(Threads REQUIRED)
 
@@ -178,7 +185,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
     find_package(httplib REQUIRED)
   endif()
 else()
-  set(httplib_version 0.51.0)
+  set(httplib_version 0.53.1)
   FetchContent_Declare(
     httplib
     URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz

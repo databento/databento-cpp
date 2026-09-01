@@ -9,31 +9,125 @@
 #include "databento/ireadable.hpp"
 #include "databento/log.hpp"              // ILogReceiver, LogLevel
 #include "detail/http_stream_reader.hpp"  // HttpStreamReader
+#include "detail/httplib.hpp"
 
 using databento::detail::HttpClient;
+using databento::detail::HttpContentReceiver;
+using databento::detail::HttpHeaders;
+using databento::detail::HttpParams;
 
 constexpr std::chrono::seconds kTimeout{100};
 
-const httplib::Headers& HttpClient::BaseHeaders() {
-  static const httplib::Headers kHeaders{
-      {"accept", "application/json"},
-      {"user-agent", kUserAgent},
-  };
-  return kHeaders;
+namespace {
+// httplib::Params and httplib::Headers are type aliases, so they can't be
+// forward-declared, and their underlying container changed in httplib 0.52.0.
+httplib::Params ToHttplibParams(const HttpParams& params) {
+  return {params.begin(), params.end()};
 }
+
+httplib::Headers ToHttplibHeaders(const HttpHeaders& headers) {
+  return {headers.begin(), headers.end()};
+}
+
+httplib::Headers BaseHeaders() {
+  return {
+      {"accept", "application/json"},
+      {"user-agent", databento::kUserAgent},
+  };
+}
+
+bool IsErrorStatus(int status_code) { return status_code >= 400; }
+
+void CheckWarnings(databento::ILogReceiver* log_receiver,
+                   const httplib::Response& response) {
+  // Returns empty string if not found. `get_header_value` is case insensitive
+  const auto raw = response.get_header_value("X-Warning");
+  if (!raw.empty()) {
+    try {
+      const auto json = nlohmann::json::parse(raw);
+      if (json.is_array()) {
+        for (const auto& warning_json : json.items()) {
+          const std::string warning = warning_json.value();
+          std::ostringstream msg;
+          msg << "[HttpClient::CheckWarnings] Server " << warning;
+          log_receiver->Receive(databento::LogLevel::Warning, msg.str());
+        }
+        return;
+      }
+    } catch (const std::exception& exc) {
+      std::ostringstream msg;
+      msg << "[HttpClient::CheckWarnings] Failed to parse warnings from HTTP "
+             "header: "
+          << exc.what() << ". Raw contents: " << raw;
+      log_receiver->Receive(databento::LogLevel::Warning, msg.str());
+      return;
+    }
+    std::ostringstream msg;
+    msg << "[HttpClient::CheckWarnings] Failed to parse warnings from HTTP "
+           "header. Raw contents: "
+        << raw;
+    log_receiver->Receive(databento::LogLevel::Warning, msg.str());
+  }
+}
+
+httplib::ResponseHandler MakeStreamResponseHandler(
+    databento::ILogReceiver* log_receiver, int& out_status) {
+  return [log_receiver, &out_status](const httplib::Response& resp) {
+    if (IsErrorStatus(resp.status)) {
+      out_status = resp.status;
+    }
+    CheckWarnings(log_receiver, resp);
+    return true;
+  };
+}
+
+void CheckStatusAndStreamRes(const std::string& path, int status_code,
+                             const std::string& err_body, const httplib::Result& res) {
+  if (status_code > 0) {
+    throw databento::HttpResponseError{path, status_code, err_body};
+  }
+  if (res.error() != httplib::Error::Success &&
+      // canceled happens if `callback` returns false, which is based on the
+      // user input, and therefore not exceptional
+      res.error() != httplib::Error::Canceled) {
+    throw databento::HttpRequestError{path, res.error()};
+  }
+}
+
+// `res` is consumed: its body is moved out of the contained response.
+// NOLINTBEGIN(cppcoreguidelines-rvalue-reference-param-not-moved)
+nlohmann::json CheckAndParseResponse(databento::ILogReceiver* log_receiver,
+                                     const std::string& path, httplib::Result&& res) {
+  if (res.error() != httplib::Error::Success) {
+    throw databento::HttpRequestError{path, res.error()};
+  }
+  auto& response = res.value();
+  const auto status_code = response.status;
+  if (IsErrorStatus(status_code)) {
+    throw databento::HttpResponseError{path, status_code, response.body};
+  }
+  CheckWarnings(log_receiver, response);
+  try {
+    return nlohmann::json::parse(std::move(response.body));
+  } catch (const nlohmann::json::parse_error& parse_err) {
+    throw databento::JsonResponseError::ParseError(path, parse_err);
+  }
+}
+// NOLINTEND(cppcoreguidelines-rvalue-reference-param-not-moved)
+}  // namespace
 
 HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string& key,
                        const std::string& gateway,
                        std::optional<HttpClientCallback> callback)
-    : log_receiver_{log_receiver}, client_{gateway} {
-  auto headers = HttpClient::BaseHeaders();
+    : log_receiver_{log_receiver}, client_{std::make_unique<httplib::Client>(gateway)} {
+  auto headers = BaseHeaders();
   headers.insert(httplib::make_basic_authentication_header(key, ""));
-  client_.set_default_headers(headers);
-  client_.set_basic_auth(key, "");
-  client_.set_read_timeout(kTimeout);
-  client_.set_write_timeout(kTimeout);
+  client_->set_default_headers(headers);
+  client_->set_basic_auth(key, "");
+  client_->set_read_timeout(kTimeout);
+  client_->set_write_timeout(kTimeout);
   if (callback) {
-    (*callback)(client_);
+    (*callback)(*client_);
   }
 }
 
@@ -42,37 +136,43 @@ HttpClient::HttpClient(databento::ILogReceiver* log_receiver, const std::string&
                        std::optional<HttpClientCallback> callback)
     : log_receiver_{log_receiver},
       // constructor with port parameter is HTTP-only
-      client_{gateway + ':' + std::to_string(port)} {
-  auto headers = HttpClient::BaseHeaders();
+      client_{std::make_unique<httplib::Client>(gateway + ':' + std::to_string(port))} {
+  auto headers = BaseHeaders();
   headers.insert(httplib::make_basic_authentication_header(key, ""));
-  client_.set_default_headers(headers);
-  client_.set_basic_auth(key, "");
-  client_.set_read_timeout(kTimeout);
-  client_.set_write_timeout(kTimeout);
+  client_->set_default_headers(headers);
+  client_->set_basic_auth(key, "");
+  client_->set_read_timeout(kTimeout);
+  client_->set_write_timeout(kTimeout);
   if (callback) {
-    (*callback)(client_);
+    (*callback)(*client_);
   }
 }
 
-nlohmann::json HttpClient::GetJson(const std::string& path,
-                                   const httplib::Params& params) {
-  httplib::Result res = client_.Get(path, params, httplib::Headers{});
-  return HttpClient::CheckAndParseResponse(path, std::move(res));
+HttpClient::HttpClient(HttpClient&&) noexcept = default;
+
+HttpClient& HttpClient::operator=(HttpClient&&) noexcept = default;
+
+HttpClient::~HttpClient() = default;
+
+nlohmann::json HttpClient::GetJson(const std::string& path, const HttpParams& params) {
+  httplib::Result res = client_->Get(path, ToHttplibParams(params), httplib::Headers{});
+  return CheckAndParseResponse(log_receiver_, path, std::move(res));
 }
 
 nlohmann::json HttpClient::PostJson(const std::string& path,
-                                    const httplib::Params& form_params) {
+                                    const HttpParams& form_params) {
   // params will be encoded as form data
-  httplib::Result res = client_.Post(path, {}, form_params);
-  return HttpClient::CheckAndParseResponse(path, std::move(res));
+  httplib::Result res = client_->Post(path, {}, ToHttplibParams(form_params));
+  return CheckAndParseResponse(log_receiver_, path, std::move(res));
 }
 
-void HttpClient::GetRawStream(const std::string& path, const httplib::Headers& headers,
-                              const httplib::ContentReceiver& callback) {
+void HttpClient::GetRawStream(const std::string& path, const HttpHeaders& headers,
+                              const HttpContentReceiver& callback) {
   std::string err_body{};
   int err_status{};
-  const httplib::Result res = client_.Get(
-      path, headers, MakeStreamResponseHandler(err_status),
+  const httplib::Result res = client_->Get(
+      path, ToHttplibHeaders(headers),
+      MakeStreamResponseHandler(log_receiver_, err_status),
       [&callback, &err_body, &err_status](const char* data, std::size_t length) {
         // if an error response was received, read all content into
         // err_body
@@ -82,20 +182,19 @@ void HttpClient::GetRawStream(const std::string& path, const httplib::Headers& h
         }
         return callback(data, length);
       });
-  CheckStatusAndStreamRes(path, err_status, std::move(err_body), res);
+  CheckStatusAndStreamRes(path, err_status, err_body, res);
 }
 
-void HttpClient::PostRawStream(const std::string& path,
-                               const httplib::Params& form_params,
-                               const httplib::ContentReceiver& callback) {
+void HttpClient::PostRawStream(const std::string& path, const HttpParams& form_params,
+                               const HttpContentReceiver& callback) {
   std::string err_body{};
   int err_status{};
   httplib::Request req;
   req.method = "POST";
   req.set_header("Content-Type", "application/x-www-form-urlencoded");
   req.path = path;
-  req.body = httplib::detail::params_to_query_str(form_params);
-  req.response_handler = MakeStreamResponseHandler(err_status);
+  req.body = httplib::detail::params_to_query_str(ToHttplibParams(form_params));
+  req.response_handler = MakeStreamResponseHandler(log_receiver_, err_status);
   req.content_receiver = [&callback, &err_body, &err_status](
                              const char* data, std::size_t length, std::uint64_t,
                              std::uint64_t) {
@@ -108,23 +207,23 @@ void HttpClient::PostRawStream(const std::string& path,
     return callback(data, length);
   };
   // NOLINTNEXTLINE(clang-analyzer-unix.BlockInCriticalSection): dependency code
-  const httplib::Result res = client_.send(req);
-  CheckStatusAndStreamRes(path, err_status, std::move(err_body), res);
+  const httplib::Result res = client_->send(req);
+  CheckStatusAndStreamRes(path, err_status, err_body, res);
 }
 
 std::unique_ptr<databento::IReadable> HttpClient::OpenPostStream(
-    const std::string& path, const httplib::Params& form_params) {
-  const auto body = httplib::detail::params_to_query_str(form_params);
+    const std::string& path, const HttpParams& form_params) {
+  const auto body = httplib::detail::params_to_query_str(ToHttplibParams(form_params));
   // NOLINTNEXTLINE(clang-analyzer-unix.BlockInCriticalSection): dependency code
-  auto handle = client_.open_stream("POST", path, {}, {}, body,
-                                    "application/x-www-form-urlencoded");
+  auto handle = client_->open_stream("POST", path, {}, {}, body,
+                                     "application/x-www-form-urlencoded");
   if (handle.error != httplib::Error::Success) {
     throw HttpRequestError{path, handle.error};
   }
   if (!handle.is_valid()) {
     throw HttpRequestError{path, httplib::Error::Connection};
   }
-  CheckWarnings(*handle.response);
+  CheckWarnings(log_receiver_, *handle.response);
   if (IsErrorStatus(handle.response->status)) {
     // Read the full error body
     std::string err_body;
@@ -137,78 +236,3 @@ std::unique_ptr<databento::IReadable> HttpClient::OpenPostStream(
   }
   return std::make_unique<HttpStreamReader>(std::move(handle));
 }
-
-httplib::ResponseHandler HttpClient::MakeStreamResponseHandler(int& out_status) {
-  return [this, &out_status](const httplib::Response& resp) {
-    if (HttpClient::IsErrorStatus(resp.status)) {
-      out_status = resp.status;
-    }
-    CheckWarnings(resp);
-    return true;
-  };
-}
-
-void HttpClient::CheckStatusAndStreamRes(const std::string& path, int status_code,
-                                         std::string&& err_body,
-                                         const httplib::Result& res) {
-  if (status_code > 0) {
-    throw HttpResponseError{path, status_code, err_body};
-  }
-  if (res.error() != httplib::Error::Success &&
-      // canceled happens if `callback` returns false, which is based on the
-      // user input, and therefore not exceptional
-      res.error() != httplib::Error::Canceled) {
-    throw HttpRequestError{path, res.error()};
-  }
-}
-
-nlohmann::json HttpClient::CheckAndParseResponse(const std::string& path,
-                                                 httplib::Result&& res) const {
-  if (res.error() != httplib::Error::Success) {
-    throw HttpRequestError{path, res.error()};
-  }
-  auto& response = res.value();
-  const auto status_code = response.status;
-  if (HttpClient::IsErrorStatus(status_code)) {
-    throw HttpResponseError{path, status_code, response.body};
-  }
-  CheckWarnings(response);
-  try {
-    return nlohmann::json::parse(std::move(response.body));
-  } catch (const nlohmann::json::parse_error& parse_err) {
-    throw JsonResponseError::ParseError(path, parse_err);
-  }
-}
-
-void HttpClient::CheckWarnings(const httplib::Response& response) const {
-  // Returns empty string if not found. `get_header_value` is case insensitive
-  const auto raw = response.get_header_value("X-Warning");
-  if (!raw.empty()) {
-    try {
-      const auto json = nlohmann::json::parse(raw);
-      if (json.is_array()) {
-        for (const auto& warning_json : json.items()) {
-          const std::string warning = warning_json.value();
-          std::ostringstream msg;
-          msg << "[HttpClient::CheckWarnings] Server " << warning;
-          log_receiver_->Receive(LogLevel::Warning, msg.str());
-        }
-        return;
-      }
-    } catch (const std::exception& exc) {
-      std::ostringstream msg;
-      msg << "[HttpClient::CheckWarnings] Failed to parse warnings from HTTP "
-             "header: "
-          << exc.what() << ". Raw contents: " << raw;
-      log_receiver_->Receive(LogLevel::Warning, msg.str());
-      return;
-    }
-    std::ostringstream msg;
-    msg << "[HttpClient::CheckWarnings] Failed to parse warnings from HTTP "
-           "header. Raw contents: "
-        << raw;
-    log_receiver_->Receive(LogLevel::Warning, msg.str());
-  }
-}
-
-bool HttpClient::IsErrorStatus(int status_code) { return status_code >= 400; }

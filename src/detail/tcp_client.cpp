@@ -1,7 +1,11 @@
 #include "databento/detail/tcp_client.hpp"
 
 #ifdef _WIN32
+#include <basetsd.h>   // SSIZE_T
 #include <winsock2.h>  // closesocket, recv, send, socket
+#include <ws2tcpip.h>  // freeaddrinfo, gai_strerror, getaddrinfo
+
+using ssize_t = SSIZE_T;
 #else
 #include <fcntl.h>       // fcntl, F_GETFL, F_SETFL, O_NONBLOCK
 #include <netdb.h>       // addrinfo, gai_strerror, getaddrinfo, freeaddrinfo
@@ -70,6 +74,8 @@ class BlockingGuard {
     unsigned long mode = 1;
     ::ioctlsocket(_fd, FIONBIO, &mode);
 #else
+    // the member only exists off Windows, so it cannot be in the init list
+    // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
     _original_flags = ::fcntl(_fd, F_GETFL, 0);
     ::fcntl(_fd, F_SETFL, _original_flags | O_NONBLOCK);
 #endif

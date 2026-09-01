@@ -3,10 +3,12 @@
 #include <gtest/gtest.h>  // ASSERT_EQ
 #ifdef _WIN32
 #include <winsock2.h>
+#include <ws2tcpip.h>  // socklen_t
 #else
-#include <netinet/in.h>  // IPPROTO_TCP, ntohs, sockaddr_in, TCP_NODELAY
-#include <sys/socket.h>  // AF_INET, listen, recv, send, setsocketopt, socket
-#include <unistd.h>      // close, socklen_t
+#include <netinet/in.h>   // IPPROTO_TCP, ntohs, sockaddr_in
+#include <netinet/tcp.h>  // TCP_NODELAY
+#include <sys/socket.h>   // AF_INET, listen, recv, send, setsocketopt, socket
+#include <unistd.h>       // close, socklen_t
 #endif
 
 #include <thread>  // this_thread

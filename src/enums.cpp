@@ -875,6 +875,9 @@ const char* ToString(SystemCode system_code) {
     case SystemCode::EndOfInterval: {
       return "end_of_interval";
     }
+    case SystemCode::UnsubscribeAck: {
+      return "unsubscribe_ack";
+    }
     case SystemCode::Unset: {
       return "unset";
     }
@@ -1344,6 +1347,9 @@ SystemCode FromString(const std::string& str) {
   }
   if (str == "end_of_interval") {
     return SystemCode::EndOfInterval;
+  }
+  if (str == "unsubscribe_ack") {
+    return SystemCode::UnsubscribeAck;
   }
   if (str == "unset") {
     return SystemCode::Unset;

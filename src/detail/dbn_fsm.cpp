@@ -185,10 +185,13 @@ DbnFsm::Status DbnFsm::Process() {
     }
     case DbnProcessStatus_Record: {
       // The decoder owns the record, which stays valid until the buffer is
-      // next mutated
+      // next mutated. The C API returns it as const, but Record wraps a
+      // mutable header.
+      // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
       last_record_ =
           Record{const_cast<RecordHeader*>(reinterpret_cast<const RecordHeader*>(
               DbnDecoder_last_record(AsDecoder(decoder_.get()))))};
+      // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
       return Status::Record;
     }
     case DbnProcessStatus_Error:
