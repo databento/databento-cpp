@@ -224,6 +224,9 @@ const char* ToString(Venue venue) {
     case Venue::Xose: {
       return "XOSE";
     }
+    case Venue::Dbix: {
+      return "DBIX";
+    }
     default: {
       return "Unknown";
     }
@@ -450,6 +453,9 @@ Venue FromString(const std::string& str) {
   if (str == "XOSE") {
     return Venue::Xose;
   }
+  if (str == "DBIX") {
+    return Venue::Dbix;
+  }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -611,6 +617,9 @@ const char* ToString(Dataset dataset) {
     }
     case Dataset::XoseItch: {
       return "XOSE.ITCH";
+    }
+    case Dataset::DbixCore: {
+      return "DBIX.CORE";
     }
     default: {
       return "Unknown";
@@ -780,6 +789,9 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "XOSE.ITCH") {
     return Dataset::XoseItch;
+  }
+  if (str == "DBIX.CORE") {
+    return Dataset::DbixCore;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -1221,6 +1233,27 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::XoseItchXose: {
       return Venue::Xose;
+    }
+    case Publisher::DbixCoreMain: {
+      return Venue::Main;
+    }
+    case Publisher::DbixCoreMsci: {
+      return Venue::Msci;
+    }
+    case Publisher::DbixCoreFtse: {
+      return Venue::Ftse;
+    }
+    case Publisher::DbixCoreInav: {
+      return Venue::Inav;
+    }
+    case Publisher::DbixCoreMstar: {
+      return Venue::Mstar;
+    }
+    case Publisher::DbixCoreCccy: {
+      return Venue::Cccy;
+    }
+    case Publisher::DbixCoreCgi: {
+      return Venue::Cgi;
     }
     default: {
       throw InvalidArgumentError{
@@ -1667,6 +1700,27 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::XoseItchXose: {
       return Dataset::XoseItch;
     }
+    case Publisher::DbixCoreMain: {
+      return Dataset::DbixCore;
+    }
+    case Publisher::DbixCoreMsci: {
+      return Dataset::DbixCore;
+    }
+    case Publisher::DbixCoreFtse: {
+      return Dataset::DbixCore;
+    }
+    case Publisher::DbixCoreInav: {
+      return Dataset::DbixCore;
+    }
+    case Publisher::DbixCoreMstar: {
+      return Dataset::DbixCore;
+    }
+    case Publisher::DbixCoreCccy: {
+      return Dataset::DbixCore;
+    }
+    case Publisher::DbixCoreCgi: {
+      return Dataset::DbixCore;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -2112,6 +2166,27 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::XoseItchXose: {
       return "XOSE.ITCH.XOSE";
+    }
+    case Publisher::DbixCoreMain: {
+      return "DBIX.CORE.MAIN";
+    }
+    case Publisher::DbixCoreMsci: {
+      return "DBIX.CORE.MSCI";
+    }
+    case Publisher::DbixCoreFtse: {
+      return "DBIX.CORE.FTSE";
+    }
+    case Publisher::DbixCoreInav: {
+      return "DBIX.CORE.INAV";
+    }
+    case Publisher::DbixCoreMstar: {
+      return "DBIX.CORE.MSTAR";
+    }
+    case Publisher::DbixCoreCccy: {
+      return "DBIX.CORE.CCCY";
+    }
+    case Publisher::DbixCoreCgi: {
+      return "DBIX.CORE.CGI";
     }
     default: {
       return "Unknown";
@@ -2560,6 +2635,27 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "XOSE.ITCH.XOSE") {
     return Publisher::XoseItchXose;
+  }
+  if (str == "DBIX.CORE.MAIN") {
+    return Publisher::DbixCoreMain;
+  }
+  if (str == "DBIX.CORE.MSCI") {
+    return Publisher::DbixCoreMsci;
+  }
+  if (str == "DBIX.CORE.FTSE") {
+    return Publisher::DbixCoreFtse;
+  }
+  if (str == "DBIX.CORE.INAV") {
+    return Publisher::DbixCoreInav;
+  }
+  if (str == "DBIX.CORE.MSTAR") {
+    return Publisher::DbixCoreMstar;
+  }
+  if (str == "DBIX.CORE.CCCY") {
+    return Publisher::DbixCoreCccy;
+  }
+  if (str == "DBIX.CORE.CGI") {
+    return Publisher::DbixCoreCgi;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};

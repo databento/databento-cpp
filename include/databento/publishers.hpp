@@ -149,6 +149,8 @@ enum class Venue : std::uint16_t {
   Xtkt = 70,
   // Osaka Exchange
   Xose = 71,
+  // Databento Core Indices
+  Dbix = 72,
 };
 
 // A source of data.
@@ -257,6 +259,8 @@ enum class Dataset : std::uint16_t {
   XtktItch = 51,
   // JPX JGATE3.0-ITCH
   XoseItch = 52,
+  // Databento Core Indices
+  DbixCore = 53,
 };
 
 // A specific Venue from a specific data source.
@@ -551,6 +555,20 @@ enum class Publisher : std::uint16_t {
   XtktItchXtkt = 144,
   // JPX - Osaka Exchange
   XoseItchXose = 145,
+  // CGIF - Main Feed
+  DbixCoreMain = 146,
+  // CGIF - Morgan Stanley Capital International
+  DbixCoreMsci = 147,
+  // CGIF - FTSE Russell
+  DbixCoreFtse = 148,
+  // CGIF - Intraday Net Asset Values
+  DbixCoreInav = 149,
+  // CGIF - Morning Star
+  DbixCoreMstar = 150,
+  // CGIF - Crypto Currency
+  DbixCoreCccy = 151,
+  // CGIF - CBOE Global Indices
+  DbixCoreCgi = 152,
 };
 
 // Get a Publisher's Venue.
