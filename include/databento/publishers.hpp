@@ -142,7 +142,7 @@ enum class Venue : std::uint16_t {
   // CGIF CBOE Global Indices
   Cgi = 67,
   // CGIF Definitions
-  Def = 68,
+  Cdef = 68,
   // Tokyo Stock Exchange
   Xtks = 69,
   // Tokyo Commodity Exchange
@@ -548,7 +548,7 @@ enum class Publisher : std::uint16_t {
   // CGIF - CBOE Global Indices
   CgiCgifCgi = 141,
   // CGIF - Definitions
-  MainCgifDef = 142,
+  MainCgifCdef = 142,
   // JPX - Tokyo Stock Exchange
   XtksFlexXtks = 143,
   // JPX - Tokyo Commodity Exchange
@@ -569,6 +569,8 @@ enum class Publisher : std::uint16_t {
   DbixCoreCccy = 151,
   // CGIF - CBOE Global Indices
   DbixCoreCgi = 152,
+  // CGIF - Definitions
+  DbixCoreCdef = 153,
 };
 
 // Get a Publisher's Venue.
