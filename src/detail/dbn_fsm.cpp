@@ -171,15 +171,13 @@ void DbnFsm::WriteAll(const std::byte* data, std::size_t length) {
 }
 
 DbnFsm::Status DbnFsm::Process() {
-  std::size_t read_more{};
-  DbnMetadata* metadata{};
-  switch (DbnDecoder_process(AsDecoder(decoder_.get()), &read_more, &metadata)) {
+  switch (DbnDecoder_process(AsDecoder(decoder_.get()))) {
     case DbnProcessStatus_ReadMore: {
       return Status::ReadMore;
     }
     case DbnProcessStatus_Metadata: {
       const std::unique_ptr<DbnMetadata, void (*)(DbnMetadata*)> owned{
-          metadata, DbnMetadata_free};
+          DbnDecoder_take_metadata(AsDecoder(decoder_.get())), DbnMetadata_free};
       metadata_ = DecodeMetadata(owned.get());
       return Status::Metadata;
     }

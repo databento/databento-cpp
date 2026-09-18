@@ -1,9 +1,11 @@
 # Changelog
 
-## 0.68.0 - Upcoming
+## 0.68.0 - 2026-09-18
 
 ### Enhancements
 - Added new venue, dataset, and publishers for Databento Core Indices
+- Upgraded libdbn_c version to 0.70.0
+- Upgraded default cpp-httplib version to 0.54.1
 
 ## 0.67.0 - 2026-09-01
 
