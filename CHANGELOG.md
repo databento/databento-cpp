@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.69.0 - Upcoming
+
+### Enhancements
+- Optimized DBN decoding to decode records in batches through libdbn_c
+
 ## 0.68.0 - 2026-09-18
 
 ### Enhancements
