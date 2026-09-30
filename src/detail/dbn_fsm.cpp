@@ -5,16 +5,13 @@
 
 #include <algorithm>  // max
 #include <chrono>
-#include <cstdint>
-#include <memory>  // unique_ptr
+#include <cstring>  // memmove
 #include <optional>
 #include <string>
 #include <utility>  // move
-#include <vector>
 
 #include "databento/datetime.hpp"    // UnixNanos
 #include "databento/exceptions.hpp"  // DbnResponseError, InvalidArgumentError
-#include "databento/record.hpp"      // kMaxRecordLen
 
 using databento::detail::DbnFsm;
 
@@ -152,6 +149,9 @@ DbnFsm::DbnFsm(VersionUpgradePolicy upgrade_policy, std::size_t buffer_size)
     : decoder_{Create(upgrade_policy, buffer_size), FreeCFfiDecoder} {}
 
 std::byte* DbnFsm::Space(std::size_t* length) {
+  if (batch_.HasUndrained()) {
+    batch_.CopyUndrained();
+  }
   return reinterpret_cast<std::byte*>(
       DbnDecoder_space(AsDecoder(decoder_.get()), length));
 }
@@ -161,42 +161,71 @@ void DbnFsm::Fill(std::size_t length) {
 }
 
 void DbnFsm::WriteAll(const char* data, std::size_t length) {
+  if (batch_.HasUndrained()) {
+    batch_.CopyUndrained();
+  }
   DbnDecoder_write_all(AsDecoder(decoder_.get()),
                        reinterpret_cast<const std::uint8_t*>(data), length);
 }
 
 void DbnFsm::WriteAll(const std::byte* data, std::size_t length) {
+  if (batch_.HasUndrained()) {
+    batch_.CopyUndrained();
+  }
   DbnDecoder_write_all(AsDecoder(decoder_.get()),
                        reinterpret_cast<const std::uint8_t*>(data), length);
 }
 
 DbnFsm::Status DbnFsm::Process() {
-  switch (DbnDecoder_process(AsDecoder(decoder_.get()))) {
-    case DbnProcessStatus_ReadMore: {
-      return Status::ReadMore;
+  if (!batch_.HasUndrained()) {
+    const auto outcome = DbnDecoder_process_many(
+        AsDecoder(decoder_.get()),
+        reinterpret_cast<const DbnRecordHeader**>(batch_.Data()), batch_.Capacity());
+    switch (outcome.status) {
+      case DbnProcessStatus_ReadMore: {
+        return Status::ReadMore;
+      }
+      case DbnProcessStatus_Metadata: {
+        const std::unique_ptr<DbnMetadata, void (*)(DbnMetadata*)> owned{
+            DbnDecoder_take_metadata(AsDecoder(decoder_.get())), DbnMetadata_free};
+        metadata_ = DecodeMetadata(owned.get());
+        return Status::Metadata;
+      }
+      case DbnProcessStatus_Record: {
+        batch_.Start(outcome.count);
+        break;
+      }
+      case DbnProcessStatus_Error:
+      default: {
+        const char* error = DbnDecoder_last_error(AsDecoder(decoder_.get()));
+        throw DbnResponseError{error == nullptr ? "Failed to decode DBN" : error};
+      }
     }
-    case DbnProcessStatus_Metadata: {
-      const std::unique_ptr<DbnMetadata, void (*)(DbnMetadata*)> owned{
-          DbnDecoder_take_metadata(AsDecoder(decoder_.get())), DbnMetadata_free};
-      metadata_ = DecodeMetadata(owned.get());
-      return Status::Metadata;
-    }
-    case DbnProcessStatus_Record: {
-      // The decoder owns the record, which stays valid until the buffer is
-      // next mutated. The C API returns it as const, but Record wraps a
-      // mutable header.
-      // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
-      last_record_ =
-          Record{const_cast<RecordHeader*>(reinterpret_cast<const RecordHeader*>(
-              DbnDecoder_last_record(AsDecoder(decoder_.get()))))};
-      // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
-      return Status::Record;
-    }
-    case DbnProcessStatus_Error:
-    default: {
-      const char* error = DbnDecoder_last_error(AsDecoder(decoder_.get()));
-      throw DbnResponseError{error == nullptr ? "Failed to decode DBN" : error};
-    }
+  }
+  // TODO(cg): change Record to wrap const RecordHeader
+  // The decoder owns the record, which stays valid until the buffer is next
+  // mutated. The C API returns it as const, but Record wraps a mutable header.
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+  last_record_ = Record{const_cast<RecordHeader*>(batch_.Next())};
+  return Status::Record;
+}
+
+void DbnFsm::RecordBatch::CopyUndrained() {
+  std::size_t size{};
+  for (auto i = drained_; i < count_; ++i) {
+    size += records_[i]->Size();
+  }
+  if (undrained_records_.size() < size) {
+    undrained_records_.resize(size);
+  }
+  auto* dest = undrained_records_.data();
+  for (auto i = drained_; i < count_; ++i) {
+    const auto rec_size = records_[i]->Size();
+    // Not `memcpy` because when this runs again before the batch is drained, the
+    // records are already in `undrained_records_` and can overlap `dest`
+    std::memmove(dest, records_[i], rec_size);
+    records_[i] = reinterpret_cast<const RecordHeader*>(dest);
+    dest += rec_size;
   }
 }
 
@@ -219,4 +248,5 @@ void DbnFsm::Reset() {
   DbnDecoder_reset(AsDecoder(decoder_.get()));
   metadata_.reset();
   last_record_ = Record{nullptr};
+  batch_ = RecordBatch{};
 }

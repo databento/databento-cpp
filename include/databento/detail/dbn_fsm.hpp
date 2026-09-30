@@ -1,9 +1,11 @@
 #pragma once
 
+#include <array>
 #include <cstddef>  // byte, size_t
-#include <cstdint>  // uint8_t
+#include <cstdint>  // uint8_t, uint32_t
 #include <memory>   // unique_ptr
 #include <optional>
+#include <vector>
 
 #include "databento/dbn.hpp"     // Metadata
 #include "databento/enums.hpp"   // VersionUpgradePolicy
@@ -55,7 +57,34 @@ class DbnFsm {
   void Reset();
 
  private:
+  class RecordBatch {
+   public:
+    // Space for the library to write up to `Capacity` record pointers into
+    const RecordHeader** Data() { return records_.data(); }
+    std::uint32_t Capacity() const {
+      return static_cast<std::uint32_t>(records_.size());
+    }
+    // Indicates the library wrote `count` record pointers to `Data`
+    void Start(std::uint32_t count) {
+      count_ = count;
+      drained_ = 0;
+    }
+    // Whether the batch has records `Next` hasn't returned yet
+    bool HasUndrained() const { return drained_ != count_; }
+    const RecordHeader* Next() { return records_[drained_++]; }
+    // Copies the undrained records out of the library's buffer before a mutation
+    // invalidates them
+    void CopyUndrained();
+
+   private:
+    std::array<const RecordHeader*, 32> records_{};
+    std::uint32_t count_{};
+    std::uint32_t drained_{};
+    std::vector<std::byte> undrained_records_;
+  };
+
   std::unique_ptr<CFfiDecoder, void (*)(CFfiDecoder*)> decoder_;
+  RecordBatch batch_;
   // Holds the decoded metadata until `TakeMetadata` moves it out
   std::optional<databento::Metadata> metadata_;
   // Owns the `Record` view of the library's buffer so callers can be handed a

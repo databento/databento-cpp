@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.68.1 - 2026-09-30
+
+### Enhancements
+- Optimized DBN decoding to decode records in batches through libdbn_c
+- Upgraded libdbn_c version to 0.71.0
+- Upgraded default cpp-httplib version to 0.57.1
+
 ## 0.68.0 - 2026-09-18
 
 ### Enhancements
