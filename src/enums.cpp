@@ -193,6 +193,9 @@ const char* ToString(RType r_type) {
     case RType::Bbo1M: {
       return "bbo-1m";
     }
+    case RType::Tbbo: {
+      return "tbbo";
+    }
     default: {
       return "Unknown";
     }
@@ -1152,6 +1155,9 @@ RType FromString(const std::string& str) {
   }
   if (str == "bbo-1m") {
     return RType::Bbo1M;
+  }
+  if (str == "tbbo") {
+    return RType::Tbbo;
   }
   throw InvalidArgumentError{"FromString<RType>", "str",
                              "unknown value '" + str + '\''};

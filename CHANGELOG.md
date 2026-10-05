@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.69.0 - Upcoming
+
+### Enhancements
+- Added `Tbbo` variant to `RType` for TBBO records in DBN version 4
+
 ## 0.68.1 - 2026-09-30
 
 ### Enhancements
