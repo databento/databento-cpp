@@ -700,8 +700,8 @@ enum SystemCode : std::uint8_t {
   SlowReaderWarning = 2,
   // Indicates a replay subscription has caught up with real-time data.
   ReplayCompleted = 3,
-  // Signals that all records for interval-based schemas have been published for the
-  // given timestamp.
+  // Signals that all records for an interval-based schema have been published for the
+  // interval ending at `ts_event`.
   EndOfInterval = 4,
   // An acknowledgement of an unsubscribe request.
   UnsubscribeAck = 5,
