@@ -4,6 +4,10 @@
 
 ### Enhancements
 - Added `Tbbo` variant to `RType` for TBBO records in DBN version 4
+- Added `Unsubscribe()` to `LiveBlocking` and `LiveThreaded` for removing symbols from
+  a live session's subscriptions
+- Added `Unsubscriptions()` to `LiveBlocking` and `LiveThreaded`
+- Modified `Resubscribe()` to resubscribe only to active subscriptions
 
 ## 0.68.1 - 2026-09-30
 

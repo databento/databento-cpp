@@ -204,6 +204,50 @@ TEST_F(LiveThreadedTests, TestTimeoutRecoveryWithZstdCompression) {
   }
 }
 
+TEST_F(LiveThreadedTests, TestUnsubscribe) {
+  const MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
+                    1,
+                    2,
+                    3,
+                    {},
+                    4,
+                    Action::Add,
+                    Side::Bid,
+                    UnixNanos{},
+                    TimeDeltaNanos{},
+                    100};
+  const std::vector<std::string> kSymbols{"ESZ6", "NQZ6"};
+  constexpr auto kSchema = Schema::Mbo;
+  constexpr auto kSType = SType::RawSymbol;
+  const mock::MockLsgServer mock_server{
+      dataset::kGlbxMdp3, kTsOut, [&kRec, &kSymbols](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.Start();
+        self.Unsubscribe(kSymbols, kSchema, kSType, true);
+        // Only sent once the unsubscribe request has been received
+        self.SendRecord(kRec);
+      }};
+
+  LiveThreaded target = builder_.SetDataset(dataset::kGlbxMdp3)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildThreaded();
+  std::atomic<bool> has_started{};
+  target.Start([&has_started](Metadata&&) { has_started = true; },
+               [&kRec](const Record& rec) {
+                 EXPECT_TRUE(rec.Holds<MboMsg>());
+                 EXPECT_EQ(rec.Get<MboMsg>(), kRec);
+                 return KeepGoing::Stop;
+               });
+  // `Start` is asynchronous, so wait for the session to start before unsubscribing
+  while (!has_started) {
+    std::this_thread::yield();
+  }
+  target.Unsubscribe(kSymbols, kSchema, kSType);
+  target.BlockForStop();
+}
+
 TEST_F(LiveThreadedTests, TestStop) {
   const MboMsg kRec{DummyHeader<MboMsg>(RType::Mbo),
                     1,

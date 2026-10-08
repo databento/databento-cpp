@@ -63,6 +63,8 @@ class MockLsgServer {
                  const std::string& start, bool is_last);
   void SubscribeWithSnapshot(const std::vector<std::string>& symbols, Schema schema,
                              SType stype, bool is_last);
+  void Unsubscribe(const std::vector<std::string>& symbols, Schema schema, SType stype,
+                   bool is_last);
   void Start();
   std::size_t Send(const std::string& msg);
   ::ssize_t UncheckedSend(const std::string& msg);

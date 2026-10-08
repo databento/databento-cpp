@@ -99,8 +99,9 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols, Schema sch
           << "|start=" << start.time_since_epoch().count()
           << "|id=" << std::to_string(sub_counter_);
   Subscribe(sub_msg.str(), symbols, false);
-  subscriptions_.emplace_back(
-      LiveSubscription{symbols, schema, stype_in, start, sub_counter_});
+  subscriptions_.emplace_back(LiveSubscription{symbols, schema, stype_in, start,
+                                               sub_counter_,
+                                               std::chrono::system_clock::now()});
 }
 
 void LiveBlocking::Subscribe(const std::vector<std::string>& symbols, Schema schema,
@@ -113,12 +114,14 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols, Schema sch
     sub_msg << "|start=" << start;
   }
   Subscribe(sub_msg.str(), symbols, false);
+
+  const auto now = std::chrono::system_clock::now();
   if (start.empty()) {
     subscriptions_.emplace_back(LiveSubscription{
-        symbols, schema, stype_in, LiveSubscription::NoStart{}, sub_counter_});
+        symbols, schema, stype_in, LiveSubscription::NoStart{}, sub_counter_, now});
   } else {
     subscriptions_.emplace_back(
-        LiveSubscription{symbols, schema, stype_in, start, sub_counter_});
+        LiveSubscription{symbols, schema, stype_in, start, sub_counter_, now});
   }
 }
 
@@ -130,18 +133,64 @@ void LiveBlocking::SubscribeWithSnapshot(const std::vector<std::string>& symbols
           << "|id=" << std::to_string(sub_counter_);
 
   Subscribe(sub_msg.str(), symbols, true);
-  subscriptions_.emplace_back(LiveSubscription{
-      symbols, schema, stype_in, LiveSubscription::Snapshot{}, sub_counter_});
+  subscriptions_.emplace_back(
+      LiveSubscription{symbols, schema, stype_in, LiveSubscription::Snapshot{},
+                       sub_counter_, std::chrono::system_clock::now()});
+}
+
+void LiveBlocking::Unsubscribe(const std::vector<std::string>& symbols, Schema schema,
+                               SType stype_in) {
+  std::ostringstream unsub_msg;
+  unsub_msg << "unsubscribe|schema=" << ToString(schema)
+            << "|stype_in=" << ToString(stype_in);
+  Unsubscribe(unsub_msg.str(), symbols);
+  unsubscriptions_.emplace_back(
+      LiveUnsubscription{symbols, schema, stype_in, std::chrono::system_clock::now()});
+}
+
+void LiveBlocking::Subscribe(LiveSubscription& subscription) {
+  if (std::holds_alternative<UnixNanos>(subscription.start) ||
+      std::holds_alternative<std::string>(subscription.start)) {
+    subscription.start = LiveSubscription::NoStart{};
+  }
+  subscription.sent_at = std::chrono::system_clock::now();
+  sub_counter_ = std::max(sub_counter_, subscription.id);
+  std::ostringstream sub_msg;
+  sub_msg << "schema=" << ToString(subscription.schema)
+          << "|stype_in=" << ToString(subscription.stype_in)
+          << "|id=" << std::to_string(sub_counter_);
+  Subscribe(sub_msg.str(), subscription.symbols,
+            std::holds_alternative<LiveSubscription::Snapshot>(subscription.start));
 }
 
 void LiveBlocking::Subscribe(std::string_view sub_msg,
                              const std::vector<std::string>& symbols,
                              bool use_snapshot) {
-  static constexpr auto kMethodName = "LiveBlocking::Subscribe";
+  SendChunkedSymbols("LiveBlocking::Subscribe", sub_msg, symbols,
+                     use_snapshot ? "|snapshot=1" : "|snapshot=0");
+}
+
+void LiveBlocking::Unsubscribe(LiveUnsubscription& unsubscription) {
+  unsubscription.sent_at = std::chrono::system_clock::now();
+  std::ostringstream unsub_msg;
+  unsub_msg << "unsubscribe|schema=" << ToString(unsubscription.schema)
+            << "|stype_in=" << ToString(unsubscription.stype_in);
+  Unsubscribe(unsub_msg.str(), unsubscription.symbols);
+}
+
+void LiveBlocking::Unsubscribe(std::string_view unsub_msg,
+                               const std::vector<std::string>& symbols) {
+  SendChunkedSymbols("LiveBlocking::Unsubscribe", unsub_msg, symbols, "");
+}
+
+void LiveBlocking::SendChunkedSymbols(std::string_view method_name,
+                                      std::string_view msg_prefix,
+                                      const std::vector<std::string>& symbols,
+                                      std::string_view msg_suffix) {
   constexpr std::ptrdiff_t kSymbolMaxChunkSize = 500;
 
   if (symbols.empty()) {
-    throw InvalidArgumentError{kMethodName, "symbols",
+    throw InvalidArgumentError{std::string{method_name}, "symbols",
                                "must contain at least one symbol"};
   }
   auto symbols_it = symbols.begin();
@@ -149,20 +198,17 @@ void LiveBlocking::Subscribe(std::string_view sub_msg,
     const auto distance_from_end = std::distance(symbols_it, symbols.end());
     const auto chunk_size = std::min(kSymbolMaxChunkSize, distance_from_end);
 
-    std::ostringstream chunked_sub_msg;
-    chunked_sub_msg << sub_msg << "|symbols="
-                    << JoinSymbolStrings(kMethodName, symbols_it,
-                                         symbols_it + chunk_size)
-                    << "|snapshot=" << use_snapshot
-                    << "|is_last=" << (distance_from_end <= kSymbolMaxChunkSize)
-                    << '\n';
+    std::ostringstream chunked_msg;
+    chunked_msg << msg_prefix << "|symbols="
+                << JoinSymbolStrings(method_name, symbols_it, symbols_it + chunk_size)
+                << msg_suffix
+                << "|is_last=" << (distance_from_end <= kSymbolMaxChunkSize) << '\n';
     if (log_receiver_->ShouldLog(LogLevel::Debug)) {
       std::ostringstream log_ss;
-      log_ss << '[' << kMethodName
-             << "] Sending subscription request: " << chunked_sub_msg.str();
+      log_ss << '[' << method_name << "] Sending request: " << chunked_msg.str();
       log_receiver_->Receive(LogLevel::Debug, log_ss.str());
     }
-    connection_.WriteAll(chunked_sub_msg.str());
+    connection_.WriteAll(chunked_msg.str());
 
     symbols_it += chunk_size;
   }
@@ -260,18 +306,19 @@ void LiveBlocking::Reconnect() {
 }
 
 void LiveBlocking::Resubscribe() {
-  for (auto& subscription : subscriptions_) {
-    if (std::holds_alternative<UnixNanos>(subscription.start) ||
-        std::holds_alternative<std::string>(subscription.start)) {
-      subscription.start = LiveSubscription::NoStart{};
+  // Replay subscriptions and unsubscriptions in the order they were made. Ties
+  // keep the subscription first.
+  auto sub_it = subscriptions_.begin();
+  auto unsub_it = unsubscriptions_.begin();
+  while (sub_it != subscriptions_.end() || unsub_it != unsubscriptions_.end()) {
+    if (unsub_it != unsubscriptions_.end() &&
+        (sub_it == subscriptions_.end() || unsub_it->sent_at < sub_it->sent_at)) {
+      Unsubscribe(*unsub_it);
+      ++unsub_it;
+    } else {
+      Subscribe(*sub_it);
+      ++sub_it;
     }
-    sub_counter_ = std::max(sub_counter_, subscription.id);
-    std::ostringstream sub_msg;
-    sub_msg << "schema=" << ToString(subscription.schema)
-            << "|stype_in=" << ToString(subscription.stype_in)
-            << "|id=" << std::to_string(sub_counter_);
-    Subscribe(sub_msg.str(), subscription.symbols,
-              std::holds_alternative<LiveSubscription::Snapshot>(subscription.start));
   }
 }
 

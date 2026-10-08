@@ -193,6 +193,15 @@ void MockLsgServer::Subscribe(const std::vector<std::string>& symbols, Schema sc
             std::string::npos);
 }
 
+void MockLsgServer::Unsubscribe(const std::vector<std::string>& symbols, Schema schema,
+                                SType stype, bool is_last) {
+  const auto received = Receive();
+  EXPECT_EQ(received, std::string{"unsubscribe|schema="} + ToString(schema) +
+                          "|stype_in=" + ToString(stype) + "|symbols=" +
+                          JoinSymbolStrings("MockLsgServer::Unsubscribe", symbols) +
+                          "|is_last=" + std::to_string(is_last) + '\n');
+}
+
 void MockLsgServer::Start() {
   const auto received = Receive();
   EXPECT_EQ(received, "start_session\n");
