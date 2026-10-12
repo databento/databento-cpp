@@ -220,7 +220,8 @@ TEST_F(LiveThreadedTests, TestUnsubscribe) {
   constexpr auto kSchema = Schema::Mbo;
   constexpr auto kSType = SType::RawSymbol;
   const mock::MockLsgServer mock_server{
-      dataset::kGlbxMdp3, kTsOut, [&kRec, &kSymbols](mock::MockLsgServer& self) {
+      dataset::kGlbxMdp3, kTsOut,
+      [&kRec, &kSymbols, kSchema, kSType](mock::MockLsgServer& self) {
         self.Accept();
         self.Authenticate();
         self.Start();
