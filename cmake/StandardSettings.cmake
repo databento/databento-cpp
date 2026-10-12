@@ -13,7 +13,7 @@ set(${PROJECT_NAME_UPPERCASE}_DBN_SOURCE_DIR "" CACHE PATH "Path to a dbn checko
 # Compiler options
 #
 
-option(${PROJECT_NAME_UPPERCASE}_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." ${IS_MAIN_PROJECT})
+option(${PROJECT_NAME_UPPERCASE}_WARNINGS_AS_ERRORS "Treat compiler warnings as errors." ${PROJECT_IS_TOP_LEVEL})
 
 #
 # Unit testing
@@ -50,9 +50,8 @@ option(${PROJECT_NAME_UPPERCASE}_ENABLE_UBSAN "Enable undefined behavior sanitiz
 #
 
 # Generate compile_commands.json for clang based tools
-set(CMAKE_EXPORT_COMPILE_COMMANDS ${IS_MAIN_PROJECT})
+set(CMAKE_EXPORT_COMPILE_COMMANDS ${PROJECT_IS_TOP_LEVEL})
 
-option(${PROJECT_NAME_UPPERCASE}_VERBOSE_OUTPUT "Enable verbose output, allowing for a better understanding of each step taken." ${IS_MAIN_PROJECT})
 option(${PROJECT_NAME_UPPERCASE}_GENERATE_EXPORT_HEADER "Create a `project_export.h` file containing all exported symbols." OFF)
 
 # Export all symbols when building a shared library

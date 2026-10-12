@@ -9,6 +9,9 @@
 - Added `Unsubscriptions()` to `LiveBlocking` and `LiveThreaded`
 - Modified `Resubscribe()` to resubscribe only to active subscriptions
 
+### Bug fixes
+- Removed clang-format target creation when not the main project
+
 ## 0.68.1 - 2026-09-30
 
 ### Enhancements
