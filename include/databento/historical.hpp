@@ -74,16 +74,6 @@ class Historical {
                                            UnixNanos since);
   std::vector<BatchJobShort> BatchListJobs(const std::vector<JobState>& states,
                                            const std::string& since);
-  // Lists previous batch jobs with the full details of each job.
-  //
-  // DEPRECATED: the batch.list_jobs endpoint will stop returning full job
-  // details at a future date; use BatchListJobs and BatchGetJobDetails
-  // instead.
-  std::vector<BatchJob> BatchListJobsFull();
-  std::vector<BatchJob> BatchListJobsFull(const std::vector<JobState>& states,
-                                          UnixNanos since);
-  std::vector<BatchJob> BatchListJobsFull(const std::vector<JobState>& states,
-                                          const std::string& since);
   // Lists all files associated with a batch job.
   std::vector<BatchFileDesc> BatchListFiles(const std::string& job_id);
   // Gets the details of a batch job.
@@ -269,7 +259,6 @@ class Historical {
   void DownloadFile(const std::string& url, const std::filesystem::path& output_path,
                     std::string_view hash, std::uint64_t exp_size);
   std::vector<BatchJobShort> BatchListJobs(const detail::HttpParams& params);
-  std::vector<BatchJob> BatchListJobsFull(const detail::HttpParams& params);
   std::vector<DatasetConditionDetail> MetadataGetDatasetCondition(
       const detail::HttpParams& params);
   std::uint64_t MetadataGetRecordCount(const detail::HttpParams& params);

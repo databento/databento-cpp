@@ -9,6 +9,12 @@
 - Added `Unsubscriptions()` to `LiveBlocking` and `LiveThreaded`
 - Modified `Resubscribe()` to resubscribe only to active subscriptions
 
+### Breaking changes
+- Removed the deprecated `Historical::BatchListJobsFull` methods. `BatchListJobs` no
+  longer sends the `short` parameter now that the `batch.list_jobs` endpoint only returns
+  the short response. Use `Historical::BatchGetJobDetails` to request the full details of
+  a job
+
 ### Bug fixes
 - Removed clang-format target creation when not the main project
 

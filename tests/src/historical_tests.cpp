@@ -124,82 +124,6 @@ TEST_F(HistoricalTests, TestBatchSubmitJob) {
   EXPECT_EQ(res.split_size, 0);
 }
 
-TEST_F(HistoricalTests, TestBatchListJobsFull) {
-  const nlohmann::json kResp{{{"actual_size", 2022690},
-                              {"billed_size", 5156064},
-                              {"compression", "zstd"},
-                              {"cost_usd", 0.119089},
-                              {"dataset", "GLBX.MDP3"},
-                              {"delivery", "download"},
-                              {"encoding", "dbn"},
-                              {"end", "2022-09-27 00:00:00+00:00"},
-                              {"id", "CKXF"},
-                              {"limit", nullptr},
-                              {"package_size", 2026761},
-                              {"packaging", nullptr},
-                              {"pretty_px", false},
-                              {"pretty_ts", false},
-                              {"map_symbols", false},
-                              {"progress", 100},
-                              {"record_count", 107418},
-                              {"schema", "trades"},
-                              {"split_duration", "day"},
-                              {"split_size", nullptr},
-                              {"split_symbols", false},
-                              {"start", "2022-08-26 00:00:00+00:00"},
-                              {"state", "done"},
-                              {"stype_in", "raw_symbol"},
-                              {"stype_out", "instrument_id"},
-                              {"symbols", "GEZ2"},
-                              {"ts_expiration", "2022-11-30 15:27:10.148788+00:00"},
-                              {"ts_process_done", "2022-10-31 15:27:10.148788+00:00"},
-                              {"ts_process_start", "2022-10-31 15:27:08.018759+00:00"},
-                              {"ts_queued", "2022-10-31 15:26:58.654241+00:00"},
-                              {"ts_received", "2022-10-31 15:26:58.112496+00:00"},
-                              {"user_id", "A_USER"}},
-                             {{"actual_size", 2022690},
-                              {"billed_size", 5156064},
-                              {"compression", "zstd"},
-                              {"cost_usd", 0.119089},
-                              {"dataset", "GLBX.MDP3"},
-                              {"delivery", "download"},
-                              {"encoding", "dbn"},
-                              {"end", "2022-09-27 00:00:00+00:00"},
-                              {"id", "8UPL"},
-                              {"limit", nullptr},
-                              {"package_size", 2026761},
-                              {"packaging", nullptr},
-                              {"pretty_px", false},
-                              {"pretty_ts", false},
-                              {"map_symbols", false},
-                              {"progress", 100},
-                              {"record_count", 107418},
-                              {"schema", "trades"},
-                              {"split_duration", "day"},
-                              {"split_size", nullptr},
-                              {"split_symbols", false},
-                              {"start", "2022-08-26 00:00:00+00:00"},
-                              {"state", "done"},
-                              {"stype_in", "raw_symbol"},
-                              {"stype_out", "instrument_id"},
-                              {"symbols", {"GEZ2", "GEH3"}},
-                              {"ts_expiration", "2022-11-30 15:29:03.010429+00:00"},
-                              {"ts_process_done", "2022-10-31 15:29:03.010429+00:00"},
-                              {"ts_process_start", "2022-10-31 15:29:01.104930+00:00"},
-                              {"ts_queued", "2022-10-31 15:28:58.933725+00:00"},
-                              {"ts_received", "2022-10-31 15:28:58.233520+00:00"},
-                              {"user_id", "A_USER"}}};
-  mock_server_.MockGetJson("/v0/batch.list_jobs", kResp);
-  const auto port = mock_server_.ListenOnThread();
-
-  databento::Historical target = Client(port);
-  const auto res = target.BatchListJobsFull();
-  ASSERT_EQ(res.size(), 2);
-  const std::vector<std::string> symbols{"GEZ2", "GEH3"};
-  EXPECT_EQ(res[1].symbols, symbols);
-  EXPECT_EQ(res[0].ts_expiration, "2022-11-30 15:27:10.148788+00:00");
-}
-
 TEST_F(HistoricalTests, TestBatchListJobs) {
   const nlohmann::json kResp{{{"id", "CKXF"},
                               {"state", "done"},
@@ -207,7 +131,7 @@ TEST_F(HistoricalTests, TestBatchListJobs) {
                              {{"id", "8UPL"},
                               {"state", "processing"},
                               {"ts_received", "2022-10-31 15:28:58.233520+00:00"}}};
-  mock_server_.MockGetJson("/v0/batch.list_jobs", {{"short", "true"}}, kResp);
+  mock_server_.MockGetJson("/v0/batch.list_jobs", kResp);
   const auto port = mock_server_.ListenOnThread();
 
   databento::Historical target = Client(port);

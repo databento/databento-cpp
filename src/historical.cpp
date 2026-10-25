@@ -327,14 +327,14 @@ std::vector<databento::BatchJobShort> Historical::BatchListJobs() {
 }
 std::vector<databento::BatchJobShort> Historical::BatchListJobs(
     const std::vector<databento::JobState>& states, UnixNanos since) {
-  detail::HttpParams params{{"short", "true"}};
+  detail::HttpParams params;
   detail::SetIfNotEmpty(&params, "states", states);
   detail::SetIfPositive(&params, "since", since.time_since_epoch().count());
   return this->BatchListJobs(params);
 }
 std::vector<databento::BatchJobShort> Historical::BatchListJobs(
     const std::vector<databento::JobState>& states, const std::string& since) {
-  detail::HttpParams params{{"short", "true"}};
+  detail::HttpParams params;
   detail::SetIfNotEmpty(&params, "states", states);
   detail::SetIfNotEmpty(&params, "since", since);
   return this->BatchListJobs(params);
@@ -351,40 +351,6 @@ std::vector<databento::BatchJobShort> Historical::BatchListJobs(
   std::transform(
       json.begin(), json.end(), std::back_inserter(jobs),
       [](const nlohmann::json& item) { return ::ParseShort(kEndpoint, item); });
-  return jobs;
-}
-std::vector<databento::BatchJob> Historical::BatchListJobsFull() {
-  static const std::vector<JobState> kDefaultStates = {
-      JobState::Queued, JobState::Processing, JobState::Done};
-  detail::HttpParams params;
-  detail::SetIfNotEmpty(&params, "states", kDefaultStates);
-  return this->BatchListJobsFull(kDefaultStates, UnixNanos{});
-}
-std::vector<databento::BatchJob> Historical::BatchListJobsFull(
-    const std::vector<databento::JobState>& states, UnixNanos since) {
-  detail::HttpParams params;
-  detail::SetIfNotEmpty(&params, "states", states);
-  detail::SetIfPositive(&params, "since", since.time_since_epoch().count());
-  return this->BatchListJobsFull(params);
-}
-std::vector<databento::BatchJob> Historical::BatchListJobsFull(
-    const std::vector<databento::JobState>& states, const std::string& since) {
-  detail::HttpParams params;
-  detail::SetIfNotEmpty(&params, "states", states);
-  detail::SetIfNotEmpty(&params, "since", since);
-  return this->BatchListJobsFull(params);
-}
-std::vector<databento::BatchJob> Historical::BatchListJobsFull(
-    const detail::HttpParams& params) {
-  static const std::string kEndpoint = "Historical::BatchListJobsFull";
-  static const std::string kPath = ::BuildBatchPath(".list_jobs");
-  const nlohmann::json json = client_.GetJson(kPath, params);
-  if (!json.is_array()) {
-    throw JsonResponseError::TypeMismatch(kEndpoint, "array", json);
-  }
-  std::vector<BatchJob> jobs;
-  std::transform(json.begin(), json.end(), std::back_inserter(jobs),
-                 [](const nlohmann::json& item) { return ::Parse(kEndpoint, item); });
   return jobs;
 }
 
