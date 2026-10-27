@@ -161,7 +161,7 @@ FileExistsResult CheckIfFileExists(
     }
     if (hasher) {
       // Hash previously downloaded data
-      std::vector<std::byte> buf(1 << 23, std::byte{});
+      std::vector<std::byte> buf(std::size_t{1} << 23U, std::byte{});
       databento::InFileStream existing_file{output_path};
       while (auto read_size = existing_file.ReadSome(buf.data(), buf.size())) {
         hasher->Update(buf.data(), read_size);

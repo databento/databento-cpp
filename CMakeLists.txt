@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.24..4.2)
 
 project(
   databento
-  VERSION 0.68.1
+  VERSION 0.69.0
   LANGUAGES CXX
   DESCRIPTION "Official Databento client library"
 )
@@ -174,7 +174,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
     find_package(httplib REQUIRED)
   endif()
 else()
-  set(httplib_version 0.57.1)
+  set(httplib_version 0.62.0)
   FetchContent_Declare(
     httplib
     URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz

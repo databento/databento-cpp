@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.69.0 - Upcoming
+## 0.69.0 - 2026-10-27
 
 ### Enhancements
 - Added `Tbbo` variant to `RType` for TBBO records in DBN version 4
@@ -8,8 +8,11 @@
   a live session's subscriptions
 - Added `Unsubscriptions()` to `LiveBlocking` and `LiveThreaded`
 - Modified `Resubscribe()` to resubscribe only to active subscriptions
+- Upgraded libdbn_c version to 0.73.0
+- Upgraded default cpp-httplib version to 0.62.0
 
 ### Breaking changes
+- Added `sent_at` field to `LiveSubscription`
 - Removed the deprecated `Historical::BatchListJobsFull` methods. `BatchListJobs` no
   longer sends the `short` parameter now that the `batch.list_jobs` endpoint only returns
   the short response. Use `Historical::BatchGetJobDetails` to request the full details of

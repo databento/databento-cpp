@@ -13,18 +13,18 @@
 #   dbn_c_native_link_options    linker flags the static library depends on
 #
 
-set(dbn_version 0.71.0)
+set(dbn_version 0.73.0)
 
 set(dbn_c_sha256_x86_64-unknown-linux-gnu
-  1d962db6a2a02150899328df4e28a7ef6f53cefa563c3013ffd2b7d61830ba53)
+  afb0e82c3352c8da669319cecb068d5544cc36ea6a7f259ae825312d0ce3f1ba)
 set(dbn_c_sha256_aarch64-unknown-linux-gnu
-  04f4f381193f22053c55bc8cf894e9c1b55f47e06e52b99f911644b4d24563b3)
+  2faa9911bef4a12d683acb590de51b976199be7291ed52814d25588067db5ac5)
 set(dbn_c_sha256_x86_64-apple-darwin
-  89e4775abca8a0131a28fccb743014f4717442e5d4246dc3a171957ff9b9c8c8)
+  15ff1ff8dbf882c21c156d38982458db2943a759439097e0996178b1b7337f78)
 set(dbn_c_sha256_aarch64-apple-darwin
-  c2c61463581602afeb474a02a395515bbedbf4c7dab02341058a8daac113c9c8)
+  b8747d544f1f4d70a7ef7773151f1f35a6c70d6a694928a43148eb46544955ad)
 set(dbn_c_sha256_x86_64-pc-windows-msvc
-  d849887ae42550f1939c7533aa750b3127b606385371714030e83def6fba1205)
+  fa48f632ebf3adac7df3dfcf9373cd006d9d72e6023bd23294e598a110f1e2a7)
 
 #
 # Determine which prebuilt archive fits the target platform, if any
