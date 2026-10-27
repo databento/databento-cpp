@@ -265,6 +265,108 @@ TEST_F(LiveBlockingTests, TestInvalidSubscription) {
                databento::InvalidArgumentError);
 }
 
+TEST_F(LiveBlockingTests, TestUnsubscribe) {
+  constexpr auto kTsOut = false;
+  constexpr auto kDataset = dataset::kGlbxMdp3;
+  const std::vector<std::string> kSymbols{"ESZ6", "NQZ6"};
+  const auto kSchema = Schema::Mbo;
+  const auto kSType = SType::RawSymbol;
+
+  const mock::MockLsgServer mock_server{
+      kDataset, kTsOut, [&kSymbols, kSchema, kSType](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.Start();
+        self.Unsubscribe(kSymbols, kSchema, kSType, true);
+      }};
+
+  LiveBlocking target = builder_.SetDataset(kDataset)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  target.Start();
+  target.Unsubscribe(kSymbols, kSchema, kSType);
+}
+
+TEST_F(LiveBlockingTests, TestUnsubscribeChunking) {
+  constexpr auto kTsOut = false;
+  constexpr auto kDataset = dataset::kXnasItch;
+  const auto kSymbol = "TEST";
+  const std::size_t kSymbolCount = 1001;
+  const auto kSchema = Schema::Trades;
+  const auto kSType = SType::RawSymbol;
+
+  const mock::MockLsgServer mock_server{
+      kDataset, kTsOut,
+      [kSymbol, kSymbolCount, kSchema, kSType](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.Start();
+        std::size_t i{};
+        while (i < kSymbolCount) {
+          const auto chunk_size =
+              std::min(static_cast<std::size_t>(500), kSymbolCount - i);
+          const std::vector<std::string> symbols_chunk(chunk_size, kSymbol);
+          self.Unsubscribe(symbols_chunk, kSchema, kSType,
+                           i + chunk_size == kSymbolCount);
+          i += chunk_size;
+        }
+      }};
+
+  LiveBlocking target = builder_.SetDataset(kDataset)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  target.Start();
+  const std::vector<std::string> kSymbols(kSymbolCount, kSymbol);
+  target.Unsubscribe(kSymbols, kSchema, kSType);
+}
+
+TEST_F(LiveBlockingTests, TestUnsubscribeAllSymbols) {
+  constexpr auto kTsOut = false;
+  constexpr auto kDataset = dataset::kXnasItch;
+  const auto kSchema = Schema::Trades;
+  const auto kSType = SType::RawSymbol;
+
+  const mock::MockLsgServer mock_server{
+      kDataset, kTsOut, [kSchema, kSType](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.Start();
+        self.Unsubscribe(kAllSymbols, kSchema, kSType, true);
+      }};
+
+  LiveBlocking target = builder_.SetDataset(kDataset)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  target.Start();
+  target.Unsubscribe(kAllSymbols, kSchema, kSType);
+}
+
+TEST_F(LiveBlockingTests, TestInvalidUnsubscribe) {
+  constexpr auto kTsOut = false;
+  constexpr auto kDataset = dataset::kXnasItch;
+  const std::vector<std::string> kNoSymbols{};
+  const auto kSchema = Schema::Trades;
+  const auto kSType = SType::RawSymbol;
+
+  const mock::MockLsgServer mock_server{kDataset, kTsOut,
+                                        [](mock::MockLsgServer& self) {
+                                          self.Accept();
+                                          self.Authenticate();
+                                          self.Start();
+                                        }};
+
+  LiveBlocking target = builder_.SetDataset(kDataset)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  target.Start();
+  ASSERT_THROW(target.Unsubscribe(kNoSymbols, kSchema, kSType),
+               databento::InvalidArgumentError);
+}
+
 TEST_F(LiveBlockingTests, TestNextRecord) {
   constexpr auto kTsOut = false;
   const auto kRecCount = 12;
@@ -728,6 +830,66 @@ TEST_F(LiveBlockingTests, TestReconnectAndResubscribe) {
   const auto rec2 = target.NextRecord();
   ASSERT_TRUE(rec2.Holds<TradeMsg>());
   ASSERT_EQ(rec2.Get<TradeMsg>(), kRec);
+}
+
+TEST_F(LiveBlockingTests, TestResubscribeReplaysUnsubscribe) {
+  constexpr auto kTsOut = false;
+  constexpr auto kDataset = dataset::kGlbxMdp3;
+  const std::vector<std::string> kSymbols{"ESZ6", "NQZ6"};
+  const std::vector<std::string> kUnsubSymbols{"NQZ6"};
+  const std::vector<std::string> kResubSymbols{"NQZ6", "ESZ6"};
+  const auto kSchema = Schema::Mbo;
+  const auto kSType = SType::RawSymbol;
+  constexpr TradeMsg kRec{DummyHeader<TradeMsg>(RType::Mbp0),
+                          1,
+                          2,
+                          Action::Add,
+                          Side::Ask,
+                          {},
+                          1,
+                          {},
+                          {},
+                          2};
+
+  const mock::MockLsgServer mock_server{
+      kDataset, kTsOut,
+      [&kSymbols, &kUnsubSymbols, &kResubSymbols, kSchema, kSType,
+       kRec](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.Subscribe(kSymbols, kSchema, kSType, true);
+        self.Start();
+        self.Unsubscribe(kUnsubSymbols, kSchema, kSType, true);
+        self.Subscribe(kResubSymbols, kSchema, kSType, true);
+        self.Close();
+        // Wait for reconnect. Requests must be replayed in the order they were sent
+        self.Accept();
+        self.Authenticate();
+        self.Subscribe(kSymbols, kSchema, kSType, true);
+        self.Unsubscribe(kUnsubSymbols, kSchema, kSType, true);
+        self.Subscribe(kResubSymbols, kSchema, kSType, true);
+        self.Start();
+        self.SendRecord(kRec);
+      }};
+
+  LiveBlocking target = builder_.SetDataset(kDataset)
+                            .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  target.Subscribe(kSymbols, kSchema, kSType);
+  target.Start();
+  target.Unsubscribe(kUnsubSymbols, kSchema, kSType);
+  target.Subscribe(kResubSymbols, kSchema, kSType);
+  ASSERT_EQ(target.Subscriptions().size(), 2);
+  ASSERT_EQ(target.Unsubscriptions().size(), 1);
+  ASSERT_THROW(target.NextRecord(), databento::LiveApiError);
+
+  target.Reconnect();
+  target.Resubscribe();
+  target.Start();
+  const auto& rec = target.NextRecord();
+  ASSERT_TRUE(rec.Holds<TradeMsg>());
+  ASSERT_EQ(rec.Get<TradeMsg>(), kRec);
 }
 
 TEST_F(LiveBlockingTests, TestHeartbeatTimeoutOnNextRecord) {

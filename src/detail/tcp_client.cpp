@@ -77,6 +77,8 @@ class BlockingGuard {
     // the member only exists off Windows, so it cannot be in the init list
     // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
     _original_flags = ::fcntl(_fd, F_GETFL, 0);
+    // POSIX defines the file status flags as int
+    // NOLINTNEXTLINE(bugprone-signed-bitwise)
     ::fcntl(_fd, F_SETFL, _original_flags | O_NONBLOCK);
 #endif
   }

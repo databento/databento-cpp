@@ -6,20 +6,11 @@ cmake_minimum_required(VERSION 3.24..4.2)
 
 project(
   databento
-  VERSION 0.68.1
+  VERSION 0.69.0
   LANGUAGES CXX
   DESCRIPTION "Official Databento client library"
 )
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPERCASE)
-
-#
-# Main project check
-#
-
-set(IS_MAIN_PROJECT OFF)
-if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  set(IS_MAIN_PROJECT ON)
-endif()
 
 #
 # Set project options
@@ -32,7 +23,7 @@ include(cmake/Utils.cmake)
 message(STATUS "Started CMake for ${PROJECT_NAME} v${PROJECT_VERSION}...")
 
 if(NOT CMAKE_BUILD_TYPE)
-  if(IS_MAIN_PROJECT)
+  if(PROJECT_IS_TOP_LEVEL)
     message(STATUS "Defaulting to Debug build")
     set(CMAKE_BUILD_TYPE "Debug")
   else()
@@ -80,16 +71,14 @@ configure_file(
 
 include(cmake/SourcesAndHeaders.cmake)
 
-if(${PROJECT_NAME_UPPERCASE}_VERBOSE_OUTPUT)
-  verbose_message("Found the following sources:")
-  foreach(source IN LISTS sources)
-    verbose_message("* ${source}")
-  endforeach()
-  verbose_message("Found the following headers:")
-  foreach(header IN LISTS headers)
-    verbose_message("* ${header}")
-  endforeach()
-endif()
+message(VERBOSE "Found the following sources:")
+foreach(source IN LISTS sources)
+  message(VERBOSE "* ${source}")
+endforeach()
+message(VERBOSE "Found the following headers:")
+foreach(header IN LISTS headers)
+  message(VERBOSE "* ${header}")
+endforeach()
 
 add_library(
   ${PROJECT_NAME}
@@ -185,7 +174,7 @@ if(${PROJECT_NAME_UPPERCASE}_USE_EXTERNAL_HTTPLIB)
     find_package(httplib REQUIRED)
   endif()
 else()
-  set(httplib_version 0.57.1)
+  set(httplib_version 0.62.0)
   FetchContent_Declare(
     httplib
     URL https://github.com/yhirose/cpp-httplib/archive/refs/tags/v${httplib_version}.tar.gz
@@ -246,7 +235,7 @@ target_compile_definitions(
     CPPHTTPLIB_OPENSSL_SUPPORT
 )
 
-verbose_message("Successfully added all dependencies and linked against them.")
+message(VERBOSE "Successfully added all dependencies and linked against them.")
 
 #
 # Set the build/user include directories
@@ -270,13 +259,15 @@ message(STATUS "Finished setting up include directories.")
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-verbose_message("Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
+message(VERBOSE "Project is now aliased as ${PROJECT_NAME}::${PROJECT_NAME}.")
 
 #
 # Format the project using the `clang-format` target (i.e: cmake --build build --target clang-format)
 #
 
-add_clang_format_target()
+if (PROJECT_IS_TOP_LEVEL)
+  add_clang_format_target()
+endif()
 
 #
 # Install library for easy downstream inclusion
@@ -387,7 +378,7 @@ install(
     ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
 
-verbose_message("Install targets successfully built. Install with `cmake --build <build_directory> --target install --config <build_config>`.")
+message(VERBOSE "Install targets successfully built. Install with `cmake --build <build_directory> --target install --config <build_config>`.")
 
 #
 # Generate export header if specified

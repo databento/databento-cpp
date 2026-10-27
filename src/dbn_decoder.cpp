@@ -83,7 +83,7 @@ void DbnDecoder::DetectCompression() {
   const auto first_word = *reinterpret_cast<const std::uint32_t*>(magic.data());
   // Zstandard skippable frames begin with 0x184D2A5? where the last 8 bits
   // can be set to any value
-  constexpr auto kZstdSkippableFrame = 0x184D2A50;
+  constexpr auto kZstdSkippableFrame = 0x184D2A50U;
   if (first_word != kZstdMagicNumber) {
     if ((first_word & kZstdSkippableFrame) == kZstdSkippableFrame) {
       throw DbnResponseError{

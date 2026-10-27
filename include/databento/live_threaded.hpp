@@ -61,14 +61,16 @@ class LiveThreaded {
   std::uint64_t SessionId() const;
   const std::vector<LiveSubscription>& Subscriptions() const;
   std::vector<LiveSubscription>& Subscriptions();
+  const std::vector<LiveUnsubscription>& Unsubscriptions() const;
+  std::vector<LiveUnsubscription>& Unsubscriptions();
 
   /*
    * Methods
    */
 
   // Add a new subscription. A single client instance supports multiple
-  // subscriptions. Note there is no unsubscribe method. Subscriptions end
-  // when the client disconnects when it's destroyed.
+  // subscriptions. Subscriptions end when the client disconnects when it's
+  // destroyed or when their symbols are removed with `Unsubscribe`.
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype_in);
   void Subscribe(const std::vector<std::string>& symbols, Schema schema, SType stype_in,
@@ -77,6 +79,9 @@ class LiveThreaded {
                  const std::string& start);
   void SubscribeWithSnapshot(const std::vector<std::string>& symbols, Schema schema,
                              SType stype_in);
+  // Removes the specified symbols from the session's subscriptions for `schema`.
+  void Unsubscribe(const std::vector<std::string>& symbols, Schema schema,
+                   SType stype_in);
   // Notifies the gateway to start sending messages for all subscriptions.
   // `metadata_callback` will be called exactly once, before any calls to
   // `record_callback`. `record_callback` will be called for records from all

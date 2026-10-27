@@ -60,14 +60,18 @@ class LiveBlocking {
   std::uint64_t SessionId() const { return session_id_; }
   const std::vector<LiveSubscription>& Subscriptions() const { return subscriptions_; }
   std::vector<LiveSubscription>& Subscriptions() { return subscriptions_; }
+  const std::vector<LiveUnsubscription>& Unsubscriptions() const {
+    return unsubscriptions_;
+  }
+  std::vector<LiveUnsubscription>& Unsubscriptions() { return unsubscriptions_; }
 
   /*
    * Methods
    */
 
   // Add a new subscription. A single client instance supports multiple
-  // subscriptions. Note there is no unsubscribe method. Subscriptions end
-  // when the client disconnects in its destructor.
+  // subscriptions. Subscriptions end when the client disconnects in its
+  // destructor or when their symbols are removed with `Unsubscribe`.
   void Subscribe(const std::vector<std::string>& symbols, Schema schema,
                  SType stype_in);
   void Subscribe(const std::vector<std::string>& symbols, Schema schema, SType stype_in,
@@ -76,6 +80,9 @@ class LiveBlocking {
                  const std::string& start);
   void SubscribeWithSnapshot(const std::vector<std::string>& symbols, Schema schema,
                              SType stype_in);
+  // Removes the specified symbols from the session's subscriptions for `schema`.
+  void Unsubscribe(const std::vector<std::string>& symbols, Schema schema,
+                   SType stype_in);
   // Notifies the gateway to start sending messages for all subscriptions.
   //
   // This method should only be called once per instance.
@@ -116,8 +123,8 @@ class LiveBlocking {
   void Stop();
   // Closes the current connection and attempts to reconnect to the gateway.
   void Reconnect();
-  // Resubscribes to all subscriptions, removing the original `start` time, if
-  // any. Usually performed after a `Reconnect()`.
+  // Resubscribes only to active subscriptions, removing the original `start`
+  // time, if any. Usually performed after a `Reconnect()`.
   void Resubscribe();
 
  private:
@@ -149,6 +156,12 @@ class LiveBlocking {
   void IncrementSubCounter();
   void Subscribe(std::string_view sub_msg, const std::vector<std::string>& symbols,
                  bool use_snapshot);
+  void Subscribe(LiveSubscription& subscription);
+  void Unsubscribe(LiveUnsubscription& unsubscription);
+  void Unsubscribe(std::string_view unsub_msg, const std::vector<std::string>& symbols);
+  void SendChunkedSymbols(std::string_view method_name, std::string_view msg_prefix,
+                          const std::vector<std::string>& symbols,
+                          std::string_view msg_suffix);
   std::chrono::milliseconds HeartbeatTimeout() const;
   void CheckHeartbeatTimeout() const;
   void LogRecord() const;
@@ -172,6 +185,7 @@ class LiveBlocking {
   detail::LiveConnection connection_;
   std::uint32_t sub_counter_{};
   std::vector<LiveSubscription> subscriptions_;
+  std::vector<LiveUnsubscription> unsubscriptions_;
   // Only used for the text protocol of the authentication handshake. DBN data is
   // buffered by `fsm_`
   detail::Buffer buffer_;

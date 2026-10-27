@@ -123,6 +123,15 @@ std::vector<databento::LiveSubscription>& LiveThreaded::Subscriptions() {
   return impl_->blocking.Subscriptions();
 }
 
+const std::vector<databento::LiveUnsubscription>& LiveThreaded::Unsubscriptions()
+    const {
+  return impl_->blocking.Unsubscriptions();
+}
+
+std::vector<databento::LiveUnsubscription>& LiveThreaded::Unsubscriptions() {
+  return impl_->blocking.Unsubscriptions();
+}
+
 void LiveThreaded::Subscribe(const std::vector<std::string>& symbols, Schema schema,
                              SType stype_in) {
   impl_->blocking.Subscribe(symbols, schema, stype_in);
@@ -141,6 +150,11 @@ void LiveThreaded::Subscribe(const std::vector<std::string>& symbols, Schema sch
 void LiveThreaded::SubscribeWithSnapshot(const std::vector<std::string>& symbols,
                                          Schema schema, SType stype_in) {
   impl_->blocking.SubscribeWithSnapshot(symbols, schema, stype_in);
+}
+
+void LiveThreaded::Unsubscribe(const std::vector<std::string>& symbols, Schema schema,
+                               SType stype_in) {
+  impl_->blocking.Unsubscribe(symbols, schema, stype_in);
 }
 
 void LiveThreaded::Start(RecordCallback callback) {

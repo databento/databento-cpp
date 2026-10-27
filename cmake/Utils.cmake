@@ -1,15 +1,4 @@
 #
-# Print a message only if the `VERBOSE_OUTPUT` option is on
-#
-
-function(verbose_message content)
-  if(${PROJECT_NAME_UPPERCASE}_VERBOSE_OUTPUT)
-    # message(VERBOSE ...) was added in cmake 3.15
-    message(STATUS ${content})
-  endif()
-endfunction()
-
-#
 # Add a target for formatting the project using `clang-format` (i.e: cmake --build build --target clang-format)
 #
 

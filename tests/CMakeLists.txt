@@ -9,7 +9,7 @@ project(
   LANGUAGES CXX
 )
 
-verbose_message("Adding tests under ${CMAKE_PROJECT_NAME}Tests...")
+message(VERBOSE "Adding tests under ${CMAKE_PROJECT_NAME}Tests...")
 
 #
 # Set the sources for the unit tests and add the executable(s)
@@ -96,7 +96,7 @@ endif()
 if (${CMAKE_PROJECT_NAME}_ENABLE_CODE_COVERAGE)
   target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC -O0 -g -fprofile-arcs -ftest-coverage)
   target_link_options(${CMAKE_PROJECT_NAME} PUBLIC -fprofile-arcs -ftest-coverage)
-  verbose_message("Code coverage is enabled and provided with GCC.")
+  message(VERBOSE "Code coverage is enabled and provided with GCC.")
 endif()
 
 #
@@ -157,7 +157,7 @@ gtest_discover_tests(${PROJECT_NAME})
 file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 add_compile_definitions(TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 
-verbose_message("Finished adding unit tests for ${CMAKE_PROJECT_NAME}.")
+message(VERBOSE "Finished adding unit tests for ${CMAKE_PROJECT_NAME}.")
 
 add_subdirectory(cmake_fetch_content)
 add_subdirectory(cmake_import)
