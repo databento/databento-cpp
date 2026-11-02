@@ -8,6 +8,8 @@ add_test(
     ${CMAKE_COMMAND}
     -G "${CMAKE_GENERATOR}"
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+    # Hide the Rust toolchain so CI fails when the platform doesn't get a prebuilt libdbn_c
+    -DRust_COMPILER=${CMAKE_CURRENT_BINARY_DIR}/no-rustc
     -S ${CMAKE_CURRENT_SOURCE_DIR}/project
     -B ${nested_binary_dir}
 )
