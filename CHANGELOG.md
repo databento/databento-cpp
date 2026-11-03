@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.69.1 - 2026-11-03
+
+### Enhancements
+- Upgraded default cpp-httplib version to 0.63.0
+
+### Bug fixes
+- Fixed the prebuilt libdbn_c archive not being used with Red Hat and SUSE GCC, whose
+  target triples omit `gnu`
+- Fixed selecting the prebuilt libdbn_c archive by host architecture instead of the
+  compiler's target, which picked the wrong archive for `-m32` and Clang cross builds
+
 ## 0.69.0 - 2026-10-27
 
 ### Enhancements

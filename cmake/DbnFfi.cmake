@@ -50,20 +50,21 @@ elseif(WIN32)
   if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(ARM64|arm64)$")
     set(dbn_c_triple x86_64-pc-windows-msvc)
   endif()
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  # The prebuilt Linux archives are built against glibc
-  execute_process(
-    COMMAND "${CMAKE_CXX_COMPILER}" -dumpmachine
-    OUTPUT_VARIABLE dbn_c_compiler_triple
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
-  )
-  if(dbn_c_compiler_triple MATCHES "gnu$")
-    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64)$")
-      set(dbn_c_triple x86_64-unknown-linux-gnu)
-    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64)$")
-      set(dbn_c_triple aarch64-unknown-linux-gnu)
-    endif()
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+  if(CMAKE_CXX_COMPILER_TARGET)
+    set(dbn_c_compiler_triple "${CMAKE_CXX_COMPILER_TARGET}")
+  else()
+    execute_process(
+      COMMAND "${CMAKE_CXX_COMPILER}" -dumpmachine
+      OUTPUT_VARIABLE dbn_c_compiler_triple
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
+    )
+  endif()
+  # The prebuilt Linux archives are built against glibc. Some distros' GCC, like Red Hat's
+  # `x86_64-redhat-linux`, leave glibc implied, while other libcs are always named
+  if(dbn_c_compiler_triple MATCHES "^(x86_64|aarch64)-.*linux(-gnu)?$")
+    set(dbn_c_triple ${CMAKE_MATCH_1}-unknown-linux-gnu)
   endif()
 endif()
 

@@ -4,12 +4,7 @@ project(DummyImport LANGUAGES CXX)
 
 include(FetchContent)
 
-get_filename_component(GIT_REPOSITORY_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../.. ABSOLUTE)
-FetchContent_Declare(
-  databento
-  GIT_REPOSITORY ${GIT_REPOSITORY_DIRECTORY}
-  GIT_TAG HEAD
-)
+FetchContent_Declare(databento SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 FetchContent_MakeAvailable(databento)
 
 add_executable(with_namespace_target main.cpp)
