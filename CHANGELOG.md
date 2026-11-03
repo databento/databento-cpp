@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.69.1 - Upcoming
+## 0.69.1 - 2026-11-03
+
+### Enhancements
+- Upgraded default cpp-httplib version to 0.63.0
 
 ### Bug fixes
 - Fixed the prebuilt libdbn_c archive not being used with Red Hat and SUSE GCC, whose
