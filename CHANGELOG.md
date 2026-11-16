@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.70.0 - Upcoming
+
+### Enhancements
+- Added new venues, datasets, and publishers for HKEX
+
 ## 0.69.1 - 2026-11-03
 
 ### Enhancements

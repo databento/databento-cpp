@@ -151,6 +151,10 @@ enum class Venue : std::uint16_t {
   Xose = 71,
   // Databento Core Indices
   Dbix = 72,
+  // Hong Kong Exchanges and Clearing
+  Xhkg = 73,
+  // Hong Kong Futures Exchange
+  Xhkf = 74,
 };
 
 // A source of data.
@@ -261,6 +265,10 @@ enum class Dataset : std::uint16_t {
   XoseItch = 52,
   // Databento Core Indices
   DbixCore = 53,
+  // HKEX Orion Securities Market (Unreleased)
+  XhkgOmdc = 54,
+  // HKEX Orion Derivatives Market (Unreleased)
+  XhkfOmdd = 55,
 };
 
 // A specific Venue from a specific data source.
@@ -571,6 +579,10 @@ enum class Publisher : std::uint16_t {
   DbixCoreCgi = 152,
   // CGIF - Definitions
   DbixCoreCdef = 153,
+  // HKEX - Hong Kong Securities Exchange (Unreleased)
+  XhkgOmdcXhkg = 154,
+  // HKEX - Hong Kong Futures Exchange (Unreleased)
+  XhkfOmddXhkf = 155,
 };
 
 // Get a Publisher's Venue.
