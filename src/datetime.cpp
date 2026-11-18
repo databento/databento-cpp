@@ -7,6 +7,7 @@
 #include <chrono>
 #include <ctime>    // localtime, strftime, tm
 #include <iomanip>  // setw
+#include <locale>
 #include <sstream>  // ostringstream
 
 #include "databento/constants.hpp"  // kUndefTimestamp
@@ -38,6 +39,7 @@ std::string ToIso8601(UnixNanos unix_nanos) {
                                std::chrono::nanoseconds{std::chrono::seconds{1}}};
   const size_t count = std::strftime(buf.data(), sizeof(buf), "%Y-%m-%dT%H:%M:%S", &tm);
   std::ostringstream time_ss;
+  time_ss.imbue(std::locale::classic());
   time_ss.write(buf.data(), static_cast<std::streamsize>(count));
   time_ss << '.' << std::setw(9) << std::setfill('0') << nanos.count() << 'Z';
   return time_ss.str();
@@ -57,6 +59,7 @@ std::string DateFromIso8601Int(std::uint32_t date_int) {
   const auto month = remaining / 100;
   const auto day = remaining % 100;
   std::ostringstream out_ss;
+  out_ss.imbue(std::locale::classic());
   out_ss << year << '-' << std::setfill('0') << std::setw(2) << month << '-'
          << std::setfill('0') << std::setw(2) << day;
   return out_ss.str();

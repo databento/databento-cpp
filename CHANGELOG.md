@@ -5,6 +5,11 @@
 ### Enhancements
 - Added new venues, datasets, and publishers for HKEX
 
+### Bug fixes
+- Fixed formatting of ISO 8601 dates and timestamps, pretty prices, and live
+  subscription and authentication requests when the global C++ locale groups
+  thousands
+
 ## 0.69.1 - 2026-11-03
 
 ### Enhancements

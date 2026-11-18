@@ -27,6 +27,7 @@
 #include "mock/mock_log_receiver.hpp"
 #include "mock/mock_lsg_server.hpp"  // MockLsgServer
 #include "mock/mock_tcp_server.hpp"  // MockTcpServer
+#include "scoped_period_separator_locale.hpp"
 
 namespace databento::tests {
 class LiveBlockingTests : public testing::Test {
@@ -171,6 +172,32 @@ TEST_F(LiveBlockingTests, TestSubscriptionUnixNanos0) {
 
   LiveBlocking target = builder_.SetDataset(kDataset)
                             .SetSendTsOut(kTsOut)
+                            .SetAddress(kLocalhost, mock_server.Port())
+                            .BuildBlocking();
+  target.Subscribe(kSymbols, kSchema, kSType, kStart);
+}
+
+TEST_F(LiveBlockingTests, TestSubscribePeriodSeparatorLocale) {
+  const ScopedPeriodSeparatorLocale locale;
+  constexpr auto kTsOut = false;
+  constexpr auto kDataset = dataset::kXnasItch;
+  constexpr auto kHeartbeatInterval = std::chrono::seconds{1'800};
+  const std::vector<std::string> kSymbols = {"TEST1", "TEST2"};
+  const auto kSchema = Schema::Ohlcv1M;
+  const auto kSType = SType::RawSymbol;
+  const auto kStart = UnixNanos{std::chrono::nanoseconds{1'700'000'000'000'000'000}};
+
+  const mock::MockLsgServer mock_server{
+      kDataset, kTsOut, kHeartbeatInterval,
+      [&kSymbols, kSchema, kSType](mock::MockLsgServer& self) {
+        self.Accept();
+        self.Authenticate();
+        self.Subscribe(kSymbols, kSchema, kSType, "1700000000000000000", true);
+      }};
+
+  LiveBlocking target = builder_.SetDataset(kDataset)
+                            .SetSendTsOut(kTsOut)
+                            .SetHeartbeatInterval(kHeartbeatInterval)
                             .SetAddress(kLocalhost, mock_server.Port())
                             .BuildBlocking();
   target.Subscribe(kSymbols, kSchema, kSType, kStart);

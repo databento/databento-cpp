@@ -96,8 +96,7 @@ void LiveBlocking::Subscribe(const std::vector<std::string>& symbols, Schema sch
   IncrementSubCounter();
   std::ostringstream sub_msg;
   sub_msg << "schema=" << ToString(schema) << "|stype_in=" << ToString(stype_in)
-          << "|start=" << start.time_since_epoch().count()
-          << "|id=" << std::to_string(sub_counter_);
+          << "|start=" << ToString(start) << "|id=" << std::to_string(sub_counter_);
   Subscribe(sub_msg.str(), symbols, false);
   subscriptions_.emplace_back(LiveSubscription{symbols, schema, stype_in, start,
                                                sub_counter_,
@@ -441,7 +440,8 @@ std::string LiveBlocking::EncodeAuthReq(std::string_view auth) {
     req_stream << ' ' << user_agent_ext_;
   }
   if (heartbeat_interval_.has_value()) {
-    req_stream << "|heartbeat_interval_s=" << heartbeat_interval_->count();
+    req_stream << "|heartbeat_interval_s="
+               << std::to_string(heartbeat_interval_->count());
   }
   if (slow_reader_behavior_.has_value()) {
     req_stream << "|slow_reader_behavior=" << *slow_reader_behavior_;

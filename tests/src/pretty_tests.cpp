@@ -10,6 +10,7 @@
 #include "databento/constants.hpp"
 #include "databento/datetime.hpp"
 #include "databento/pretty.hpp"
+#include "scoped_period_separator_locale.hpp"
 
 namespace databento::pretty::tests {
 
@@ -25,6 +26,10 @@ TEST(PrettyTests, TestPrettyPx) {
     ASSERT_EQ(ss.str(), exp);
     ss.str("");
   }
+}
+TEST(PrettyTests, TestPrettyPxPeriodSeparatorLocale) {
+  const ScopedPeriodSeparatorLocale locale;
+  ASSERT_EQ(PxToString(1'234'567'890'123), "1234.567890123");
 }
 TEST(PrettyTests, TestPrecision) {
   std::ostringstream ss;
