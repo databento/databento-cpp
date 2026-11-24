@@ -21,6 +21,7 @@ set(
   include/mock/mock_log_receiver.hpp
   include/mock/mock_lsg_server.hpp
   include/mock/mock_tcp_server.hpp
+  include/scoped_period_separator_locale.hpp
   include/temp_file.hpp
 )
 

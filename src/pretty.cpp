@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <iomanip>
+#include <locale>
 #include <sstream>
 
 #include "databento/datetime.hpp"
@@ -20,6 +21,7 @@ std::ostream& operator<<(std::ostream& stream, Px px) {
   const int64_t price_integer = px_abs / kFixedPriceScale;
   const int64_t price_fraction = px_abs % kFixedPriceScale;
   std::ostringstream ss;
+  ss.imbue(std::locale::classic());
   if (is_negative) {
     ss << '-';
   }

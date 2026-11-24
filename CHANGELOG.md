@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.70.0 - 2026-11-24
+
+### Enhancements
+- Added new venues, datasets, and publishers for HKEX
+- Upgraded default cpp-httplib version to 0.66.0
+
+### Bug fixes
+- Fixed formatting of ISO 8601 dates and timestamps, pretty prices, and live
+  subscription and authentication requests when the global C++ locale groups
+  thousands
+
 ## 0.69.1 - 2026-11-03
 
 ### Enhancements

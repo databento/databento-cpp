@@ -227,6 +227,12 @@ const char* ToString(Venue venue) {
     case Venue::Dbix: {
       return "DBIX";
     }
+    case Venue::Xhkg: {
+      return "XHKG";
+    }
+    case Venue::Xhkf: {
+      return "XHKF";
+    }
     default: {
       return "Unknown";
     }
@@ -456,6 +462,12 @@ Venue FromString(const std::string& str) {
   if (str == "DBIX") {
     return Venue::Dbix;
   }
+  if (str == "XHKG") {
+    return Venue::Xhkg;
+  }
+  if (str == "XHKF") {
+    return Venue::Xhkf;
+  }
   throw InvalidArgumentError{"FromString<Venue>", "str",
                              "unknown value '" + str + '\''};
 }
@@ -620,6 +632,12 @@ const char* ToString(Dataset dataset) {
     }
     case Dataset::DbixCore: {
       return "DBIX.CORE";
+    }
+    case Dataset::XhkgOmdc: {
+      return "XHKG.OMDC";
+    }
+    case Dataset::XhkfOmdd: {
+      return "XHKF.OMDD";
     }
     default: {
       return "Unknown";
@@ -792,6 +810,12 @@ Dataset FromString(const std::string& str) {
   }
   if (str == "DBIX.CORE") {
     return Dataset::DbixCore;
+  }
+  if (str == "XHKG.OMDC") {
+    return Dataset::XhkgOmdc;
+  }
+  if (str == "XHKF.OMDD") {
+    return Dataset::XhkfOmdd;
   }
   throw InvalidArgumentError{"FromString<Dataset>", "str",
                              "unknown value '" + str + '\''};
@@ -1257,6 +1281,12 @@ Venue PublisherVenue(Publisher publisher) {
     }
     case Publisher::DbixCoreCdef: {
       return Venue::Cdef;
+    }
+    case Publisher::XhkgOmdcXhkg: {
+      return Venue::Xhkg;
+    }
+    case Publisher::XhkfOmddXhkf: {
+      return Venue::Xhkf;
     }
     default: {
       throw InvalidArgumentError{
@@ -1727,6 +1757,12 @@ Dataset PublisherDataset(Publisher publisher) {
     case Publisher::DbixCoreCdef: {
       return Dataset::DbixCore;
     }
+    case Publisher::XhkgOmdcXhkg: {
+      return Dataset::XhkgOmdc;
+    }
+    case Publisher::XhkfOmddXhkf: {
+      return Dataset::XhkfOmdd;
+    }
     default: {
       throw InvalidArgumentError{
           "PublisherDataset", "publisher",
@@ -2196,6 +2232,12 @@ const char* ToString(Publisher publisher) {
     }
     case Publisher::DbixCoreCdef: {
       return "DBIX.CORE.CDEF";
+    }
+    case Publisher::XhkgOmdcXhkg: {
+      return "XHKG.OMDC.XHKG";
+    }
+    case Publisher::XhkfOmddXhkf: {
+      return "XHKF.OMDD.XHKF";
     }
     default: {
       return "Unknown";
@@ -2668,6 +2710,12 @@ Publisher FromString(const std::string& str) {
   }
   if (str == "DBIX.CORE.CDEF") {
     return Publisher::DbixCoreCdef;
+  }
+  if (str == "XHKG.OMDC.XHKG") {
+    return Publisher::XhkgOmdcXhkg;
+  }
+  if (str == "XHKF.OMDD.XHKF") {
+    return Publisher::XhkfOmddXhkf;
   }
   throw InvalidArgumentError{"FromString<Publisher>", "str",
                              "unknown value '" + str + '\''};
